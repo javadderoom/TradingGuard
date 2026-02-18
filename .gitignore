@@ -1,0 +1,54 @@
+############################
+# Python / General
+############################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.log
+
+############################
+# Virtual environments
+############################
+venv/
+.venv/
+env/
+.env/
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.code-workspace
+
+############################
+# OS files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Test / tooling artifacts
+############################
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+
+############################
+# Project-specific
+############################
+# Local SQLite database
+tradingguard.db
+
+# Runtime session bridge file (created in MT5 Common Files; keep local copies out)
+session.json
+
+# PyInstaller / build output
+build/
+dist/
+*.spec
+
