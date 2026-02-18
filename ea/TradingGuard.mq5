@@ -126,7 +126,14 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
                         const MqlTradeRequest &request,
                         const MqlTradeResult &result)
 {
-    // We care about deal additions (trade closed)
+    // Diagnostic: confirm we are receiving trade events at all.
+    // (Shows up in the MT5 Experts log.)
+    Print("TG OnTradeTransaction: type=", (int)trans.type,
+          " deal=", (ulong)trans.deal,
+          " pos=", (ulong)trans.position,
+          " symbol=", trans.symbol);
+
+    // We care about deal additions (deals created in history)
     if (trans.type != TRADE_TRANSACTION_DEAL_ADD)
         return;
 
@@ -134,11 +141,23 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     ulong dealTicket = trans.deal;
     if (dealTicket == 0) return;
 
-    // Make sure the deal is on our symbol
-    if (trans.symbol != _Symbol) return;
+    // Ensure deal history is available; otherwise HistoryDealGet* can return defaults.
+    datetime from = TimeCurrent() - 86400 * 7;
+    datetime to   = TimeCurrent() + 60;
+    if (!HistorySelect(from, to))
+    {
+        Print("TG: HistorySelect failed; cannot read deal details for ", (ulong)dealTicket);
+        return;
+    }
+    if (!HistoryDealSelect(dealTicket))
+    {
+        Print("TG: HistoryDealSelect failed for deal ", (ulong)dealTicket);
+        return;
+    }
 
     ENUM_DEAL_ENTRY dealEntry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
-    if (dealEntry != DEAL_ENTRY_OUT && dealEntry != DEAL_ENTRY_INOUT)
+    // Some brokers/operations close via OUT_BY (close-by).
+    if (dealEntry != DEAL_ENTRY_OUT && dealEntry != DEAL_ENTRY_INOUT && dealEntry != DEAL_ENTRY_OUT_BY)
         return;  // only care about closing deals
 
     double dealProfit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
@@ -246,7 +265,10 @@ void WriteSessionUpdate(string lastResult = "")
     // Timestamp
     g_session["timestamp"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
 
-    g_session.WriteToFile(g_filePath);
+    if (!g_session.WriteToFile(g_filePath))
+    {
+        Print("TG: FAILED to write session file: ", g_filePath);
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -258,7 +280,6 @@ void MonitorOpenPositions()
     {
         ulong ticket = PositionGetTicket(i);
         if (ticket == 0) continue;
-        if (PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
 
         double floatingPnl = PositionGetDouble(POSITION_PROFIT)
                            + PositionGetDouble(POSITION_SWAP);
@@ -362,7 +383,6 @@ void CloseAllPositions()
     {
         ulong ticket = PositionGetTicket(i);
         if (ticket == 0) continue;
-        if (PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
         ForceClosePosition(ticket);
     }
 }

@@ -49,6 +49,13 @@ class MainWindow(QMainWindow):
         self._poll_timer.timeout.connect(self._poll_session)
         self._poll_timer.start()
 
+        # MT5 guard timer — ensures terminal cannot be reopened after shutdown
+        # or on a mandatory recovery day.
+        self._mt5_guard_timer = QTimer(self)
+        self._mt5_guard_timer.setInterval(5000)  # 5 seconds
+        self._mt5_guard_timer.timeout.connect(self._guard_mt5_after_shutdown)
+        self._mt5_guard_timer.start()
+
     # ══════════════════════════════════════════════════════════════════════
     #  UI Construction
     # ══════════════════════════════════════════════════════════════════════
@@ -121,6 +128,14 @@ class MainWindow(QMainWindow):
             btn_refresh, alignment=Qt.AlignmentFlag.AlignCenter
         )
 
+        # Development helper: allow resetting today's lock so we can test flows
+        # multiple times in a single day.
+        self._btn_dev_reset = QPushButton("DEV: Reset Today's Lock")
+        self._btn_dev_reset.clicked.connect(self._dev_reset_today)
+        history_layout.addWidget(
+            self._btn_dev_reset, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+
         self._tabs.addTab(history_tab, "📅  History")
 
         # ── Status bar ────────────────────────────────────────────────────
@@ -135,9 +150,16 @@ class MainWindow(QMainWindow):
     # ══════════════════════════════════════════════════════════════════════
 
     def _check_recovery_day(self):
-        """Block trading entirely if last 2 days were red."""
+        """Evaluate whether trading is allowed today.
+
+        - If the last 2 completed days were red → mandatory recovery day.
+        - If there is already a record for today → today's session is finished.
+        """
+        # Mandatory recovery day after 2 consecutive red days
         if self._db.is_recovery_day():
             self._btn_start_session.setEnabled(False)
+            self._timer_widget.setEnabled(False)
+            self._shutdown_done = True  # treat as permanently shut down for today
             self._status_bar.showMessage(
                 "🛑  RECOVERY DAY — 2 consecutive red days. Trading is blocked."
             )
@@ -146,6 +168,22 @@ class MainWindow(QMainWindow):
                 "Recovery Day",
                 "You had 2 consecutive losing days.\n"
                 "Today is a mandatory recovery day — no trading allowed.",
+            )
+            # Ensure MT5 is not running on a recovery day.
+            mt5_controller.kill_mt5()
+            return
+
+        # If we already have a row for today, that means today's session was
+        # completed earlier (either manually or via EA shutdown). Do not allow
+        # a new session to start after reopening the app.
+        today_row = self._db.get_today()
+        if today_row is not None:
+            self._btn_start_session.setEnabled(False)
+            self._timer_widget.setEnabled(False)
+            self._shutdown_done = True
+            result = today_row.get("result", "completed").upper()
+            self._status_bar.showMessage(
+                f"🛑  SESSION COMPLETED TODAY ({result}) — no further trading allowed."
             )
 
     def _start_session(self):
@@ -224,6 +262,47 @@ class MainWindow(QMainWindow):
 
         self._load_history()
         self._status_bar.showMessage("Session ended — MT5 closed")
+
+    def _dev_reset_today(self):
+        """Development-only helper to clear today's lock and session state.
+
+        This makes it possible to run multiple test sessions in one day while
+        keeping production behavior strict by default.
+        """
+        reply = QMessageBox.question(
+            self,
+            "DEV: Reset Today's Lock",
+            "This will clear today's result and re-enable trading for testing.\n"
+            "Are you sure?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # Clear today's DB row and reset in-memory flags
+        self._db.clear_today()
+        self._shutdown_done = False
+        self._btn_start_session.setEnabled(True)
+        self._timer_widget.setEnabled(True)
+        self._timer_widget.reset()
+        self._status_bar.showMessage(
+            "DEV: Today's lock reset — you may start a test session."
+        )
+
+    def _guard_mt5_after_shutdown(self):
+        """Continuously enforce 'no reopening after shutdown' and recovery days.</new_code>
+
+        If today's session has been shut down, or today is a mandatory recovery day,
+        automatically kill MT5 whenever it is detected running.
+        """
+        if not self._shutdown_done and not self._db.is_recovery_day():
+            return
+
+        if mt5_controller.is_mt5_running():
+            mt5_controller.kill_mt5()
+            self._status_bar.showMessage(
+                "🛑  MT5 is blocked after shutdown / on recovery day"
+            )
 
     # ══════════════════════════════════════════════════════════════════════
     #  Polling

@@ -83,3 +83,14 @@ class DailyDatabase:
                 "SELECT * FROM daily_results WHERE date = ?", (today,)
             ).fetchone()
             return dict(row) if row else None
+
+    def clear_today(self) -> None:
+        """Delete today's row, if any.
+
+        Intended for development/testing to reset the daily lock.
+        """
+        today = date.today().isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                "DELETE FROM daily_results WHERE date = ?", (today,)
+            )

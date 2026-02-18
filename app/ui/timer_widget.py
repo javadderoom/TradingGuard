@@ -100,6 +100,10 @@ class TimerWidget(QWidget):
         """True when the timer has reached zero."""
         return self._remaining <= 0
 
+    def reset(self) -> None:
+        """Public wrapper to reset the timer (used by MainWindow)."""
+        self._reset_timer()
+
     # ── Helpers ────────────────────────────────────────────────────────────
 
     @staticmethod
