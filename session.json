@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "session_active": false,
+  "trading_allowed": false,
+  "bias": "bullish",
+  "invalidation_price": 1260.0,
+  "news_lock": true,
+  "daily_loss_usd": 0.0,
+  "daily_profit_usd": 0.0,
+  "trades_today": 0,
+  "consecutive_losses": 0,
+  "shutdown_signal": false,
+  "cooldown_until": "",
+  "last_trade_result": "",
+  "timestamp": "2026-02-18T17:29:10.347817"
+}
