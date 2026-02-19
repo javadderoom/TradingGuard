@@ -32,6 +32,13 @@ input int      InpBreakHour     = 16;        // Daily break hour (Tehran)
 input int      InpBreakMin      = 20;        // Daily break minute
 input int      InpBreakDuration = 12;         // Break duration in minutes
 
+// Manual checklist (on-chart, before each trade)
+input bool     InpEnforceChecklist = true;   // Block new entries until checklist is complete
+input string   InpChecklist1   = "Trend aligned";
+input string   InpChecklist2   = "Entry setup valid";
+input string   InpChecklist3   = "SL/TP defined";
+input string   InpChecklist4   = "Risk acceptable";
+
 //+------------------------------------------------------------------+
 //| Global State                                                       |
 //+------------------------------------------------------------------+
@@ -59,6 +66,16 @@ bool     g_breakActive     = false;
 
 // File path — we look in both MQL5\Files and actual disk path
 string   g_filePath      = "";
+string   g_checklistItems[4];
+bool     g_checklistState[4] = {false, false, false, false};
+string   g_checkPrefix = "TG_CHECK_";
+string   g_panelBgName = "TG_PANEL_BG";
+string   g_panelLinePrefix = "TG_PANEL_LINE_";
+int      g_panelMaxLines = 20;
+int      g_panelWidth = 200;
+int      g_panelHeight = 560;
+int      g_panelX = 20;
+int      g_panelY = 14;
 
 //+------------------------------------------------------------------+
 //| Expert initialization                                              |
@@ -66,6 +83,10 @@ string   g_filePath      = "";
 int OnInit()
 {
     g_filePath = InpSessionFile;
+    g_checklistItems[0] = InpChecklist1;
+    g_checklistItems[1] = InpChecklist2;
+    g_checklistItems[2] = InpChecklist3;
+    g_checklistItems[3] = InpChecklist4;
 
     // Try to read session on init
     if (!ReadSession())
@@ -79,6 +100,8 @@ int OnInit()
         Print("✅ TradingGuard initialized. Session loaded.");
     }
 
+    CreateChecklistButtons();
+
     // Initial chart panel
     UpdateChartPanel();
     return INIT_SUCCEEDED;
@@ -89,7 +112,141 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
+    RemoveChecklistButtons();
     Comment("");  // clear chart panel
+}
+
+//+------------------------------------------------------------------+
+//| Get Tehran clock from GMT (UTC+3:30)                             |
+//+------------------------------------------------------------------+
+void GetTehranTime(int &hour, int &minute)
+{
+    MqlDateTime gmtDT;
+    TimeToStruct(TimeGMT(), gmtDT);
+
+    hour = gmtDT.hour + 3;
+    minute = gmtDT.min + 30;
+    if (minute >= 60) { minute -= 60; hour += 1; }
+    if (hour >= 24) hour -= 24;
+}
+
+int ChecklistDoneCount()
+{
+    int done = 0;
+    for (int i = 0; i < 4; i++)
+        if (g_checklistState[i]) done++;
+    return done;
+}
+
+bool IsChecklistComplete()
+{
+    return ChecklistDoneCount() == 4;
+}
+
+int PanelLineYOffset(const int idx)
+{
+    // Base 18 px per row + extra gaps before section headers.
+    int y = idx * 18;
+    if (idx >= 4) y += 8;    // gap before Risk section
+    if (idx >= 12) y += 8;   // gap before Time section
+    if (idx >= 16) y += 8;   // gap before Checklist section
+    return y;
+}
+
+void EnsureSidePanel()
+{
+    int chartWidth = (int)ChartGetInteger(0, CHART_WIDTH_IN_PIXELS, 0);
+    if (chartWidth > 0)
+        g_panelX = MathMax(10, chartWidth - g_panelWidth - 14);
+
+    if (ObjectFind(0, g_panelBgName) < 0)
+        ObjectCreate(0, g_panelBgName, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_XDISTANCE, g_panelX);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_YDISTANCE, g_panelY);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_XSIZE, g_panelWidth);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_YSIZE, g_panelHeight);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_BGCOLOR, clrMidnightBlue);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_COLOR, clrSlateGray);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_BACK, false);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, g_panelBgName, OBJPROP_HIDDEN, true);
+
+    for (int i = 0; i < g_panelMaxLines; i++)
+    {
+        string lineName = g_panelLinePrefix + IntegerToString(i);
+        if (ObjectFind(0, lineName) < 0)
+            ObjectCreate(0, lineName, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, lineName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, lineName, OBJPROP_XDISTANCE, g_panelX + 10);
+        ObjectSetInteger(0, lineName, OBJPROP_YDISTANCE, g_panelY + 10 + PanelLineYOffset(i));
+        ObjectSetInteger(0, lineName, OBJPROP_COLOR, clrWhite);
+        ObjectSetInteger(0, lineName, OBJPROP_FONTSIZE, 10);
+        ObjectSetString(0, lineName, OBJPROP_FONT, "Consolas");
+        ObjectSetInteger(0, lineName, OBJPROP_SELECTABLE, false);
+        ObjectSetInteger(0, lineName, OBJPROP_HIDDEN, true);
+    }
+}
+
+void UpdateChecklistButton(const int idx)
+{
+    string name = g_checkPrefix + IntegerToString(idx + 1);
+    string mark = g_checklistState[idx] ? "[x] " : "[ ] ";
+    ObjectSetString(0, name, OBJPROP_TEXT, mark + g_checklistItems[idx]);
+}
+
+void ResetChecklist()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        g_checklistState[i] = false;
+        UpdateChecklistButton(i);
+    }
+}
+
+void CreateChecklistButtons()
+{
+    EnsureSidePanel();
+
+    for (int i = 0; i < 4; i++)
+    {
+        string name = g_checkPrefix + IntegerToString(i + 1);
+        ObjectDelete(0, name);
+        ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0);
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, name, OBJPROP_XDISTANCE, g_panelX + 10);
+        ObjectSetInteger(0, name, OBJPROP_YDISTANCE, g_panelY + 410 + (i * 28));
+        ObjectSetInteger(0, name, OBJPROP_XSIZE, g_panelWidth - 20);
+        ObjectSetInteger(0, name, OBJPROP_YSIZE, 20);
+        ObjectSetInteger(0, name, OBJPROP_COLOR, clrWhite);
+        ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clrDarkSlateGray);
+        UpdateChecklistButton(i);
+    }
+
+    string resetName = g_checkPrefix + "RESET";
+    ObjectDelete(0, resetName);
+    ObjectCreate(0, resetName, OBJ_BUTTON, 0, 0, 0);
+    ObjectSetInteger(0, resetName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    ObjectSetInteger(0, resetName, OBJPROP_XDISTANCE, g_panelX + 10);
+    ObjectSetInteger(0, resetName, OBJPROP_YDISTANCE, g_panelY + 524);
+    ObjectSetInteger(0, resetName, OBJPROP_XSIZE, g_panelWidth - 20);
+    ObjectSetInteger(0, resetName, OBJPROP_YSIZE, 20);
+    ObjectSetInteger(0, resetName, OBJPROP_COLOR, clrWhite);
+    ObjectSetInteger(0, resetName, OBJPROP_BGCOLOR, clrIndianRed);
+    ObjectSetString(0, resetName, OBJPROP_TEXT, "Reset Checklist");
+}
+
+void RemoveChecklistButtons()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        string name = g_checkPrefix + IntegerToString(i + 1);
+        ObjectDelete(0, name);
+    }
+    ObjectDelete(0, g_checkPrefix + "RESET");
+    for (int i = 0; i < g_panelMaxLines; i++)
+        ObjectDelete(0, g_panelLinePrefix + IntegerToString(i));
+    ObjectDelete(0, g_panelBgName);
 }
 
 //+------------------------------------------------------------------+
@@ -114,16 +271,9 @@ void OnTick()
     }
 
     // ── 2a. Check trading hours (Tehran time: UTC+3:30) ───────────────
-    MqlDateTime utcDT;
-    TimeToStruct(TimeCurrent(), utcDT);
-    int utcHour = utcDT.hour;
-    int utcMin = utcDT.min;
-    
-    // Tehran is UTC+3:30
-    int tehranHour = utcHour + 3;
-    int tehranMin = utcMin + 30;
-    if (tehranMin >= 60) { tehranMin -= 60; tehranHour += 1; }
-    if (tehranHour >= 24) tehranHour -= 24;
+    int tehranHour = 0;
+    int tehranMin = 0;
+    GetTehranTime(tehranHour, tehranMin);
     
     bool withinHours = (tehranHour > InpStartHour || (tehranHour == InpStartHour && tehranMin >= 0)) 
                    && (tehranHour < InpEndHour || (tehranHour == InpEndHour && tehranMin < 60));
@@ -286,6 +436,34 @@ void OnTick()
 }
 
 //+------------------------------------------------------------------+
+//| Chart event handler (manual checklist buttons)                    |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
+{
+    if (id != CHARTEVENT_OBJECT_CLICK)
+        return;
+
+    if (sparam == g_checkPrefix + "RESET")
+    {
+        ResetChecklist();
+        UpdateChartPanel();
+        return;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        string name = g_checkPrefix + IntegerToString(i + 1);
+        if (sparam == name)
+        {
+            g_checklistState[i] = !g_checklistState[i];
+            UpdateChecklistButton(i);
+            UpdateChartPanel();
+            return;
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
 //| Trade transaction handler                                          |
 //+------------------------------------------------------------------+
 void OnTradeTransaction(const MqlTradeTransaction &trans,
@@ -358,6 +536,30 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
             }
             return;
         }
+    }
+
+    // Manual checklist enforcement: block new entries until all checks are done.
+    if (dealEntry == DEAL_ENTRY_IN && InpEnforceChecklist && !IsChecklistComplete())
+    {
+        Print("🛑 Checklist incomplete: closing new entry #", (ulong)dealTicket);
+
+        ulong posTicket = trans.position;
+        if (posTicket != 0)
+            ForceClosePosition(posTicket);
+        else
+        {
+            for (int i = PositionsTotal() - 1; i >= 0; i--)
+            {
+                ulong ticket = PositionGetTicket(i);
+                if (ticket == 0) continue;
+                if (PositionGetString(POSITION_SYMBOL) == trans.symbol)
+                {
+                    ForceClosePosition(ticket);
+                    break;
+                }
+            }
+        }
+        return;
     }
 
     // When a trade OPENS, set base cooldown (15 minutes)
@@ -776,19 +978,22 @@ double CalculateLotSize(double slPoints)
 //+------------------------------------------------------------------+
 void UpdateChartPanel()
 {
+    EnsureSidePanel();
+
     double netPnl = g_dailyProfit - g_dailyLoss;
     int tradesLeft = InpMaxTrades - g_tradesToday;
 
-    // Calculate Tehran time (UTC+3:30)
-    MqlDateTime utcDT;
-    TimeToStruct(TimeCurrent(), utcDT);
-    int tehranHour = utcDT.hour + 3;
-    int tehranMin = utcDT.min + 30;
-    if (tehranMin >= 60) { tehranMin -= 60; tehranHour += 1; }
-    if (tehranHour >= 24) tehranHour -= 24;
+    int tehranHour = 0;
+    int tehranMin = 0;
+    GetTehranTime(tehranHour, tehranMin);
     
     bool withinHours = (tehranHour > InpStartHour || (tehranHour == InpStartHour && tehranMin >= 0)) 
                    && (tehranHour < InpEndHour || (tehranHour == InpEndHour && tehranMin < 60));
+    
+    int breakStartMin = InpBreakHour * 60 + InpBreakMin;
+    int breakEndMin = breakStartMin + InpBreakDuration;
+    int tehranNowMin = tehranHour * 60 + tehranMin;
+    bool isDailyBreak = (tehranNowMin >= breakStartMin && tehranNowMin < breakEndMin);
 
     string cooldownStr = "None";
     if (g_cooldownUntil > 0 && TimeCurrent() < g_cooldownUntil)
@@ -799,39 +1004,54 @@ void UpdateChartPanel()
         cooldownStr = StringFormat("%02d:%02d", min, sec);
     }
 
-    string panel = "";
-    panel += "═══════════════════════════════\n";
-    panel += "       TRADING GUARD v1.0\n";
-    panel += "═══════════════════════════════\n";
-    panel += "\n";
-
+    string lines[20];
+    lines[0]  = "TRADING GUARD v1.0";
+    lines[1]  = "STATUS";
     if (g_shutdownDone)
-        panel += "  ⛔  SESSION ENDED — LIMITS HIT\n\n";
+        lines[2] = "State: SESSION ENDED";
     else if (!g_tradingAllowed)
-        panel += "  🚫  TRADING DISABLED\n\n";
+        lines[2] = "State: DISABLED";
     else if (g_newsLock)
-        panel += "  🔒  NEWS LOCK ACTIVE\n\n";
+        lines[2] = "State: NEWS LOCK";
     else
-        panel += "  ✅  TRADING ACTIVE\n\n";
+        lines[2] = "State: ACTIVE";
+    lines[3]  = "Bias: " + g_bias;
+    lines[4]  = "RISK";
+    lines[5]  = "Trades: " + IntegerToString(g_tradesToday) + "/" + IntegerToString(InpMaxTrades);
+    lines[6]  = "P&L: $" + DoubleToString(netPnl, 2);
+    lines[7]  = "Loss: $" + DoubleToString(g_dailyLoss, 2);
+    lines[8]  = "Profit: $" + DoubleToString(g_dailyProfit, 2);
+    lines[9]  = "Consec Loss: " + IntegerToString(g_consecLosses);
+    lines[10] = "Cooldown: " + cooldownStr;
+    lines[11] = "News: " + (g_newsLock ? "ON" : "OFF");
+    lines[12] = "TIME";
+    lines[13] = "Tehran: " + IntegerToString(tehranHour) + ":" + IntegerToString(tehranMin);
+    lines[14] = "Hours: " + (withinHours ? "OPEN" : "CLOSED");
+    lines[15] = "Break: " + (isDailyBreak ? "ACTIVE" : "No");
+    lines[16] = "CHECKLIST";
+    lines[17] = "Done: " + IntegerToString(ChecklistDoneCount()) + "/4" + (InpEnforceChecklist ? " ENFORCED" : "");
+    lines[18] = "Toggle items below:";
+    lines[19] = "Use Reset after each trade";
 
-    panel += "  Bias:           " + g_bias + "\n";
-    panel += "  Trades Today:   " + IntegerToString(g_tradesToday) +
-             " / " + IntegerToString(InpMaxTrades) +
-             "  (" + IntegerToString(tradesLeft) + " left)\n";
-    panel += "  Daily P&L:      $" + DoubleToString(netPnl, 2) + "\n";
-    panel += "  Daily Loss:     $" + DoubleToString(g_dailyLoss, 2) +
-             " / $" + DoubleToString(InpMaxDailyLoss, 0) + "\n";
-    panel += "  Daily Profit:   $" + DoubleToString(g_dailyProfit, 2) +
-             " / $" + DoubleToString(InpMaxDailyProfit, 0) + "\n";
-    panel += "  Consec Losses:  " + IntegerToString(g_consecLosses) +
-             " / " + IntegerToString(InpMaxConsecLoss) + "\n";
-    panel += "  Cooldown:       " + cooldownStr + "\n";
-    panel += "  News Lock:      " + (g_newsLock ? "ON" : "OFF") + "\n";
-    panel += "  Tehran Time:    " + tehranHour + ":" + tehranMin + " (Trade " + (withinHours ? "OK" : "CLOSED") + ")\n";
-    panel += "  Daily Break:    " + (isDailyBreak ? "ACTIVE" : "No") + "\n";
-    panel += "\n";
-    panel += "═══════════════════════════════\n";
-
-    Comment(panel);
+    for (int i = 0; i < g_panelMaxLines; i++)
+    {
+        string lineName = g_panelLinePrefix + IntegerToString(i);
+        ObjectSetString(0, lineName, OBJPROP_TEXT, lines[i]);
+        if (i == 0)
+        {
+            ObjectSetInteger(0, lineName, OBJPROP_FONTSIZE, 11);
+            ObjectSetInteger(0, lineName, OBJPROP_COLOR, clrLightGoldenrod);
+        }
+        else if (i == 1 || i == 4 || i == 12 || i == 16)
+        {
+            ObjectSetInteger(0, lineName, OBJPROP_FONTSIZE, 10);
+            ObjectSetInteger(0, lineName, OBJPROP_COLOR, clrAqua);
+        }
+        else
+        {
+            ObjectSetInteger(0, lineName, OBJPROP_FONTSIZE, 10);
+            ObjectSetInteger(0, lineName, OBJPROP_COLOR, clrWhite);
+        }
+    }
 }
 //+------------------------------------------------------------------+

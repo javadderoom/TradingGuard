@@ -34,6 +34,14 @@ DAILY_BREAK_DURATION_MINUTES = 12  # 12 minute break
 # ─── Bias ──────────────────────────────────────────────────────────────────────
 BIAS_CHOICES = ["Bullish", "Bearish", "Neutral"]
 
+# Manual pre-trade checklist items (editable for your personal system).
+MANUAL_CHECKLIST_ITEMS = [
+    "HTF structure is clear",
+    "Entry aligns with my strategy setup",
+    "Risk-reward is acceptable",
+    "No impulsive/emotional decision",
+]
+
 # ─── Symbol ────────────────────────────────────────────────────────────────────
 DEFAULT_SYMBOL = "XAUUSD"
 
