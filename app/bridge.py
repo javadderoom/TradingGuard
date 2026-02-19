@@ -24,6 +24,14 @@ _DEFAULT_SESSION = {
     "daily_profit_usd": 0.0,
     "trades_today": 0,
     "consecutive_losses": 0,
+    # Phase 3: bias expiry / strict mode
+    "bias_set_at": "",
+    "losses_since_bias": 0,
+    "bias_expired": False,
+    "strict_mode": False,
+    # Long break after consecutive losses
+    "break_active": False,
+    "break_until": "",
     "shutdown_signal": False,
     "cooldown_until": "",
     "last_trade_result": "",
@@ -40,12 +48,15 @@ class SessionBridge:
     # ── Public API ─────────────────────────────────────────────────────────
 
     def read(self) -> dict:
-        """Return the current session state. Creates file if missing."""
+        """Return the current session state. Creates file if missing.
+        Merges any missing default fields for backward compatibility."""
         if not os.path.exists(self.path):
-            # Ensure the directory exists (especially for MT5 Common folder)
             os.makedirs(os.path.dirname(self.path), exist_ok=True)
             self.reset()
-        return self._locked_read()
+        data = self._locked_read()
+        merged = dict(_DEFAULT_SESSION)
+        merged.update(data)
+        return merged
 
     def write(self, data: dict) -> None:
         """Overwrite the entire session file."""

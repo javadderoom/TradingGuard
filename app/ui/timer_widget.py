@@ -55,6 +55,8 @@ class TimerWidget(QWidget):
 
         self._btn_start = QPushButton("Start Analysis Timer")
         self._btn_start.setObjectName("btn_start")
+        # Slightly taller so the label is fully visible
+        self._btn_start.setMinimumHeight(40)
         self._btn_start.clicked.connect(self._start_timer)
         btn_row.addWidget(self._btn_start)
 

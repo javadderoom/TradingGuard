@@ -19,11 +19,26 @@ COOLDOWN_LOSS_EXTRA_MINUTES = 10  # Extra cooldown if last trade was a loss
 # ─── Pre-Session ───────────────────────────────────────────────────────────────
 ANALYSIS_TIMER_MINUTES = 1      # ⚠ TESTING — set back to 20 for live use
 
+# ─── Trading Hours (Tehran Time) ─────────────────────────────────────────────
+# Tehran is UTC+3:30
+TRADING_START_HOUR = 11        # Start trading at 11:00 Tehran time
+TRADING_START_MINUTE = 0
+TRADING_END_HOUR = 21         # Stop trading at 21:00 Tehran time
+TRADING_END_MINUTE = 0
+
+# ─── Daily Break ───────────────────────────────────────────────────────────
+DAILY_BREAK_HOUR = 16          # Daily break at 16:20 Tehran time
+DAILY_BREAK_MINUTE = 20
+DAILY_BREAK_DURATION_MINUTES = 12  # 12 minute break
+
 # ─── Bias ──────────────────────────────────────────────────────────────────────
 BIAS_CHOICES = ["Bullish", "Bearish", "Neutral"]
 
 # ─── Symbol ────────────────────────────────────────────────────────────────────
 DEFAULT_SYMBOL = "XAUUSD"
+
+# ─── News API ───────────────────────────────────────────────────────────────
+NEWS_API_KEY = "kXrk8XlbuipqCD3VeMI6EJQR4PWAFO46"
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,3 +61,45 @@ MT5_EXPERTS_PATH = (
 
 # ─── Polling ───────────────────────────────────────────────────────────────────
 SESSION_POLL_INTERVAL_MS = 2000  # How often the app re-reads session.json (ms)
+
+# ─── Helper Functions ─────────────────────────────────────────────────────────
+from datetime import datetime, timedelta
+
+def is_within_trading_hours() -> bool:
+    """Check if current time is within trading hours (Tehran time).
+    Tehran is UTC+3:30.
+    """
+    utc_now = datetime.utcnow()
+    tehran_offset = timedelta(hours=3, minutes=30)
+    tehran_now = utc_now + tehran_offset
+    
+    start_minutes = TRADING_START_HOUR * 60 + TRADING_START_MINUTE
+    end_minutes = TRADING_END_HOUR * 60 + TRADING_END_MINUTE
+    current_minutes = tehran_now.hour * 60 + tehran_now.minute
+    
+    return start_minutes <= current_minutes < end_minutes
+
+
+def is_daily_break_time() -> tuple[bool, str]:
+    """Check if it's time for the daily 2-minute break.
+    Returns (is_break_time, reason).
+    """
+    utc_now = datetime.utcnow()
+    tehran_offset = timedelta(hours=3, minutes=30)
+    tehran_now = utc_now + tehran_offset
+    
+    current_minutes = tehran_now.hour * 60 + tehran_now.minute
+    break_start = DAILY_BREAK_HOUR * 60 + DAILY_BREAK_MINUTE
+    break_end = break_start + DAILY_BREAK_DURATION_MINUTES
+    
+    if break_start <= current_minutes < break_end:
+        return True, f"Daily break ({DAILY_BREAK_HOUR}:{DAILY_BREAK_MINUTE:02d} Tehran)"
+    return False, ""
+
+
+def get_tehran_time_str() -> str:
+    """Get current Tehran time as string."""
+    utc_now = datetime.utcnow()
+    tehran_offset = timedelta(hours=3, minutes=30)
+    tehran_now = utc_now + tehran_offset
+    return tehran_now.strftime("%H:%M")

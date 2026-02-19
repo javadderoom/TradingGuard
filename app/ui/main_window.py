@@ -6,7 +6,7 @@ Polls session.json on a timer and orchestrates session lifecycle.
 
 import os
 import logging
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import (
@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         self._db = DailyDatabase()
         self._session_started = False
         self._shutdown_done = False
+        self._break_until = None  # 1-hour break after consecutive losses
 
         self._build_ui()
         self._check_recovery_day()
@@ -84,7 +85,12 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(analysis_tab, "📊  Analysis")
 
         # ── Tab 2: Session ────────────────────────────────────────────────
+        from PyQt6.QtWidgets import QScrollArea
         session_tab = QWidget()
+        session_scroll = QScrollArea()
+        session_scroll.setWidgetResizable(True)
+        session_scroll.setWidget(session_tab)
+        
         session_layout = QVBoxLayout(session_tab)
 
         self._session_widget = SessionWidget()
@@ -100,7 +106,7 @@ class MainWindow(QMainWindow):
             self._btn_end_session, alignment=Qt.AlignmentFlag.AlignCenter
         )
 
-        self._tabs.addTab(session_tab, "⚡  Session")
+        self._tabs.addTab(session_scroll, "⚡  Session")
 
         # ── Tab 3: History ────────────────────────────────────────────────
         history_tab = QWidget()
@@ -188,6 +194,8 @@ class MainWindow(QMainWindow):
 
     def _start_session(self):
         """Called when 'Start Trading Session' is clicked."""
+        from app.config import is_within_trading_hours, get_tehran_time_str, TRADING_START_HOUR, TRADING_END_HOUR
+        
         if not self._timer_widget.is_complete():
             QMessageBox.information(
                 self,
@@ -202,6 +210,17 @@ class MainWindow(QMainWindow):
                 "Session Ended",
                 "Today's session has already been shut down.\n"
                 "You cannot restart until tomorrow.",
+            )
+            return
+
+        # Check trading hours (Tehran time)
+        if not is_within_trading_hours():
+            tehran_time = get_tehran_time_str()
+            QMessageBox.warning(
+                self,
+                "Outside Trading Hours",
+                f"Trading is only allowed between {TRADING_START_HOUR}:00 and {TRADING_END_HOUR}:00 Tehran time.\n"
+                f"Current Tehran time: {tehran_time}",
             )
             return
 
@@ -263,6 +282,24 @@ class MainWindow(QMainWindow):
         self._load_history()
         self._status_bar.showMessage("Session ended — MT5 closed")
 
+    def _handle_consecutive_losses_shutdown(self, data: dict):
+        """Handle shutdown triggered by consecutive losses - 1 hour break."""
+        mt5_controller.kill_mt5()
+        self._session_started = False
+
+        # Start 1-hour break (don't record day - user can resume after break)
+        self._break_until = datetime.now() + timedelta(hours=1)
+        self._bridge.update(
+            session_active=False,
+            trading_allowed=False,
+            shutdown_signal=False,  # Clear shutdown so new session is possible
+            break_until=self._break_until.isoformat(),
+        )
+
+        self._status_bar.showMessage(
+            "🛑  2 consecutive losses — 1-hour break started"
+        )
+
     def _dev_reset_today(self):
         """Development-only helper to clear today's lock and session state.
 
@@ -285,23 +322,70 @@ class MainWindow(QMainWindow):
         self._btn_start_session.setEnabled(True)
         self._timer_widget.setEnabled(True)
         self._timer_widget.reset()
+        
+        # Also reset session.json to clear any stale break state
+        self._bridge.reset()
+        
         self._status_bar.showMessage(
             "DEV: Today's lock reset — you may start a test session."
         )
 
     def _guard_mt5_after_shutdown(self):
-        """Continuously enforce 'no reopening after shutdown' and recovery days.</new_code>
+        """Continuously enforce 'no reopening after shutdown', recovery days, 
+        and 1-hour break after consecutive losses."""
+        
+        break_active = False
+        break_reason = ""
+        break_until_str = ""
+        try:
+            data = self._bridge.read()
+            break_until_str = data.get("break_until") or ""
+            break_active = data.get("break_active", False)
+            if break_until_str:
+                try:
+                    break_until = datetime.fromisoformat(break_until_str)
+                    if datetime.now() < break_until:
+                        break_reason = "1-hour break"
+                    else:
+                        break_active = False
+                except ValueError:
+                    break_reason = ""
+                    break_active = False
+        except Exception as exc:
+            log.warning("Error reading session in guard_mt5: %s", exc)
 
-        If today's session has been shut down, or today is a mandatory recovery day,
-        automatically kill MT5 whenever it is detected running.
-        """
-        if not self._shutdown_done and not self._db.is_recovery_day():
+        recovery_day = self._db.is_recovery_day()
+        
+        # Check daily break time
+        from app.config import is_daily_break_time, get_tehran_time_str
+        daily_break, break_reason = is_daily_break_time()
+        
+        # Add daily break to the check
+        if daily_break and not break_active:
+            break_active = True
+            break_reason = break_reason or "daily break"
+        
+        log.debug(
+            "MT5 guard check: _shutdown_done=%s, recovery_day=%s, break_active=%s, break_reason='%s'",
+            self._shutdown_done, recovery_day, break_active, break_reason
+        )
+
+        if not self._shutdown_done and not recovery_day and not break_active:
             return
 
         if mt5_controller.is_mt5_running():
             mt5_controller.kill_mt5()
+            if break_reason:
+                reason = break_reason
+            elif recovery_day:
+                reason = "recovery day"
+            elif self._shutdown_done:
+                reason = "session shutdown"
+            else:
+                reason = "unknown"
+            log.info("MT5 blocked: %s", reason)
             self._status_bar.showMessage(
-                "🛑  MT5 is blocked after shutdown / on recovery day"
+                f"🛑  MT5 is blocked — {reason}"
             )
 
     # ══════════════════════════════════════════════════════════════════════
@@ -319,15 +403,124 @@ class MainWindow(QMainWindow):
 
         self._session_widget.refresh(data)
 
+        # Enforce long break after consecutive losses (EA sets break_active).
+        self._enforce_break(data)
+
+        # Enforce bias expiry (Phase 3): after 2 hours or 3 losses since bias
+        # was set, disable trading until the user updates their bias again.
+        self._enforce_bias_expiry(data)
+
         # Auto-shutdown if EA sets shutdown_signal
         if (
             data.get("shutdown_signal")
             and self._session_started
             and not self._shutdown_done
         ):
-            self._shutdown_session()
+            # Check if this is a consecutive losses shutdown (has break_active)
+            if data.get("break_active"):
+                # Consecutive losses: record result and start 1-hour break
+                self._handle_consecutive_losses_shutdown(data)
+            else:
+                # Full daily shutdown (limits reached)
+                self._shutdown_session()
+                self._status_bar.showMessage(
+                    "🛑  AUTO-SHUTDOWN — daily limit reached"
+                )
+
+    def _enforce_break(self, data: dict) -> None:
+        """Keep MT5 closed for one hour after N consecutive losses.
+
+        EA sets break_active=True and trading_allowed=False. Here we:
+        - On first detection, set break_until = now + 1 hour.
+        - While now < break_until, keep killing MT5.
+        - When the hour has passed, clear break_active/break_until and
+          re-enable trading (unless other shutdown rules apply).
+        """
+        if not data.get("break_active"):
+            return
+
+        if data.get("shutdown_signal"):
+            # Full daily shutdown takes precedence.
+            return
+
+        # Initialise break_until if missing
+        break_until_str = data.get("break_until") or ""
+        now = datetime.now()
+
+        if not break_until_str:
+            until = now + timedelta(hours=1)
+            self._bridge.update(break_until=until.isoformat())
             self._status_bar.showMessage(
-                "🛑  AUTO-SHUTDOWN — daily limit reached"
+                "🛑  1-hour break started after consecutive losses."
+            )
+            mt5_controller.kill_mt5()
+            return
+
+        try:
+            break_until = datetime.fromisoformat(break_until_str)
+        except ValueError:
+            # If parsing fails, reset the break to be safe.
+            until = now + timedelta(hours=1)
+            self._bridge.update(break_until=until.isoformat())
+            return
+
+        if now < break_until:
+            # Still in break window — keep MT5 closed.
+            mt5_controller.kill_mt5()
+            return
+
+        # Break period finished — clear flags and re-enable trading.
+        self._bridge.update(
+            break_active=False,
+            break_until="",
+            trading_allowed=True,
+        )
+        self._status_bar.showMessage(
+            "✅  1-hour break finished — trading re-enabled for this session."
+        )
+
+    def _enforce_bias_expiry(self, data: dict) -> None:
+        """Disable trading when bias has expired by time or losses.
+
+        Rules:
+        - Bias expires after 2 hours OR 3 losses since it was set.
+        - After expiry, trading_allowed is set False and bias_expired True.
+        - Updating the bias (via BiasWidget) clears bias_expired and
+          re-enables trading for the current session.
+        """
+        if not data.get("session_active"):
+            return
+        if data.get("shutdown_signal"):
+            # Full daily shutdown already in effect; do not interfere.
+            return
+
+        bias_set_at = data.get("bias_set_at") or ""
+        if not bias_set_at:
+            return
+
+        try:
+            bias_time = datetime.fromisoformat(bias_set_at)
+        except ValueError:
+            return
+
+        now = datetime.now()
+        age = now - bias_time
+        losses_since_bias = int(data.get("losses_since_bias", 0) or 0)
+        expired = bool(data.get("bias_expired"))
+
+        if expired:
+            return
+
+        if age >= timedelta(hours=2) or losses_since_bias >= 3:
+            self._bridge.update(trading_allowed=False, bias_expired=True)
+            self._status_bar.showMessage(
+                "🛑  Bias expired — trading disabled until bias is updated."
+            )
+            QMessageBox.information(
+                self,
+                "Bias Expired",
+                "Your bias has expired (time limit or 3 losses).\n"
+                "Update your bias to resume trading.",
             )
 
     # ══════════════════════════════════════════════════════════════════════

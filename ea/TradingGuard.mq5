@@ -8,6 +8,7 @@
 #property strict
 
 #include "JAson.mqh"
+#include <Trade\Trade.mqh>
 
 //+------------------------------------------------------------------+
 //| Input Parameters                                                   |
@@ -22,6 +23,15 @@ input int      InpCooldownMin   = 15;        // Cooldown minutes after trade
 input int      InpCooldownExtra = 10;        // Extra cooldown after a loss
 input double   InpDefaultSL     = 50.0;      // Default stop-loss in points (if none)
 
+// Trading hours (Tehran time: UTC+3:30)
+input int      InpStartHour     = 11;        // Trading start hour (Tehran)
+input int      InpEndHour       = 21;        // Trading end hour (Tehran)
+
+// Daily break time (Tehran time)
+input int      InpBreakHour     = 16;        // Daily break hour (Tehran)
+input int      InpBreakMin      = 20;        // Daily break minute
+input int      InpBreakDuration = 12;         // Break duration in minutes
+
 //+------------------------------------------------------------------+
 //| Global State                                                       |
 //+------------------------------------------------------------------+
@@ -30,15 +40,22 @@ datetime g_lastRead      = 0;   // throttle file reads
 int      g_readInterval  = 2;   // seconds between reads
 
 // Daily tracking (in-EA, synced to JSON)
-double   g_dailyLoss     = 0.0;
-double   g_dailyProfit   = 0.0;
-int      g_tradesToday   = 0;
-int      g_consecLosses  = 0;
-bool     g_tradingAllowed= false;
-bool     g_shutdownDone  = false;
-datetime g_cooldownUntil = 0;
-string   g_bias          = "neutral";
-bool     g_newsLock      = false;
+double   g_dailyLoss       = 0.0;
+double   g_dailyProfit     = 0.0;
+int      g_tradesToday     = 0;
+int      g_consecLosses    = 0;
+int      g_lossesSinceBias = 0;
+bool     g_tradingAllowed  = false;
+bool     g_shutdownDone    = false;
+datetime g_cooldownUntil   = 0;
+datetime g_cooldownStart    = 0;   // when cooldown started (to avoid closing current trade)
+string   g_bias            = "neutral";
+bool     g_newsLock        = false;
+bool     g_strictMode      = false;
+bool     g_biasExpired     = false;
+
+// Extended behavior: 1-hour break after consecutive losses
+bool     g_breakActive     = false;
 
 // File path — we look in both MQL5\Files and actual disk path
 string   g_filePath      = "";
@@ -80,12 +97,13 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-    // ── 1. Throttled session read ────────────────────────────────────
-    if (TimeCurrent() - g_lastRead >= g_readInterval)
+    // ── 1. Throttled session read (every 2 seconds) ─────────────────
+    datetime now = TimeCurrent();
+    if (now - g_lastRead >= g_readInterval)
     {
         if (ReadSession())
             SyncFromSession();
-        g_lastRead = TimeCurrent();
+        g_lastRead = now;
     }
 
     // ── 2. Shutdown already done? ────────────────────────────────────
@@ -93,6 +111,148 @@ void OnTick()
     {
         UpdateChartPanel();
         return;
+    }
+
+    // ── 2a. Check trading hours (Tehran time: UTC+3:30) ───────────────
+    MqlDateTime utcDT;
+    TimeToStruct(TimeCurrent(), utcDT);
+    int utcHour = utcDT.hour;
+    int utcMin = utcDT.min;
+    
+    // Tehran is UTC+3:30
+    int tehranHour = utcHour + 3;
+    int tehranMin = utcMin + 30;
+    if (tehranMin >= 60) { tehranMin -= 60; tehranHour += 1; }
+    if (tehranHour >= 24) tehranHour -= 24;
+    
+    bool withinHours = (tehranHour > InpStartHour || (tehranHour == InpStartHour && tehranMin >= 0)) 
+                   && (tehranHour < InpEndHour || (tehranHour == InpEndHour && tehranMin < 60));
+    
+    static bool hoursWarningShown = false;
+    if (!withinHours && !hoursWarningShown)
+    {
+        Print("🛑 Outside trading hours. Tehran: ", tehranHour, ":", tehranMin, " Allowed: ", InpStartHour, "-", InpEndHour);
+        hoursWarningShown = true;
+    }
+    else if (withinHours)
+    {
+        hoursWarningShown = false;
+    }
+    
+    if (!withinHours)
+    {
+        // Close all positions if open during non-trading hours
+        if (PositionsTotal() > 0)
+            CloseAllPositions();
+        UpdateChartPanel();
+        return;
+    }
+
+    // ── 2b. Check daily break time (16:30 Tehran) ────────────────────────
+    int breakStartMin = InpBreakHour * 60 + InpBreakMin;
+    int breakEndMin = breakStartMin + InpBreakDuration;
+    int tehranNowMin = tehranHour * 60 + tehranMin;
+    
+    bool isDailyBreak = (tehranNowMin >= breakStartMin && tehranNowMin < breakEndMin);
+    
+    static bool breakWarningShown = false;
+    if (isDailyBreak && !breakWarningShown)
+    {
+        Print("🛑 Daily break started. Tehran: ", tehranHour, ":", tehranMin);
+        breakWarningShown = true;
+    }
+    else if (!isDailyBreak)
+    {
+        breakWarningShown = false;
+    }
+    
+    if (isDailyBreak)
+    {
+        // Just update panel - Python app will kill MT5
+        UpdateChartPanel();
+        return;
+    }
+
+    // ── 2c. Long break after consecutive losses ──────────────────────
+    if (g_breakActive)
+    {
+        if (PositionsTotal() > 0)
+        {
+            Print("🛑 Break active - closing all positions");
+            CloseAllPositions();
+        }
+        UpdateChartPanel();
+        return;
+    }
+
+    // ── 2d. Check cooldown FIRST - close any positions opened BEFORE cooldown started
+    if (g_cooldownUntil > 0 && now < g_cooldownUntil)
+    {
+        int secLeft = (int)(g_cooldownUntil - now);
+        if (PositionsTotal() > 0)
+        {
+            // Only close positions that were opened BEFORE cooldown started
+            for (int i = PositionsTotal() - 1; i >= 0; i--)
+            {
+                ulong ticket = PositionGetTicket(i);
+                if (ticket == 0) continue;
+                if (!PositionSelectByTicket(ticket)) continue;
+                
+                datetime openTime = (datetime)PositionGetInteger(POSITION_TIME);
+                
+                // Only close if position was opened BEFORE cooldown started
+                if (openTime < g_cooldownStart)
+                {
+                    Print("🛑 Cooldown: closing position #", ticket);
+                    ForceClosePosition(ticket);
+                }
+            }
+        }
+        // Only update panel every 5 seconds to reduce spam
+        static datetime lastPanelUpdate = 0;
+        if (now - lastPanelUpdate >= 5)
+        {
+            UpdateChartPanel();
+            lastPanelUpdate = now;
+        }
+        return;
+    }
+    
+    // Debug: show cooldown state
+    static datetime lastDebug = 0;
+    if (now - lastDebug >= 10)
+    {
+        Print("DEBUG: cooldownUntil=", g_cooldownUntil, " cooldownStart=", g_cooldownStart, " now=", now);
+        lastDebug = now;
+    }
+
+    // ── 2e. Strict mode: close any opposite-bias positions immediately ───
+    if (g_strictMode && (g_bias == "bullish" || g_bias == "bearish") && PositionsTotal() > 0)
+    {
+        // Only log and check occasionally
+        static datetime lastStrictCheck = 0;
+        if (now - lastStrictCheck >= 5)
+        {
+            Print("TG Strict: bias=", g_bias, " strict=", g_strictMode);
+            lastStrictCheck = now;
+        }
+        for (int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+            ulong ticket = PositionGetTicket(i);
+            if (ticket == 0) continue;
+            if (!PositionSelectByTicket(ticket)) continue;
+
+            ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+            bool opposite =
+                (g_bias == "bullish" && posType == POSITION_TYPE_SELL) ||
+                (g_bias == "bearish" && posType == POSITION_TYPE_BUY);
+
+            if (opposite)
+            {
+                Print("🛑 Strict mode: closing opposite-bias position #", ticket, " type=", EnumToString(posType));
+                ForceClosePosition(ticket);
+            }
+        }
     }
 
     // ── 3. Check if trading is allowed ───────────────────────────────
@@ -105,6 +265,12 @@ void OnTick()
     // ── 4. Check cooldown ────────────────────────────────────────────
     if (g_cooldownUntil > 0 && TimeCurrent() < g_cooldownUntil)
     {
+        // During cooldown, no trades are allowed. If the user manages to open
+        // a position manually, close it immediately so that manual attempts
+        // are effectively ignored.
+        if (PositionsTotal() > 0)
+            CloseAllPositions();
+
         UpdateChartPanel();
         return;
     }
@@ -156,9 +322,61 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     }
 
     ENUM_DEAL_ENTRY dealEntry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
-    // Some brokers/operations close via OUT_BY (close-by).
+
+    // Strict mode: block opposite-direction entries immediately.
+    if (dealEntry == DEAL_ENTRY_IN && g_strictMode && (g_bias == "bullish" || g_bias == "bearish"))
+    {
+        ENUM_DEAL_TYPE dealType = (ENUM_DEAL_TYPE)HistoryDealGetInteger(dealTicket, DEAL_TYPE);
+        bool isBuy  = (dealType == DEAL_TYPE_BUY);
+        bool isSell = (dealType == DEAL_TYPE_SELL);
+        bool opposite =
+            (g_bias == "bullish" && isSell) ||
+            (g_bias == "bearish" && isBuy);
+
+        if (opposite)
+        {
+            Print("🛑 Strict mode: blocking opposite-bias deal ", (ulong)dealTicket,
+                  " on symbol ", trans.symbol, " bias=", g_bias);
+            
+            // Try to close using position ticket from transaction
+            ulong posTicket = trans.position;
+            if (posTicket != 0)
+                ForceClosePosition(posTicket);
+            else
+            {
+                // Fallback: find position by symbol
+                for (int i = PositionsTotal() - 1; i >= 0; i--)
+                {
+                    ulong ticket = PositionGetTicket(i);
+                    if (ticket == 0) continue;
+                    if (PositionGetString(POSITION_SYMBOL) == trans.symbol)
+                    {
+                        ForceClosePosition(ticket);
+                        break;
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    // When a trade OPENS, set base cooldown (15 minutes)
+    if (dealEntry == DEAL_ENTRY_IN)
+    {
+        g_cooldownStart = TimeCurrent();
+        g_cooldownUntil = g_cooldownStart + (InpCooldownMin * 60);
+        WriteSessionUpdate();
+        Print("📊 Trade opened — cooldown set: ", InpCooldownMin, " min, until ", g_cooldownUntil);
+        
+        // Force immediate panel update
+        UpdateChartPanel();
+        return;
+    }
+
+    // Some brokers/operations close via OUT_BY (close-by). For P&L and limits
+    // we only care about closing deals.
     if (dealEntry != DEAL_ENTRY_OUT && dealEntry != DEAL_ENTRY_INOUT && dealEntry != DEAL_ENTRY_OUT_BY)
-        return;  // only care about closing deals
+        return;
 
     double dealProfit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
     double dealSwap   = HistoryDealGetDouble(dealTicket, DEAL_SWAP);
@@ -176,13 +394,20 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     {
         g_dailyLoss += MathAbs(netPnl);
         g_consecLosses++;
+        g_lossesSinceBias++;
     }
 
-    // Set cooldown
-    int cooldownSec = InpCooldownMin * 60;
-    if (netPnl < 0)
-        cooldownSec += InpCooldownExtra * 60;
-    g_cooldownUntil = TimeCurrent() + cooldownSec;
+    // Extend cooldown if trade was a loss (add extra 10 min to current cooldown)
+    if (netPnl < 0 && g_cooldownUntil > TimeCurrent())
+    {
+        g_cooldownUntil += InpCooldownExtra * 60;
+        Print("📊 Trade closed at loss — added ", InpCooldownExtra, " min extra cooldown");
+    }
+    else if (netPnl < 0)
+    {
+        // No active cooldown, set base + extra for loss
+        g_cooldownUntil = TimeCurrent() + (InpCooldownMin + InpCooldownExtra) * 60;
+    }
 
     // Write results back to session.json
     string lastResult = (netPnl >= 0) ? "win" : "loss";
@@ -222,6 +447,12 @@ void SyncFromSession()
         g_newsLock = g_session["news_lock"].ToBool();
     if (g_session["bias"] != NULL)
         g_bias = g_session["bias"].GetStr();
+    if (g_session["strict_mode"] != NULL)
+        g_strictMode = g_session["strict_mode"].ToBool();
+    if (g_session["bias_expired"] != NULL)
+        g_biasExpired = g_session["bias_expired"].ToBool();
+    if (g_session["break_active"] != NULL)
+        g_breakActive = g_session["break_active"].ToBool();
     if (g_session["shutdown_signal"] != NULL && g_session["shutdown_signal"].ToBool())
         g_shutdownDone = true;
 
@@ -234,6 +465,30 @@ void SyncFromSession()
         g_tradesToday = (int)g_session["trades_today"].ToInt();
     if (g_session["consecutive_losses"] != NULL)
         g_consecLosses = (int)g_session["consecutive_losses"].ToInt();
+    if (g_session["losses_since_bias"] != NULL)
+        g_lossesSinceBias = (int)g_session["losses_since_bias"].ToInt();
+    
+    // Sync cooldown from session.json - read minutes remaining
+    // Only use if we don't have an active cooldown in memory
+    if (g_cooldownUntil == 0 || g_cooldownUntil <= TimeCurrent())
+    {
+        string cooldownStr = "0";
+        if (g_session["cooldown_until"] != NULL)
+            cooldownStr = g_session["cooldown_until"].GetStr();
+        
+        int minLeft = (int)StringToInteger(cooldownStr);
+        
+        // Only accept reasonable values (1-60 minutes)
+        if (minLeft > 0 && minLeft <= 60)
+        {
+            g_cooldownUntil = TimeCurrent() + minLeft * 60;
+            g_cooldownStart = g_cooldownUntil - minLeft * 60;
+            Print("📊 Loaded cooldown: ", minLeft, " minutes");
+        }
+    }
+    
+    // Debug: Print sync values
+    Print("TG Sync: bias=", g_bias, " strict=", g_strictMode, " cooldown_until=", g_cooldownUntil);
 }
 
 //+------------------------------------------------------------------+
@@ -245,18 +500,17 @@ void WriteSessionUpdate(string lastResult = "")
     g_session["daily_profit_usd"].Set(g_dailyProfit);
     g_session["trades_today"].Set((long)g_tradesToday);
     g_session["consecutive_losses"].Set((long)g_consecLosses);
+    g_session["losses_since_bias"].Set((long)g_lossesSinceBias);
 
-    // Format cooldown time
+    // Format cooldown time as minutes from now (e.g., "15" = 15 minutes)
     if (g_cooldownUntil > 0 && TimeCurrent() < g_cooldownUntil)
     {
-        MqlDateTime dt;
-        TimeToStruct(g_cooldownUntil, dt);
-        g_session["cooldown_until"].Set(
-            StringFormat("%02d:%02d:%02d", dt.hour, dt.min, dt.sec));
+        int minLeft = (int)((g_cooldownUntil - TimeCurrent()) / 60);
+        g_session["cooldown_until"].Set(IntegerToString(minLeft)); // Simple format: minutes left
     }
     else
     {
-        g_session["cooldown_until"].Set("");
+        g_session["cooldown_until"].Set("0");
     }
 
     if (lastResult != "")
@@ -281,6 +535,28 @@ void MonitorOpenPositions()
         ulong ticket = PositionGetTicket(i);
         if (ticket == 0) continue;
 
+        // Strict mode: immediately close positions that are opposite to the
+        // declared bias direction.
+        if (g_strictMode && (g_bias == "bullish" || g_bias == "bearish"))
+        {
+            if (!PositionSelectByTicket(ticket))
+                continue;
+
+            ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)
+                PositionGetInteger(POSITION_TYPE);
+
+            bool opposite =
+                (g_bias == "bullish" && posType == POSITION_TYPE_SELL) ||
+                (g_bias == "bearish" && posType == POSITION_TYPE_BUY);
+
+            if (opposite)
+            {
+                Print("🛑 Strict mode: closing opposite-bias position #", ticket);
+                ForceClosePosition(ticket);
+                continue;
+            }
+        }
+
         double floatingPnl = PositionGetDouble(POSITION_PROFIT)
                            + PositionGetDouble(POSITION_SWAP);
 
@@ -294,36 +570,91 @@ void MonitorOpenPositions()
 }
 
 //+------------------------------------------------------------------+
-//| Force close a position by ticket                                   |
+//| Force close a position by ticket - using CTrade for reliability    |
 //+------------------------------------------------------------------+
+#include <Trade\Trade.mqh>
+CTrade g_trade;  // Global trade object
+
 void ForceClosePosition(ulong ticket)
 {
-    if (!PositionSelectByTicket(ticket)) return;
-
-    MqlTradeRequest request = {};
-    MqlTradeResult  result = {};
-
-    request.action   = TRADE_ACTION_DEAL;
-    request.position = ticket;
-    request.symbol   = PositionGetString(POSITION_SYMBOL);
-    request.volume   = PositionGetDouble(POSITION_VOLUME);
-    request.deviation= 20;
-
-    ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)
-        PositionGetInteger(POSITION_TYPE);
-    if (posType == POSITION_TYPE_BUY)
+    // Set larger deviation and faster execution
+    g_trade.SetDeviationInPoints(100);
+    g_trade.SetTypeFilling(ORDER_FILLING_IOC);
+    
+    // Try to close using CTrade
+    bool result = g_trade.PositionClose(ticket);
+    
+    if (result)
     {
-        request.type  = ORDER_TYPE_SELL;
-        request.price = SymbolInfoDouble(request.symbol, SYMBOL_BID);
+        Print("✅ Closed position #", ticket, " via CTrade");
     }
     else
     {
-        request.type  = ORDER_TYPE_BUY;
-        request.price = SymbolInfoDouble(request.symbol, SYMBOL_ASK);
-    }
+        Print("❌ CTrade close failed for #", ticket, " error: ", g_trade.ResultRetcode());
+        
+        // Fallback: try manual close
+        if (!PositionSelectByTicket(ticket))
+        {
+            Print("❌ Could not select position #", ticket);
+            return;
+        }
+        
+        string symbol = PositionGetString(POSITION_SYMBOL);
+        double volume = PositionGetDouble(POSITION_VOLUME);
+        ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+        
+        // Re-select for each retry to get fresh data
+        for (int retry = 0; retry < 3; retry++)
+        {
+            if (!PositionSelectByTicket(ticket))
+            {
+                Print("✅ Position #", ticket, " no longer exists");
+                return;
+            }
+            
+            MqlTradeRequest request = {};
+            MqlTradeResult tradeResult = {};
 
-    if (!OrderSend(request, result))
-        Print("❌ Force close failed: ", GetLastError());
+            request.action = TRADE_ACTION_DEAL;
+            request.position = ticket;
+            request.symbol = symbol;
+            request.volume = volume;
+            request.deviation = 100;
+            request.type_filling = ORDER_FILLING_IOC;
+
+            if (posType == POSITION_TYPE_BUY)
+            {
+                request.type = ORDER_TYPE_SELL;
+                request.price = SymbolInfoDouble(symbol, SYMBOL_BID);
+            }
+            else
+            {
+                request.type = ORDER_TYPE_BUY;
+                request.price = SymbolInfoDouble(symbol, SYMBOL_ASK);
+            }
+
+            if (OrderSend(request, tradeResult))
+            {
+                if (tradeResult.retcode == TRADE_RETCODE_DONE || tradeResult.retcode == TRADE_RETCODE_PLACED)
+                {
+                    Print("✅ Position #", ticket, " closed successfully (fallback)");
+                    return;
+                }
+                else
+                {
+                    Print("⚠️ Close retcode: ", tradeResult.retcode);
+                }
+            }
+            else
+            {
+                Print("⚠️ OrderSend error: ", GetLastError());
+            }
+            
+            Sleep(500);
+        }
+    
+        Print("❌ Force close failed after retries: #", ticket);
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -332,6 +663,34 @@ void ForceClosePosition(ulong ticket)
 void CheckDailyLimits()
 {
     if (g_shutdownDone) return;
+
+    // After N consecutive losses, trigger full shutdown with 1-hour break.
+    // MT5 will be killed by the Python app, and blocked from reopening for 1 hour.
+    if (!g_shutdownDone && g_consecLosses >= InpMaxConsecLoss)
+    {
+        Print("🛑 SHUTDOWN: Consecutive losses (", g_consecLosses,
+              ") reached. Killing MT5 for 1-hour break.");
+
+        // Close all open positions
+        CloseAllPositions();
+
+        // Clear cooldown on shutdown
+        g_cooldownUntil = 0;
+        g_cooldownStart = 0;
+
+        // Signal full shutdown - Python app will kill MT5 and enforce 1-hour wait
+        g_shutdownDone = true;
+        g_breakActive = true;
+        g_tradingAllowed = false;
+
+        g_session["shutdown_signal"].Set(true);
+        g_session["break_active"].Set(true);
+        g_session["trading_allowed"].Set(false);
+        g_session["session_active"].Set(false);
+        g_session["cooldown_until"].Set("");
+        WriteSessionUpdate();
+        return;
+    }
 
     bool shouldShutdown = false;
     string reason = "";
@@ -351,11 +710,6 @@ void CheckDailyLimits()
         shouldShutdown = true;
         reason = "Max trades (" + IntegerToString(InpMaxTrades) + ") reached";
     }
-    else if (g_consecLosses >= InpMaxConsecLoss)
-    {
-        shouldShutdown = true;
-        reason = "Consecutive losses (" + IntegerToString(InpMaxConsecLoss) + ") reached";
-    }
 
     if (shouldShutdown)
     {
@@ -364,12 +718,17 @@ void CheckDailyLimits()
         // Close all open positions
         CloseAllPositions();
 
+        // Clear cooldown on shutdown
+        g_cooldownUntil = 0;
+        g_cooldownStart = 0;
+
         // Signal shutdown
         g_shutdownDone = true;
         g_tradingAllowed = false;
         g_session["shutdown_signal"].Set(true);
         g_session["trading_allowed"].Set(false);
         g_session["session_active"].Set(false);
+        g_session["cooldown_until"].Set("");
         WriteSessionUpdate();
     }
 }
@@ -420,6 +779,17 @@ void UpdateChartPanel()
     double netPnl = g_dailyProfit - g_dailyLoss;
     int tradesLeft = InpMaxTrades - g_tradesToday;
 
+    // Calculate Tehran time (UTC+3:30)
+    MqlDateTime utcDT;
+    TimeToStruct(TimeCurrent(), utcDT);
+    int tehranHour = utcDT.hour + 3;
+    int tehranMin = utcDT.min + 30;
+    if (tehranMin >= 60) { tehranMin -= 60; tehranHour += 1; }
+    if (tehranHour >= 24) tehranHour -= 24;
+    
+    bool withinHours = (tehranHour > InpStartHour || (tehranHour == InpStartHour && tehranMin >= 0)) 
+                   && (tehranHour < InpEndHour || (tehranHour == InpEndHour && tehranMin < 60));
+
     string cooldownStr = "None";
     if (g_cooldownUntil > 0 && TimeCurrent() < g_cooldownUntil)
     {
@@ -457,6 +827,8 @@ void UpdateChartPanel()
              " / " + IntegerToString(InpMaxConsecLoss) + "\n";
     panel += "  Cooldown:       " + cooldownStr + "\n";
     panel += "  News Lock:      " + (g_newsLock ? "ON" : "OFF") + "\n";
+    panel += "  Tehran Time:    " + tehranHour + ":" + tehranMin + " (Trade " + (withinHours ? "OK" : "CLOSED") + ")\n";
+    panel += "  Daily Break:    " + (isDailyBreak ? "ACTIVE" : "No") + "\n";
     panel += "\n";
     panel += "═══════════════════════════════\n";
 
