@@ -270,3 +270,27 @@ QProgressBar::chunk {
     background-color: #00d2ff;
     border-radius: 6px;
 }
+
+/* —— Performance Cards ——————————————————————————————————————————————— */
+QFrame#perf_container {
+    background-color: transparent;
+}
+
+QFrame#perf_card {
+    background-color: #0f2b4b;
+    border: 1px solid #2d4a6a;
+    border-radius: 10px;
+    min-height: 82px;
+}
+
+QLabel#perf_card_title {
+    color: #9ec5ea;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+QLabel#value_label {
+    color: #f5f7ff;
+    font-size: 18px;
+    font-weight: 700;
+}

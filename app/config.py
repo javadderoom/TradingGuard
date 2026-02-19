@@ -23,7 +23,7 @@ ANALYSIS_TIMER_MINUTES = 1      # ⚠ TESTING — set back to 20 for live use
 # Tehran is UTC+3:30
 TRADING_START_HOUR = 11        # Start trading at 11:00 Tehran time
 TRADING_START_MINUTE = 0
-TRADING_END_HOUR = 21         # Stop trading at 21:00 Tehran time
+TRADING_END_HOUR = 23         # Stop trading at 21:00 Tehran time
 TRADING_END_MINUTE = 0
 
 # ─── Daily Break ───────────────────────────────────────────────────────────

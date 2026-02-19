@@ -4,7 +4,7 @@ SQLite-backed storage for daily P&L and session history.
 """
 
 import sqlite3
-from datetime import date, timedelta
+from datetime import date, datetime
 from app.config import DB_PATH
 
 
@@ -26,6 +26,19 @@ class DailyDatabase:
                     pnl        REAL NOT NULL DEFAULT 0.0,
                     trades     INTEGER NOT NULL DEFAULT 0,
                     result     TEXT NOT NULL DEFAULT 'flat'
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS trade_events (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    trade_date   TEXT NOT NULL,
+                    trade_index  INTEGER NOT NULL,
+                    result       TEXT NOT NULL DEFAULT 'unknown',
+                    pnl          REAL,
+                    recorded_at  TEXT NOT NULL,
+                    UNIQUE(trade_date, trade_index)
                 )
                 """
             )
@@ -94,3 +107,119 @@ class DailyDatabase:
             conn.execute(
                 "DELETE FROM daily_results WHERE date = ?", (today,)
             )
+            conn.execute(
+                "DELETE FROM trade_events WHERE trade_date = ?", (today,)
+            )
+
+    def record_trade_event(
+        self,
+        trade_index: int,
+        result: str = "unknown",
+        pnl: float | None = None,
+        trade_day: str | None = None,
+    ) -> None:
+        """Insert one trade event for the given day/index (idempotent)."""
+        trade_day = trade_day or date.today().isoformat()
+        recorded_at = datetime.now().isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO trade_events (trade_date, trade_index, result, pnl, recorded_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(trade_date, trade_index) DO UPDATE SET
+                    result = excluded.result,
+                    pnl = COALESCE(excluded.pnl, trade_events.pnl),
+                    recorded_at = excluded.recorded_at
+                """,
+                (trade_day, trade_index, result, pnl, recorded_at),
+            )
+
+    def get_last_trade_index(self, trade_day: str | None = None) -> int:
+        """Return max trade_index for a day (0 if none)."""
+        trade_day = trade_day or date.today().isoformat()
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT MAX(trade_index) FROM trade_events WHERE trade_date = ?",
+                (trade_day,),
+            ).fetchone()
+            return int(row[0] or 0)
+
+    def get_trade_events(
+        self,
+        trade_day: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """Return trade events newest first; optionally restricted to one day."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            if trade_day:
+                rows = conn.execute(
+                    """
+                    SELECT trade_date, trade_index, result, pnl, recorded_at
+                    FROM trade_events
+                    WHERE trade_date = ?
+                    ORDER BY trade_date DESC, trade_index DESC
+                    LIMIT ?
+                    """,
+                    (trade_day, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT trade_date, trade_index, result, pnl, recorded_at
+                    FROM trade_events
+                    ORDER BY trade_date DESC, trade_index DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            return [dict(r) for r in rows]
+
+    def get_overview_stats(self, days: int = 30) -> dict:
+        """Aggregate history stats over the last *days* days."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            daily_rows = conn.execute(
+                """
+                SELECT date, pnl, trades, result
+                FROM daily_results
+                ORDER BY date DESC
+                LIMIT ?
+                """,
+                (days,),
+            ).fetchall()
+            trade_rows = conn.execute(
+                """
+                SELECT result
+                FROM trade_events
+                WHERE trade_date >= date('now', ?)
+                """,
+                (f"-{max(days - 1, 0)} day",),
+            ).fetchall()
+
+        wins = sum(1 for r in trade_rows if (r["result"] or "").lower() == "win")
+        losses = sum(1 for r in trade_rows if (r["result"] or "").lower() == "loss")
+        breakeven = sum(1 for r in trade_rows if (r["result"] or "").lower() in ("be", "flat", "breakeven"))
+        unknown = sum(1 for r in trade_rows if (r["result"] or "").lower() not in ("win", "loss", "be", "flat", "breakeven"))
+        decided = wins + losses
+        win_rate = (wins / decided * 100.0) if decided else 0.0
+
+        total_pnl = sum(float(r["pnl"]) for r in daily_rows) if daily_rows else 0.0
+        total_days = len(daily_rows)
+        green_days = sum(1 for r in daily_rows if (r["result"] or "") == "green")
+        red_days = sum(1 for r in daily_rows if (r["result"] or "") == "red")
+        total_trades = sum(int(r["trades"]) for r in daily_rows) if daily_rows else 0
+
+        return {
+            "days": days,
+            "total_days": total_days,
+            "green_days": green_days,
+            "red_days": red_days,
+            "total_pnl": total_pnl,
+            "total_trades": total_trades,
+            "wins": wins,
+            "losses": losses,
+            "breakeven": breakeven,
+            "unknown": unknown,
+            "win_rate": win_rate,
+        }

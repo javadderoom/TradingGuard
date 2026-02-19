@@ -10,9 +10,9 @@ from datetime import date, datetime, timedelta
 
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import (
-    QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
+    QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem,
-    QMessageBox, QStatusBar,
+    QMessageBox, QStatusBar, QFrame,
 )
 
 from app.bridge import SessionBridge
@@ -40,6 +40,8 @@ class MainWindow(QMainWindow):
         self._session_started = False
         self._shutdown_done = False
         self._break_until = None  # 1-hour break after consecutive losses
+        self._prev_trades_today = None
+        self._prev_net_pnl = None
 
         self._build_ui()
         self._check_recovery_day()
@@ -110,23 +112,74 @@ class MainWindow(QMainWindow):
 
         # ── Tab 3: History ────────────────────────────────────────────────
         history_tab = QWidget()
+        history_scroll = QScrollArea()
+        history_scroll.setWidgetResizable(True)
+        history_scroll.setWidget(history_tab)
         history_layout = QVBoxLayout(history_tab)
 
-        history_title = QLabel("Daily Results")
+        history_title = QLabel("History & Performance")
         history_title.setObjectName("heading")
         history_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         history_layout.addWidget(history_title)
 
+        perf_title = QLabel("Performance (30 Days)")
+        perf_title.setObjectName("subheading")
+        perf_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        history_layout.addWidget(perf_title)
+
+        perf_container = QFrame()
+        perf_container.setObjectName("perf_container")
+        perf_grid = QGridLayout(perf_container)
+        perf_grid.setHorizontalSpacing(12)
+        perf_grid.setVerticalSpacing(12)
+
+        self._perf_values: dict[str, QLabel] = {}
+        cards = [
+            ("total_pnl", "Total P&L"),
+            ("win_rate", "Win Rate"),
+            ("wins_losses", "W/L"),
+            ("total_trades", "Total Trades"),
+            ("green_red_days", "Green/Red Days"),
+            ("breakeven", "Breakeven"),
+        ]
+        for i, (key, title) in enumerate(cards):
+            card = self._create_perf_card(title)
+            value_label = card.findChild(QLabel, "value_label")
+            if value_label:
+                self._perf_values[key] = value_label
+            perf_grid.addWidget(card, i // 3, i % 3)
+
+        history_layout.addWidget(perf_container)
+
+        daily_title = QLabel("Daily Results (Completed Days)")
+        daily_title.setObjectName("subheading")
+        daily_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        history_layout.addWidget(daily_title)
         self._history_table = QTableWidget()
         self._history_table.setColumnCount(4)
         self._history_table.setHorizontalHeaderLabels(
             ["Date", "P&L ($)", "Trades", "Result"]
         )
+        self._history_table.setMinimumHeight(220)
         self._history_table.horizontalHeader().setStretchLastSection(True)
         self._history_table.setEditTriggers(
             QTableWidget.EditTrigger.NoEditTriggers
         )
         history_layout.addWidget(self._history_table)
+
+        trade_title = QLabel("Live Trade Events (Most Recent)")
+        trade_title.setObjectName("subheading")
+        trade_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        history_layout.addWidget(trade_title)
+        self._trade_table = QTableWidget()
+        self._trade_table.setColumnCount(5)
+        self._trade_table.setHorizontalHeaderLabels(
+            ["Day", "#", "Result", "P&L", "Recorded At"]
+        )
+        self._trade_table.setMinimumHeight(260)
+        self._trade_table.horizontalHeader().setStretchLastSection(True)
+        self._trade_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        history_layout.addWidget(self._trade_table)
 
         btn_refresh = QPushButton("🔄  Refresh History")
         btn_refresh.clicked.connect(self._load_history)
@@ -142,7 +195,7 @@ class MainWindow(QMainWindow):
             self._btn_dev_reset, alignment=Qt.AlignmentFlag.AlignCenter
         )
 
-        self._tabs.addTab(history_tab, "📅  History")
+        self._tabs.addTab(history_scroll, "📅  History")
 
         # ── Status bar ────────────────────────────────────────────────────
         self._status_bar = QStatusBar()
@@ -316,18 +369,41 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
+        # Stop MT5 first so EA cannot rewrite stale cooldown/break state.
+        mt5_controller.kill_mt5()
+        self._session_started = False
+        self._break_until = None
+
         # Clear today's DB row and reset in-memory flags
         self._db.clear_today()
         self._shutdown_done = False
         self._btn_start_session.setEnabled(True)
         self._timer_widget.setEnabled(True)
         self._timer_widget.reset()
-        
-        # Also reset session.json to clear any stale break state
+
+        # Reset session.json and force-clear cooldown/break fields.
         self._bridge.reset()
-        
+        self._bridge.update(
+            session_active=False,
+            trading_allowed=False,
+            shutdown_signal=False,
+            break_active=False,
+            break_until="",
+            cooldown_until="0",
+            last_trade_result="",
+            trades_today=0,
+            daily_loss_usd=0.0,
+            daily_profit_usd=0.0,
+            consecutive_losses=0,
+            losses_since_bias=0,
+        )
+
+        self._prev_trades_today = 0
+        self._prev_net_pnl = 0.0
+        self._load_history()
+
         self._status_bar.showMessage(
-            "DEV: Today's lock reset — you may start a test session."
+            "DEV: Today's lock reset — cooldown and break state cleared."
         )
 
     def _guard_mt5_after_shutdown(self):
@@ -337,10 +413,15 @@ class MainWindow(QMainWindow):
         break_active = False
         break_reason = ""
         break_until_str = ""
+        pre_session_block = False
         try:
             data = self._bridge.read()
             break_until_str = data.get("break_until") or ""
             break_active = data.get("break_active", False)
+            pre_session_block = (
+                not self._timer_widget.is_complete()
+                and not bool(data.get("session_active"))
+            )
             if break_until_str:
                 try:
                     break_until = datetime.fromisoformat(break_until_str)
@@ -366,17 +447,19 @@ class MainWindow(QMainWindow):
             break_reason = break_reason or "daily break"
         
         log.debug(
-            "MT5 guard check: _shutdown_done=%s, recovery_day=%s, break_active=%s, break_reason='%s'",
-            self._shutdown_done, recovery_day, break_active, break_reason
+            "MT5 guard check: _shutdown_done=%s, recovery_day=%s, break_active=%s, pre_session_block=%s, break_reason='%s'",
+            self._shutdown_done, recovery_day, break_active, pre_session_block, break_reason
         )
 
-        if not self._shutdown_done and not recovery_day and not break_active:
+        if not self._shutdown_done and not recovery_day and not break_active and not pre_session_block:
             return
 
         if mt5_controller.is_mt5_running():
             mt5_controller.kill_mt5()
             if break_reason:
                 reason = break_reason
+            elif pre_session_block:
+                reason = "complete pre-session analysis first"
             elif recovery_day:
                 reason = "recovery day"
             elif self._shutdown_done:
@@ -402,6 +485,7 @@ class MainWindow(QMainWindow):
             return
 
         self._session_widget.refresh(data)
+        self._sync_live_trade_events(data)
 
         # Enforce long break after consecutive losses (EA sets break_active).
         self._enforce_break(data)
@@ -522,7 +606,38 @@ class MainWindow(QMainWindow):
     #  History
     # ══════════════════════════════════════════════════════════════════════
 
+    def _create_perf_card(self, title: str) -> QFrame:
+        card = QFrame()
+        card.setObjectName("perf_card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(4)
+
+        title_lbl = QLabel(title)
+        title_lbl.setObjectName("perf_card_title")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_lbl)
+
+        value_lbl = QLabel("--")
+        value_lbl.setObjectName("value_label")
+        value_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(value_lbl)
+        return card
+
+    def _set_perf_value(self, key: str, value: str) -> None:
+        lbl = self._perf_values.get(key)
+        if lbl:
+            lbl.setText(value)
+
     def _load_history(self):
+        stats = self._db.get_overview_stats(days=30)
+        self._set_perf_value("total_pnl", f"${stats['total_pnl']:+.2f}")
+        self._set_perf_value("win_rate", f"{stats['win_rate']:.1f}%")
+        self._set_perf_value("wins_losses", f"{stats['wins']} / {stats['losses']}")
+        self._set_perf_value("total_trades", str(stats["total_trades"]))
+        self._set_perf_value("green_red_days", f"{stats['green_days']} / {stats['red_days']}")
+        self._set_perf_value("breakeven", str(stats["breakeven"]))
+
         rows = self._db.get_last_n_days(30)
         self._history_table.setRowCount(len(rows))
         for i, row in enumerate(rows):
@@ -534,3 +649,55 @@ class MainWindow(QMainWindow):
             )
             result_item = QTableWidgetItem(row["result"].upper())
             self._history_table.setItem(i, 3, result_item)
+
+        trades = self._db.get_trade_events(limit=100)
+        self._trade_table.setRowCount(len(trades))
+        for i, t in enumerate(trades):
+            self._trade_table.setItem(i, 0, QTableWidgetItem(t["trade_date"]))
+            self._trade_table.setItem(i, 1, QTableWidgetItem(str(t["trade_index"])))
+            self._trade_table.setItem(i, 2, QTableWidgetItem((t["result"] or "unknown").upper()))
+            pnl_val = t.get("pnl")
+            pnl_text = "—" if pnl_val is None else f"${float(pnl_val):+.2f}"
+            self._trade_table.setItem(i, 3, QTableWidgetItem(pnl_text))
+            self._trade_table.setItem(i, 4, QTableWidgetItem(t["recorded_at"]))
+
+    def _sync_live_trade_events(self, data: dict) -> None:
+        """Capture live trade events so History stays up-to-date intraday."""
+        try:
+            today = date.today().isoformat()
+            current_trades = int(data.get("trades_today", 0) or 0)
+            net_pnl = float(data.get("daily_profit_usd", 0) or 0) - float(data.get("daily_loss_usd", 0) or 0)
+
+            db_last_index = self._db.get_last_trade_index(today)
+            if current_trades <= db_last_index:
+                self._prev_trades_today = current_trades
+                self._prev_net_pnl = net_pnl
+                return
+
+            # Backfill any missed entries as unknown.
+            for idx in range(db_last_index + 1, current_trades + 1):
+                result = "unknown"
+                pnl_delta = None
+                if idx == current_trades:
+                    last = (data.get("last_trade_result") or "").strip().lower()
+                    if last in ("win", "loss", "flat", "breakeven", "be"):
+                        result = last
+                    if (
+                        self._prev_trades_today is not None
+                        and self._prev_net_pnl is not None
+                        and current_trades - self._prev_trades_today == 1
+                    ):
+                        pnl_delta = net_pnl - self._prev_net_pnl
+
+                self._db.record_trade_event(
+                    trade_index=idx,
+                    result=result,
+                    pnl=pnl_delta,
+                    trade_day=today,
+                )
+
+            self._load_history()
+            self._prev_trades_today = current_trades
+            self._prev_net_pnl = net_pnl
+        except Exception as exc:
+            log.warning("Failed to sync live trade events: %s", exc)
