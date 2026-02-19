@@ -42,6 +42,11 @@ class MainWindow(QMainWindow):
         self._break_until = None  # 1-hour break after consecutive losses
         self._prev_trades_today = None
         self._prev_net_pnl = None
+        self._prev_shutdown_signal = False
+        self._prev_break_active = False
+        self._prev_bias_expired = False
+        self._prev_news_lock = False
+        self._violation_dedupe: set[str] = set()
 
         self._build_ui()
         self._check_recovery_day()
@@ -167,19 +172,33 @@ class MainWindow(QMainWindow):
         )
         history_layout.addWidget(self._history_table)
 
-        trade_title = QLabel("Live Trade Events (Most Recent)")
+        trade_title = QLabel("Trade Ledger (Most Recent)")
         trade_title.setObjectName("subheading")
         trade_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         history_layout.addWidget(trade_title)
         self._trade_table = QTableWidget()
-        self._trade_table.setColumnCount(5)
+        self._trade_table.setColumnCount(7)
         self._trade_table.setHorizontalHeaderLabels(
-            ["Day", "#", "Result", "P&L", "Recorded At"]
+            ["Day", "#", "Result", "P&L", "Close Reason", "Source", "Recorded At"]
         )
         self._trade_table.setMinimumHeight(260)
         self._trade_table.horizontalHeader().setStretchLastSection(True)
         self._trade_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         history_layout.addWidget(self._trade_table)
+
+        violation_title = QLabel("Rule Violations / Enforcements (Most Recent)")
+        violation_title.setObjectName("subheading")
+        violation_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        history_layout.addWidget(violation_title)
+        self._violation_table = QTableWidget()
+        self._violation_table.setColumnCount(6)
+        self._violation_table.setHorizontalHeaderLabels(
+            ["Time", "Rule", "Severity", "Trade #", "Day", "Message"]
+        )
+        self._violation_table.setMinimumHeight(240)
+        self._violation_table.horizontalHeader().setStretchLastSection(True)
+        self._violation_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        history_layout.addWidget(self._violation_table)
 
         btn_refresh = QPushButton("🔄  Refresh History")
         btn_refresh.clicked.connect(self._load_history)
@@ -331,6 +350,12 @@ class MainWindow(QMainWindow):
         pnl = data.get("daily_profit_usd", 0) - data.get("daily_loss_usd", 0)
         trades = data.get("trades_today", 0)
         self._db.record_day(pnl=pnl, trades=trades)
+        self._record_violation(
+            rule_code="DAILY_SHUTDOWN",
+            severity="critical",
+            message="Session shut down after daily limit trigger.",
+            context={"pnl": pnl, "trades_today": trades},
+        )
 
         self._load_history()
         self._status_bar.showMessage("Session ended — MT5 closed")
@@ -347,6 +372,15 @@ class MainWindow(QMainWindow):
             trading_allowed=False,
             shutdown_signal=False,  # Clear shutdown so new session is possible
             break_until=self._break_until.isoformat(),
+        )
+        self._record_violation(
+            rule_code="CONSECUTIVE_LOSS_BREAK",
+            severity="critical",
+            message="1-hour break enforced after consecutive losses.",
+            context={
+                "consecutive_losses": int(data.get("consecutive_losses", 0) or 0),
+                "break_until": self._break_until.isoformat(),
+            },
         )
 
         self._status_bar.showMessage(
@@ -400,6 +434,11 @@ class MainWindow(QMainWindow):
 
         self._prev_trades_today = 0
         self._prev_net_pnl = 0.0
+        self._prev_shutdown_signal = False
+        self._prev_break_active = False
+        self._prev_bias_expired = False
+        self._prev_news_lock = False
+        self._violation_dedupe.clear()
         self._load_history()
 
         self._status_bar.showMessage(
@@ -467,6 +506,12 @@ class MainWindow(QMainWindow):
             else:
                 reason = "unknown"
             log.info("MT5 blocked: %s", reason)
+            self._record_violation(
+                rule_code="MT5_BLOCKED",
+                severity="warn",
+                message=f"MT5 process terminated: {reason}",
+                context={"reason": reason},
+            )
             self._status_bar.showMessage(
                 f"🛑  MT5 is blocked — {reason}"
             )
@@ -486,6 +531,7 @@ class MainWindow(QMainWindow):
 
         self._session_widget.refresh(data)
         self._sync_live_trade_events(data)
+        self._track_rule_state_transitions(data)
 
         # Enforce long break after consecutive losses (EA sets break_active).
         self._enforce_break(data)
@@ -509,6 +555,81 @@ class MainWindow(QMainWindow):
                 self._status_bar.showMessage(
                     "🛑  AUTO-SHUTDOWN — daily limit reached"
                 )
+
+    def _record_violation(
+        self,
+        rule_code: str,
+        severity: str,
+        message: str,
+        trade_index: int | None = None,
+        context: dict | None = None,
+        dedupe_key: str | None = None,
+    ) -> None:
+        """Persist one violation entry; optionally dedupe repeated keys."""
+        if dedupe_key and dedupe_key in self._violation_dedupe:
+            return
+        if dedupe_key:
+            self._violation_dedupe.add(dedupe_key)
+        try:
+            self._db.record_violation(
+                rule_code=rule_code,
+                severity=severity,
+                message=message,
+                trade_index=trade_index,
+                context=context,
+            )
+        except Exception as exc:
+            log.warning("Failed to record violation: %s", exc)
+
+    def _track_rule_state_transitions(self, data: dict) -> None:
+        """Record key session-rule transitions as violation/audit events."""
+        shutdown_signal = bool(data.get("shutdown_signal"))
+        break_active = bool(data.get("break_active"))
+        bias_expired = bool(data.get("bias_expired"))
+        news_lock = bool(data.get("news_lock"))
+        trade_idx = int(data.get("trades_today", 0) or 0) or None
+
+        if shutdown_signal and not self._prev_shutdown_signal:
+            self._record_violation(
+                rule_code="SHUTDOWN_SIGNAL",
+                severity="critical",
+                message="EA signaled session shutdown.",
+                trade_index=trade_idx,
+                context={"trading_allowed": bool(data.get("trading_allowed"))},
+                dedupe_key=f"shutdown:{date.today().isoformat()}",
+            )
+        if break_active and not self._prev_break_active:
+            self._record_violation(
+                rule_code="BREAK_ACTIVE",
+                severity="critical",
+                message="Break state became active.",
+                trade_index=trade_idx,
+                context={"break_until": data.get("break_until", "")},
+                dedupe_key=f"break:{date.today().isoformat()}",
+            )
+        if bias_expired and not self._prev_bias_expired:
+            self._record_violation(
+                rule_code="BIAS_EXPIRED_SIGNAL",
+                severity="warn",
+                message="Bias expired flag received from session.",
+                trade_index=trade_idx,
+                context={"losses_since_bias": int(data.get("losses_since_bias", 0) or 0)},
+                dedupe_key=f"bias_expired:{date.today().isoformat()}",
+            )
+        if news_lock and not self._prev_news_lock:
+            self._record_violation(
+                rule_code="NEWS_LOCK_ACTIVE",
+                severity="info",
+                message="News lock enabled; trade entries should be blocked.",
+                trade_index=trade_idx,
+                context={},
+                dedupe_key=f"news_lock:{date.today().isoformat()}",
+            )
+
+        self._prev_shutdown_signal = shutdown_signal
+        self._prev_break_active = break_active
+        self._prev_bias_expired = bias_expired
+        self._prev_news_lock = news_lock
 
     def _enforce_break(self, data: dict) -> None:
         """Keep MT5 closed for one hour after N consecutive losses.
@@ -592,6 +713,15 @@ class MainWindow(QMainWindow):
 
         if age >= timedelta(hours=2) or losses_since_bias >= 3:
             self._bridge.update(trading_allowed=False, bias_expired=True)
+            self._record_violation(
+                rule_code="BIAS_EXPIRED",
+                severity="warn",
+                message="Bias expired and trading was disabled until bias refresh.",
+                context={
+                    "age_minutes": int(age.total_seconds() // 60),
+                    "losses_since_bias": losses_since_bias,
+                },
+            )
             self._status_bar.showMessage(
                 "🛑  Bias expired — trading disabled until bias is updated."
             )
@@ -650,7 +780,7 @@ class MainWindow(QMainWindow):
             result_item = QTableWidgetItem(row["result"].upper())
             self._history_table.setItem(i, 3, result_item)
 
-        trades = self._db.get_trade_events(limit=100)
+        trades = self._db.get_trade_ledger(limit=150)
         self._trade_table.setRowCount(len(trades))
         for i, t in enumerate(trades):
             self._trade_table.setItem(i, 0, QTableWidgetItem(t["trade_date"]))
@@ -659,7 +789,20 @@ class MainWindow(QMainWindow):
             pnl_val = t.get("pnl")
             pnl_text = "—" if pnl_val is None else f"${float(pnl_val):+.2f}"
             self._trade_table.setItem(i, 3, QTableWidgetItem(pnl_text))
-            self._trade_table.setItem(i, 4, QTableWidgetItem(t["recorded_at"]))
+            self._trade_table.setItem(i, 4, QTableWidgetItem(t.get("close_reason") or ""))
+            self._trade_table.setItem(i, 5, QTableWidgetItem(t.get("source") or ""))
+            self._trade_table.setItem(i, 6, QTableWidgetItem(t["recorded_at"]))
+
+        violations = self._db.get_violation_log(limit=150)
+        self._violation_table.setRowCount(len(violations))
+        for i, v in enumerate(violations):
+            self._violation_table.setItem(i, 0, QTableWidgetItem(v["event_time"]))
+            self._violation_table.setItem(i, 1, QTableWidgetItem(v["rule_code"]))
+            self._violation_table.setItem(i, 2, QTableWidgetItem((v.get("severity") or "warn").upper()))
+            trade_idx = "-" if v.get("trade_index") is None else str(v.get("trade_index"))
+            self._violation_table.setItem(i, 3, QTableWidgetItem(trade_idx))
+            self._violation_table.setItem(i, 4, QTableWidgetItem(v.get("trade_date") or ""))
+            self._violation_table.setItem(i, 5, QTableWidgetItem(v.get("message") or ""))
 
     def _sync_live_trade_events(self, data: dict) -> None:
         """Capture live trade events so History stays up-to-date intraday."""
@@ -693,6 +836,15 @@ class MainWindow(QMainWindow):
                     trade_index=idx,
                     result=result,
                     pnl=pnl_delta,
+                    trade_day=today,
+                )
+                close_reason = "sync_backfill" if idx < current_trades else "session_update"
+                self._db.record_trade_ledger(
+                    trade_index=idx,
+                    result=result,
+                    pnl=pnl_delta,
+                    close_reason=close_reason,
+                    source="bridge",
                     trade_day=today,
                 )
 

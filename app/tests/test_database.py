@@ -69,3 +69,46 @@ class TestDailyDatabase:
 
     def test_get_today_returns_none_when_empty(self, db):
         assert db.get_today() is None
+
+    def test_trade_ledger_upsert_and_fetch(self, db):
+        db.record_trade_ledger(
+            trade_index=1,
+            result="win",
+            pnl=5.5,
+            close_reason="session_update",
+            source="bridge",
+            trade_day="2026-02-19",
+        )
+        db.record_trade_ledger(
+            trade_index=1,
+            result="win",
+            pnl=6.0,
+            close_reason="manual_adjust",
+            source="bridge",
+            trade_day="2026-02-19",
+        )
+
+        rows = db.get_trade_ledger(trade_day="2026-02-19", limit=10)
+        assert len(rows) == 1
+        assert rows[0]["trade_index"] == 1
+        assert rows[0]["result"] == "win"
+        assert rows[0]["pnl"] == 6.0
+        assert rows[0]["close_reason"] == "manual_adjust"
+
+    def test_violation_log_insert_and_fetch(self, db):
+        db.record_violation(
+            rule_code="TEST_RULE",
+            severity="warn",
+            message="Test violation message",
+            trade_index=2,
+            trade_day="2026-02-19",
+            context={"foo": "bar"},
+            event_time="2026-02-19T10:00:00",
+        )
+
+        rows = db.get_violation_log(trade_day="2026-02-19", limit=10)
+        assert len(rows) == 1
+        assert rows[0]["rule_code"] == "TEST_RULE"
+        assert rows[0]["severity"] == "warn"
+        assert rows[0]["trade_index"] == 2
+        assert rows[0]["message"] == "Test violation message"

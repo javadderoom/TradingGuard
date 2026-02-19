@@ -3,6 +3,7 @@ TradingGuard — Daily Results Database
 SQLite-backed storage for daily P&L and session history.
 """
 
+import json
 import sqlite3
 from datetime import date, datetime
 from app.config import DB_PATH
@@ -39,6 +40,35 @@ class DailyDatabase:
                     pnl          REAL,
                     recorded_at  TEXT NOT NULL,
                     UNIQUE(trade_date, trade_index)
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS trade_ledger (
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    trade_date    TEXT NOT NULL,
+                    trade_index   INTEGER NOT NULL,
+                    result        TEXT NOT NULL DEFAULT 'unknown',
+                    pnl           REAL,
+                    close_reason  TEXT NOT NULL DEFAULT '',
+                    source        TEXT NOT NULL DEFAULT 'bridge',
+                    recorded_at   TEXT NOT NULL,
+                    UNIQUE(trade_date, trade_index)
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS violation_log (
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_time    TEXT NOT NULL,
+                    trade_date    TEXT,
+                    trade_index   INTEGER,
+                    rule_code     TEXT NOT NULL,
+                    severity      TEXT NOT NULL DEFAULT 'warn',
+                    message       TEXT NOT NULL,
+                    context_json  TEXT NOT NULL DEFAULT '{}'
                 )
                 """
             )
@@ -110,6 +140,12 @@ class DailyDatabase:
             conn.execute(
                 "DELETE FROM trade_events WHERE trade_date = ?", (today,)
             )
+            conn.execute(
+                "DELETE FROM trade_ledger WHERE trade_date = ?", (today,)
+            )
+            conn.execute(
+                "DELETE FROM violation_log WHERE trade_date = ?", (today,)
+            )
 
     def record_trade_event(
         self,
@@ -169,6 +205,125 @@ class DailyDatabase:
                     SELECT trade_date, trade_index, result, pnl, recorded_at
                     FROM trade_events
                     ORDER BY trade_date DESC, trade_index DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            return [dict(r) for r in rows]
+
+    def record_trade_ledger(
+        self,
+        trade_index: int,
+        result: str = "unknown",
+        pnl: float | None = None,
+        close_reason: str = "",
+        source: str = "bridge",
+        trade_day: str | None = None,
+    ) -> None:
+        """Insert one trade ledger row for the given day/index (idempotent)."""
+        trade_day = trade_day or date.today().isoformat()
+        recorded_at = datetime.now().isoformat()
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO trade_ledger (
+                    trade_date, trade_index, result, pnl, close_reason, source, recorded_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(trade_date, trade_index) DO UPDATE SET
+                    result = excluded.result,
+                    pnl = COALESCE(excluded.pnl, trade_ledger.pnl),
+                    close_reason = CASE
+                        WHEN excluded.close_reason != '' THEN excluded.close_reason
+                        ELSE trade_ledger.close_reason
+                    END,
+                    source = excluded.source,
+                    recorded_at = excluded.recorded_at
+                """,
+                (trade_day, trade_index, result, pnl, close_reason, source, recorded_at),
+            )
+
+    def get_trade_ledger(
+        self,
+        trade_day: str | None = None,
+        limit: int = 200,
+    ) -> list[dict]:
+        """Return trade ledger rows newest first; optionally restricted to one day."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            if trade_day:
+                rows = conn.execute(
+                    """
+                    SELECT trade_date, trade_index, result, pnl, close_reason, source, recorded_at
+                    FROM trade_ledger
+                    WHERE trade_date = ?
+                    ORDER BY trade_date DESC, trade_index DESC
+                    LIMIT ?
+                    """,
+                    (trade_day, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT trade_date, trade_index, result, pnl, close_reason, source, recorded_at
+                    FROM trade_ledger
+                    ORDER BY trade_date DESC, trade_index DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            return [dict(r) for r in rows]
+
+    def record_violation(
+        self,
+        rule_code: str,
+        message: str,
+        severity: str = "warn",
+        trade_index: int | None = None,
+        trade_day: str | None = None,
+        context: dict | None = None,
+        event_time: str | None = None,
+    ) -> None:
+        """Append a rule violation / enforcement event to the audit log."""
+        trade_day = trade_day or date.today().isoformat()
+        event_time = event_time or datetime.now().isoformat()
+        context_json = json.dumps(context or {}, ensure_ascii=True)
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO violation_log (
+                    event_time, trade_date, trade_index, rule_code, severity, message, context_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (event_time, trade_day, trade_index, rule_code, severity, message, context_json),
+            )
+
+    def get_violation_log(
+        self,
+        trade_day: str | None = None,
+        limit: int = 200,
+    ) -> list[dict]:
+        """Return violation log rows newest first; optionally restricted to one day."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            if trade_day:
+                rows = conn.execute(
+                    """
+                    SELECT event_time, trade_date, trade_index, rule_code, severity, message, context_json
+                    FROM violation_log
+                    WHERE trade_date = ?
+                    ORDER BY event_time DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (trade_day, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT event_time, trade_date, trade_index, rule_code, severity, message, context_json
+                    FROM violation_log
+                    ORDER BY event_time DESC, id DESC
                     LIMIT ?
                     """,
                     (limit,),
