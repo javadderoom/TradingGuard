@@ -79,22 +79,49 @@ class SessionBridge:
     # ── Internal helpers (Windows file locking) ────────────────────────────
 
     def _locked_read(self) -> dict:
+        self._ensure_file_exists()
         with open(self.path, "r", encoding="utf-8") as f:
-            # Shared lock for reading
-            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            self._acquire_lock(f, exclusive=False)
             try:
                 content = f.read()
                 return json.loads(content) if content.strip() else dict(_DEFAULT_SESSION)
             finally:
-                f.seek(0)
-                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+                self._release_lock(f)
 
     def _locked_write(self, data: dict) -> None:
-        with open(self.path, "w", encoding="utf-8") as f:
-            # Exclusive lock for writing
-            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        self._ensure_file_exists()
+        payload = json.dumps(data, indent=2)
+        with open(self.path, "r+", encoding="utf-8") as f:
+            self._acquire_lock(f, exclusive=True)
             try:
-                json.dump(data, f, indent=2)
-            finally:
                 f.seek(0)
-                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+                f.truncate()
+                f.write(payload)
+                f.flush()
+                os.fsync(f.fileno())
+            finally:
+                self._release_lock(f)
+
+    def _ensure_file_exists(self) -> None:
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        if not os.path.exists(self.path):
+            with open(self.path, "w", encoding="utf-8") as f:
+                f.write("{}")
+
+    @staticmethod
+    def _acquire_lock(file_obj, exclusive: bool, retries: int = 20, delay: float = 0.05) -> None:
+        lock_mode = msvcrt.LK_NBLCK if exclusive else msvcrt.LK_NBRLCK
+        for attempt in range(retries):
+            try:
+                file_obj.seek(0)
+                msvcrt.locking(file_obj.fileno(), lock_mode, 0x7FFFFFFF)
+                return
+            except OSError:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(delay)
+
+    @staticmethod
+    def _release_lock(file_obj) -> None:
+        file_obj.seek(0)
+        msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 0x7FFFFFFF)

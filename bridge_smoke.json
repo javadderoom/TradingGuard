@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "session_active": true,
+  "trading_allowed": false,
+  "bias": "neutral",
+  "invalidation_price": 0.0,
+  "news_lock": false,
+  "daily_loss_usd": 0.0,
+  "daily_profit_usd": 0.0,
+  "trades_today": 2,
+  "consecutive_losses": 0,
+  "bias_set_at": "",
+  "losses_since_bias": 0,
+  "bias_expired": false,
+  "strict_mode": false,
+  "break_active": false,
+  "break_until": "",
+  "shutdown_signal": false,
+  "cooldown_until": "",
+  "last_trade_result": "",
+  "timestamp": "2026-02-19T10:24:19.750461"
+}

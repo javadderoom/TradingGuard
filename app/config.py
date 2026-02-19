@@ -38,7 +38,9 @@ BIAS_CHOICES = ["Bullish", "Bearish", "Neutral"]
 DEFAULT_SYMBOL = "XAUUSD"
 
 # ─── News API ───────────────────────────────────────────────────────────────
-NEWS_API_KEY = "kXrk8XlbuipqCD3VeMI6EJQR4PWAFO46"
+# Set NEWS_API_KEY in your environment to avoid committing secrets.
+NEWS_API_KEY = os.getenv("NEWS_API_KEY", "").strip()
+NEWS_PROXY_URL = os.getenv("NEWS_PROXY_URL", "http://127.0.0.1:10808").strip()
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

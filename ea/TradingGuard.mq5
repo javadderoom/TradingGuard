@@ -664,12 +664,12 @@ void CheckDailyLimits()
 {
     if (g_shutdownDone) return;
 
-    // After N consecutive losses, trigger full shutdown with 1-hour break.
-    // MT5 will be killed by the Python app, and blocked from reopening for 1 hour.
+    // After N consecutive losses, trigger a temporary 1-hour break.
+    // This is not a full daily shutdown.
     if (!g_shutdownDone && g_consecLosses >= InpMaxConsecLoss)
     {
-        Print("🛑 SHUTDOWN: Consecutive losses (", g_consecLosses,
-              ") reached. Killing MT5 for 1-hour break.");
+        Print("🛑 BREAK: Consecutive losses (", g_consecLosses,
+              ") reached. Starting 1-hour break.");
 
         // Close all open positions
         CloseAllPositions();
@@ -678,12 +678,12 @@ void CheckDailyLimits()
         g_cooldownUntil = 0;
         g_cooldownStart = 0;
 
-        // Signal full shutdown - Python app will kill MT5 and enforce 1-hour wait
+        // Signal break mode - Python app will kill MT5 and enforce 1-hour wait.
         g_shutdownDone = true;
         g_breakActive = true;
         g_tradingAllowed = false;
 
-        g_session["shutdown_signal"].Set(true);
+        g_session["shutdown_signal"].Set(false);
         g_session["break_active"].Set(true);
         g_session["trading_allowed"].Set(false);
         g_session["session_active"].Set(false);

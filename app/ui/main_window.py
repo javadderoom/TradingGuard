@@ -413,7 +413,6 @@ class MainWindow(QMainWindow):
         # Auto-shutdown if EA sets shutdown_signal
         if (
             data.get("shutdown_signal")
-            and self._session_started
             and not self._shutdown_done
         ):
             # Check if this is a consecutive losses shutdown (has break_active)
@@ -437,10 +436,6 @@ class MainWindow(QMainWindow):
           re-enable trading (unless other shutdown rules apply).
         """
         if not data.get("break_active"):
-            return
-
-        if data.get("shutdown_signal"):
-            # Full daily shutdown takes precedence.
             return
 
         # Initialise break_until if missing
