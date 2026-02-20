@@ -35,6 +35,7 @@ _DEFAULT_SESSION = {
     "shutdown_signal": False,
     "cooldown_until": "",
     "last_trade_result": "",
+    "last_trade_pnl": 0.0,
     "manual_checklist": {},
     "timestamp": "",
 }

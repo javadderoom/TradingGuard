@@ -49,9 +49,13 @@ DEFAULT_SYMBOL = "XAUUSD"
 # Set NEWS_API_KEY in your environment to avoid committing secrets.
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "").strip()
 NEWS_PROXY_URL = os.getenv("NEWS_PROXY_URL", "http://127.0.0.1:10808").strip()
+# Optional manual correction for API timestamps (minutes).
+# Default is 0 (no correction). Set env NEWS_TIME_OFFSET_MINUTES only if needed.
+NEWS_TIME_OFFSET_MINUTES = int(os.getenv("NEWS_TIME_OFFSET_MINUTES", "0"))
 
 # ─── Paths ─────────────────────────────────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ANALYSIS_ASSETS_DIR = os.path.join(PROJECT_ROOT, "analysis_assets")
 
 # MT5 Common Data Folder — This is shared between ALL MT5 instances and accessible by Python
 # Path: %APPDATA%\MetaQuotes\Terminal\Common\Files
@@ -73,15 +77,39 @@ MT5_EXPERTS_PATH = (
 SESSION_POLL_INTERVAL_MS = 2000  # How often the app re-reads session.json (ms)
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
+
+def get_tehran_now() -> datetime:
+    """Current Tehran datetime using fixed UTC+3:30 offset."""
+    utc_now = datetime.utcnow()
+    tehran_offset = timedelta(hours=3, minutes=30)
+    return utc_now + tehran_offset
+
+
+def get_session_day() -> date:
+    """Session day key with rollover at configured Tehran start time.
+
+    Before session start (e.g. before 11:00), we still treat it as the
+    previous trading day for lock/history consistency.
+    """
+    tehran_now = get_tehran_now()
+    start_minutes = TRADING_START_HOUR * 60 + TRADING_START_MINUTE
+    current_minutes = tehran_now.hour * 60 + tehran_now.minute
+    if current_minutes < start_minutes:
+        return (tehran_now - timedelta(days=1)).date()
+    return tehran_now.date()
+
+
+def get_session_day_str() -> str:
+    """Session day key in ISO format (YYYY-MM-DD)."""
+    return get_session_day().isoformat()
 
 def is_within_trading_hours() -> bool:
     """Check if current time is within trading hours (Tehran time).
     Tehran is UTC+3:30.
     """
-    utc_now = datetime.utcnow()
-    tehran_offset = timedelta(hours=3, minutes=30)
-    tehran_now = utc_now + tehran_offset
+    tehran_now = get_tehran_now()
     
     start_minutes = TRADING_START_HOUR * 60 + TRADING_START_MINUTE
     end_minutes = TRADING_END_HOUR * 60 + TRADING_END_MINUTE
@@ -94,9 +122,7 @@ def is_daily_break_time() -> tuple[bool, str]:
     """Check if it's time for the daily 12-minute break.
     Returns (is_break_time, reason).
     """
-    utc_now = datetime.utcnow()
-    tehran_offset = timedelta(hours=3, minutes=30)
-    tehran_now = utc_now + tehran_offset
+    tehran_now = get_tehran_now()
     
     current_minutes = tehran_now.hour * 60 + tehran_now.minute
     break_start = DAILY_BREAK_HOUR * 60 + DAILY_BREAK_MINUTE
@@ -109,7 +135,4 @@ def is_daily_break_time() -> tuple[bool, str]:
 
 def get_tehran_time_str() -> str:
     """Get current Tehran time as string."""
-    utc_now = datetime.utcnow()
-    tehran_offset = timedelta(hours=3, minutes=30)
-    tehran_now = utc_now + tehran_offset
-    return tehran_now.strftime("%H:%M")
+    return get_tehran_now().strftime("%H:%M")

@@ -5,8 +5,8 @@ SQLite-backed storage for daily P&L and session history.
 
 import json
 import sqlite3
-from datetime import date, datetime
-from app.config import DB_PATH
+from datetime import datetime
+from app.config import DB_PATH, get_session_day_str
 
 
 class DailyDatabase:
@@ -72,6 +72,22 @@ class DailyDatabase:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS trade_analysis (
+                    trade_date             TEXT NOT NULL,
+                    trade_index            INTEGER NOT NULL,
+                    entry_reason           TEXT NOT NULL DEFAULT '',
+                    setup_tags             TEXT NOT NULL DEFAULT '[]',
+                    notes                  TEXT NOT NULL DEFAULT '',
+                    mt5_screenshots        TEXT NOT NULL DEFAULT '{}',
+                    tradingview_screenshots TEXT NOT NULL DEFAULT '{}',
+                    created_at             TEXT NOT NULL,
+                    updated_at             TEXT NOT NULL,
+                    PRIMARY KEY (trade_date, trade_index)
+                )
+                """
+            )
 
     def _conn(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path)
@@ -85,7 +101,7 @@ class DailyDatabase:
         day: str | None = None,
     ) -> None:
         """Insert or replace today's result.  ``day`` defaults to today."""
-        day = day or date.today().isoformat()
+        day = day or get_session_day_str()
         result = "green" if pnl > 0 else ("red" if pnl < 0 else "flat")
         with self._conn() as conn:
             conn.execute(
@@ -119,11 +135,15 @@ class DailyDatabase:
 
     def get_today(self) -> dict | None:
         """Return today's row or None."""
-        today = date.today().isoformat()
+        today = get_session_day_str()
+        return self.get_day(today)
+
+    def get_day(self, day: str) -> dict | None:
+        """Return one specific day row or None."""
         with self._conn() as conn:
             conn.row_factory = sqlite3.Row
             row = conn.execute(
-                "SELECT * FROM daily_results WHERE date = ?", (today,)
+                "SELECT * FROM daily_results WHERE date = ?", (day,)
             ).fetchone()
             return dict(row) if row else None
 
@@ -132,19 +152,25 @@ class DailyDatabase:
 
         Intended for development/testing to reset the daily lock.
         """
-        today = date.today().isoformat()
+        self.clear_day(get_session_day_str())
+
+    def clear_day(self, day: str) -> None:
+        """Delete one specific day from daily and intraday tables."""
         with self._conn() as conn:
             conn.execute(
-                "DELETE FROM daily_results WHERE date = ?", (today,)
+                "DELETE FROM daily_results WHERE date = ?", (day,)
             )
             conn.execute(
-                "DELETE FROM trade_events WHERE trade_date = ?", (today,)
+                "DELETE FROM trade_events WHERE trade_date = ?", (day,)
             )
             conn.execute(
-                "DELETE FROM trade_ledger WHERE trade_date = ?", (today,)
+                "DELETE FROM trade_ledger WHERE trade_date = ?", (day,)
             )
             conn.execute(
-                "DELETE FROM violation_log WHERE trade_date = ?", (today,)
+                "DELETE FROM violation_log WHERE trade_date = ?", (day,)
+            )
+            conn.execute(
+                "DELETE FROM trade_analysis WHERE trade_date = ?", (day,)
             )
 
     def record_trade_event(
@@ -155,7 +181,7 @@ class DailyDatabase:
         trade_day: str | None = None,
     ) -> None:
         """Insert one trade event for the given day/index (idempotent)."""
-        trade_day = trade_day or date.today().isoformat()
+        trade_day = trade_day or get_session_day_str()
         recorded_at = datetime.now().isoformat()
         with self._conn() as conn:
             conn.execute(
@@ -172,7 +198,7 @@ class DailyDatabase:
 
     def get_last_trade_index(self, trade_day: str | None = None) -> int:
         """Return max trade_index for a day (0 if none)."""
-        trade_day = trade_day or date.today().isoformat()
+        trade_day = trade_day or get_session_day_str()
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT MAX(trade_index) FROM trade_events WHERE trade_date = ?",
@@ -221,7 +247,7 @@ class DailyDatabase:
         trade_day: str | None = None,
     ) -> None:
         """Insert one trade ledger row for the given day/index (idempotent)."""
-        trade_day = trade_day or date.today().isoformat()
+        trade_day = trade_day or get_session_day_str()
         recorded_at = datetime.now().isoformat()
         with self._conn() as conn:
             conn.execute(
@@ -285,7 +311,7 @@ class DailyDatabase:
         event_time: str | None = None,
     ) -> None:
         """Append a rule violation / enforcement event to the audit log."""
-        trade_day = trade_day or date.today().isoformat()
+        trade_day = trade_day or get_session_day_str()
         event_time = event_time or datetime.now().isoformat()
         context_json = json.dumps(context or {}, ensure_ascii=True)
         with self._conn() as conn:
@@ -329,6 +355,81 @@ class DailyDatabase:
                     (limit,),
                 ).fetchall()
             return [dict(r) for r in rows]
+
+    def upsert_trade_analysis(
+        self,
+        trade_date: str,
+        trade_index: int,
+        entry_reason: str = "",
+        setup_tags: list[str] | None = None,
+        notes: str = "",
+        mt5_screenshots: dict | None = None,
+        tradingview_screenshots: dict | None = None,
+    ) -> None:
+        """Insert or update analysis metadata for one trade."""
+        now = datetime.now().isoformat()
+        setup_tags_json = json.dumps(setup_tags or [], ensure_ascii=True)
+        mt5_json = json.dumps(mt5_screenshots or {}, ensure_ascii=True)
+        tv_json = json.dumps(tradingview_screenshots or {}, ensure_ascii=True)
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO trade_analysis (
+                    trade_date, trade_index, entry_reason, setup_tags, notes,
+                    mt5_screenshots, tradingview_screenshots, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(trade_date, trade_index) DO UPDATE SET
+                    entry_reason = excluded.entry_reason,
+                    setup_tags = excluded.setup_tags,
+                    notes = excluded.notes,
+                    mt5_screenshots = excluded.mt5_screenshots,
+                    tradingview_screenshots = excluded.tradingview_screenshots,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    trade_date,
+                    trade_index,
+                    entry_reason,
+                    setup_tags_json,
+                    notes,
+                    mt5_json,
+                    tv_json,
+                    now,
+                    now,
+                ),
+            )
+
+    def get_trade_analysis(self, trade_date: str, trade_index: int) -> dict | None:
+        """Return analysis metadata for one trade, if available."""
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                """
+                SELECT trade_date, trade_index, entry_reason, setup_tags, notes,
+                       mt5_screenshots, tradingview_screenshots, created_at, updated_at
+                FROM trade_analysis
+                WHERE trade_date = ? AND trade_index = ?
+                """,
+                (trade_date, trade_index),
+            ).fetchone()
+            if not row:
+                return None
+
+            data = dict(row)
+            try:
+                data["setup_tags"] = json.loads(data.get("setup_tags") or "[]")
+            except Exception:
+                data["setup_tags"] = []
+            try:
+                data["mt5_screenshots"] = json.loads(data.get("mt5_screenshots") or "{}")
+            except Exception:
+                data["mt5_screenshots"] = {}
+            try:
+                data["tradingview_screenshots"] = json.loads(data.get("tradingview_screenshots") or "{}")
+            except Exception:
+                data["tradingview_screenshots"] = {}
+            return data
 
     def get_overview_stats(self, days: int = 30) -> dict:
         """Aggregate history stats over the last *days* days."""

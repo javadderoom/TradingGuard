@@ -26,6 +26,7 @@ class TestSessionBridge:
         data = bridge.read()
         assert data["bias"] == "neutral"
         assert data["trades_today"] == 0
+        assert data["last_trade_pnl"] == 0.0
 
     def test_write_and_read_roundtrip(self, bridge):
         bridge.reset()

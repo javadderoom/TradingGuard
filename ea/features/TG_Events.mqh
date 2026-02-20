@@ -382,11 +382,11 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     }
     else if (netPnl < 0)
     {
-        g_cooldownUntil = TimeCurrent() + (InpCooldownMin + InpCooldownExtra) * 60;
+        g_cooldownUntil = TimeCurrent() + InpCooldownExtra * 60;
     }
 
     string lastResult = (netPnl >= 0) ? "win" : "loss";
-    WriteSessionUpdate(lastResult);
+    WriteSessionUpdate(lastResult, true, netPnl);
 
     Print("TG: Trade closed: $", DoubleToString(netPnl, 2),
           " | Today: ", g_tradesToday, " trades",

@@ -112,3 +112,33 @@ class TestDailyDatabase:
         assert rows[0]["severity"] == "warn"
         assert rows[0]["trade_index"] == 2
         assert rows[0]["message"] == "Test violation message"
+
+    def test_trade_analysis_upsert_and_get(self, db):
+        db.upsert_trade_analysis(
+            trade_date="2026-02-19",
+            trade_index=3,
+            entry_reason="Break of structure + pullback",
+            setup_tags=["bos", "pullback"],
+            notes="Clean execution, late by one candle.",
+            mt5_screenshots={"M15": r"D:\shots\mt5_m15.png"},
+            tradingview_screenshots={"H1": r"D:\shots\tv_h1.png"},
+        )
+        db.upsert_trade_analysis(
+            trade_date="2026-02-19",
+            trade_index=3,
+            entry_reason="Retest after BOS",
+            setup_tags=["bos", "retest"],
+            notes="Second review.",
+            mt5_screenshots={"M15": r"D:\shots\mt5_m15_v2.png"},
+            tradingview_screenshots={"H1": r"D:\shots\tv_h1_v2.png"},
+        )
+
+        row = db.get_trade_analysis("2026-02-19", 3)
+        assert row is not None
+        assert row["trade_date"] == "2026-02-19"
+        assert row["trade_index"] == 3
+        assert row["entry_reason"] == "Retest after BOS"
+        assert row["setup_tags"] == ["bos", "retest"]
+        assert row["notes"] == "Second review."
+        assert row["mt5_screenshots"]["M15"].endswith("mt5_m15_v2.png")
+        assert row["tradingview_screenshots"]["H1"].endswith("tv_h1_v2.png")

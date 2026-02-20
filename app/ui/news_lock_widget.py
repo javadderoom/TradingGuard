@@ -115,7 +115,7 @@ class NewsLockWidget(QWidget):
             self._status_label.setText("API key required")
             return
         
-        self._events = news_service.fetch_high_impact_news(hours_ahead=4)
+        self._events = news_service.fetch_high_impact_news(hours_ahead=24)
         self._update_news_list()
         self._check_auto_lock()
 

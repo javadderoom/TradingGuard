@@ -6,7 +6,7 @@ Polls session.json on a timer and orchestrates session lifecycle.
 
 import os
 import logging
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import (
@@ -18,11 +18,12 @@ from PyQt6.QtWidgets import (
 from app.bridge import SessionBridge
 from app.database import DailyDatabase
 from app import mt5_controller
-from app.config import SESSION_POLL_INTERVAL_MS
+from app.config import SESSION_POLL_INTERVAL_MS, get_session_day_str
 from app.ui.timer_widget import TimerWidget
 from app.ui.bias_widget import BiasWidget
 from app.ui.news_lock_widget import NewsLockWidget
 from app.ui.session_widget import SessionWidget
+from app.ui.trade_analysis_widget import TradeAnalysisWidget
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ class MainWindow(QMainWindow):
         self._prev_bias_expired = False
         self._prev_news_lock = False
         self._violation_dedupe: set[str] = set()
+        self._session_day_key = get_session_day_str()
 
         self._build_ui()
         self._check_recovery_day()
@@ -216,6 +218,16 @@ class MainWindow(QMainWindow):
 
         self._tabs.addTab(history_scroll, "📅  History")
 
+        # ── Tab 4: Trade Analysis Journal ─────────────────────────────
+        trade_analysis_tab = QWidget()
+        trade_analysis_scroll = QScrollArea()
+        trade_analysis_scroll.setWidgetResizable(True)
+        trade_analysis_scroll.setWidget(trade_analysis_tab)
+        trade_analysis_layout = QVBoxLayout(trade_analysis_tab)
+        self._trade_analysis_widget = TradeAnalysisWidget(self._db)
+        trade_analysis_layout.addWidget(self._trade_analysis_widget)
+        self._tabs.addTab(trade_analysis_scroll, "Trade Analysis")
+
         # ── Status bar ────────────────────────────────────────────────────
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
@@ -264,6 +276,15 @@ class MainWindow(QMainWindow):
                 f"🛑  SESSION COMPLETED TODAY ({result}) — no further trading allowed."
             )
 
+        if today_row is not None:
+            return
+
+        # No recovery lock and no completed row for current session day.
+        self._shutdown_done = False
+        self._btn_start_session.setEnabled(True)
+        self._timer_widget.setEnabled(True)
+        self._status_bar.showMessage("Ready")
+
     def _start_session(self):
         """Called when 'Start Trading Session' is clicked."""
         from app.config import is_within_trading_hours, get_tehran_time_str, TRADING_START_HOUR, TRADING_END_HOUR
@@ -307,6 +328,7 @@ class MainWindow(QMainWindow):
             consecutive_losses=0,
             cooldown_until="",
             last_trade_result="",
+            last_trade_pnl=0.0,
         )
 
         # Launch MT5
@@ -425,6 +447,7 @@ class MainWindow(QMainWindow):
             break_until="",
             cooldown_until="0",
             last_trade_result="",
+            last_trade_pnl=0.0,
             trades_today=0,
             daily_loss_usd=0.0,
             daily_profit_usd=0.0,
@@ -523,11 +546,31 @@ class MainWindow(QMainWindow):
     def _poll_session(self):
         """Read session.json and update the Session widget.
         Also auto-shutdown if the EA signals it."""
+        current_session_day = get_session_day_str()
+        if current_session_day != self._session_day_key:
+            self._session_day_key = current_session_day
+            self._shutdown_done = False
+            self._prev_shutdown_signal = False
+            self._prev_break_active = False
+            self._prev_bias_expired = False
+            self._prev_news_lock = False
+            self._violation_dedupe.clear()
+            self._check_recovery_day()
+
         try:
             data = self._bridge.read()
         except Exception as exc:
             log.warning("Failed to read session.json: %s", exc)
             return
+
+        if self._cleanup_carryover_duplicate_day_if_detected(data):
+            try:
+                data = self._bridge.read()
+            except Exception as exc:
+                log.warning("Failed to re-read session after carry-over cleanup: %s", exc)
+                return
+
+        data = self._sanitize_inactive_bridge_state(data)
 
         self._session_widget.refresh(data)
         self._sync_live_trade_events(data)
@@ -541,10 +584,9 @@ class MainWindow(QMainWindow):
         self._enforce_bias_expiry(data)
 
         # Auto-shutdown if EA sets shutdown_signal
-        if (
-            data.get("shutdown_signal")
-            and not self._shutdown_done
-        ):
+        shutdown_signal = bool(data.get("shutdown_signal"))
+        is_current_session_day = self._is_bridge_data_for_current_session_day(data)
+        if shutdown_signal and not self._shutdown_done and is_current_session_day:
             # Check if this is a consecutive losses shutdown (has break_active)
             if data.get("break_active"):
                 # Consecutive losses: record result and start 1-hour break
@@ -555,6 +597,129 @@ class MainWindow(QMainWindow):
                 self._status_bar.showMessage(
                     "🛑  AUTO-SHUTDOWN — daily limit reached"
                 )
+
+        elif shutdown_signal and not is_current_session_day:
+            log.info("Ignoring stale shutdown_signal from previous session day.")
+            try:
+                self._bridge.update(shutdown_signal=False)
+            except Exception as exc:
+                log.warning("Failed to clear stale shutdown_signal: %s", exc)
+
+    def _is_bridge_data_for_current_session_day(self, data: dict) -> bool:
+        """True when bridge timestamp belongs to current Tehran session day."""
+        ts = (data.get("timestamp") or "").strip()
+        if not ts:
+            return False
+        try:
+            dt = datetime.fromisoformat(ts)
+        except ValueError:
+            try:
+                dt = datetime.strptime(ts, "%Y.%m.%d %H:%M:%S")
+            except ValueError:
+                return False
+
+        start_minutes = 11 * 60
+        current_minutes = dt.hour * 60 + dt.minute
+        bridge_session_day = (dt - timedelta(days=1)).date() if current_minutes < start_minutes else dt.date()
+        return bridge_session_day.isoformat() == get_session_day_str()
+
+    def _sanitize_inactive_bridge_state(self, data: dict) -> dict:
+        """Reset stale intraday counters when session is inactive and no day row exists."""
+        if bool(data.get("session_active")):
+            return data
+
+        trades_today = int(data.get("trades_today", 0) or 0)
+        net_pnl = float(data.get("daily_profit_usd", 0) or 0) - float(data.get("daily_loss_usd", 0) or 0)
+        has_stale_signal = bool(data.get("shutdown_signal")) or bool(data.get("break_active"))
+        today_row = self._db.get_today()
+
+        if today_row is not None:
+            return data
+        if trades_today == 0 and abs(net_pnl) < 0.0001 and not has_stale_signal:
+            return data
+
+        try:
+            self._bridge.update(
+                session_active=False,
+                trading_allowed=False,
+                shutdown_signal=False,
+                break_active=False,
+                break_until="",
+                cooldown_until="0",
+                last_trade_result="",
+                last_trade_pnl=0.0,
+                trades_today=0,
+                daily_loss_usd=0.0,
+                daily_profit_usd=0.0,
+                consecutive_losses=0,
+                losses_since_bias=0,
+            )
+            cleaned = self._bridge.read()
+            log.warning("Cleared stale inactive bridge counters for new session day.")
+            return cleaned
+        except Exception as exc:
+            log.warning("Failed to clear stale inactive bridge counters: %s", exc)
+            return data
+
+    def _cleanup_carryover_duplicate_day_if_detected(self, data: dict) -> bool:
+        """Remove duplicated current-day rows that were copied from yesterday."""
+        if bool(data.get("session_active")):
+            return False
+
+        current_day = get_session_day_str()
+        try:
+            previous_day = (
+                datetime.strptime(current_day, "%Y-%m-%d") - timedelta(days=1)
+            ).strftime("%Y-%m-%d")
+        except ValueError:
+            return False
+
+        today_row = self._db.get_day(current_day)
+        prev_row = self._db.get_day(previous_day)
+        if not today_row or not prev_row:
+            return False
+
+        same_daily = (
+            int(today_row.get("trades", 0)) == int(prev_row.get("trades", 0))
+            and (today_row.get("result") or "") == (prev_row.get("result") or "")
+            and abs(float(today_row.get("pnl", 0.0)) - float(prev_row.get("pnl", 0.0))) < 0.01
+        )
+        if not same_daily:
+            return False
+
+        bridge_trades = int(data.get("trades_today", 0) or 0)
+        bridge_net = float(data.get("daily_profit_usd", 0) or 0) - float(data.get("daily_loss_usd", 0) or 0)
+        bridge_matches_today = (
+            bridge_trades == int(today_row.get("trades", 0))
+            and abs(bridge_net - float(today_row.get("pnl", 0.0))) < 0.01
+        )
+        if not bridge_matches_today:
+            return False
+
+        self._db.clear_day(current_day)
+        try:
+            self._bridge.update(
+                session_active=False,
+                trading_allowed=False,
+                shutdown_signal=False,
+                break_active=False,
+                break_until="",
+                cooldown_until="0",
+                last_trade_result="",
+                last_trade_pnl=0.0,
+                trades_today=0,
+                daily_loss_usd=0.0,
+                daily_profit_usd=0.0,
+                consecutive_losses=0,
+                losses_since_bias=0,
+            )
+        except Exception as exc:
+            log.warning("Failed to reset bridge after carry-over cleanup: %s", exc)
+
+        log.warning("Removed carry-over duplicate rows for session day %s", current_day)
+        self._status_bar.showMessage("Cleared stale carry-over data for current session day.")
+        self._load_history()
+        return True
 
     def _record_violation(
         self,
@@ -596,7 +761,7 @@ class MainWindow(QMainWindow):
                 message="EA signaled session shutdown.",
                 trade_index=trade_idx,
                 context={"trading_allowed": bool(data.get("trading_allowed"))},
-                dedupe_key=f"shutdown:{date.today().isoformat()}",
+                dedupe_key=f"shutdown:{get_session_day_str()}",
             )
         if break_active and not self._prev_break_active:
             self._record_violation(
@@ -605,7 +770,7 @@ class MainWindow(QMainWindow):
                 message="Break state became active.",
                 trade_index=trade_idx,
                 context={"break_until": data.get("break_until", "")},
-                dedupe_key=f"break:{date.today().isoformat()}",
+                dedupe_key=f"break:{get_session_day_str()}",
             )
         if bias_expired and not self._prev_bias_expired:
             self._record_violation(
@@ -614,7 +779,7 @@ class MainWindow(QMainWindow):
                 message="Bias expired flag received from session.",
                 trade_index=trade_idx,
                 context={"losses_since_bias": int(data.get("losses_since_bias", 0) or 0)},
-                dedupe_key=f"bias_expired:{date.today().isoformat()}",
+                dedupe_key=f"bias_expired:{get_session_day_str()}",
             )
         if news_lock and not self._prev_news_lock:
             self._record_violation(
@@ -623,7 +788,7 @@ class MainWindow(QMainWindow):
                 message="News lock enabled; trade entries should be blocked.",
                 trade_index=trade_idx,
                 context={},
-                dedupe_key=f"news_lock:{date.today().isoformat()}",
+                dedupe_key=f"news_lock:{get_session_day_str()}",
             )
 
         self._prev_shutdown_signal = shutdown_signal
@@ -804,12 +969,23 @@ class MainWindow(QMainWindow):
             self._violation_table.setItem(i, 4, QTableWidgetItem(v.get("trade_date") or ""))
             self._violation_table.setItem(i, 5, QTableWidgetItem(v.get("message") or ""))
 
+        if hasattr(self, "_trade_analysis_widget"):
+            self._trade_analysis_widget.refresh_trades()
+
     def _sync_live_trade_events(self, data: dict) -> None:
         """Capture live trade events so History stays up-to-date intraday."""
         try:
-            today = date.today().isoformat()
+            today = get_session_day_str()
             current_trades = int(data.get("trades_today", 0) or 0)
             net_pnl = float(data.get("daily_profit_usd", 0) or 0) - float(data.get("daily_loss_usd", 0) or 0)
+            session_active = bool(data.get("session_active"))
+
+            # Prevent ghost duplicates when app starts with stale bridge counters
+            # from a previous day/session but MT5 is not actively trading.
+            if not session_active:
+                self._prev_trades_today = current_trades
+                self._prev_net_pnl = net_pnl
+                return
 
             db_last_index = self._db.get_last_trade_index(today)
             if current_trades <= db_last_index:
@@ -825,7 +1001,15 @@ class MainWindow(QMainWindow):
                     last = (data.get("last_trade_result") or "").strip().lower()
                     if last in ("win", "loss", "flat", "breakeven", "be"):
                         result = last
+                    raw_last_pnl = data.get("last_trade_pnl")
+                    if raw_last_pnl not in (None, ""):
+                        try:
+                            pnl_delta = float(raw_last_pnl)
+                        except (TypeError, ValueError):
+                            pnl_delta = None
                     if (
+                        pnl_delta is None
+                        and
                         self._prev_trades_today is not None
                         and self._prev_net_pnl is not None
                         and current_trades - self._prev_trades_today == 1

@@ -54,7 +54,7 @@ void SyncFromSession()
     Print("TG Sync: bias=", g_bias, " strict=", g_strictMode, " cooldown_until=", g_cooldownUntil);
 }
 
-void WriteSessionUpdate(string lastResult = "")
+void WriteSessionUpdate(string lastResult = "", bool hasLastPnl = false, double lastPnl = 0.0)
 {
     g_session["daily_loss_usd"].Set(g_dailyLoss);
     g_session["daily_profit_usd"].Set(g_dailyProfit);
@@ -74,6 +74,8 @@ void WriteSessionUpdate(string lastResult = "")
 
     if (lastResult != "")
         g_session["last_trade_result"].Set(lastResult);
+    if (hasLastPnl)
+        g_session["last_trade_pnl"].Set(lastPnl);
 
     g_session["timestamp"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
 

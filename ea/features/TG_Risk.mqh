@@ -2,7 +2,6 @@
 
 void ForceClosePosition(ulong ticket);
 void CloseAllPositions();
-void WriteSessionUpdate(string lastResult = "");
 
 void MonitorOpenPositions()
 {

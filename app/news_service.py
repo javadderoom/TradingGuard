@@ -12,7 +12,12 @@ from typing import NamedTuple
 
 import requests
 
-from app.config import NEWS_API_KEY, NEWS_PROXY_URL
+from app.config import (
+    NEWS_API_KEY,
+    NEWS_PROXY_URL,
+    NEWS_TIME_OFFSET_MINUTES,
+    get_tehran_now,
+)
 
 log = logging.getLogger(__name__)
 
@@ -28,22 +33,38 @@ API_URL = "https://www.jblanked.com/news/api/mql5/calendar/today/?currency=USD&i
 CACHE_FILE = os.path.join(os.path.dirname(__file__), "news_cache.json")
 
 
-def fetch_high_impact_news(hours_ahead: int = 4) -> list[NewsEvent]:
-    """Fetch high-impact USD news events, using cache if available."""
+def fetch_high_impact_news(hours_ahead: int = 24) -> list[NewsEvent]:
+    """Fetch high-impact USD news events, using cache if available.
+
+    Default lookahead is 24h so the app can show the full day's events.
+    """
     if not NEWS_API_KEY:
         log.warning("No NEWS_API_KEY configured in config.py")
         return []
     
     cached = _load_cache()
     if cached is not None:
-        log.info("Using cached news data")
-        return _filter_by_time(cached, hours_ahead)
+        filtered = _filter_by_time(cached, hours_ahead)
+        log.info(
+            "Using cached news data: total=%d filtered=%d lookahead=%dh",
+            len(cached),
+            len(filtered),
+            hours_ahead,
+        )
+        return filtered
     
     events = _fetch_from_api()
     if events is None:
         return []
     _save_cache(events)
-    return _filter_by_time(events, hours_ahead)
+    filtered = _filter_by_time(events, hours_ahead)
+    log.info(
+        "News filter result: total=%d filtered=%d lookahead=%dh",
+        len(events),
+        len(filtered),
+        hours_ahead,
+    )
+    return filtered
 
 
 def _fetch_from_api() -> list[NewsEvent] | None:
@@ -71,6 +92,8 @@ def _fetch_from_api() -> list[NewsEvent] | None:
                 continue
 
             event_time = datetime.strptime(date_str, "%Y.%m.%d %H:%M:%S")
+            if NEWS_TIME_OFFSET_MINUTES:
+                event_time = event_time + timedelta(minutes=NEWS_TIME_OFFSET_MINUTES)
 
             events.append(NewsEvent(
                 time=event_time,
@@ -81,7 +104,11 @@ def _fetch_from_api() -> list[NewsEvent] | None:
         except (ValueError, KeyError, TypeError):
             continue
 
-    log.info("Fetched %d high-impact USD news events from API", len(events))
+    log.info(
+        "Fetched %d high-impact USD news events from API (offset=%d min)",
+        len(events),
+        NEWS_TIME_OFFSET_MINUTES,
+    )
     return events
 
 
@@ -147,7 +174,7 @@ def _request_calendar_data() -> list[dict] | None:
 
 def _filter_by_time(events: list[NewsEvent], hours_ahead: int) -> list[NewsEvent]:
     """Filter events to only those within the time window."""
-    now = datetime.now()
+    now = get_tehran_now()
     cutoff = now + timedelta(hours=hours_ahead)
     return [e for e in events if now <= e.time <= cutoff]
 
@@ -163,19 +190,33 @@ def _load_cache() -> list[NewsEvent] | None:
         
         cached_date = cache.get("date")
         cached_events = cache.get("events", [])
+        cached_offset = cache.get("offset_minutes")
         
         if not cached_date or not cached_events:
             return None
         
         cache_date = datetime.fromisoformat(cached_date).date()
-        if cache_date != date.today():
+        if cache_date != get_tehran_now().date():
             log.info("News cache is from %s, refreshing", cache_date)
+            return None
+        # Legacy cache entries had no offset metadata and may contain
+        # previously shifted times; force refresh once to avoid stale bias.
+        if cached_offset is None:
+            log.info("News cache has no offset metadata, refreshing")
+            return None
+        if cached_offset is not None and int(cached_offset) != NEWS_TIME_OFFSET_MINUTES:
+            log.info(
+                "News cache offset mismatch (cache=%s, current=%s), refreshing",
+                cached_offset,
+                NEWS_TIME_OFFSET_MINUTES,
+            )
             return None
         
         events = []
         for e in cached_events:
+            cached_time = datetime.fromisoformat(e["time"])
             events.append(NewsEvent(
-                time=datetime.fromisoformat(e["time"]),
+                time=cached_time,
                 currency=e["currency"],
                 event=e["event"],
                 impact=e["impact"]
@@ -191,7 +232,8 @@ def _save_cache(events: list[NewsEvent]) -> None:
     """Save events to cache file."""
     try:
         cache = {
-            "date": datetime.now().isoformat(),
+            "date": get_tehran_now().isoformat(),
+            "offset_minutes": NEWS_TIME_OFFSET_MINUTES,
             "events": [
                 {
                     "time": e.time.isoformat(),
@@ -211,7 +253,7 @@ def _save_cache(events: list[NewsEvent]) -> None:
 
 def is_news_active(events: list[NewsEvent], buffer_minutes: int = 30) -> bool:
     """Check if any high-impact news is currently active."""
-    now = datetime.now()
+    now = get_tehran_now()
     for event in events:
         event_start = event.time - timedelta(minutes=buffer_minutes)
         event_end = event.time + timedelta(minutes=buffer_minutes)
@@ -222,7 +264,7 @@ def is_news_active(events: list[NewsEvent], buffer_minutes: int = 30) -> bool:
 
 def get_next_high_impact_news(events: list[NewsEvent]) -> NewsEvent | None:
     """Get the next upcoming high-impact news event."""
-    now = datetime.now()
+    now = get_tehran_now()
     future_events = [e for e in events if e.time > now]
     if future_events:
         return min(future_events, key=lambda e: e.time)

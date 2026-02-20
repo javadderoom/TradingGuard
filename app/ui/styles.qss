@@ -185,6 +185,20 @@ QDoubleSpinBox {
     font-size: 13px;
 }
 
+/* ── Line / Text Inputs ─────────────────────────────────────────────── */
+QLineEdit, QTextEdit {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #2d2d4a;
+    border-radius: 6px;
+    padding: 8px 10px;
+    selection-background-color: #0f3460;
+}
+
+QLineEdit:focus, QTextEdit:focus {
+    border-color: #e94560;
+}
+
 /* ── Group Box ────────────────────────────────────────────────────────── */
 QGroupBox {
     border: 1px solid #2d2d4a;
