@@ -9,6 +9,15 @@ void OnTick()
             SyncFromSession();
         g_lastRead = now;
     }
+
+    if (g_biasExpired && !g_prevBiasExpired)
+    {
+        string msg = "TradingGuard: Bias expired. New entries are blocked until bias is refreshed.";
+        Print(msg);
+        Alert(msg);
+    }
+    g_prevBiasExpired = g_biasExpired;
+
     NotifyAutoCloseWarning(GetAutoCloseWarning());
 
     if (g_shutdownDone)
@@ -76,6 +85,24 @@ void OnTick()
         UpdateChartPanel();
         return;
     }
+
+    // Fallback: if an entry is opened but no transaction path set cooldown,
+    // start the base cooldown as soon as open-position count increases.
+    int currentPositions = PositionsTotal();
+    if (g_prevPositionsTotal < 0)
+        g_prevPositionsTotal = currentPositions;
+    if (currentPositions > g_prevPositionsTotal
+        && g_cooldownUntil <= now
+        && !g_shutdownDone
+        && !g_breakActive)
+    {
+        g_cooldownStart = now;
+        g_cooldownUntil = g_cooldownStart + (InpCooldownMin * 60);
+        WriteSessionUpdate();
+        Print("TG: Position count increased - cooldown fallback set: ",
+              InpCooldownMin, " min, until ", g_cooldownUntil);
+    }
+    g_prevPositionsTotal = currentPositions;
 
     if (g_cooldownUntil > 0 && now < g_cooldownUntil)
     {
@@ -245,6 +272,28 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     if (dealEntry == DEAL_ENTRY_IN && g_cooldownUntil > 0 && TimeCurrent() < g_cooldownUntil)
     {
         Print("TG: Cooldown active, closing new entry #", (ulong)dealTicket);
+        ulong posTicket = trans.position;
+        if (posTicket != 0)
+            ForceClosePosition(posTicket);
+        else
+        {
+            for (int i = PositionsTotal() - 1; i >= 0; i--)
+            {
+                ulong ticket = PositionGetTicket(i);
+                if (ticket == 0) continue;
+                if (PositionGetString(POSITION_SYMBOL) == trans.symbol)
+                {
+                    ForceClosePosition(ticket);
+                    break;
+                }
+            }
+        }
+        return;
+    }
+
+    if (dealEntry == DEAL_ENTRY_IN && !g_tradingAllowed)
+    {
+        Print("TG: Trading not allowed, closing new entry #", (ulong)dealTicket);
         ulong posTicket = trans.position;
         if (posTicket != 0)
             ForceClosePosition(posTicket);

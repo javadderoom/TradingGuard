@@ -317,15 +317,42 @@ class MainWindow(QMainWindow):
             )
             return
 
+        # Seed today's counters from DB so restarts do not reset daily limits.
+        today = get_session_day_str()
+        today_ledger = self._db.get_trade_ledger(trade_day=today, limit=500)
+        trades_today = len(today_ledger)
+        daily_profit = 0.0
+        daily_loss = 0.0
+        for row in today_ledger:
+            pnl_val = row.get("pnl")
+            if pnl_val in (None, ""):
+                continue
+            try:
+                pnl = float(pnl_val)
+            except (TypeError, ValueError):
+                continue
+            if pnl >= 0:
+                daily_profit += pnl
+            else:
+                daily_loss += abs(pnl)
+
+        consecutive_losses = 0
+        today_events = self._db.get_trade_events(trade_day=today, limit=500)
+        for evt in today_events:
+            if (evt.get("result") or "").lower() == "loss":
+                consecutive_losses += 1
+            else:
+                break
+
         # Write initial session state
         self._bridge.update(
             session_active=True,
             trading_allowed=True,
             shutdown_signal=False,
-            daily_loss_usd=0.0,
-            daily_profit_usd=0.0,
-            trades_today=0,
-            consecutive_losses=0,
+            daily_loss_usd=daily_loss,
+            daily_profit_usd=daily_profit,
+            trades_today=trades_today,
+            consecutive_losses=consecutive_losses,
             cooldown_until="",
             last_trade_result="",
             last_trade_pnl=0.0,
@@ -627,6 +654,8 @@ class MainWindow(QMainWindow):
         """Reset stale intraday counters when session is inactive and no day row exists."""
         if bool(data.get("session_active")):
             return data
+        if self._is_bridge_data_for_current_session_day(data):
+            return data
 
         trades_today = int(data.get("trades_today", 0) or 0)
         net_pnl = float(data.get("daily_profit_usd", 0) or 0) - float(data.get("daily_loss_usd", 0) or 0)
@@ -877,7 +906,10 @@ class MainWindow(QMainWindow):
             return
 
         if age >= timedelta(hours=2) or losses_since_bias >= 3:
-            self._bridge.update(trading_allowed=False, bias_expired=True)
+            self._bridge.update(
+                trading_allowed=False,
+                bias_expired=True,
+            )
             self._record_violation(
                 rule_code="BIAS_EXPIRED",
                 severity="warn",
@@ -894,7 +926,7 @@ class MainWindow(QMainWindow):
                 self,
                 "Bias Expired",
                 "Your bias has expired (time limit or 3 losses).\n"
-                "Update your bias to resume trading.",
+                "New trades are now blocked until you refresh bias.",
             )
 
     # ══════════════════════════════════════════════════════════════════════

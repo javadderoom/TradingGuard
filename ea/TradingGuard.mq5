@@ -52,7 +52,9 @@ string   g_bias            = "neutral";
 bool     g_newsLock        = false;
 bool     g_strictMode      = false;
 bool     g_biasExpired     = false;
+bool     g_prevBiasExpired = false;
 bool     g_breakActive     = false;
+int      g_prevPositionsTotal = -1;
 
 string   g_filePath      = "";
 string   g_checklistItems[4];
@@ -92,6 +94,7 @@ int OnInit()
     }
 
     CreateChecklistButtons();
+    g_prevPositionsTotal = PositionsTotal();
     UpdateChartPanel();
     return INIT_SUCCEEDED;
 }

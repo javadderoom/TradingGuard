@@ -85,7 +85,6 @@ class BiasWidget(QWidget):
             losses_since_bias=0,
             bias_expired=False,
             strict_mode=self._strict_checkbox.isChecked(),
-            trading_allowed=True,
         )
 
     def get_bias(self) -> str:

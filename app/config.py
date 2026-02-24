@@ -65,7 +65,7 @@ SESSION_JSON_PATH = os.path.join(MT5_COMMON_PATH, "session.json")
 DB_PATH = os.path.join(PROJECT_ROOT, "tradingguard.db")
 
 # MT5 terminal executable — update if your installation differs
-MT5_EXE_PATH = r"C:\Program Files\LiteFinance MT5 Terminal\terminal64.exe"
+MT5_EXE_PATH = r"C:\Program Files\Sarmaye Gozare Bartar MT5 Terminal\terminal64.exe"
 
 # MT5 Experts folder (for reference / copy instructions)
 MT5_EXPERTS_PATH = (
