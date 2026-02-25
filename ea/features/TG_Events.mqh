@@ -406,6 +406,36 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     if (dealEntry != DEAL_ENTRY_OUT && dealEntry != DEAL_ENTRY_INOUT && dealEntry != DEAL_ENTRY_OUT_BY)
         return;
 
+    long closedPositionId = (long)HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID);
+    if (closedPositionId > 0)
+    {
+        bool stillOpen = false;
+        for (int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+            ulong ticket = PositionGetTicket(i);
+            if (ticket == 0) continue;
+            if (!PositionSelectByTicket(ticket)) continue;
+            long openPositionId = (long)PositionGetInteger(POSITION_IDENTIFIER);
+            if (openPositionId == closedPositionId)
+            {
+                stillOpen = true;
+                break;
+            }
+        }
+
+        if (stillOpen)
+        {
+            Print("TG: Partial close ignored for position id ", (long)closedPositionId);
+            return;
+        }
+
+        if (closedPositionId == g_lastCountedClosedPositionId)
+        {
+            Print("TG: Duplicate close event ignored for position id ", (long)closedPositionId);
+            return;
+        }
+    }
+
     double dealProfit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
     double dealSwap   = HistoryDealGetDouble(dealTicket, DEAL_SWAP);
     double dealComm   = HistoryDealGetDouble(dealTicket, DEAL_COMMISSION);
@@ -435,6 +465,8 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     }
 
     string lastResult = (netPnl >= 0) ? "win" : "loss";
+    if (closedPositionId > 0)
+        g_lastCountedClosedPositionId = closedPositionId;
     WriteSessionUpdate(lastResult, true, netPnl);
 
     Print("TG: Trade closed: $", DoubleToString(netPnl, 2),

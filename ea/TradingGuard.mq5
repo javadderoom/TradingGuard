@@ -55,6 +55,7 @@ bool     g_biasExpired     = false;
 bool     g_prevBiasExpired = false;
 bool     g_breakActive     = false;
 int      g_prevPositionsTotal = -1;
+long     g_lastCountedClosedPositionId = -1;
 
 string   g_filePath      = "";
 string   g_checklistItems[4];

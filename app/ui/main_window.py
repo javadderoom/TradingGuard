@@ -349,6 +349,8 @@ class MainWindow(QMainWindow):
             session_active=True,
             trading_allowed=True,
             shutdown_signal=False,
+            break_active=False,
+            break_until="",
             daily_loss_usd=daily_loss,
             daily_profit_usd=daily_profit,
             trades_today=trades_today,
