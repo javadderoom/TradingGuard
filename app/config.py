@@ -77,12 +77,13 @@ MT5_EXPERTS_PATH = (
 SESSION_POLL_INTERVAL_MS = 2000  # How often the app re-reads session.json (ms)
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 
 
 def get_tehran_now() -> datetime:
     """Current Tehran datetime using fixed UTC+3:30 offset."""
-    utc_now = datetime.utcnow()
+    # Keep return value naive for compatibility with existing code paths.
+    utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
     tehran_offset = timedelta(hours=3, minutes=30)
     return utc_now + tehran_offset
 

@@ -237,6 +237,57 @@ class DailyDatabase:
                 ).fetchall()
             return [dict(r) for r in rows]
 
+    def prune_ambiguous_bridge_trades(self, trade_day: str | None = None) -> int:
+        """Delete placeholder bridge rows that look like ghost trades.
+
+        Targets rows created as unknown/zero during bridge backfill
+        (`session_update` / `sync_backfill`) with no realized PnL signal.
+        Returns number of trade indexes removed.
+        """
+        trade_day = trade_day or get_session_day_str()
+        with self._conn() as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """
+                SELECT trade_index
+                FROM trade_ledger
+                WHERE trade_date = ?
+                  AND lower(result) = 'unknown'
+                  AND abs(COALESCE(pnl, 0.0)) < 0.0001
+                  AND source = 'bridge'
+                  AND close_reason IN ('session_update', 'sync_backfill')
+                ORDER BY trade_index ASC
+                """,
+                (trade_day,),
+            ).fetchall()
+            indexes = [int(r["trade_index"]) for r in rows]
+            if not indexes:
+                return 0
+
+            placeholders = ",".join("?" for _ in indexes)
+            params = (trade_day, *indexes)
+
+            conn.execute(
+                f"""
+                DELETE FROM trade_ledger
+                WHERE trade_date = ?
+                  AND trade_index IN ({placeholders})
+                  AND lower(result) = 'unknown'
+                """,
+                params,
+            )
+            conn.execute(
+                f"""
+                DELETE FROM trade_events
+                WHERE trade_date = ?
+                  AND trade_index IN ({placeholders})
+                  AND lower(result) = 'unknown'
+                  AND abs(COALESCE(pnl, 0.0)) < 0.0001
+                """,
+                params,
+            )
+            return len(indexes)
+
     def record_trade_ledger(
         self,
         trade_index: int,

@@ -318,9 +318,18 @@ class MainWindow(QMainWindow):
             return
 
         # Seed today's counters from DB so restarts do not reset daily limits.
+        # First prune ambiguous placeholder rows that can appear after stale
+        # bridge counters (ghost trades).
         today = get_session_day_str()
+        removed = self._db.prune_ambiguous_bridge_trades(trade_day=today)
+        if removed:
+            log.warning(
+                "Pruned %d ambiguous bridge trade row(s) for %s before session start.",
+                removed,
+                today,
+            )
         today_ledger = self._db.get_trade_ledger(trade_day=today, limit=500)
-        trades_today = len(today_ledger)
+        trades_today = self._db.get_last_trade_index(today)
         daily_profit = 0.0
         daily_loss = 0.0
         for row in today_ledger:
@@ -1027,20 +1036,50 @@ class MainWindow(QMainWindow):
                 self._prev_net_pnl = net_pnl
                 return
 
-            # Backfill any missed entries as unknown.
+            last = (data.get("last_trade_result") or "").strip().lower()
+            has_last_result_signal = last in ("win", "loss", "flat", "breakeven", "be")
+
+            raw_last_pnl = data.get("last_trade_pnl")
+            parsed_last_pnl = None
+            if raw_last_pnl not in (None, ""):
+                try:
+                    parsed_last_pnl = float(raw_last_pnl)
+                except (TypeError, ValueError):
+                    parsed_last_pnl = None
+
+            pnl_delta_signal = False
+            if (
+                self._prev_trades_today is not None
+                and self._prev_net_pnl is not None
+                and current_trades - self._prev_trades_today == 1
+            ):
+                pnl_delta_signal = abs(net_pnl - self._prev_net_pnl) >= 0.0001
+
+            has_pnl_signal = (
+                parsed_last_pnl is not None
+                and abs(parsed_last_pnl) >= 0.0001
+            )
+            has_trade_signal = has_last_result_signal or has_pnl_signal or pnl_delta_signal
+            if not has_trade_signal:
+                log.warning(
+                    "Skipping ambiguous bridge trade sync (bridge=%s, db=%s, day=%s).",
+                    current_trades,
+                    db_last_index,
+                    today,
+                )
+                self._prev_trades_today = current_trades
+                self._prev_net_pnl = net_pnl
+                return
+
+            # Backfill any missed entries. Older gaps are unknown because only
+            # the latest close payload is available in session.json.
             for idx in range(db_last_index + 1, current_trades + 1):
                 result = "unknown"
                 pnl_delta = None
                 if idx == current_trades:
-                    last = (data.get("last_trade_result") or "").strip().lower()
                     if last in ("win", "loss", "flat", "breakeven", "be"):
                         result = last
-                    raw_last_pnl = data.get("last_trade_pnl")
-                    if raw_last_pnl not in (None, ""):
-                        try:
-                            pnl_delta = float(raw_last_pnl)
-                        except (TypeError, ValueError):
-                            pnl_delta = None
+                    pnl_delta = parsed_last_pnl
                     if (
                         pnl_delta is None
                         and

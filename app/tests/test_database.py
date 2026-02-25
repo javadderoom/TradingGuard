@@ -95,6 +95,47 @@ class TestDailyDatabase:
         assert rows[0]["pnl"] == 6.0
         assert rows[0]["close_reason"] == "manual_adjust"
 
+    def test_prune_ambiguous_bridge_trades_removes_only_placeholder_unknowns(self, db):
+        db.record_trade_event(
+            trade_index=1,
+            result="unknown",
+            pnl=0.0,
+            trade_day="2026-02-20",
+        )
+        db.record_trade_ledger(
+            trade_index=1,
+            result="unknown",
+            pnl=0.0,
+            close_reason="session_update",
+            source="bridge",
+            trade_day="2026-02-20",
+        )
+
+        db.record_trade_event(
+            trade_index=2,
+            result="win",
+            pnl=3.5,
+            trade_day="2026-02-20",
+        )
+        db.record_trade_ledger(
+            trade_index=2,
+            result="win",
+            pnl=3.5,
+            close_reason="session_update",
+            source="bridge",
+            trade_day="2026-02-20",
+        )
+
+        removed = db.prune_ambiguous_bridge_trades("2026-02-20")
+        assert removed == 1
+
+        ledger_rows = db.get_trade_ledger(trade_day="2026-02-20", limit=10)
+        event_rows = db.get_trade_events(trade_day="2026-02-20", limit=10)
+        assert len(ledger_rows) == 1
+        assert len(event_rows) == 1
+        assert ledger_rows[0]["trade_index"] == 2
+        assert event_rows[0]["trade_index"] == 2
+
     def test_violation_log_insert_and_fetch(self, db):
         db.record_violation(
             rule_code="TEST_RULE",
