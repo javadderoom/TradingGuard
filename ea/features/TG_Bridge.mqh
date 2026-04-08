@@ -77,8 +77,26 @@ void WriteSessionUpdate(string lastResult = "", bool hasLastPnl = false, double 
     if (hasLastPnl)
         g_session["last_trade_pnl"].Set(lastPnl);
 
+    g_session["ea_heartbeat"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
     g_session["timestamp"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
 
     if (!g_session.WriteToFile(g_filePath))
         Print("TG: FAILED to write session file: ", g_filePath);
+}
+
+void WriteHeartbeat()
+{
+    CJAVal hb;
+    if (!hb.ReadFromFile(g_filePath))
+    {
+        Print("TG: Heartbeat read failed: ", g_filePath);
+        return;
+    }
+
+    string nowStr = TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS);
+    hb["ea_heartbeat"].Set(nowStr);
+    hb["timestamp"].Set(nowStr);
+
+    if (!hb.WriteToFile(g_filePath))
+        Print("TG: Heartbeat write failed: ", g_filePath);
 }

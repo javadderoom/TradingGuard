@@ -18,7 +18,11 @@ from PyQt6.QtWidgets import (
 from app.bridge import SessionBridge
 from app.database import DailyDatabase
 from app import mt5_controller
-from app.config import SESSION_POLL_INTERVAL_MS, get_session_day_str
+from app.config import (
+    SESSION_POLL_INTERVAL_MS,
+    EA_HEARTBEAT_TIMEOUT_SECONDS,
+    get_session_day_str,
+)
 from app.ui.timer_widget import TimerWidget
 from app.ui.bias_widget import BiasWidget
 from app.ui.news_lock_widget import NewsLockWidget
@@ -49,6 +53,9 @@ class MainWindow(QMainWindow):
         self._prev_news_lock = False
         self._violation_dedupe: set[str] = set()
         self._session_day_key = get_session_day_str()
+        self._active_session_since: datetime | None = None
+        self._last_seen_ea_heartbeat: str = ""
+        self._last_seen_ea_heartbeat_at: datetime | None = None
 
         self._build_ui()
         self._check_recovery_day()
@@ -609,6 +616,8 @@ class MainWindow(QMainWindow):
                 return
 
         data = self._sanitize_inactive_bridge_state(data)
+        self._update_active_session_tracking(data)
+        self._enforce_ea_presence(data)
 
         self._session_widget.refresh(data)
         self._sync_live_trade_events(data)
@@ -646,20 +655,79 @@ class MainWindow(QMainWindow):
     def _is_bridge_data_for_current_session_day(self, data: dict) -> bool:
         """True when bridge timestamp belongs to current Tehran session day."""
         ts = (data.get("timestamp") or "").strip()
-        if not ts:
+        dt = self._parse_bridge_datetime(ts)
+        if dt is None:
             return False
-        try:
-            dt = datetime.fromisoformat(ts)
-        except ValueError:
-            try:
-                dt = datetime.strptime(ts, "%Y.%m.%d %H:%M:%S")
-            except ValueError:
-                return False
 
         start_minutes = 11 * 60
         current_minutes = dt.hour * 60 + dt.minute
         bridge_session_day = (dt - timedelta(days=1)).date() if current_minutes < start_minutes else dt.date()
         return bridge_session_day.isoformat() == get_session_day_str()
+
+    @staticmethod
+    def _parse_bridge_datetime(raw: str) -> datetime | None:
+        """Parse bridge timestamps written by Python (ISO) or MQL5."""
+        value = (raw or "").strip()
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            try:
+                return datetime.strptime(value, "%Y.%m.%d %H:%M:%S")
+            except ValueError:
+                return None
+
+    def _update_active_session_tracking(self, data: dict) -> None:
+        if bool(data.get("session_active")):
+            if self._active_session_since is None:
+                self._active_session_since = datetime.now()
+        else:
+            self._active_session_since = None
+            self._last_seen_ea_heartbeat = ""
+            self._last_seen_ea_heartbeat_at = None
+
+    def _enforce_ea_presence(self, data: dict) -> None:
+        """Kill MT5 if EA heartbeat disappears during an active session."""
+        if not bool(data.get("session_active")):
+            return
+        if not mt5_controller.is_mt5_running():
+            return
+
+        now = datetime.now()
+        heartbeat_raw = (data.get("ea_heartbeat") or "").strip()
+        if heartbeat_raw:
+            if heartbeat_raw != self._last_seen_ea_heartbeat:
+                self._last_seen_ea_heartbeat = heartbeat_raw
+                self._last_seen_ea_heartbeat_at = now
+            elif self._last_seen_ea_heartbeat_at is None:
+                self._last_seen_ea_heartbeat_at = now
+
+        # Allow a short startup window after clicking "Start Session".
+        grace_seconds = 30
+        if not heartbeat_raw:
+            if self._active_session_since is not None:
+                age = (now - self._active_session_since).total_seconds()
+                if age <= grace_seconds:
+                    return
+            reason = "missing"
+        else:
+            if self._last_seen_ea_heartbeat_at is None:
+                return
+            observed_age = (now - self._last_seen_ea_heartbeat_at).total_seconds()
+            if observed_age <= EA_HEARTBEAT_TIMEOUT_SECONDS:
+                return
+            reason = f"stale ({int(observed_age)}s since last update)"
+
+        mt5_controller.kill_mt5()
+        self._record_violation(
+            rule_code="EA_HEARTBEAT_MISSING",
+            severity="critical",
+            message=f"EA heartbeat {reason} during active session; MT5 terminated.",
+            context={"ea_heartbeat": heartbeat_raw},
+            dedupe_key=f"ea_heartbeat_missing:{get_session_day_str()}",
+        )
+        self._status_bar.showMessage("🛑  EA not detected in active session — MT5 closed")
 
     def _sanitize_inactive_bridge_state(self, data: dict) -> dict:
         """Reset stale intraday counters when session is inactive and no day row exists."""

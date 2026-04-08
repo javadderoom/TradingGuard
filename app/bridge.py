@@ -37,6 +37,7 @@ _DEFAULT_SESSION = {
     "last_trade_result": "",
     "last_trade_pnl": 0.0,
     "manual_checklist": {},
+    "ea_heartbeat": "",
     "timestamp": "",
 }
 

@@ -1,5 +1,18 @@
 // Event handlers
 
+void OnTimer()
+{
+    if (!ReadSession())
+        return;
+
+    SyncFromSession();
+    if (g_shutdownDone)
+        return;
+
+    if (g_session["session_active"] != NULL && g_session["session_active"].ToBool())
+        WriteHeartbeat();
+}
+
 void OnTick()
 {
     datetime now = TimeCurrent();

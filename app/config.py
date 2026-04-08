@@ -75,6 +75,7 @@ MT5_EXPERTS_PATH = (
 
 # ─── Polling ───────────────────────────────────────────────────────────────────
 SESSION_POLL_INTERVAL_MS = 2000  # How often the app re-reads session.json (ms)
+EA_HEARTBEAT_TIMEOUT_SECONDS = 20  # Max allowed age of EA heartbeat during active session
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
 from datetime import datetime, timedelta, date, timezone

@@ -97,11 +97,13 @@ int OnInit()
     CreateChecklistButtons();
     g_prevPositionsTotal = PositionsTotal();
     UpdateChartPanel();
+    EventSetTimer(5);
     return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason)
 {
+    EventKillTimer();
     RemoveChecklistButtons();
     Comment("");
 }
