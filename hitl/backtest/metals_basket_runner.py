@@ -251,22 +251,42 @@ def run_metals_basket_backtest(
             # Inject Screener Candidate Setup directly into Telemetry
             cand_entry = screener.get('entry_ref', price_g if sym == "XAUUSD" else price_s)
             cand_sl = screener.get('sl_ref')
+            mtf_info = screener.get("mtf_info", {})
+            mtf_phase = screener.get("phase", "UNKNOWN")
+            rec_target_rr = screener.get("recommended_target_rr", 3.0)
+            rec_be_rr = screener.get("recommended_be_rr")
+            phase_summary = screener.get("phase_summary", "")
+            dol_target = screener.get("dol_target", "N/A")
+            h1_state = mtf_info.get("h1_state", "NEUTRAL")
+
+            mtf_block = (
+                f"\n=== MULTI-TIMEFRAME (MTF) STRUCTURAL NARRATIVE ===\n"
+                f"• MTF Phase: {mtf_phase}\n"
+                f"• 1H Market Structure State: {h1_state}\n"
+                f"• Draw on Liquidity (DOL): {dol_target}\n"
+                f"• Target Strategy: {'BIG EXPANSION TARGET (4.5R)' if mtf_phase == 'PRO_EXPANSION' else ('SCALED RETRACEMENT TARGET (2.2R)' if mtf_phase == 'HTF_RETRACEMENT' else 'BALANCED RANGE TARGET (2.5R)')}\n"
+                f"• Breakeven Defense: {'Runner Mode (No early BE choke)' if rec_be_rr is None else f'Fast Breakeven Ratchet at {rec_be_rr}R'}\n"
+                f"• Structural Summary: {phase_summary}\n"
+                f"================================================\n"
+            )
             cand_block = (
                 f"\n=== SCREENER HIGH-PROBABILITY CANDIDATE SETUP ===\n"
                 f"• Screener Archetype: [{arch_id}] {screener.get('setup_type', 'N/A')}\n"
                 f"• Technical Trigger: {screener['reason']}\n"
-                f"• Screener Proximal Entry Reference: {cand_entry:{fmt}}\n"
+                f"• Recommended Proximal Entry: {cand_entry:{fmt}}\n"
             )
             if cand_sl:
-                cand_block += f"• Screener Structural SL Reference: {cand_sl:{fmt}}\n"
+                risk_val = abs(cand_entry - cand_sl) * (1.0 if sym == 'XAUUSD' else 50.0)
+                cand_block += f"• Structural SL Reference: {cand_sl:{fmt}} (Risk: ${risk_val:.2f})\n"
             cand_block += (
-                f"• Alpha Execution Directive: This setup has passed pre-screening for institutional edge.\n"
+                f"• Target Strategy: Aim for {rec_target_rr}R Take Profit ({'BIG EXPANSION RUNNER' if mtf_phase == 'PRO_EXPANSION' else 'SCALED RETRACEMENT'}).\n"
+                f"• Alpha Execution Directive: This setup has passed algorithmic MTF pre-screening.\n"
                 f"  The Council's primary mandate is ALPHA CAPTURE WITH CONTROLLED RISK.\n"
-                f"  If risk <= $17 and R:R >= 1:3.0, APPROVE [BUY LIMIT] or [SELL LIMIT] anchored at the PROXIMAL edge.\n"
+                f"  If risk <= $17 and R:R >= 1:2.0, APPROVE [BUY LIMIT] or [SELL LIMIT].\n"
                 f"  Do NOT invent bureaucratic reasons to stand aside when valid displacement/sweep is present.\n"
                 f"================================================\n"
             )
-            dossier["telemetry_prompt"] = cand_block + dossier.get("telemetry_prompt", "")
+            dossier["telemetry_prompt"] = mtf_block + cand_block + dossier.get("telemetry_prompt", "")
 
             # Inject SMT Divergence Context directly into AI Council Telemetry
             if smt_info.get("has_smt"):
@@ -308,6 +328,11 @@ def run_metals_basket_backtest(
             # 4. Forward M1 Execution Simulator with Dynamic Empirical Policy
             forward_m1 = feed.get_forward_m1_bars(sym, milestone, hours_forward=12)
             opt_tgt, opt_be = get_optimal_trade_management(sym, label)
+            if screener.get("recommended_target_rr"):
+                opt_tgt = screener["recommended_target_rr"]
+            if "recommended_be_rr" in screener:
+                opt_be = screener["recommended_be_rr"]
+
             eval_res = evaluate_council_decision(
                 res,
                 forward_m1,

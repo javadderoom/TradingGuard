@@ -343,30 +343,41 @@ def screen_ict_session(
     swept_high = pierced_high and not is_bullish_breakout and (current_price <= (range_high + rejection_buf) or recent_bars[-1]['close'] < recent_bars[-1]['open'])
     swept_low = pierced_low and not is_bearish_breakdown and (current_price >= (range_low - rejection_buf) or recent_bars[-1]['close'] > recent_bars[-1]['open'])
 
-    # 2b. Daily Regime Gate (Inside Day & Mid-Range Equilibrium Chop Suppression)
-    in_mid_equilibrium = False
-    is_inside_day = False
-    if bars_1d and len(bars_1d) >= 2:
-        pd = bars_1d[-2]
-        pdh = pd['high']
-        pdl = pd['low']
-        pdr = pdh - pdl
-        cd = bars_1d[-1]
-        is_inside_day = (cd['high'] <= pdh and cd['low'] >= pdl)
-        if pdr > 0:
-            in_mid_equilibrium = ((pdl + 0.25 * pdr) <= current_price <= (pdl + 0.75 * pdr))
+    # 2b. Multi-Timeframe Structural & Phase Analysis (Daily DOL + 1H MSS)
+    from hitl.backtest.mtf_structure import analyze_mtf_state, classify_setup_phase
+    mtf_state = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
 
-    # 2c. 1H Macro Order Flow & Bias
-    h1_bias = "NEUTRAL"
-    if len(bars_1h) >= 5:
-        h1_closes = [b['close'] for b in bars_1h[-5:]]
-        h1_opens = [b['open'] for b in bars_1h[-5:]]
-        h1_net_disp = h1_closes[-1] - h1_opens[-3]
-        min_1h_disp = 4.0 if "XAU" in symbol.upper() else (0.40 if is_silver else 0.0025)
-        if h1_net_disp > min_1h_disp:
-            h1_bias = "BULLISH"
-        elif h1_net_disp < -min_1h_disp:
-            h1_bias = "BEARISH"
+    if mtf_state.get("is_dead_consolidation", False):
+        return {
+            "has_setup": False,
+            "reason": f"Dead market: Mid-range equilibrium compression ({mtf_state.get('h1_state', 'NEUTRAL')})",
+            "setup_type": "NONE",
+            "mtf_info": mtf_state
+        }
+
+    in_mid_equilibrium = mtf_state.get("in_mid_equilibrium", False)
+    is_inside_day = mtf_state.get("is_inside_day", False)
+
+    def _package_setup(arch_id: str, setup_type: str, entry_p: float, sl_p: Optional[float], reason_text: str, direction: str) -> Dict[str, Any]:
+        p_info = classify_setup_phase(mtf_state, direction, symbol=symbol)
+        return {
+            "has_setup": True,
+            "reason": f"[{arch_id}] {reason_text} | Scaled Entry: {entry_p:{fmt}} | Phase: {p_info['phase']}",
+            "setup_type": setup_type,
+            "archetype_id": arch_id,
+            "entry_ref": entry_p,
+            "sl_ref": sl_p,
+            "mtf_info": mtf_state,
+            "recommended_target_rr": p_info["recommended_target_rr"],
+            "recommended_be_rr": p_info["recommended_be_rr"],
+            "phase": p_info["phase"],
+            "poi_ratio": p_info["poi_ratio"],
+            "dol_target": p_info["dol_target"],
+            "phase_summary": p_info["summary"]
+        }
+
+    short_phase = classify_setup_phase(mtf_state, "SHORT", symbol)
+    long_phase = classify_setup_phase(mtf_state, "LONG", symbol)
 
     # 3. Detect FVG & Breaker Blocks with Asset Specifics
     has_fvg, fvg_dir, fvg_proximal, fvg_distal = detect_fvg_5m(bars_5m, lookback=12, symbol=symbol)
@@ -382,77 +393,53 @@ def screen_ict_session(
 
         smt_type = smt_info.get("smt_type")
         if smt_type == "BEARISH_SMT" and not is_bullish_breakout and (swept_high or fvg_dir == "BEARISH" or breaker_type == "BEARISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=0.50)
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BEARISH") else (breaker_price if has_breaker else range_high)
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] BEARISH SMT: {smt_info.get('summary', '')} | Scaled Entry: {entry_p:{fmt}}",
-                "setup_type": "BEARISH_SMT_MITIGATION",
-                "archetype_id": arch_id,
-                "entry_ref": entry_p
-            }
+            sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+            sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), entry_p + sl_dist)
+            return _package_setup(arch_id, "BEARISH_SMT_MITIGATION", entry_p, sl_p, f"BEARISH SMT: {smt_info.get('summary', '')}", "SHORT")
         elif smt_type == "BULLISH_SMT" and not is_bearish_breakdown and (swept_low or fvg_dir == "BULLISH" or breaker_type == "BULLISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=0.50)
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BULLISH") else (breaker_price if has_breaker else range_low)
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] BULLISH SMT: {smt_info.get('summary', '')} | Scaled Entry: {entry_p:{fmt}}",
-                "setup_type": "BULLISH_SMT_MITIGATION",
-                "archetype_id": arch_id,
-                "entry_ref": entry_p
-            }
+            sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+            sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), entry_p - sl_dist)
+            return _package_setup(arch_id, "BULLISH_SMT_MITIGATION", entry_p, sl_p, f"BULLISH SMT: {smt_info.get('summary', '')}", "LONG")
 
     # Setup A: Judas Swing + Breaker Block (SETUP-ARCH-001)
     if swept_high and not is_bullish_breakout and breaker_type == "BEARISH_BREAKER":
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block at {breaker_price:{fmt}}",
-            "setup_type": "BEARISH_BREAKER_SWEEP",
-            "archetype_id": arch_id,
-            "entry_ref": breaker_price
-        }
+        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+        sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price + sl_dist)
+        return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
 
     if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER":
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block at {breaker_price:{fmt}}",
-            "setup_type": "BULLISH_BREAKER_SWEEP",
-            "archetype_id": arch_id,
-            "entry_ref": breaker_price
-        }
+        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+        sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price - sl_dist)
+        return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
 
     # Setup B: Judas Swing + Fair Value Gap (SETUP-ARCH-002)
     if swept_high and not is_bullish_breakout and fvg_dir == "BEARISH":
         arch_id = "SETUP-ARCH-002"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=0.50)
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG [RULE-EXEC-036 Scaled: {scaled_entry:{fmt}}]",
-            "setup_type": "BEARISH_SWEEP_FVG",
-            "archetype_id": arch_id,
-            "entry_ref": scaled_entry
-        }
+        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
+        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+        sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), scaled_entry + sl_dist)
+        return _package_setup(arch_id, "BEARISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG", "SHORT")
 
     if swept_low and not is_bearish_breakdown and fvg_dir == "BULLISH":
         arch_id = "SETUP-ARCH-002"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=0.50)
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG [RULE-EXEC-036 Scaled: {scaled_entry:{fmt}}]",
-            "setup_type": "BULLISH_SWEEP_FVG",
-            "archetype_id": arch_id,
-            "entry_ref": scaled_entry
-        }
+        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
+        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
+        sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), scaled_entry - sl_dist)
+        return _package_setup(arch_id, "BULLISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG", "LONG")
 
     # Setup C: Clean Market Structure Shift (MSS) with Breaker Block retest (SETUP-ARCH-003)
     # Gated: Must NOT be trapped in mid-range equilibrium chop, and must have a tight retest
@@ -461,25 +448,15 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] Bearish Breaker Block retest at {breaker_price:{fmt}}",
-                "setup_type": "BEARISH_BREAKER_RETEST",
-                "archetype_id": arch_id,
-                "entry_ref": breaker_price
-            }
+            sl_p = breaker_price + (6.0 if "XAU" in symbol.upper() else 0.0015)
+            return _package_setup(arch_id, "BEARISH_BREAKER_RETEST", breaker_price, sl_p, f"Bearish Breaker Block retest at {breaker_price:{fmt}}", "SHORT")
 
         if breaker_type == "BULLISH_BREAKER" and abs(current_price - breaker_price) <= breaker_tol:
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] Bullish Breaker Block retest at {breaker_price:{fmt}}",
-                "setup_type": "BULLISH_BREAKER_RETEST",
-                "archetype_id": arch_id,
-                "entry_ref": breaker_price
-            }
+            sl_p = breaker_price - (6.0 if "XAU" in symbol.upper() else 0.0015)
+            return _package_setup(arch_id, "BULLISH_BREAKER_RETEST", breaker_price, sl_p, f"Bullish Breaker Block retest at {breaker_price:{fmt}}", "LONG")
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
     # Gated: Must have broken outside of mid-range equilibrium and cannot be an inside day compression
@@ -488,25 +465,15 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-004"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] Breakout above {session_label} High with Bullish FVG at {fvg_proximal:{fmt}}",
-                "setup_type": "BULLISH_EXPANSION",
-                "archetype_id": arch_id,
-                "entry_ref": fvg_proximal
-            }
+            sl_p = fvg_distal - (1.50 if "XAU" in symbol.upper() else 0.0010)
+            return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
         if is_bearish_breakdown and fvg_dir == "BEARISH":
             arch_id = "SETUP-ARCH-004"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            return {
-                "has_setup": True,
-                "reason": f"[{arch_id}] Breakdown below {session_label} Low with Bearish FVG at {fvg_proximal:{fmt}}",
-                "setup_type": "BEARISH_EXPANSION",
-                "archetype_id": arch_id,
-                "entry_ref": fvg_proximal
-            }
+            sl_p = fvg_distal + (1.50 if "XAU" in symbol.upper() else 0.0010)
+            return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
     # Scaled minimum expansion: >= 12.0 pts on Gold, >= 0.80 on Silver, >= 35 pips on FX.
@@ -517,45 +484,25 @@ def screen_ict_session(
         if is_session_bearish and current_price >= (range_low + 0.45 * total_range):
             if current_price >= (range_low + 0.618 * total_range):
                 ote_entry = range_low + 0.705 * total_range
-                return {
-                    "has_setup": True,
-                    "reason": f"[{arch_id}] Bearish Trend Continuation: OTE Premium Retracement at {ote_entry:{fmt}} (Range: {total_range*10000 if is_fx else total_range:{fmt}} {unit})",
-                    "setup_type": "BEARISH_TREND_RETEST",
-                    "archetype_id": arch_id,
-                    "entry_ref": round(ote_entry, 5 if is_fx else 2)
-                }
+                sl_p = range_high + (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BEARISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bearish Trend Continuation: OTE Premium Retracement", "SHORT")
             elif (has_fvg and fvg_dir == "BEARISH") or (has_breaker and breaker_type == "BEARISH_BREAKER"):
                 entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BEARISH") else breaker_price
-                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=0.50) if has_fvg else entry_poi
-                return {
-                    "has_setup": True,
-                    "reason": f"[{arch_id}] Bearish Trend Continuation: Retracement to Breakdown POI at {scaled_entry:{fmt}}",
-                    "setup_type": "BEARISH_TREND_RETEST",
-                    "archetype_id": arch_id,
-                    "entry_ref": scaled_entry
-                }
+                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"]) if has_fvg else entry_poi
+                sl_p = range_high + (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BEARISH_TREND_RETEST", scaled_entry, sl_p, "Bearish Trend Continuation: Retracement to Breakdown POI", "SHORT")
 
         # Bullish: Prior session rallied; price retraced into lower half (<55% retracement)
         elif is_session_bullish and current_price <= (range_high - 0.45 * total_range):
             if current_price <= (range_high - 0.618 * total_range):
                 ote_entry = range_high - 0.705 * total_range
-                return {
-                    "has_setup": True,
-                    "reason": f"[{arch_id}] Bullish Trend Continuation: OTE Discount Retracement at {ote_entry:{fmt}} (Range: {total_range*10000 if is_fx else total_range:{fmt}} {unit})",
-                    "setup_type": "BULLISH_TREND_RETEST",
-                    "archetype_id": arch_id,
-                    "entry_ref": round(ote_entry, 5 if is_fx else 2)
-                }
+                sl_p = range_low - (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BULLISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bullish Trend Continuation: OTE Discount Retracement", "LONG")
             elif (has_fvg and fvg_dir == "BULLISH") or (has_breaker and breaker_type == "BULLISH_BREAKER"):
                 entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BULLISH") else breaker_price
-                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=0.50) if has_fvg else entry_poi
-                return {
-                    "has_setup": True,
-                    "reason": f"[{arch_id}] Bullish Trend Continuation: Retracement to Breakout POI at {scaled_entry:{fmt}}",
-                    "setup_type": "BULLISH_TREND_RETEST",
-                    "archetype_id": arch_id,
-                    "entry_ref": scaled_entry
-                }
+                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"]) if has_fvg else entry_poi
+                sl_p = range_low - (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)
     has_prom_sweep, sweep_dir, sweep_entry, sweep_sl, sweep_desc = detect_prominent_sweep_and_mss(
@@ -563,14 +510,8 @@ def screen_ict_session(
     )
     if has_prom_sweep and setup_registry.is_archetype_ratified("SETUP-ARCH-010"):
         arch_id = "SETUP-ARCH-010"
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] {sweep_desc} [Entry: {sweep_entry:{fmt}} | SL: {sweep_sl:{fmt}}]",
-            "setup_type": f"{sweep_dir}_PROMINENT_SWEEP_MSS",
-            "archetype_id": arch_id,
-            "entry_ref": sweep_entry,
-            "sl_ref": sweep_sl
-        }
+        direction = "LONG" if sweep_dir == "BULLISH" else "SHORT"
+        return _package_setup(arch_id, f"{sweep_dir}_PROMINENT_SWEEP_MSS", sweep_entry, sweep_sl, sweep_desc, direction)
 
     # Price trapped in mid-range consolidation
     return {

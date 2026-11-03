@@ -49,12 +49,14 @@ class CounterfactualOpportunityAuditor:
         pdh = dossier.get("pdh")
         pdl = dossier.get("pdl")
 
+        target_rr = screener_result.get("recommended_target_rr", 3.0)
+
         sym = symbol.upper()
         if "XAU" in sym:
             # Gold: $1.00 per point on 0.01 lot. Mandate min 5.5 to 7.0 pt buffer
             sl_dist = min(17.0, max(5.5, 1.5 * atr_5m))
             entry = round(entry_ref, 2)
-            min_target_dist = 3.0 * sl_dist
+            min_target_dist = target_rr * sl_dist
             if is_buy:
                 sl = round(entry - sl_dist, 2)
                 cand_tp = bench_high if (bench_high and (bench_high - entry) >= min_target_dist) else None
@@ -71,7 +73,7 @@ class CounterfactualOpportunityAuditor:
             # Silver: $50.00 per point on 0.01 lot ($0.50/cent). Max stop ceiling 0.34 pts ($17)
             sl_dist = min(0.34, max(0.20, 1.5 * atr_5m))
             entry = round(entry_ref, 3)
-            min_target_dist = 3.0 * sl_dist
+            min_target_dist = target_rr * sl_dist
             if is_buy:
                 sl = round(entry - sl_dist, 3)
                 cand_tp = bench_high if (bench_high and (bench_high - entry) >= min_target_dist) else None
@@ -88,7 +90,7 @@ class CounterfactualOpportunityAuditor:
             # FX (EURUSD, GBPUSD): $0.10 per pip on 0.01 lot
             sl_dist = max(0.0010, 1.5 * atr_5m)
             entry = round(entry_ref, 5)
-            min_target_dist = 3.0 * sl_dist
+            min_target_dist = target_rr * sl_dist
             if is_buy:
                 sl = round(entry - sl_dist, 5)
                 cand_tp = bench_high if (bench_high and (bench_high - entry) >= min_target_dist) else None
@@ -131,7 +133,11 @@ class CounterfactualOpportunityAuditor:
         - Hard Stop Loss and Take Profit resolutions
         """
         hypo_order = self.build_theoretical_order(screener_result, dossier, symbol)
-        eval_res = evaluate_council_decision(hypo_order, forward_m1_bars, symbol)
+        tgt_cap = screener_result.get("recommended_target_rr", 3.0)
+        be_cap = screener_result.get("recommended_be_rr")
+        if be_cap is None:
+            be_cap = 999.0
+        eval_res = evaluate_council_decision(hypo_order, forward_m1_bars, symbol, breakeven_rr=be_cap, target_rr_cap=tgt_cap)
 
         status = eval_res.get("status", "EXPIRED")
         pnl = eval_res.get("realized_pnl_usd", 0.0)
