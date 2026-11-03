@@ -43,26 +43,12 @@ class LiveMarketRadar:
 
     def is_killzone_active(self) -> Tuple[bool, str]:
         """
-        Determines whether the market is currently inside institutional Killzones (Tehran time):
-        - London Killzone: 11:00 - 15:00 Tehran Time (07:30 - 11:30 UTC)
-        - NY Killzone:     16:30 - 20:30 Tehran Time (13:00 - 17:00 UTC)
+        Determines whether the market is currently inside institutional Killzones,
+        dynamically resolving seasonal DST shifts across London, New York, and Tehran.
         """
-        now = datetime.datetime.now()
-        # Monday = 0 ... Friday = 4
-        if now.weekday() >= 5:
-            return False, "Weekend (Market Closed)"
-
-        t_min = now.hour * 60 + now.minute
-
-        # London: 11:00 (660m) to 15:00 (900m)
-        if 660 <= t_min <= 900:
-            return True, "London Killzone"
-
-        # NY Pre-Open & Regular Session: 15:30 (930m) to 20:30 (1230m)
-        if 930 <= t_min <= 1230:
-            return True, "New York Session"
-
-        return False, "Outside Killzones"
+        from hitl.backtest.session_clock import get_active_session_status
+        is_active, label, sess_key = get_active_session_status()
+        return is_active, label
 
     def scan_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
@@ -209,7 +195,28 @@ class LiveMarketRadar:
             if side == "BUY" and (last_ext != 0.0 and extreme_val >= last_ext - (min_sweep_pips * pip_size)):
                 return None
 
+        # Check Intermarket SMT Divergence for Gold vs Silver (SETUP-ARCH-005/007)
+        smt_info = None
+        if "XAU" in symbol.upper():
+            try:
+                res_silver = self.engine.resolve_symbol("XAGUSD")
+                if res_silver:
+                    rates_s = mt5.copy_rates_from_pos(res_silver, mt5.TIMEFRAME_M5, 0, 120)
+                    if rates_s is not None and len(rates_s) >= 40:
+                        list_5m_s = _convert_records(rates_s)
+                        from hitl.backtest.metals_smt import detect_metals_smt_divergence
+                        smt_info = detect_metals_smt_divergence(list_5m, list_5m_s, cur_dt.hour)
+            except Exception as e:
+                print(f"[LiveRadar] Metals SMT check error: {e}")
+
         setup_type = "BEARISH_SWEEP_MSS" if is_bearish_mss else "BULLISH_SWEEP_MSS"
+        if smt_info and smt_info.get("has_smt"):
+            smt_type = smt_info.get("smt_type", "")
+            if "BEARISH" in smt_type and is_bearish_mss:
+                setup_type = "[SETUP-ARCH-007] Bearish Intermarket SMT Displacement"
+            elif "BULLISH" in smt_type and is_bullish_mss:
+                setup_type = "[SETUP-ARCH-005] Bullish Intermarket SMT Accumulation"
+
         target_name = swept_high_target if is_bearish_mss else swept_low_target
 
         return {
@@ -221,7 +228,8 @@ class LiveMarketRadar:
             "sweep_extreme": extreme_val,
             "sweep_delta_pips": round(sweep_delta_pips, 1),
             "current_price": current_bid,
-            "timestamp_utc": cur_dt
+            "timestamp_utc": cur_dt,
+            "smt_info": smt_info
         }
 
     def trigger_autonomous_pipeline(self, setup: Dict[str, Any]):
@@ -314,6 +322,22 @@ class LiveMarketRadar:
 
             # 3. Streamlined Single-Message Telegram Dispatch (100% English)
             if plan and plan.get("entry") and plan.get("sl") and plan.get("tp"):
+                from hitl.backtest.session_clock import get_active_session_status
+                from hitl.backtest.evaluator import get_optimal_trade_management
+                _, _, sess_key = get_active_session_status()
+                target_rr_cap, breakeven_rr = get_optimal_trade_management(sym, sess_key)
+
+                # Cap Take Profit target to empirical optimal ceiling
+                initial_rr = plan.get("rr", 3.0)
+                if initial_rr > target_rr_cap:
+                    risk_dist = abs(plan["entry"] - plan["sl"])
+                    if "BUY" in decision:
+                        capped_tp = plan["entry"] + (risk_dist * target_rr_cap)
+                    else:
+                        capped_tp = plan["entry"] - (risk_dist * target_rr_cap)
+                    plan["tp"] = round(capped_tp, 5 if is_fx else 2)
+                    plan["rr"] = target_rr_cap
+
                 plan_id = f"PLN-{sym}-{int(time.time())}"
                 risk_usd = plan["risk_pips"] * (0.1 if is_fx else 1.0)
                 order_lbl = decision.replace("_", " ")
@@ -328,6 +352,9 @@ class LiveMarketRadar:
 
                 risk_str = f"{plan['risk_pips']:.1f} {pips_unit} | ${risk_usd:.2f}"
                 is_demo = self.engine.is_demo_account()
+
+                be_str = f"🛡️ *Breakeven:* Auto-secured at `+{breakeven_rr:.1f}R`\n" if breakeven_rr else "🛡️ *Breakeven:* Off (Runner mode)\n"
+                smt_str = f"🔗 *Intermarket SMT:* {setup['smt_info']['summary']}\n" if setup.get('smt_info') and setup['smt_info'].get('has_smt') else ""
 
                 if is_demo:
                     # Autonomous Demo Execution: Council has free will, no approval needed
@@ -350,6 +377,8 @@ class LiveMarketRadar:
                         "tp": plan["tp"],
                         "lot": 0.01,
                         "rr": plan["rr"],
+                        "breakeven_rr": breakeven_rr,
+                        "session_key": sess_key,
                         "risk_usd": risk_usd,
                         "ticket": ticket if success else None,
                         "full_report": report,
@@ -382,7 +411,9 @@ class LiveMarketRadar:
                         f"⚡ *{sym_icon} {sym} · {order_lbl}*\n"
                         f"📍 *Entry:* `{plan['entry']:{fmt}}`\n"
                         f"🛑 *SL:*    `{plan['sl']:{fmt}}` ({risk_str})\n"
-                        f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}*)\n"
+                        f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}* [Capped])\n"
+                        f"{be_str}"
+                        f"{smt_str}"
                         f"💡 *Hunt:*  `{setup['swept_target']}` (+{setup['sweep_delta_pips']} {pips_unit})\n"
                         f"⚖️ *Lot:*   `0.01`\n"
                         f"✅ *Final Verdict:* {clean_verdict}\n\n"
@@ -399,6 +430,8 @@ class LiveMarketRadar:
                         "tp": plan["tp"],
                         "lot": 0.01,
                         "rr": plan["rr"],
+                        "breakeven_rr": breakeven_rr,
+                        "session_key": sess_key,
                         "risk_usd": risk_usd,
                         "full_report": report,
                         "created_at": time.time()
@@ -420,7 +453,9 @@ class LiveMarketRadar:
                         f"⚡ *{sym_icon} {sym} · {order_lbl}*\n\n"
                         f"📍 *Entry:* `{plan['entry']:{fmt}}`\n"
                         f"🛑 *SL:*    `{plan['sl']:{fmt}}` ({risk_str})\n"
-                        f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}*)\n"
+                        f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}* [Capped])\n"
+                        f"{be_str}"
+                        f"{smt_str}"
                         f"💡 *Hunt:*  `{setup['swept_target']}` (+{setup['sweep_delta_pips']} {pips_unit})\n"
                         f"⚖️ *Lot:*   `0.01`\n"
                         f"✅ *Final Verdict:* {clean_verdict}"

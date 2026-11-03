@@ -24,3 +24,17 @@
 - Every single trade in `orders_schedule.csv` must be the direct, unedited programmatic output of the automated system.
 - If the current codebase, screener, or algorithm has a limitation or cannot detect a setup, state the technical limitation bluntly and immediately. Never manually fabricate or insert a trade to simulate success.
 - Any attempt to deceive the user or take shortcuts instead of executing the real pipeline is strictly forbidden.
+
+## Dynamic Seasonal Session Clock Mandate (Tehran No-DST vs London/NY DST)
+- **Tehran abolished DST permanently (Fixed at UTC+3:30 year-round).**
+- **London (UK) and New York (US) change their clocks twice annually for DST.**
+- **Winter / Autumn Schedule (Late October / Early November to March):**
+  - London Open (08:00 GMT / UTC) = **11:30 Tehran Time** (NOT 10:30).
+  - NY Open Forex Killzone (08:00 EST / 13:00 UTC) = **16:30 Tehran Time** (NOT 15:30).
+  - NYSE Equities Cash Open (09:30 EST / 14:30 UTC) = **18:00 Tehran Time**.
+- **Summer Schedule (Late March to Late October):**
+  - London Open (08:00 BST / 07:00 UTC) = **10:30 Tehran Time**.
+  - NY Open Forex Killzone (08:00 EDT / 12:00 UTC) = **15:30 Tehran Time**.
+  - NYSE Equities Cash Open (09:30 EDT / 13:30 UTC) = **17:00 Tehran Time**.
+- **Enforcement**: Never use static hardcoded Tehran hours across different seasons. All session calculations, backtests, and live radar monitors must dynamically resolve via `hitl/backtest/session_clock.py` or standard `ZoneInfo`.
+

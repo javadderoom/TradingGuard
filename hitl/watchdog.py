@@ -36,6 +36,7 @@ class MarketWatchdog:
         self.reminded_tickets: Set[int] = set()
         self.warned_news_events: Set[str] = set()
         self.known_positions: Set[int] = set()
+        self.ratcheted_be_positions: Set[int] = set()
         if self.engine.ensure_connected():
             curr_pos = mt5.positions_get()
             if curr_pos:
@@ -182,15 +183,17 @@ class MarketWatchdog:
         # Clean up stale reminded tickets
         self.reminded_tickets = self.reminded_tickets.intersection(active_tickets)
 
-        # 2. Inspect Open Positions (Detect Newly Filled Orders)
+        # 2. Inspect Open Positions (Detect Newly Filled Orders & Dynamic Breakeven Ratchet)
         positions = mt5.positions_get()
         current_pos_tickets = set()
         if positions:
             for p in positions:
                 current_pos_tickets.add(p.ticket)
+                is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+                pos_type = "BUY" if is_buy else "SELL"
+
                 if p.ticket not in self.known_positions:
                     self.known_positions.add(p.ticket)
-                    pos_type = "BUY" if p.type == mt5.POSITION_TYPE_BUY else "SELL"
                     self.client.send_message(
                         chat_id,
                         f"🎯 *Limit Order Filled - Position Active!*\n"
@@ -200,6 +203,55 @@ class MarketWatchdog:
                         f"📍 Entry: `{p.price_open}` | 🛑 SL: `{p.sl}` | 🎯 TP: `{p.tp}`\n"
                         f"🧘 *Set & Forget Protocol Activated.*"
                     )
+
+                # Dynamic Breakeven Ratchet Protocol
+                if p.ticket not in self.ratcheted_be_positions and p.sl > 0:
+                    try:
+                        from hitl.backtest.session_clock import get_active_session_status
+                        from hitl.backtest.evaluator import get_optimal_trade_management, get_default_broker_spread
+                        _, _, sess_key = get_active_session_status()
+                        _, be_rr = get_optimal_trade_management(p.symbol, sess_key)
+
+                        if be_rr is not None and be_rr > 0:
+                            risk_pts = abs(p.price_open - p.sl)
+                            spread_pts = get_default_broker_spread(p.symbol)
+                            digits = 5 if ("EUR" in p.symbol or "GBP" in p.symbol) else 2
+
+                            if is_buy:
+                                trigger_px = p.price_open + (be_rr * risk_pts)
+                                if p.price_current >= trigger_px and p.sl < p.price_open:
+                                    be_sl = round(p.price_open + spread_pts, digits)
+                                    ok, msg = self.engine.modify_position_sltp(p.ticket, sl=be_sl, tp=p.tp)
+                                    if ok:
+                                        self.ratcheted_be_positions.add(p.ticket)
+                                        self.client.send_message(
+                                            chat_id,
+                                            f"🛡️ *Breakeven Ratchet Activated!*\n\n"
+                                            f"📌 *Ticket:* `#{p.ticket}` | Symbol: `{p.symbol}` ({pos_type})\n"
+                                            f"📈 *Favorable Excursion:* Reached `+{be_rr:.1f}R` ({p.price_current})\n"
+                                            f"🔒 *Stop Loss Ratcheted:* Entry + Spread (`{be_sl}`)\n"
+                                            f"🎉 *Risk-Free Trade Guaranteed!*"
+                                        )
+                            else: # SELL
+                                trigger_px = p.price_open - (be_rr * risk_pts)
+                                if p.price_current <= trigger_px and p.sl > p.price_open:
+                                    be_sl = round(p.price_open - spread_pts, digits)
+                                    ok, msg = self.engine.modify_position_sltp(p.ticket, sl=be_sl, tp=p.tp)
+                                    if ok:
+                                        self.ratcheted_be_positions.add(p.ticket)
+                                        self.client.send_message(
+                                            chat_id,
+                                            f"🛡️ *Breakeven Ratchet Activated!*\n\n"
+                                            f"📌 *Ticket:* `#{p.ticket}` | Symbol: `{p.symbol}` ({pos_type})\n"
+                                            f"📉 *Favorable Excursion:* Reached `+{be_rr:.1f}R` ({p.price_current})\n"
+                                            f"🔒 *Stop Loss Ratcheted:* Entry - Spread (`{be_sl}`)\n"
+                                            f"🎉 *Risk-Free Trade Guaranteed!*"
+                                        )
+                    except Exception as be_err:
+                        print(f"[Watchdog] Breakeven ratchet error: {be_err}")
+
+        # Clean up ratcheted tickets when closed
+        self.ratcheted_be_positions = self.ratcheted_be_positions.intersection(current_pos_tickets)
 
         # 3. Detect Closed Positions (Position was in known_positions but now gone!)
         closed_tickets = self.known_positions - current_pos_tickets

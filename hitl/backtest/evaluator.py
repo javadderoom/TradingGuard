@@ -4,7 +4,37 @@ Replays forward M1 bars to simulate exact order fills, 45-minute TTL expirations
 Watchdog ATR momentum spike cancellations, and hard SL/TP trade outcomes.
 """
 
-from typing import Dict, Any, List, Optional
+import json
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Tuple
+
+POLICY_FILE = Path(__file__).resolve().parent.parent / "memory" / "optimal_trade_management_policy.json"
+
+
+def get_optimal_trade_management(symbol: str, session_label: str) -> Tuple[float, Optional[float]]:
+    """Retrieves empirical (Target R:R, Breakeven R:R) for a given symbol and session."""
+    sym_clean = "XAUUSD" if "XAU" in symbol.upper() else ("EURUSD" if "EUR" in symbol.upper() else ("GBPUSD" if "GBP" in symbol.upper() else "XAUUSD"))
+    
+    s = (session_label or "").lower()
+    if "silver bullet" in s:
+        sess_key = "NY_Silver_Bullet"
+    elif "london" in s:
+        sess_key = "London_Post_Open" if "post" in s else ("London_Pre_Open" if "pre" in s else "London_Open")
+    elif "ny" in s or "new york" in s:
+        sess_key = "NY_Post_Open" if "post" in s else ("NY_Pre_Open" if "pre" in s else "NY_Open")
+    else:
+        sess_key = "London_Open"
+
+    if POLICY_FILE.exists():
+        try:
+            with open(POLICY_FILE, "r", encoding="utf-8") as f:
+                policy = json.load(f)
+                match = policy.get(sym_clean, {}).get(sess_key)
+                if match:
+                    return float(match.get("target_rr", 3.5)), match.get("breakeven_rr")
+        except Exception:
+            pass
+    return 3.5, 2.0
 
 
 def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14) -> float:
@@ -38,13 +68,16 @@ def evaluate_council_decision(
     decision_dict: Dict[str, Any],
     forward_m1_bars: List[Dict[str, Any]],
     symbol: str = "XAUUSD",
-    spread_pts: Optional[float] = None
+    spread_pts: Optional[float] = None,
+    breakeven_rr: float = 2.0,
+    target_rr_cap: float = 3.5
 ) -> Dict[str, Any]:
     """
     Evaluates the CIO Council decision against forward M1 price action.
+    Enforces dynamic Breakeven ratchet (at breakeven_rr) and caps unrealistic targets at target_rr_cap.
     Returns:
     {
-        'status': 'WIN' | 'LOSS' | 'EXPIRED' | 'CANCELLED_WATCHDOG' | 'STAND_ASIDE' | 'OPEN_AT_END',
+        'status': 'WIN' | 'LOSS' | 'BREAKEVEN' | 'EXPIRED' | 'CANCELLED_WATCHDOG' | 'STAND_ASIDE' | 'OPEN_AT_END',
         'realized_pnl_usd': float,
         'fill_minute': int or None,
         'exit_minute': int or None,
@@ -116,6 +149,18 @@ def evaluate_council_decision(
     if price_risk_usd > 17.0:
         price_risk_usd = 17.0  # Hard ceiling enforcement ($17.00)
 
+    # Target R:R Realism Cap: Capping fantasy intraday targets (e.g. max 3.5 to 4.0 R:R)
+    risk_pts = abs(entry - sl)
+    if target_rr_cap and risk_pts > 0:
+        if is_buy:
+            max_tp = entry + (risk_pts * target_rr_cap)
+            if tp > max_tp:
+                tp = max_tp
+        else:
+            min_tp = entry - (risk_pts * target_rr_cap)
+            if tp < min_tp:
+                tp = min_tp
+
     is_filled = False
     fill_idx = None
     active_sl = sl
@@ -176,47 +221,25 @@ def evaluate_council_decision(
                 fill_idx = idx
 
         else:
-            # Filled! Monitor for SL or TP with Spread Dynamics (Pure Target / Stop - No Breakeven Choking)
+            # Filled! Monitor for SL, Breakeven, or TP with Spread Dynamics
             if is_buy:
-                # BUY Position: Closed at BID
-                if bar['low'] <= sl:
-                    loss_amount = -min(17.0, price_risk_usd)
-                    # Target Optimization Metric: Record peak excursion before stopping out
-                    mfe_price = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
-                    max_fav_dist = max(0.0, mfe_price - entry)
-                    max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
-                    unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
-                    unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
-                    ext_units = max_fav_dist * unit_scale
-                    
-                    target_opt = {
-                        "planned_tp": tp,
-                        "planned_rr": round(abs(tp - entry) * pip_val / max(0.1, price_risk_usd), 2),
-                        "mfe_price": round(mfe_price, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
-                        "max_rr_potential": max_rr,
-                        "extension_beyond_tp": 0.0,
-                        "capture_efficiency_pct": 0.0,
-                        "excursion_before_sl_units": round(ext_units, 1)
-                    }
-                    notes_extra = f" (Peak excursion reached {mfe_price:{val_fmt}} / 1:{max_rr:.2f} R:R before reversal)" if max_rr >= 1.0 else ""
-                    return {
-                        "status": "LOSS",
-                        "realized_pnl_usd": round(loss_amount, 2),
-                        "fill_minute": fill_idx,
-                        "exit_minute": idx,
-                        "rr_realized": -1.0,
-                        "target_optimization": target_opt,
-                        "notes": f"Hit Stop Loss at {sl_fmt}. Realized loss strictly capped at ${abs(loss_amount):.2f}.{notes_extra}"
-                    }
-                elif bar['high'] >= tp:
+                # 1. Dynamic Breakeven Ratchet (RULE-MGMT-029)
+                mfe_price = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
+                curr_fav_dist = max(0.0, mfe_price - entry)
+                curr_rr = curr_fav_dist * pip_val / max(0.1, price_risk_usd)
+                if curr_rr >= breakeven_rr and not is_be_active:
+                    is_be_active = True
+                    active_sl = entry + spread  # cover broker spread for risk-free scratch
+
+                # 2. Check Take Profit Hit
+                if bar['high'] >= tp:
                     reward_amount = abs(tp - entry) * pip_val
                     rr = reward_amount / max(0.1, price_risk_usd)
-                    # Target Optimization Engine: Calculate full run-out beyond initial target
                     subsequent_bars = forward_m1_bars[fill_idx:]
-                    mfe_price = max(b['high'] for b in subsequent_bars)
-                    max_fav_dist = max(0.0, mfe_price - entry)
+                    full_mfe = max(b['high'] for b in subsequent_bars)
+                    max_fav_dist = max(0.0, full_mfe - entry)
                     max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
-                    ext_dist = max(0.0, mfe_price - tp)
+                    ext_dist = max(0.0, full_mfe - tp)
                     unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
                     unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
                     ext_units = ext_dist * unit_scale
@@ -226,7 +249,7 @@ def evaluate_council_decision(
                     target_opt = {
                         "planned_tp": tp,
                         "planned_rr": round(rr, 2),
-                        "mfe_price": round(mfe_price, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
+                        "mfe_price": round(full_mfe, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
                         "max_rr_potential": max_rr,
                         "extension_beyond_tp": round(ext_units, 1),
                         "capture_efficiency_pct": eff_pct,
@@ -239,48 +262,68 @@ def evaluate_council_decision(
                         "exit_minute": idx,
                         "rr_realized": round(rr, 2),
                         "target_optimization": target_opt,
-                        "notes": f"Hit Take Profit at {tp_fmt}! Realized: +${reward_amount:.2f} (R:R 1:{rr:.2f}). Market extended to {mfe_price:{val_fmt}} (Peak R:R 1:{max_rr:.2f}, +{ext_units:.1f} {unit_name} beyond target, Efficiency: {eff_pct}%)."
+                        "notes": f"Hit Take Profit at {tp_fmt}! Realized: +${reward_amount:.2f} (R:R 1:{rr:.2f}). Market extended to {full_mfe:{val_fmt}} (Peak R:R 1:{max_rr:.2f}, +{ext_units:.1f} {unit_name} beyond target, Efficiency: {eff_pct}%)."
                     }
+
+                # 3. Check Stop Loss / Breakeven Hit
+                elif bar['low'] <= active_sl:
+                    if is_be_active:
+                        mfe_full = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
+                        max_rr = round((mfe_full - entry) * pip_val / max(0.1, price_risk_usd), 2)
+                        return {
+                            "status": "BREAKEVEN",
+                            "realized_pnl_usd": 0.0,
+                            "fill_minute": fill_idx,
+                            "exit_minute": idx,
+                            "rr_realized": 0.0,
+                            "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Capital defended!"
+                        }
+                    else:
+                        loss_amount = -min(17.0, price_risk_usd)
+                        mfe_full = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
+                        max_fav_dist = max(0.0, mfe_full - entry)
+                        max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
+                        unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
+                        unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
+                        ext_units = max_fav_dist * unit_scale
+                        target_opt = {
+                            "planned_tp": tp,
+                            "planned_rr": round(abs(tp - entry) * pip_val / max(0.1, price_risk_usd), 2),
+                            "mfe_price": round(mfe_full, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
+                            "max_rr_potential": max_rr,
+                            "extension_beyond_tp": 0.0,
+                            "capture_efficiency_pct": 0.0,
+                            "excursion_before_sl_units": round(ext_units, 1)
+                        }
+                        notes_extra = f" (Peak excursion reached {mfe_full:{val_fmt}} / 1:{max_rr:.2f} R:R before reversal)" if max_rr >= 1.0 else ""
+                        return {
+                            "status": "LOSS",
+                            "realized_pnl_usd": round(loss_amount, 2),
+                            "fill_minute": fill_idx,
+                            "exit_minute": idx,
+                            "rr_realized": -1.0,
+                            "target_optimization": target_opt,
+                            "notes": f"Hit Stop Loss at {sl_fmt}. Realized loss strictly capped at ${abs(loss_amount):.2f}.{notes_extra}"
+                        }
             else:
                 # SELL Position: Closed at ASK = BID + Spread
-                if (bar['high'] + spread) >= sl:
-                    loss_amount = -min(17.0, price_risk_usd)
-                    # Target Optimization Metric: Record peak excursion before stopping out
-                    mfe_price = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
-                    max_fav_dist = max(0.0, entry - (mfe_price + spread))
-                    max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
-                    unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
-                    unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
-                    ext_units = max_fav_dist * unit_scale
-                    
-                    target_opt = {
-                        "planned_tp": tp,
-                        "planned_rr": round(abs(entry - tp) * pip_val / max(0.1, price_risk_usd), 2),
-                        "mfe_price": round(mfe_price, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
-                        "max_rr_potential": max_rr,
-                        "extension_beyond_tp": 0.0,
-                        "capture_efficiency_pct": 0.0,
-                        "excursion_before_sl_units": round(ext_units, 1)
-                    }
-                    notes_extra = f" (Peak excursion reached {mfe_price:{val_fmt}} / 1:{max_rr:.2f} R:R before reversal)" if max_rr >= 1.0 else ""
-                    return {
-                        "status": "LOSS",
-                        "realized_pnl_usd": round(loss_amount, 2),
-                        "fill_minute": fill_idx,
-                        "exit_minute": idx,
-                        "rr_realized": -1.0,
-                        "target_optimization": target_opt,
-                        "notes": f"Hit Stop Loss (Ask {bar['high'] + spread:{val_fmt}} >= SL {sl_fmt}). Realized loss strictly capped at ${abs(loss_amount):.2f}.{notes_extra}"
-                    }
-                elif (bar['low'] + spread) <= tp:
+                # 1. Dynamic Breakeven Ratchet (RULE-MGMT-029)
+                mfe_price = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
+                curr_fav_dist = max(0.0, entry - (mfe_price + spread))
+                curr_rr = curr_fav_dist * pip_val / max(0.1, price_risk_usd)
+                if curr_rr >= breakeven_rr and not is_be_active:
+                    is_be_active = True
+                    active_sl = entry - spread  # cover broker spread for risk-free scratch
+
+                # 2. Check Take Profit Hit
+                if (bar['low'] + spread) <= tp:
                     reward_amount = abs(entry - tp) * pip_val
                     rr = reward_amount / max(0.1, price_risk_usd)
-                    # Target Optimization Engine: Calculate full run-out beyond initial target
                     subsequent_bars = forward_m1_bars[fill_idx:]
-                    mfe_price = min(b['low'] for b in subsequent_bars)
-                    max_fav_dist = max(0.0, entry - (mfe_price + spread))
+                    full_mfe = min(b['low'] for b in subsequent_bars)
+                    max_fav_dist = max(0.0, entry - (full_mfe + spread))
                     max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
-                    ext_dist = max(0.0, tp - (mfe_price + spread))
+                    ext_dist = max(0.0, tp - (full_mfe + spread))
                     unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
                     unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
                     ext_units = ext_dist * unit_scale
@@ -290,7 +333,7 @@ def evaluate_council_decision(
                     target_opt = {
                         "planned_tp": tp,
                         "planned_rr": round(rr, 2),
-                        "mfe_price": round(mfe_price, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
+                        "mfe_price": round(full_mfe, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
                         "max_rr_potential": max_rr,
                         "extension_beyond_tp": round(ext_units, 1),
                         "capture_efficiency_pct": eff_pct,
@@ -303,40 +346,49 @@ def evaluate_council_decision(
                         "exit_minute": idx,
                         "rr_realized": round(rr, 2),
                         "target_optimization": target_opt,
-                        "notes": f"Hit Take Profit at {tp_fmt}! Realized: +${reward_amount:.2f} (R:R 1:{rr:.2f}). Market extended to {mfe_price:{val_fmt}} (Peak R:R 1:{max_rr:.2f}, +{ext_units:.1f} {unit_name} beyond target, Efficiency: {eff_pct}%)."
+                        "notes": f"Hit Take Profit at {tp_fmt}! Realized: +${reward_amount:.2f} (R:R 1:{rr:.2f}). Market extended to {full_mfe:{val_fmt}} (Peak R:R 1:{max_rr:.2f}, +{ext_units:.1f} {unit_name} beyond target, Efficiency: {eff_pct}%)."
                     }
-                    reward_amount = abs(entry - tp) * pip_val
-                    rr = reward_amount / max(0.1, price_risk_usd)
-                    # Target Optimization Engine: Calculate full run-out beyond initial target
-                    subsequent_bars = forward_m1_bars[fill_idx:]
-                    mfe_price = min(b['low'] for b in subsequent_bars)
-                    max_fav_dist = max(0.0, entry - (mfe_price + spread))
-                    max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
-                    ext_dist = max(0.0, tp - (mfe_price + spread))
-                    unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
-                    unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
-                    ext_units = ext_dist * unit_scale
-                    eff_pct = round((abs(entry - tp) / max(0.00001, max_fav_dist)) * 100, 1) if max_fav_dist > 0 else 100.0
-                    left_on_table = round(max(0.0, (max_rr - rr) * price_risk_usd), 2)
 
-                    target_opt = {
-                        "planned_tp": tp,
-                        "planned_rr": round(rr, 2),
-                        "mfe_price": round(mfe_price, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
-                        "max_rr_potential": max_rr,
-                        "extension_beyond_tp": round(ext_units, 1),
-                        "capture_efficiency_pct": eff_pct,
-                        "left_on_table_usd": left_on_table
-                    }
-                    return {
-                        "status": "WIN",
-                        "realized_pnl_usd": round(reward_amount, 2),
-                        "fill_minute": fill_idx,
-                        "exit_minute": idx,
-                        "rr_realized": round(rr, 2),
-                        "target_optimization": target_opt,
-                        "notes": f"Hit Take Profit (Ask cleared TP {tp_fmt})! Realized: +${reward_amount:.2f} (R:R 1:{rr:.2f}). Market extended to {mfe_price:{val_fmt}} (Peak R:R 1:{max_rr:.2f}, +{ext_units:.1f} {unit_name} beyond target, Efficiency: {eff_pct}%)."
-                    }
+                # 3. Check Stop Loss / Breakeven Hit
+                elif (bar['high'] + spread) >= active_sl:
+                    if is_be_active:
+                        mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
+                        max_rr = round((entry - (mfe_full + spread)) * pip_val / max(0.1, price_risk_usd), 2)
+                        return {
+                            "status": "BREAKEVEN",
+                            "realized_pnl_usd": 0.0,
+                            "fill_minute": fill_idx,
+                            "exit_minute": idx,
+                            "rr_realized": 0.0,
+                            "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Capital defended!"
+                        }
+                    else:
+                        loss_amount = -min(17.0, price_risk_usd)
+                        mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
+                        max_fav_dist = max(0.0, entry - (mfe_full + spread))
+                        max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
+                        unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
+                        unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
+                        ext_units = max_fav_dist * unit_scale
+                        target_opt = {
+                            "planned_tp": tp,
+                            "planned_rr": round(abs(entry - tp) * pip_val / max(0.1, price_risk_usd), 2),
+                            "mfe_price": round(mfe_full, 5 if "EUR" in symbol.upper() or "GBP" in symbol.upper() else 2),
+                            "max_rr_potential": max_rr,
+                            "extension_beyond_tp": 0.0,
+                            "capture_efficiency_pct": 0.0,
+                            "excursion_before_sl_units": round(ext_units, 1)
+                        }
+                        notes_extra = f" (Peak excursion reached {mfe_full:{val_fmt}} / 1:{max_rr:.2f} R:R before reversal)" if max_rr >= 1.0 else ""
+                        return {
+                            "status": "LOSS",
+                            "realized_pnl_usd": round(loss_amount, 2),
+                            "fill_minute": fill_idx,
+                            "exit_minute": idx,
+                            "rr_realized": -1.0,
+                            "target_optimization": target_opt,
+                            "notes": f"Hit Stop Loss (Ask {bar['high'] + spread:{val_fmt}} >= SL {sl_fmt}). Realized loss strictly capped at ${abs(loss_amount):.2f}.{notes_extra}"
+                        }
 
     # If still open by end of window
     if is_filled:

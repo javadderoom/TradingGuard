@@ -30,66 +30,86 @@ from hitl.backtest.data_feed import HistoricalDataFeed, _convert_records
 from hitl.backtest.fast_screener import screen_ict_session
 from hitl.backtest.metals_smt import detect_metals_smt_divergence
 from hitl.backtest.council_replay import convene_council_on_historical_dossier
-from hitl.backtest.evaluator import evaluate_council_decision, get_default_broker_spread
+from hitl.backtest.evaluator import evaluate_council_decision, get_default_broker_spread, get_optimal_trade_management
 from hitl.backtest.logger import BacktestLogger
 from hitl.setup_registry import setup_registry
 from hitl.review_council import convene_review_council
 from hitl.counterfactual_auditor import counterfactual_auditor
+from hitl.backtest.session_clock import get_session_times_for_date
 
 
 def generate_basket_checkpoints(
     days_back: Optional[int] = None,
     start_date: Optional[datetime.date] = None,
     end_date: Optional[datetime.date] = None,
-    session_filter: Optional[str] = None
+    session_filter: Optional[str] = None,
+    include_pre_session: bool = False
 ) -> List[Dict[str, Any]]:
-    """Generates London, NY Open, and NY Silver Bullet checkpoints across trading days."""
+    """Generates dynamic DST-aware London, NY Open, and NY Silver Bullet checkpoints.
+    Accounts for Tehran permanent UTC+3:30 (no DST) vs London/NY seasonal DST shifts.
+    Disallows pre-session checkpoints by default per User Mandate.
+    """
     sessions = []
     now = datetime.datetime.now()
 
-    checkpoints = [
-        (10, 0, "London Pre-Open"),
-        (10, 30, "London Open"),
-        (11, 0, "London Post-Open"),
-        (15, 0, "NY Pre-Open"),
-        (15, 30, "NY Open"),
-        (16, 0, "NY Post-Open"),
-        (17, 30, "NY Silver Bullet Open"),
-        (18, 0, "NY Silver Bullet Mid")
-    ]
-
+    target_dates = []
     if start_date and end_date:
         cur = start_date
         while cur <= end_date:
             if cur.weekday() not in (5, 6):
-                for h, m, label in checkpoints:
-                    if session_filter and session_filter.lower() not in label.lower():
-                        continue
-                    dt = datetime.datetime.combine(cur, datetime.time(h, m, 0))
-                    sessions.append({
-                        "datetime": dt,
-                        "label": label,
-                        "hour": h,
-                        "date_str": cur.strftime("%Y-%m-%d")
-                    })
+                target_dates.append(cur)
             cur += datetime.timedelta(days=1)
     else:
         d_back = days_back or 45
         for d in range(d_back, 0, -1):
-            target_date = now - datetime.timedelta(days=d)
-            if target_date.weekday() in (5, 6):
-                continue
+            target_date = (now - datetime.timedelta(days=d)).date()
+            if target_date.weekday() not in (5, 6):
+                target_dates.append(target_date)
 
-            for h, m, label in checkpoints:
-                if session_filter and session_filter.lower() not in label.lower():
-                    continue
-                dt = target_date.replace(hour=h, minute=m, second=0, microsecond=0)
-                sessions.append({
-                    "datetime": dt,
-                    "label": label,
-                    "hour": h,
-                    "date_str": target_date.strftime("%Y-%m-%d")
-                })
+    for cur in target_dates:
+        st = get_session_times_for_date(cur)
+        lon_dt = st["london"]["tehran_time"]
+        ny_dt = st["new_york"]["tehran_time"]
+
+        # Build dynamic milestones for this specific calendar date
+        day_checkpoints = []
+
+        if include_pre_session:
+            # 30m prior to London Open
+            pre_lon = lon_dt - datetime.timedelta(minutes=30)
+            day_checkpoints.append((pre_lon.hour, pre_lon.minute, "London Pre-Open"))
+
+        # Prime London volume killzones
+        day_checkpoints.append((lon_dt.hour, lon_dt.minute, "London Open"))
+        lon_post = lon_dt + datetime.timedelta(minutes=30)
+        day_checkpoints.append((lon_post.hour, lon_post.minute, "London Post-Open"))
+
+        if include_pre_session:
+            # 30m prior to NY Forex Open
+            pre_ny = ny_dt - datetime.timedelta(minutes=30)
+            day_checkpoints.append((pre_ny.hour, pre_ny.minute, "NY Pre-Open"))
+
+        # Prime NY volume killzones
+        day_checkpoints.append((ny_dt.hour, ny_dt.minute, "NY Open"))
+        ny_post = ny_dt + datetime.timedelta(minutes=30)
+        day_checkpoints.append((ny_post.hour, ny_post.minute, "NY Post-Open"))
+
+        # NY Silver Bullet (10:00 - 11:00 NY local time -> 2h to 2.5h after NY Open)
+        sb_open = ny_dt + datetime.timedelta(hours=2)
+        sb_mid = ny_dt + datetime.timedelta(hours=2, minutes=30)
+        day_checkpoints.append((sb_open.hour, sb_open.minute, "NY Silver Bullet Open"))
+        day_checkpoints.append((sb_mid.hour, sb_mid.minute, "NY Silver Bullet Mid"))
+
+        for h, m, label in day_checkpoints:
+            if session_filter and session_filter.lower() not in label.lower():
+                continue
+            dt = datetime.datetime.combine(cur, datetime.time(h, m, 0))
+            sessions.append({
+                "datetime": dt,
+                "label": label,
+                "hour": h,
+                "date_str": cur.strftime("%Y-%m-%d")
+            })
 
     sessions.sort(key=lambda s: s["datetime"])
     return sessions
@@ -100,7 +120,8 @@ def run_metals_basket_backtest(
     start_date: Optional[datetime.date] = None,
     end_date: Optional[datetime.date] = None,
     max_council_triggers: int = 24,
-    session_filter: Optional[str] = None
+    session_filter: Optional[str] = None,
+    include_pre_session: bool = False
 ) -> Dict[str, Any]:
     """
     Executes the 2-Asset Gold & Silver basket backtest.
@@ -114,7 +135,8 @@ def run_metals_basket_backtest(
         days_back=days_back,
         start_date=start_date,
         end_date=end_date,
-        session_filter=session_filter
+        session_filter=session_filter,
+        include_pre_session=include_pre_session
     )
     total_checkpoints = len(all_checkpoints)
 
@@ -281,9 +303,16 @@ def run_metals_basket_backtest(
                 print(f"   Entry: {entry_val:{fmt}} | SL: {sl_val:{fmt}} | TP: {tp_val:{fmt}} | R:R: {res.get('rr')}")
                 active_orders_per_asset[sym][window_key] = True
 
-            # 4. Forward M1 Execution Simulator (12 Hours with Realistic Bid/Ask Spread)
+            # 4. Forward M1 Execution Simulator with Dynamic Empirical Policy
             forward_m1 = feed.get_forward_m1_bars(sym, milestone, hours_forward=12)
-            eval_res = evaluate_council_decision(res, forward_m1, sym)
+            opt_tgt, opt_be = get_optimal_trade_management(sym, label)
+            eval_res = evaluate_council_decision(
+                res,
+                forward_m1,
+                sym,
+                breakeven_rr=opt_be if opt_be is not None else 999.0,
+                target_rr_cap=opt_tgt
+            )
 
             status = eval_res['status']
             pnl = eval_res['realized_pnl_usd']
@@ -347,9 +376,10 @@ def run_metals_basket_backtest(
         orders = tot - sa
         wins = sum(1 for r in recs if r.get('status') == 'WIN')
         losses = sum(1 for r in recs if r.get('status') == 'LOSS')
+        breakevens = sum(1 for r in recs if r.get('status') == 'BREAKEVEN')
         expired = sum(1 for r in recs if r.get('status') == 'EXPIRED')
         cancels = sum(1 for r in recs if r.get('status') == 'CANCELLED_WATCHDOG')
-        filled = wins + losses
+        filled = wins + losses + breakevens
         net_pnl = sum(r.get('realized_pnl_usd', 0.0) for r in recs)
         g_profit = sum(r.get('realized_pnl_usd', 0.0) for r in recs if r.get('realized_pnl_usd', 0.0) > 0)
         g_loss = abs(sum(r.get('realized_pnl_usd', 0.0) for r in recs if r.get('realized_pnl_usd', 0.0) < 0))
@@ -364,6 +394,7 @@ def run_metals_basket_backtest(
             "filled_trades": filled,
             "wins": wins,
             "losses": losses,
+            "breakevens": breakevens,
             "win_rate_pct": round(wr, 1),
             "gross_profit_usd": round(g_profit, 2),
             "gross_loss_usd": round(g_loss, 2),
@@ -424,26 +455,26 @@ def run_metals_basket_backtest(
     print("-" * 85)
     print(f"🥇 GOLD (XAUUSD) PERFORMANCE:")
     print(f"   • Limit Orders Approved:   {stats_gold['orders_approved']}")
-    print(f"   • Filled Trades:           {stats_gold['filled_trades']} ({stats_gold['wins']} Wins | {stats_gold['losses']} Losses)")
+    print(f"   • Filled Trades:           {stats_gold['filled_trades']} ({stats_gold['wins']} Wins | {stats_gold['losses']} Losses | {stats_gold.get('breakevens', 0)} BE)")
     print(f"   • Win Rate on Fills:       {stats_gold['win_rate_pct']}%")
     print(f"   • Net Realized Profit:     ${stats_gold['net_pnl_usd']:+.2f}")
     print(f"   • Profit Factor:           {stats_gold['profit_factor']}")
     print("-" * 85)
     print(f"🥈 SILVER (XAGUSD) PERFORMANCE:")
     print(f"   • Limit Orders Approved:   {stats_silver['orders_approved']}")
-    print(f"   • Filled Trades:           {stats_silver['filled_trades']} ({stats_silver['wins']} Wins | {stats_silver['losses']} Losses)")
+    print(f"   • Filled Trades:           {stats_silver['filled_trades']} ({stats_silver['wins']} Wins | {stats_silver['losses']} Losses | {stats_silver.get('breakevens', 0)} BE)")
     print(f"   • Win Rate on Fills:       {stats_silver['win_rate_pct']}%")
     print(f"   • Net Realized Profit:     ${stats_silver['net_pnl_usd']:+.2f}")
     print(f"   • Profit Factor:           {stats_silver['profit_factor']}")
     print("-" * 85)
     print(f"🔗 INTERMARKET SMT SUB-SET TRADES (SETUP-ARCH-005):")
-    print(f"   • Filled Trades:           {stats_smt['filled_trades']} ({stats_smt['wins']} Wins | {stats_smt['losses']} Losses)")
+    print(f"   • Filled Trades:           {stats_smt['filled_trades']} ({stats_smt['wins']} Wins | {stats_smt['losses']} Losses | {stats_smt.get('breakevens', 0)} BE)")
     print(f"   • Win Rate on SMT:         {stats_smt['win_rate_pct']}%")
     print(f"   • Net Realized Profit:     ${stats_smt['net_pnl_usd']:+.2f}")
     print(f"   • Profit Factor:           {stats_smt['profit_factor']}")
     print("-" * 85)
     print(f"🏛️ CONSOLIDATED BASKET TOTAL:")
-    print(f"   • Total Filled Trades:     {stats_basket['filled_trades']} ({stats_basket['wins']} Wins | {stats_basket['losses']} Losses)")
+    print(f"   • Total Filled Trades:     {stats_basket['filled_trades']} ({stats_basket['wins']} Wins | {stats_basket['losses']} Losses | {stats_basket.get('breakevens', 0)} BE)")
     print(f"   • Basket Win Rate:         {stats_basket['win_rate_pct']}%")
     print(f"   • Basket Net PnL:          ${stats_basket['net_pnl_usd']:+.2f}")
     print(f"   • Basket Profit Factor:    {stats_basket['profit_factor']}")
@@ -478,6 +509,7 @@ if __name__ == "__main__":
     parser.add_argument("--days", type=int, default=None, help="Days back (optional)")
     parser.add_argument("--max_triggers", type=int, default=24, help="Max council triggers")
     parser.add_argument("--session", type=str, default=None, help="Filter session by label (e.g. London)")
+    parser.add_argument("--include_pre", action="store_true", default=False, help="Include pre-session checkpoints")
     args = parser.parse_args()
 
     s_date = datetime.date.fromisoformat(args.start) if args.start else None
@@ -488,5 +520,6 @@ if __name__ == "__main__":
         start_date=s_date,
         end_date=e_date,
         max_council_triggers=args.max_triggers,
-        session_filter=args.session
+        session_filter=args.session,
+        include_pre_session=args.include_pre
     )

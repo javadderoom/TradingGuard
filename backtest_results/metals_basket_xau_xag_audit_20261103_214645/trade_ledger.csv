@@ -1,0 +1,31 @@
+session_id,symbol,timestamp,session,decision,entry,sl,tp,rr,status,realized_pnl_usd,fill_minute,exit_minute,mfe_price,max_rr_potential,extension_beyond_tp,capture_efficiency_pct,notes,cdo_watchlist_trigger
+1,XAUUSD,2026-07-20 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+2,BASKET,2026-07-20 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+3,XAUUSD,2026-07-20 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+4,BASKET,2026-07-20 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+5,BASKET,2026-07-20 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+6,BASKET,2026-07-20 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+7,XAUUSD,2026-07-21 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+8,XAUUSD,2026-07-21 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+9,BASKET,2026-07-21 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+10,XAUUSD,2026-07-21 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+11,XAUUSD,2026-07-21 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+12,BASKET,2026-07-21 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+13,XAUUSD,2026-07-22 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+14,BASKET,2026-07-22 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+15,BASKET,2026-07-22 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+16,BASKET,2026-07-22 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+17,XAUUSD,2026-07-22 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+18,XAUUSD,2026-07-22 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 0.35 pts.,N/A
+19,BASKET,2026-07-23 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+20,BASKET,2026-07-23 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+21,XAUUSD,2026-07-23 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 2.43 pts.,N/A
+22,XAUUSD,2026-07-23 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 2.43 pts.,N/A
+23,XAUUSD,2026-07-23 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 2.73 pts.,N/A
+24,XAUUSD,2026-07-23 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 3.18 pts.,N/A
+25,BASKET,2026-07-24 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+26,BASKET,2026-07-24 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+27,BASKET,2026-07-24 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+28,BASKET,2026-07-24 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+29,XAUUSD,2026-07-24 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Stand aside executed. 2h price range was 11.96 pts.,N/A
+30,BASKET,2026-07-24 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup

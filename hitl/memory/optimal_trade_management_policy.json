@@ -1,0 +1,192 @@
+{
+  "EURUSD": {
+    "London_Post_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 100.0,
+      "expected_pf": 99.0,
+      "sample_size": 1
+    },
+    "London_Pre_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 50.0,
+      "expected_pf": 5.0,
+      "sample_size": 3
+    },
+    "NY_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 75.0,
+      "expected_pf": 15.0,
+      "sample_size": 5
+    },
+    "NY_Post_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 4
+    },
+    "NY_Pre_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 50.0,
+      "expected_pf": 2.5,
+      "sample_size": 4
+    },
+    "NY_Silver_Bullet": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 2
+    }
+  },
+  "GBPUSD": {
+    "London_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 100.0,
+      "expected_pf": 99.0,
+      "sample_size": 2
+    },
+    "London_Pre_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 100.0,
+      "expected_pf": 99.0,
+      "sample_size": 4
+    },
+    "NY_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 66.7,
+      "expected_pf": 10.0,
+      "sample_size": 4
+    },
+    "NY_Post_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 2
+    },
+    "NY_Pre_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 50.0,
+      "expected_pf": 7.5,
+      "sample_size": 9
+    },
+    "NY_Silver_Bullet": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 4
+    }
+  },
+  "XAGUSD": {
+    "London_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 50.0,
+      "expected_pf": 5.0,
+      "sample_size": 3
+    },
+    "London_Post_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 3
+    },
+    "London_Pre_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 50.0,
+      "expected_pf": 2.0,
+      "sample_size": 3
+    },
+    "NY_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 2
+    },
+    "NY_Post_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 100.0,
+      "expected_pf": 99.0,
+      "sample_size": 2
+    },
+    "NY_Pre_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 2
+    },
+    "NY_Silver_Bullet": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 0.0,
+      "expected_pf": 0.0,
+      "sample_size": 3
+    }
+  },
+  "XAUUSD": {
+    "London_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 80.0,
+      "expected_pf": 10.0,
+      "sample_size": 7
+    },
+    "London_Post_Open": {
+      "target_rr": 4.5,
+      "breakeven_rr": null,
+      "win_rate_pct": 60.0,
+      "expected_pf": 6.75,
+      "sample_size": 6
+    },
+    "London_Pre_Open": {
+      "target_rr": 2.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 25.0,
+      "expected_pf": 0.67,
+      "sample_size": 5
+    },
+    "NY_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 80.0,
+      "expected_pf": 99.0,
+      "sample_size": 6
+    },
+    "NY_Post_Open": {
+      "target_rr": 5.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 25.0,
+      "expected_pf": 1.67,
+      "sample_size": 4
+    },
+    "NY_Pre_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": 1.8,
+      "win_rate_pct": 44.4,
+      "expected_pf": 2.5,
+      "sample_size": 13
+    },
+    "NY_Silver_Bullet": {
+      "target_rr": 5.0,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 16.7,
+      "expected_pf": 1.25,
+      "sample_size": 7
+    }
+  }
+}

@@ -52,19 +52,13 @@ class MT5Engine:
         is_crypto = any(c in symbol.upper() for c in ["BTC", "ETH"])
 
         if not is_crypto:
-            # Check weekend (Saturday is 5, Sunday is 6)
             if now.weekday() in (5, 6):
-                return False, "بازارهای فارکس و انس طلا در روزهای آخر هفته بسته هستند."
+                return False, "Forex and Gold markets are closed on weekends."
 
-            start_t = datetime.time(SESSION_START_HOUR, SESSION_START_MINUTE)
-            end_t = datetime.time(SESSION_END_HOUR, SESSION_END_MINUTE)
-            current_t = now.time()
-
-            if not (start_t <= current_t <= end_t):
-                return False, (
-                    f"خارج از ساعت سشن معاملاتی مجاز ({SESSION_START_HOUR}:{SESSION_START_MINUTE:02d} الی "
-                    f"{SESSION_END_HOUR}:{SESSION_END_MINUTE:02d} تهران). ترید در ساعات کم‌نقدینگی مجاز نیست."
-                )
+            from hitl.backtest.session_clock import get_active_session_status
+            is_active, label, sess_key = get_active_session_status()
+            if not is_active:
+                return False, f"Outside authorized institutional trading session ({label}). Trading during low-liquidity off-hours is prohibited."
 
         return True, ""
 
@@ -381,8 +375,31 @@ class MT5Engine:
         result = mt5.order_send(request)
         if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
             comment = result.comment if result else str(mt5.last_error())
-            return False, f"لغو اردر ناموفق بود: {comment}"
-        return True, f"اردر #{ticket} با موفقیت لغو شد."
+            return False, f"Order cancellation failed: {comment}"
+        return True, f"Order #{ticket} cancelled successfully."
+
+    def modify_position_sltp(self, ticket: int, sl: float, tp: float) -> Tuple[bool, str]:
+        """Modifies Stop Loss and Take Profit of an active open position."""
+        if not self.ensure_connected():
+            return False, "MT5 connection failed"
+        
+        pos = mt5.positions_get(ticket=ticket)
+        if not pos:
+            return False, f"Position #{ticket} not found"
+        p = pos[0]
+
+        request = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "position": ticket,
+            "symbol": p.symbol,
+            "sl": float(sl),
+            "tp": float(tp),
+        }
+        res = mt5.order_send(request)
+        if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+            return True, f"Position #{ticket} SL/TP updated successfully."
+        err = res.comment if res else str(mt5.last_error())
+        return False, f"Failed to modify position #{ticket}: {err}"
 
     def get_pending_orders(self) -> List[Dict[str, Any]]:
         """Retrieves all active pending orders."""

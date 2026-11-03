@@ -132,7 +132,7 @@ class BacktestLogger:
             f"| **Approved Limit Orders** | **{tot_orders}** | Strict SMC confluences satisfied |",
             f"| **Unfilled Orders (75m TTL)** | **{tot_exp}** | Safely cancelled after 75 minutes |",
             f"| **Watchdog Radar Interceptions** | **{tot_canc}** | Adverse spikes killed before execution |",
-            f"| **Filled Institutional Trades** | **{tot_filled}** | Executed with strict hard stop-losses |",
+            f"| **Filled Institutional Trades** | **{tot_filled} ({target_sc.get('wins', 0)}W / {target_sc.get('losses', 0)}L / {target_sc.get('breakevens', 0)}BE)** | Executed with dynamic BE & target cap |",
             f"| **Win Rate on Fills** | **{wr:.1f}%** | Won / Total Filled |",
             f"| **Gross Profit** | **+${gp:.2f}** | Cumulative winning trades |",
             f"| **Gross Loss** | **-${gl:.2f}** | Strictly contained under $17 cap |",
@@ -147,11 +147,11 @@ class BacktestLogger:
             smt = scorecard.get("smt_trades_performance", {})
             lines.extend([
                 "## 🥇 Dual-Asset Segmented Breakdown (Gold vs Silver vs SMT)",
-                "| Asset Segment | Approved Orders | Filled | Wins | Losses | Win Rate | Net PnL (0.01 lot) | Profit Factor |",
-                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
-                f"| **Gold (XAUUSD)** | {g.get('orders_approved', 0)} | {g.get('filled_trades', 0)} | {g.get('wins', 0)} | {g.get('losses', 0)} | {g.get('win_rate_pct', 0.0):.1f}% | ${g.get('net_pnl_usd', 0.0):+.2f} | {g.get('profit_factor', 0.0):.2f} |",
-                f"| **Silver (XAGUSD)** | {s.get('orders_approved', 0)} | {s.get('filled_trades', 0)} | {s.get('wins', 0)} | {s.get('losses', 0)} | {s.get('win_rate_pct', 0.0):.1f}% | ${s.get('net_pnl_usd', 0.0):+.2f} | {s.get('profit_factor', 0.0):.2f} |",
-                f"| **Intermarket SMT Setups** | {smt.get('orders_approved', 0)} | {smt.get('filled_trades', 0)} | {smt.get('wins', 0)} | {smt.get('losses', 0)} | {smt.get('win_rate_pct', 0.0):.1f}% | ${smt.get('net_pnl_usd', 0.0):+.2f} | {smt.get('profit_factor', 0.0):.2f} |",
+                "| Asset Segment | Approved Orders | Filled | Wins | Losses | Breakeven | Win Rate | Net PnL (0.01 lot) | Profit Factor |",
+                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
+                f"| **Gold (XAUUSD)** | {g.get('orders_approved', 0)} | {g.get('filled_trades', 0)} | {g.get('wins', 0)} | {g.get('losses', 0)} | {g.get('breakevens', 0)} | {g.get('win_rate_pct', 0.0):.1f}% | ${g.get('net_pnl_usd', 0.0):+.2f} | {g.get('profit_factor', 0.0):.2f} |",
+                f"| **Silver (XAGUSD)** | {s.get('orders_approved', 0)} | {s.get('filled_trades', 0)} | {s.get('wins', 0)} | {s.get('losses', 0)} | {s.get('breakevens', 0)} | {s.get('win_rate_pct', 0.0):.1f}% | ${s.get('net_pnl_usd', 0.0):+.2f} | {s.get('profit_factor', 0.0):.2f} |",
+                f"| **Intermarket SMT Setups** | {smt.get('orders_approved', 0)} | {smt.get('filled_trades', 0)} | {smt.get('wins', 0)} | {smt.get('losses', 0)} | {smt.get('breakevens', 0)} | {smt.get('win_rate_pct', 0.0):.1f}% | ${smt.get('net_pnl_usd', 0.0):+.2f} | {smt.get('profit_factor', 0.0):.2f} |",
                 ""
             ])
 

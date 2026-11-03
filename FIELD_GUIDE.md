@@ -154,3 +154,30 @@ python -c "from hitl.backtest.run_backtest import run_council_backtest; run_coun
   - Double-click [`start_silent.vbs`](file:///g:/Code/TradingGuard/start_silent.vbs) to launch completely hidden.
 - **Stopping the Service**:
   - Double-click [`stop_tradingguard.bat`](file:///g:/Code/TradingGuard/stop_tradingguard.bat) to kill all running instances cleanly.
+
+---
+
+## 7. Institutional Session Clock & Seasonal DST Reference
+
+> [!IMPORTANT]
+> **Tehran abolished Daylight Saving Time (DST) permanently in 2023 (Farvardin 1402).**
+> Tehran is permanently fixed at **UTC+3:30** all year round.
+> However, **London (UK)** and **New York (US)** continue to observe DST, causing their local open hours to shift relative to Tehran time twice a year.
+
+### Seasonal Schedule Comparison Table
+
+| Session | Market Local Time | Summer (BST / EDT) — Tehran Time | Winter (GMT / EST) — Tehran Time | Note |
+| :--- | :---: | :---: | :---: | :--- |
+| **London Pre-Open** | 07:00 / 07:30 Local | 09:30 / 10:00 Tehran | **10:30 / 11:00 Tehran** | Pre-session (rested/banned) |
+| **London Open** | 08:00 Local | 10:30 Tehran | **11:30 Tehran** | Frankfurt/London volume open |
+| **London Post-Open** | 08:30 / 09:00 Local | 11:00 / 11:30 Tehran | **12:00 / 12:30 Tehran** | Prime London displacement |
+| **NY Pre-Open** | 07:00 / 07:30 Local | 14:30 / 15:00 Tehran | **15:30 / 16:00 Tehran** | Pre-session (rested/banned) |
+| **NY Forex Open** | 08:00 Local | 15:30 Tehran | **16:30 Tehran** | US macro liquidity arrival |
+| **NYSE Equities Open** | 09:30 Local | 17:00 Tehran | **18:00 Tehran** | US Cash Equity open |
+| **NY Silver Bullet** | 10:00 – 11:00 Local | 17:30 – 18:30 Tehran | **18:30 – 19:30 Tehran** | Prime Silver Bullet window |
+
+### Transition Windows:
+* **Summer Schedule**: From last Sunday of March until last Sunday of October (UK) / first Sunday of November (US).
+* **Winter Schedule**: From last Sunday of October (UK) / first Sunday of November (US) until late March.
+* **Architecture Implementation**: All backtests and live radars must dynamically query [`hitl/backtest/session_clock.py`](file:///g:/Code/TradingGuard/hitl/backtest/session_clock.py) rather than using static hardcoded hours.
+

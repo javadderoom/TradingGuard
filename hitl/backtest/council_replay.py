@@ -61,7 +61,7 @@ def convene_council_on_historical_dossier(dossier: Dict[str, Any]) -> Optional[D
         f"1. Alpha Execution Mandate: The quantitative ICT screener has pre-screened this session and flagged a candidate setup with confirmed displacement, liquidity sweep, or SMT divergence. The Council's primary duty is ALPHA CAPTURE WITH STRICT CAPITAL PRESERVATION. If the candidate setup satisfies structural invalidation (SL <= $17.00) and targets a minimum 1:3.0 R:R, the Council MUST APPROVE the limit order ([BUY LIMIT] or [SELL LIMIT]). Do NOT act as a fearful bureaucrat seeking theoretical excuses to declare STAND ASIDE when a valid edge is present. STAND ASIDE is strictly reserved for dead consolidation without displacement, high-impact red-folder news within 15 minutes, or negative R:R (< 1:3.0).\n"
         f"2. Proximal Entry Enforcement: Limit orders MUST be anchored at the PROXIMAL EDGE of the displacement FVG or Breaker Block (the nearest boundary price can tap on a pullback). NEVER demand an excessive, deep retracement (e.g. 50% CE or distal edge during active sessions) because that causes the order to expire unfilled after 75 minutes, resulting in severe alpha leakage.\n"
         f"3. Strict $17.00 Max Risk per Trade (0.01 lot base). Stop loss must never exceed $17.00. For Gold (XAUUSD), anchor SL behind the recent structural swing/sweep wick (typically 5.0 to 7.5 points).\n"
-        f"4. Structural Target Anchoring (Minimum 1:3.0 R:R): Take Profit MUST anchor to the major External Structural Swing Low/High (SSL/BSL) or liquidity pool, ensuring at least 1:3.0 to 1:5.0 R:R. Exiting prematurely or targeting minor internal support/resistance is prohibited.\n"
+        f"4. Realistic Structural Target Anchoring (Strict 1:3.0 to 1:4.0 R:R): Take Profit MUST anchor to the realistic opposing session landmark (e.g. Asian Range High/Low or London High/Low), targeting between 1:3.0 and 1:4.0 R:R. NEVER set fantasy swing targets exceeding 1:4.5 R:R on intraday session setups, as intraday liquidity cycles mean price will retrace before reaching 100+ point targets.\n"
         f"5. SMT & Macro Alignment: Confirm correlation alignment or SMT divergence against Silver (XAGUSD) and USDX.\n"
         f"6. Directional Confluence Mandate: In pro-trend regimes, execute with pro-trend momentum. Counter-trend trades are only allowed if a prominent liquidity sweep (Asian Range High/Low or PDH/PDL) has formed with confirmed MSS displacement or intermarket SMT divergence (SETUP-ARCH-007).\n\n"
         f"Deliver the Tactical Execution findings strictly in the following format:\n\n"
@@ -89,12 +89,13 @@ def convene_council_on_historical_dossier(dossier: Dict[str, Any]) -> Optional[D
         agy_bin,
         "--dangerously-skip-permissions",
         "--model", "gemini-3.8-flash-low",
-        "-p", prompt
+        "-p", "-"
     ]
 
     try:
         proc = subprocess.run(
             cmd,
+            input=prompt,
             cwd=str(BASE_DIR),
             capture_output=True,
             text=True,
