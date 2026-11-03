@@ -10,11 +10,12 @@ The system operates across a strict 5-timeframe hierarchy, ensuring macro orderf
 
 ```mermaid
 flowchart TD
-    D1["Daily (1D) Macro Context\n• Draw on Liquidity (DOL)\n• Prior Day Range (PDR = PDH - PDL)\n• Inside Day Mid-Range Equilibrium (25%-75%)"] --> H1
-    H1["1-Hour (1H) Structural State Machine\n• Fractal Swings (Window = 2)\n• 1H Market Structure Shift (MSS)\n• Structural Invalidation Levels (Trough / Crest)"] --> Phase
-    Phase["Directional Phase Classifier\n• PRO_EXPANSION (Aligned with 1H MSS)\n• HTF_RETRACEMENT (Counter-trend Pullback)\n• BALANCED_RANGE (Neutral 1H)\n• CONSOLIDATION (Inside Day Mid-Range Chop)"] --> M5
-    M5["5-Minute (5M) Setup Screener\n• Asian/London/NY Liquidity Benchmarks\n• Fair Value Gaps (FVG) & Breaker Blocks\n• Precious Metals Intermarket SMT Divergence"] --> M1
-    M1["1-Minute (M1) Execution Simulator / Broker\n• Exact Bid/Ask Spread Penalties\n• 75-Minute Inactivity TTL\n• Watchdog Adverse Momentum Canceller\n• Dynamic Breakeven Ratchet & Target Realization"]
+    D1["Daily (1D): Macro Context & Draw on Liquidity"] --> H1["1-Hour (1H): Structural State Machine & MSS"]
+    H1 --> Phase["Phase Classifier: PRO_EXPANSION vs HTF_RETRACEMENT"]
+    Phase --> M5["5-Minute (5M): Pre-Screener & SMT Radar"]
+    M5 --> M1["1-Minute (M1): Forward Execution & Spread Engine"]
+
+    classDef default fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
 ```
 
 ---
