@@ -24,6 +24,8 @@ void SyncFromSession()
         g_breakActive = g_session["break_active"].ToBool();
     if (g_session["shutdown_signal"] != NULL && g_session["shutdown_signal"].ToBool())
         g_shutdownDone = true;
+    if (g_session["app_challenge"] != NULL)
+        g_appChallenge = g_session["app_challenge"].GetStr();
 
     if (g_session["daily_loss_usd"] != NULL)
         g_dailyLoss = g_session["daily_loss_usd"].ToDouble();
@@ -78,6 +80,8 @@ void WriteSessionUpdate(string lastResult = "", bool hasLastPnl = false, double 
         g_session["last_trade_pnl"].Set(lastPnl);
 
     g_session["ea_heartbeat"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
+    g_session["ea_challenge_echo"].Set(g_appChallenge);
+    g_session["ea_heartbeat_ts"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
     g_session["timestamp"].Set(TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
 
     if (!g_session.WriteToFile(g_filePath))
@@ -95,6 +99,8 @@ void WriteHeartbeat()
 
     string nowStr = TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS);
     hb["ea_heartbeat"].Set(nowStr);
+    hb["ea_challenge_echo"].Set(g_appChallenge);
+    hb["ea_heartbeat_ts"].Set(nowStr);
     hb["timestamp"].Set(nowStr);
 
     if (!hb.WriteToFile(g_filePath))

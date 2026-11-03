@@ -54,6 +54,7 @@ bool     g_strictMode      = false;
 bool     g_biasExpired     = false;
 bool     g_prevBiasExpired = false;
 bool     g_breakActive     = false;
+string   g_appChallenge    = "";
 int      g_prevPositionsTotal = -1;
 long     g_lastCountedClosedPositionId = -1;
 

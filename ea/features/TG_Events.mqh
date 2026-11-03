@@ -31,6 +31,13 @@ void OnTick()
     }
     g_prevBiasExpired = g_biasExpired;
 
+    static datetime lastHeartbeatWrite = 0;
+    if (now - lastHeartbeatWrite >= 5)
+    {
+        WriteSessionUpdate();
+        lastHeartbeatWrite = now;
+    }
+
     NotifyAutoCloseWarning(GetAutoCloseWarning());
 
     if (g_shutdownDone)

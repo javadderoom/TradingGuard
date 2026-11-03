@@ -1,0 +1,4 @@
+session_id,symbol,timestamp,session,decision,entry,sl,tp,rr,status,realized_pnl_usd,fill_minute,exit_minute,mfe_price,max_rr_potential,extension_beyond_tp,capture_efficiency_pct,notes,cdo_watchlist_trigger
+1,BASKET,2026-11-03 10:00,London Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+2,BASKET,2026-11-03 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+3,BASKET,2026-11-03 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup

@@ -38,6 +38,13 @@ _DEFAULT_SESSION = {
     "last_trade_pnl": 0.0,
     "manual_checklist": {},
     "ea_heartbeat": "",
+    # EA/app watchdog fields (local anti-tamper)
+    "app_challenge": "",
+    "app_challenge_ts": "",
+    "ea_challenge_echo": "",
+    "ea_heartbeat_ts": "",
+    "tamper_lock": False,
+    "tamper_reason": "",
     "timestamp": "",
 }
 

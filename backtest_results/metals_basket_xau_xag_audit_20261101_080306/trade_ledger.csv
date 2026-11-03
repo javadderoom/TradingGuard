@@ -1,0 +1,33 @@
+session_id,symbol,timestamp,session,decision,entry,sl,tp,rr,status,realized_pnl_usd,fill_minute,exit_minute,notes,cdo_watchlist_trigger
+1,XAGUSD,2026-10-19 10:00,London Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Stand aside executed. 2h price range was 0.29 pts.,• **Developing Setup Context:** XAGUSD has engineered Buy-Side Liquidity at 57.742 while Gold displayed relative weakness (Bearish SMT). Price is now consolidating right around the Asian High (57.693) awaiting London session displacement.
+2,XAGUSD,2026-10-19 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Stand aside executed. 2h price range was 0.32 pts.,• **Developing Setup Context:** A classic Judas swing expansion into premium above Asian Range High (57.698) seeking liquidity before London order flow drives lower toward Asian Low (57.215).
+3,BASKET,2026-10-19 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+4,XAUUSD,2026-10-19 15:00,NY Pre-Open,SELL_LIMIT,4177.55,4183.15,4163.55,2.5,WIN,14.0,0,131,Hit Take Profit (Ask cleared TP 4163.55)! Realized profit: +$14.00 (R:R 1:2.50).,"• **Developing Setup Context:** Intermarket Bullish SMT is incubating at 4171.09. If price aggressively runs London Low and immediately rejects, a reverse Judas swing may form for NY Open."
+5,XAGUSD,2026-10-19 15:00,NY Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Stand aside executed. 2h price range was 0.17 pts.,"• **Developing Setup Context:** Bullish SMT accumulation is incubating at London session lows with a micro Bullish FVG (57.455–57.462), but lacks structural market shift confirmation."
+6,XAGUSD,2026-10-19 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Stand aside executed. 2h price range was 0.37 pts.,"• **Developing Setup Context:** A high-probability Bearish Turtle Soup / Distribution model is incubating following the sweep of 57.597 to 57.691 against Gold's non-confirmation, but price is currently stalling inside the 5M Bullish FVG (57.605–57.575)."
+7,XAGUSD,2026-10-19 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Stand aside executed. 2h price range was 0.40 pts.,"• **Developing Setup Context:** Awaiting confirmed 5M displacement either breaking below internal swing support (57.550) to align with the Bearish Daily trend, or reclaiming above 57.760 to confirm SMT accumulation."
+8,BASKET,2026-10-20 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+9,BASKET,2026-10-20 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+10,BASKET,2026-10-21 15:00,NY Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+11,BASKET,2026-10-21 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+12,BASKET,2026-10-21 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+13,BASKET,2026-10-22 15:00,NY Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+14,BASKET,2026-10-22 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+15,BASKET,2026-10-22 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+16,BASKET,2026-10-23 10:00,London Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+17,BASKET,2026-10-23 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+18,BASKET,2026-10-23 15:00,NY Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+19,BASKET,2026-10-23 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+20,BASKET,2026-10-26 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+21,BASKET,2026-10-26 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+22,BASKET,2026-10-27 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+23,BASKET,2026-10-27 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+24,BASKET,2026-10-28 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+25,BASKET,2026-10-28 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+26,BASKET,2026-10-29 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+27,BASKET,2026-10-29 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+28,BASKET,2026-10-30 10:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+29,BASKET,2026-10-30 11:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+30,BASKET,2026-10-30 15:00,NY Pre-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+31,BASKET,2026-10-30 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+32,BASKET,2026-10-30 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup

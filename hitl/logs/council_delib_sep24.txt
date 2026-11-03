@@ -1,0 +1,30 @@
+🏛️ **ANTIGRAVITY AI INVESTMENT COUNCIL: GBPUSD**
+
+👨💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**
+• **1D Macro Order Flow & Institutional Bias:** Strongly Bearish; price trades below PDH (`1.33472`) and targets Sell-Side Liquidity into PDL (`1.32235`).
+• **SMC POIs:** Active 5M Bearish FVG proximal edge at `1.32369`, distal at `1.32398` (width 2.9 pips). Premium OTE zone sits higher at `1.32467`–`1.32509`.
+• **Liquidity Sweeps & MSS:** Cable performed an ultra-shallow sweep of London Low (`1.32315`) by only 0.8 pips (extreme `1.32307`) with no sustained bullish displacement, validating continuation order flow rather than a clearing reversal. Bearish MSS intact.
+
+🌐 **2. Chief Macro & Geopolitical Economist**
+• **Central Bank Policy & USDX / SMT Alignment:** USDX is in aggressive markup at `100.95` (+1.07% 5D momentum) while GBPLFX weakens (-0.33%). Although EURUSD held a higher low, the 0.8-pip sweep on GBPUSD is insufficient for structural SMT reversal.
+• **HTF Fundamental Bias & Mandatory Directional Filter:** **[SELL_ONLY]**. Counter-trend buys at session lows are strictly prohibited by sovereign macro distribution rules.
+
+👥 **3. Head of Sentiment & TradingView Community Intelligence**
+• **Retail Positioning & Liquidity Pool Targets:** Retail dip-buyers are trapped attempting to long the London Low. Primary Sell-Side Liquidity (SSL) rests squarely at Prior Day Low (`1.32235`).
+
+🛡️ **4. Chief Risk Officer (CRO - Capital Defense & Invalidation)**
+• **Veto Governance Review:**
+  - **[RULE-VETO-025] & [RULE-VETO-023]:** Hard-vetoes any counter-trend buy setup because the London Low sweep was only 0.8 pips (<3.0 pips) with no explosive 5M MSS (>6.0 pips).
+  - **Bearish Continuation Check:** Selling current 5M FVG at `1.32369` against distal `1.32398` + 1.0 pip spread buffer (`1.32408`, 3.9 pips risk) targeting PDL (`1.32235`, 13.4 pips reward) yields 1:3.4 R:R. However, current market quote is already at `1.32368` (sitting at the FVG boundary without a premium expansion into OTE).
+• **Capital Preservation:** Stand aside to let price retrace deeper into premium OTE or break PDL cleanly. Max risk limit ($17.00) strictly guarded ($0.00 committed).
+
+⚖️ **5. CIO Executive Consensus Directive**
+• **Council Decision:** **[STAND ASIDE]**
+• **Actionable Execution Plan:** N/A (Stand Aside).
+• **Playbook Alignment:** Strictly governed by **[RULE-VETO-025]** (sub-3.0 pip sweep veto) and **[RULE-VETO-003]** (absence of counter-displacement).
+• **Executive Summary & Critical Trigger:** Macro filter mandates SELL_ONLY, yet Cable is hovering near session lows following an unconfirmed 0.8-pip sweep. The Council firmly stands aside to avoid low-displacement consolidation chop and protect institutional capital.
+
+📋 **6. Chief Watchlist & Developing Opportunities Officer (CDO - Tactical Reconnaissance)**
+• **Developing Setup Context:** Cable is distributing toward PDL (`1.32235`). An optimal pro-trend short requires a liquidity retest into the 62%–70.5% OTE premium zone (`1.32467`–`1.32488`).
+• **Actionable 'IF-THEN' Re-Activation Trigger:** **IF** price pulls back into the 15M/5M premium zone at `1.32467`–`1.32488` during the NY Open window and prints a bearish 5M rejection, **THEN** evaluate a SELL LIMIT at `1.32467` targeting PDL `1.32235`.
+• **Setup Invalidation Anchor:** Sustained 15M close above London Session High (`1.32560`).

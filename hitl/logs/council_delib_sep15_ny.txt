@@ -1,0 +1,34 @@
+Decision: STAND_ASIDE
+Entry: None
+SL: None
+TP: None
+RR: None
+
+=== FULL REPORT ===
+🏛️ **ANTIGRAVITY AI INVESTMENT COUNCIL: GBPUSD**
+
+👨💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**
+• **1D Macro Order Flow & Institutional Bias:** Bearish expansion toward PDL (`1.34639`). Order flow remains net bearish under PDH (`1.35285`).
+• **SMC POIs:** Active 5M Bullish FVG (`1.34727`–`1.34715`, width 1.2 pips). Premium OTE retracement zone sits overhead at `1.34783` (62%) to `1.34822` (79%).
+• **Liquidity Sweeps & MSS:** London Range (`1.34870` / `1.34642`) remains completely intact with zero liquidity sweeps printed. Market Structure Shift (MSS) is absent.
+
+🌐 **2. Chief Macro & Geopolitical Economist**
+• **Central Bank Policy & USDX / SMT Alignment:** BoE at 4.75% vs. Fed at 4.75% (0.00% spread). USDX in solid bullish expansion at 99.31 (+0.85% 5D momentum). EURUSD and GBPUSD display neutral coupled drift inside respective session bounds without SMT divergence.
+• **HTF Fundamental Bias & Mandatory Directional Filter:** **[SELL_ONLY]**. Macro momentum heavily disfavors long executions.
+
+👥 **3. Head of Sentiment & TradingView Community Intelligence**
+• **Retail Positioning & Targets:** Retail crowd trapped buying mid-range consolidations. Primary sell-side liquidity (SSL) rests clustered at the London Session Low (`1.34642`) and Prior Day Low (`1.34639`), with buy-side liquidity (BSL) resting at London High (`1.34870`).
+
+🛡️ **4. Chief Risk Officer (CRO - Capital Defense & Invalidation)**
+• **Structural Invalidation & Risk Buffer Check:** Current price (`1.34741`) trades in mid-session equilibrium without structural divergence or displacement. Any sell limit at current micro-levels targeting `1.34642` (9.9 pips) against the mandatory 9.0–14.0 pip stop loss floor ([RULE-RISK-011]) collapses the Risk-to-Reward far below the mandatory 1:3.0 minimum threshold (~1:1). Long setups violate the sovereign `SELL_ONLY` macro mandate and [RULE-VETO-035].
+
+⚖️ **5. CIO Executive Consensus Directive**
+• **Council Decision:** **[STAND ASIDE]**
+• **Actionable Execution Plan:** N/A (Stand Aside).
+• **Playbook Alignment:** Honoring [RULE-RISK-011] (hard-floor 9.0–14.0 pip SL), [RULE-VETO-035] (veto pre-expansion chop), and Directional Confluence Rule #7 (mandating stand-aside when technical setups contradict HTF `SELL_ONLY`).
+• **Executive Summary & Critical Trigger:** GBPUSD trades trapped in dead mid-range equilibrium without session liquidity sweeps or market structure shift. Preserving firm capital is mandatory until London extremes are purged and retested.
+
+📋 **6. Chief Watchlist & Developing Opportunities Officer (CDO - Tactical Reconnaissance)**
+• **Developing Setup Context:** Incomplete session sweep of London Range High (`1.34870`) or retracement into the 15M/5M OTE Premium array (`1.34783`–`1.34822`).
+• **Actionable 'IF-THEN' Re-Activation Trigger:** IF price pushes into the OTE Premium zone (`1.34783`–`1.34803`) or sweeps London High (`1.34870`) and prints a confirmed 5M bearish displacement candle (>5.0 pips) with an FVG, THEN re-evaluate for a **SELL LIMIT** targeting London Low (`1.34642`) and PDL (`1.34639`) with R:R ≥ 1:3.0.
+• **Setup Invalidation Anchor:** Sustained 15M candle body close above Prior Day High (`1.35285`).

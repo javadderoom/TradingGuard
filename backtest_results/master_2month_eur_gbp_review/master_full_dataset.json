@@ -1,0 +1,67 @@
+{
+  "review_period": "2026-09-02 to 2026-10-31 (60 Calendar Days / 43 Trading Days)",
+  "segments_compiled": 5,
+  "total_opportunities_screened": 174,
+  "council_portfolio": {
+    "trades_approved": 25,
+    "filled_trades": 16,
+    "wins": 5,
+    "losses": 11,
+    "win_rate_pct": 31.2,
+    "gross_profit_usd": 14.43,
+    "gross_loss_usd": 12.87,
+    "net_pnl_usd": 1.56,
+    "profit_factor": 1.12
+  },
+  "blind_execution_portfolio": {
+    "filled_trades": 107,
+    "wins": 16,
+    "losses": 91,
+    "win_rate_pct": 15.0,
+    "gross_profit_usd": 41.93,
+    "gross_loss_usd": 93.19,
+    "net_pnl_usd": -51.26,
+    "profit_factor": 0.45
+  },
+  "counterfactual_filtering_impact": {
+    "total_stand_asides": 149,
+    "protective_vetoes_losses_prevented": 80,
+    "capital_saved_usd": 80.32,
+    "damaging_stand_asides_missed_winners": 11,
+    "missed_alpha_usd": 27.5,
+    "unfilled_or_expired": 58,
+    "net_council_filtering_value_usd": 52.82
+  },
+  "asset_breakdown": {
+    "eurusd": {
+      "filled": 5,
+      "wins": 0,
+      "losses": 5,
+      "win_rate_pct": 0.0,
+      "net_pnl_usd": -5.04
+    },
+    "gbpusd": {
+      "filled": 11,
+      "wins": 5,
+      "losses": 6,
+      "win_rate_pct": 45.5,
+      "net_pnl_usd": 7.4
+    }
+  },
+  "setup_architecture_breakdown": {
+    "smt_divergence": {
+      "filled": 6,
+      "wins": 2,
+      "losses": 4,
+      "win_rate_pct": 33.3,
+      "net_pnl_usd": 0.59
+    },
+    "independent_smc": {
+      "filled": 10,
+      "wins": 3,
+      "losses": 7,
+      "win_rate_pct": 30.0,
+      "net_pnl_usd": 1.77
+    }
+  }
+}

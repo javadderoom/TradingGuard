@@ -1,0 +1,37 @@
+Decision: STAND_ASIDE
+Entry: None
+SL: None
+TP: None
+RR: None
+
+=== FULL REPORT ===
+🏛️ **ANTIGRAVITY AI INVESTMENT COUNCIL: GBPUSD**
+
+👨💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**
+• **1D Macro Order Flow & Institutional Bias:** Bearish expansion targeting PDL ([1.34639](file:///G:/Code/TradingGuard/analysis_assets/backtest_mtf/GBPUSD_1D.png)).
+• **SMC POIs (FVGs, Breaker Blocks, OTE):** Active micro Bullish FVG proximal at [1.34711](file:///G:/Code/TradingGuard/analysis_assets/backtest_mtf/GBPUSD_5M.png) (width 0.6 pips). Premium OTE resistance sits at 1.34811–1.34850.
+• **Liquidity Sweeps & MSS:** Swept London Range Low (1.34668) down to 1.34642 by only 2.6 pips (0.00026). **MSS: NONE**. Displacement is absent.
+
+🌐 **2. Chief Macro & Geopolitical Economist**
+• **Central Bank Policy & USDX / SMT Alignment:** USDX trades bullish at 99.28 (+0.85% 5D momentum). Neutral coupled drift with EURUSD; both swept London lows without divergence.
+• **HTF Fundamental Bias & Mandatory Directional Filter:** **[SELL ONLY]** (Sovereign Bearish Macro Bias; buying is strictly prohibited).
+
+👥 **3. Head of Sentiment & TradingView Community Intelligence**
+• **Retail Positioning & Liquidity Pool Targets:** Retail is attempting to knife-catch the sub-3.0 pip sweep of the London low. Sell-side liquidity rests below PDL (1.34639), with buy-side liquidity pooled at Session High (1.34898).
+
+🛡️ **4. Chief Risk Officer (CRO - Capital Defense & Invalidation)**
+• **Structural Invalidation Level & Veto Governance:**
+  - **RULE-VETO-003 & RULE-VETO-025 Violation:** London Low swept by only 2.6 pips (<3.0 pips) with zero 5M counter-displacement and no MSS. Counter-trend long orders are hard-vetoed.
+  - **Directional Confluence Rule 7 Violation:** Attempting a long entry off the bullish micro-FVG directly violates the mandatory macro **SELL ONLY** filter.
+  - **Pro-Trend Retracement Invalidation:** Price is currently in deep discount (1.34751) rather than the required premium OTE (1.34811+), offering no valid pro-trend sell location.
+
+⚖️ **5. CIO Executive Consensus Directive**
+• **Council Decision:** **[STAND ASIDE]**
+• **Actionable Execution Plan:** N/A (Standing Aside).
+• **Playbook Alignment:** Enforcing [RULE-VETO-003], [RULE-VETO-025], and Rule 7 (Directional Confluence). Capital defense takes precedence over low-conviction chop.
+• **Executive Summary & Critical Trigger:** Standing aside is mandated because the London Low sweep was shallow (2.6 pips) and lacks 5M displacement, while long trades are forbidden by the sovereign [SELL ONLY] macro filter. Preserving capital until price retests premium supply prevents entering a classic continuation trap.
+
+📋 **6. Chief Watchlist & Developing Opportunities Officer (CDO - Tactical Reconnaissance)**
+• **Developing Setup Context:** Cable is drifting in mid-range after a weak sell-side purge. Waiting for an intraday corrective retracement into premium supply during early New York hours.
+• **Actionable 'IF-THEN' Re-Activation Trigger:** IF price pulls back into the 15M/5M Premium OTE / Bearish FVG zone between `1.34810` and `1.34850` and prints a 5M bearish displacement candle, THEN evaluate for a pro-trend **SELL LIMIT** targeting PDL (`1.34639`) with SL above London High (`1.34910`).
+• **Setup Invalidation Anchor:** Sustained 15M close above London Range High (`1.34898`).

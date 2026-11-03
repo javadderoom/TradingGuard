@@ -11,12 +11,22 @@ __pycache__/
 *.log
 
 ############################
-# Virtual environments
+# Virtual environments & Secrets
 ############################
 venv/
 .venv/
 env/
 .env/
+.env
+.env.*
+
+############################
+# Media & Assets
+############################
+analysis_assets/
+*.png
+*.jpg
+*.jpeg
 
 ############################
 # IDE / Editor
