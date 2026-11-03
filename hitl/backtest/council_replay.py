@@ -85,23 +85,32 @@ def convene_council_on_historical_dossier(dossier: Dict[str, Any]) -> Optional[D
         f"Keep the entire tactical report punchy, concise, and under 300 words total."
     )
 
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".txt") as tf:
+        tf.write(prompt)
+        prompt_file = Path(tf.name)
+
     cmd = [
         agy_bin,
         "--dangerously-skip-permissions",
         "--model", "gemini-3.8-flash-low",
-        "-p", "-"
+        "-p", f"@{prompt_file.as_posix()}"
     ]
 
     try:
         proc = subprocess.run(
             cmd,
-            input=prompt,
             cwd=str(BASE_DIR),
             capture_output=True,
             text=True,
             encoding="utf-8",
             timeout=90
         )
+        try:
+            if prompt_file.exists():
+                prompt_file.unlink()
+        except Exception:
+            pass
 
         if proc.returncode != 0:
             print(f"[CouncilReplay] agy failed: {proc.stderr}")
@@ -231,5 +240,10 @@ def convene_council_on_historical_dossier(dossier: Dict[str, Any]) -> Optional[D
         }
 
     except Exception as e:
+        try:
+            if prompt_file.exists():
+                prompt_file.unlink()
+        except Exception:
+            pass
         print(f"[CouncilReplay] Error invoking agy: {e}")
         return None

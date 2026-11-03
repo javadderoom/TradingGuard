@@ -173,12 +173,14 @@ def run_metals_basket_backtest(
         date_str = cp["date_str"]
         t_str = milestone.strftime("%Y-%m-%d %H:%M")
 
-        # 1. Fetch lightweight 5M & 1H bars for both metals (<2ms)
+        # 1. Fetch lightweight 5M, 1H & Daily bars for both metals (<3ms)
         rates_5m_g = _convert_records(mt5.copy_rates_from(res_gold, mt5.TIMEFRAME_M5, milestone, 85))
         rates_1h_g = _convert_records(mt5.copy_rates_from(res_gold, mt5.TIMEFRAME_H1, milestone, 20))
+        rates_1d_g = _convert_records(mt5.copy_rates_from(res_gold, mt5.TIMEFRAME_D1, milestone, 5))
 
         rates_5m_s = _convert_records(mt5.copy_rates_from(res_silver, mt5.TIMEFRAME_M5, milestone, 85))
         rates_1h_s = _convert_records(mt5.copy_rates_from(res_silver, mt5.TIMEFRAME_H1, milestone, 20))
+        rates_1d_s = _convert_records(mt5.copy_rates_from(res_silver, mt5.TIMEFRAME_D1, milestone, 5))
 
         if not (rates_5m_g and rates_1h_g and rates_5m_s and rates_1h_s):
             continue
@@ -189,9 +191,9 @@ def run_metals_basket_backtest(
         # 2. Intermarket SMT Divergence Computation
         smt_info = detect_metals_smt_divergence(rates_5m_g, rates_5m_s, milestone.hour)
 
-        # 3. Screen both metals independently with SMT Confluence
-        screener_g = screen_ict_session(rates_5m_g, rates_1h_g, "XAUUSD", milestone.hour, smt_info=smt_info)
-        screener_s = screen_ict_session(rates_5m_s, rates_1h_s, "XAGUSD", milestone.hour, smt_info=smt_info)
+        # 3. Screen both metals independently with SMT Confluence & Daily Regime Gates
+        screener_g = screen_ict_session(rates_5m_g, rates_1h_g, "XAUUSD", milestone.hour, smt_info=smt_info, bars_1d=rates_1d_g)
+        screener_s = screen_ict_session(rates_5m_s, rates_1h_s, "XAGUSD", milestone.hour, smt_info=smt_info, bars_1d=rates_1d_s)
 
         # Evaluate candidate opportunities (Silver execution is strictly BANNED by User Mandate)
         candidates = []

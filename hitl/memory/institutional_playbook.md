@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Institutional AI Playbook & Memory Ledger
-**Last Calibration:** `2026-11-03T21:49:45.109747` | **Version:** `2.0.0-LEAN`
+**Last Calibration:** `2026-11-03T23:03:21.956471` | **Version:** `2.0.0-LEAN`
 
 This playbook represents the continuous learning feedback loop of the Antigravity 6-Seat Investment Council.
 It is updated dynamically after every executed trade and every counterfactual audit of debated stand-asides.
@@ -190,6 +190,14 @@ It is updated dynamically after every executed trade and every counterfactual au
 ### 🟢 [RULE-RISK-046] Capital Preservation (XAUUSD & XAGUSD)
 **Directive:** Minimum Post-Sweep Displacement Confirmation Filter for Non-Discretionary SMT Overrides: The automated limit execution override granted under [RULE-SETUP-041] and [RULE-EXEC-044] is conditioned upon the sweeping asset completing an M5 displacement candle whose body closes back inside the reference session range. If the sweep candle or subsequent candle closes outside the reference range boundary, the Tier-1 Non-Discretionary override is revoked, and the order compilation layer must veto the setup as an "Expansion Breakout in Progress."
 > **Empirical Rationale:** Empirical replay of 2026-07-23 15:30, 16:00, and 17:30 UTC demonstrated that all three failed long setups penetrated range lows and closed decisively outside the boundary rather than showing sharp mean-reversion displacement back into the value area. This filter distinguishes true institutional absorption sweeps from genuine trend expansions.
+
+### 🟢 [RULE-RISK-047] Risk Calibration (XAUUSD & XAGUSD)
+**Directive:** Absolute Dynamic Floor on Protective Stop Loss Width. For all limit orders on XAUUSD routed during the London Open (07:00–11:30 UTC) or NY Sessions (13:00–18:30 UTC), the protective stop loss distance must never be set narrower than max(3.50 pts, 1.25x M5 ATR). If the structural invalidation level requires a stop distance < 3.50 pts, the order execution engine must either: (1) Synthetically widen the stop to 3.50 pts while proportionally scaling down lot size to preserve fixed dollar risk; or (2) Veto the order placement entirely under "Micro-Stop Volatility Hazard."
+> **Empirical Rationale:** Empirical audit of Trade [2026-07-27 17:30] showed a 2.40 pt stop loss was stopped out at 4103.07 despite the price reaching a 1:1.24 R:R favorable excursion (4097.00). Sub-3.0 pt stops on XAUUSD suffer micro-choking from normal spread expansion and intraday noise during high-velocity killzones.
+
+### 🟢 [RULE-SETUP-048] Setup Selection (XAUUSD & XAGUSD)
+**Directive:** Pre-Requisite M5 Close Inside Session Boundary for Counter-Trend SMT Limit Routing. Any SMT divergence setup ([SETUP-ARCH-005] or [SETUP-ARCH-007]) that breaches a Session High or Low is permanently disqualified from non-discretionary limit placement if the sweeping candle closes its body outside the reference boundary. Routing is strictly conditional upon observing an immediate follow-through M5 candle body closing completely back inside the established session range within 15 minutes of the breach. In the absence of an internal close, the setup is classified as an "Impulse Session Expansion" and must be vetoed.
+> **Empirical Rationale:** Counterfactual audit of Stand-Aside [2026-07-30 15:30] verified that Gold swept London High by 2.86 pts and closed outside the range, continuing upward to hit theoretical SL for a -$9.68 loss. Enforcing an internal M5 body close eliminates the failure mode of stepping in front of unexhausted runaway expansion legs.
 
 ---
 ## 🔍 Recent Counterfactual Stand-Aside Audits
@@ -732,6 +740,12 @@ It is updated dynamically after every executed trade and every counterfactual au
 | 2026-07-23 17:30 | XAUUSD | [SETUP-ARCH-002] Swept NY AM Range ... | +0.52 / -2.21 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4091.68, trade would have filled at min 0 and hit SL at min 1 for -$5.55 loss. Council stand-aside successfully defended capital! |
 | 2026-07-23 18:00 | XAUUSD | [SETUP-ARCH-004] Breakdown below NY... | +0.52 / -2.66 pts | **BENIGN_UNFILLED** | 75m TTL would have expired without order fill ($0.00 PnL). Zero harm. |
 | 2026-07-24 17:30 | XAUUSD | [SETUP-ARCH-002] Swept NY AM Range ... | +9.98 / -15.35 pts | **BENIGN_UNFILLED** | 75m TTL would have expired without order fill ($0.00 PnL). Zero harm. |
+| 2026-07-27 16:00 | XAUUSD | [SETUP-ARCH-009] Bullish Trend Cont... | +12.75 / -15.36 pts | **BENIGN_UNFILLED** | 75m TTL would have expired without order fill ($0.00 PnL). Zero harm. |
+| 2026-07-29 11:00 | XAUUSD | [SETUP-ARCH-009] Bearish Trend Cont... | +24.41 / -0.00 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4024.55, trade would have filled at min 0 and hit SL at min 41 for -$5.50 loss. Council stand-aside successfully defended capital! |
+| 2026-07-30 11:00 | XAUUSD | [SETUP-ARCH-005] BULLISH SMT: BULLI... | +14.41 / -25.65 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4055.61, trade would have filled at min 0 and hit SL at min 8 for -$5.50 loss. Council stand-aside successfully defended capital! |
+| 2026-07-30 15:30 | XAUUSD | [SETUP-ARCH-007] BEARISH SMT: BEARI... | +25.30 / -1.07 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4061.95, trade would have filled at min 0 and hit SL at min 21 for -$9.68 loss. Council stand-aside successfully defended capital! |
+| 2026-07-31 16:00 | XAUUSD | [SETUP-ARCH-004] Breakdown below Lo... | +8.90 / -17.55 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4053.27, trade would have filled at min 0 and hit SL at min 101 for -$5.84 loss. Council stand-aside successfully defended capital! |
+| 2026-07-31 18:00 | XAUUSD | [SETUP-ARCH-005] BULLISH SMT: BULLI... | +0.58 / -37.83 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4056.75, trade would have filled at min 0 and hit SL at min 12 for -$5.50 loss. Council stand-aside successfully defended capital! |
 
 ---
 ## 🎯 Executed Trade Post-Mortems

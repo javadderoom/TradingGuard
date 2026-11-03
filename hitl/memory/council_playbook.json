@@ -1,6 +1,6 @@
 {
   "version": "2.0.0-LEAN",
-  "last_updated": "2026-11-03T21:49:45.109747",
+  "last_updated": "2026-11-03T23:03:21.956471",
   "active_rules": [
     {
       "id": "RULE-CORE-001",
@@ -368,6 +368,22 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Minimum Post-Sweep Displacement Confirmation Filter for Non-Discretionary SMT Overrides: The automated limit execution override granted under [RULE-SETUP-041] and [RULE-EXEC-044] is conditioned upon the sweeping asset completing an M5 displacement candle whose body closes back inside the reference session range. If the sweep candle or subsequent candle closes outside the reference range boundary, the Tier-1 Non-Discretionary override is revoked, and the order compilation layer must veto the setup as an \"Expansion Breakout in Progress.\"",
       "rationale": "Empirical replay of 2026-07-23 15:30, 16:00, and 17:30 UTC demonstrated that all three failed long setups penetrated range lows and closed decisively outside the boundary rather than showing sharp mean-reversion displacement back into the value area. This filter distinguishes true institutional absorption sweeps from genuine trend expansions.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "RULE-RISK-047",
+      "category": "Risk Calibration",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Absolute Dynamic Floor on Protective Stop Loss Width. For all limit orders on XAUUSD routed during the London Open (07:00–11:30 UTC) or NY Sessions (13:00–18:30 UTC), the protective stop loss distance must never be set narrower than max(3.50 pts, 1.25x M5 ATR). If the structural invalidation level requires a stop distance < 3.50 pts, the order execution engine must either: (1) Synthetically widen the stop to 3.50 pts while proportionally scaling down lot size to preserve fixed dollar risk; or (2) Veto the order placement entirely under \"Micro-Stop Volatility Hazard.\"",
+      "rationale": "Empirical audit of Trade [2026-07-27 17:30] showed a 2.40 pt stop loss was stopped out at 4103.07 despite the price reaching a 1:1.24 R:R favorable excursion (4097.00). Sub-3.0 pt stops on XAUUSD suffer micro-choking from normal spread expansion and intraday noise during high-velocity killzones.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "RULE-SETUP-048",
+      "category": "Setup Selection",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Pre-Requisite M5 Close Inside Session Boundary for Counter-Trend SMT Limit Routing. Any SMT divergence setup ([SETUP-ARCH-005] or [SETUP-ARCH-007]) that breaches a Session High or Low is permanently disqualified from non-discretionary limit placement if the sweeping candle closes its body outside the reference boundary. Routing is strictly conditional upon observing an immediate follow-through M5 candle body closing completely back inside the established session range within 15 minutes of the breach. In the absence of an internal close, the setup is classified as an \"Impulse Session Expansion\" and must be vetoed.",
+      "rationale": "Counterfactual audit of Stand-Aside [2026-07-30 15:30] verified that Gold swept London High by 2.86 pts and closed outside the range, continuing upward to hit theoretical SL for a -$9.68 loss. Enforcing an internal M5 body close eliminates the failure mode of stepping in front of unexhausted runaway expansion legs.",
       "status": "ACTIVE"
     }
   ],
@@ -6844,6 +6860,78 @@
       "verdict": "BENIGN_UNFILLED",
       "lesson": "75m TTL would have expired without order fill ($0.00 PnL). Zero harm.",
       "logged_at": "2026-11-03T21:49:25.075238"
+    },
+    {
+      "timestamp": "2026-07-27 16:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-009] Bullish Trend Continuation: OTE Discount Retracement at 4090.77 (Range: 21.58 pts)",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 12.75,
+      "forward_4h_mae": 15.36,
+      "forward_4h_close_delta": -15.24,
+      "verdict": "BENIGN_UNFILLED",
+      "lesson": "75m TTL would have expired without order fill ($0.00 PnL). Zero harm.",
+      "logged_at": "2026-11-03T23:00:31.599545"
+    },
+    {
+      "timestamp": "2026-07-29 11:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-009] Bearish Trend Continuation: Retracement to Breakdown POI at 4024.55",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 24.41,
+      "forward_4h_mae": 0.0,
+      "forward_4h_close_delta": 13.91,
+      "verdict": "PROTECTIVE_VETO",
+      "lesson": "PROTECTIVE VETO: If entered at 4024.55, trade would have filled at min 0 and hit SL at min 41 for -$5.50 loss. Council stand-aside successfully defended capital!",
+      "logged_at": "2026-11-03T23:01:30.539190"
+    },
+    {
+      "timestamp": "2026-07-30 11:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-005] BULLISH SMT: BULLISH SMT DIVERGENCE: Silver swept Asian Range Low by 0.012 pts (Judas Purge), while Gold REFUSED to sweep its Low (Higher Low accumulation). Institutional Smart Money Buy Signal! | Scaled Entry: 4055.61",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 14.41,
+      "forward_4h_mae": 25.65,
+      "forward_4h_close_delta": 10.53,
+      "verdict": "PROTECTIVE_VETO",
+      "lesson": "PROTECTIVE VETO: If entered at 4055.61, trade would have filled at min 0 and hit SL at min 8 for -$5.50 loss. Council stand-aside successfully defended capital!",
+      "logged_at": "2026-11-03T23:02:04.463275"
+    },
+    {
+      "timestamp": "2026-07-30 15:30",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-007] BEARISH SMT: BEARISH SMT DIVERGENCE: Gold swept London Range High by 2.86 pts, but Silver REFUSED to sweep its High (Silver held lower high). Institutional Distribution in Metals! | Scaled Entry: 4061.95",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 25.3,
+      "forward_4h_mae": 1.07,
+      "forward_4h_close_delta": 7.53,
+      "verdict": "PROTECTIVE_VETO",
+      "lesson": "PROTECTIVE VETO: If entered at 4061.95, trade would have filled at min 0 and hit SL at min 21 for -$9.68 loss. Council stand-aside successfully defended capital!",
+      "logged_at": "2026-11-03T23:02:21.233350"
+    },
+    {
+      "timestamp": "2026-07-31 16:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-004] Breakdown below London Range Low with Bearish FVG at 4053.27",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 8.9,
+      "forward_4h_mae": 17.55,
+      "forward_4h_close_delta": -9.59,
+      "verdict": "PROTECTIVE_VETO",
+      "lesson": "PROTECTIVE VETO: If entered at 4053.27, trade would have filled at min 0 and hit SL at min 101 for -$5.84 loss. Council stand-aside successfully defended capital!",
+      "logged_at": "2026-11-03T23:02:39.641719"
+    },
+    {
+      "timestamp": "2026-07-31 18:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-005] BULLISH SMT: BULLISH SMT DIVERGENCE: Silver swept NY AM Range Low by 0.000 pts (Judas Purge), while Gold REFUSED to sweep its Low (Higher Low accumulation). Institutional Smart Money Buy Signal! | Scaled Entry: 4056.75",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 0.58,
+      "forward_4h_mae": 37.83,
+      "forward_4h_close_delta": -17.57,
+      "verdict": "PROTECTIVE_VETO",
+      "lesson": "PROTECTIVE VETO: If entered at 4056.75, trade would have filled at min 0 and hit SL at min 12 for -$5.50 loss. Council stand-aside successfully defended capital!",
+      "logged_at": "2026-11-03T23:02:58.681444"
     }
   ]
 }
