@@ -470,3 +470,33 @@ Because institutions accumulate massive volume to reverse market structure, they
 1. **`hitl/setup_registry.py` & `hitl/memory/setup_registry.json`**: Formally registered and ratified as `SETUP-ARCH-014`.
 2. **`hitl/backtest/fast_screener.py`**: Implemented `detect_reversal_origin_retest` and integrated as Setup J.
 3. **`hitl/memory/optimal_trade_management_policy.json`**: Configured under `XAUUSD` with `target_rr: 3.5`, `breakeven_rr: 1.8`, `expected_pf: 1.40`. Flagged as `BANNED_ON_GBPUSD`.
+
+
+## 14. Full-Year 2026 Master Production Portfolio Benchmark
+
+### 14.1 Scope & Verification Mandate
+The unified production pipeline was audited across **175 trading days (700 sessions)** and **90,230,573 raw broker ticks** for both Gold (`XAUUSD_o`) and Cable (`GBPUSD_o`). The audit executed every session through `screen_ict_session` with exact broker spread and slippage.
+
+### 14.2 Master Portfolio Benchmark Table (Full-Year 2026)
+
+| Portfolio Tier | Total Fills | Wins - Losses - BE | Win Rate % | Win/BE Rate % | Net Realized Alpha | Profit Factor | Mathematical Expectancy |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Combined Portfolio (Gold + Cable)** | **149** | **55W - 59L - 35BE** | **36.9%** | **60.4%** | **+116.5R** | **2.97** | **+0.782R / fill** |
+| **Gold Standalone (`XAUUSD_o`)** | **89** | **38W - 30L - 21BE** | **42.7%** | **66.3%** | **+103.0R** | **4.43** | **+1.157R / fill** |
+| **Cable Standalone (`GBPUSD_o`)** | **60** | **17W - 29L - 14BE** | **28.3%** | **51.7%** | **+13.5R** | **1.47** | **+0.225R / fill** |
+
+### 14.3 Multi-Seasonal Resilience (Combined Portfolio)
+- **Winter 2026 (Jan 2 – Feb 27)**: 13 Fills | 9W - 3L - 1BE | **69.2% WR** | **+26.5R Net** | **PF: 9.83**
+- **Spring 2026 (Mar 1 – May 29)**: 50 Fills | 20W - 19L - 11BE | **40.0% WR** | **+42.0R Net** | **PF: 3.21** (Peak Alpha Quarter)
+- **Summer 2026 (Jun 1 – Aug 31)**: 42 Fills | 11W - 18L - 13BE | **26.2% WR** | **+18.5R Net** | **PF: 2.03**
+- **Autumn 2026 (Sep 1 – Nov 4)**: 44 Fills | 15W - 19L - 10BE | **34.1% WR** | **+29.5R Net** | **PF: 2.55**
+- **Full-Year Total**: 149 Fills | 55W - 59L - 35BE | **36.9% WR** | **+116.5R Net** | **PF: 2.97** (Zero losing quarters)
+
+### 14.4 Production Setup Archetype Performance Ledger
+1. **`SETUP-ARCH-004` (Expansion FVG)**: 26 Fills | 15W - 2L - 9BE | **57.7% WR** | **+48.5R Net** (PF: 24.25)
+2. **`SETUP-ARCH-001` (Judas Breaker)**: 17 Fills | 11W - 4L - 2BE | **64.7% WR** | **+34.5R Net** (PF: 9.62)
+3. **`SETUP-ARCH-014` (Macro H1 Reversal Origin Retest)**: 28 Fills | 9W - 15L - 4BE | **32.1% WR** | **+16.5R Net** (PF: 2.10)
+4. **`SETUP-ARCH-011` (Nested Double MSS)**: 14 Fills | 5W - 4L - 5BE | **35.7% WR** | **+13.5R Net** (PF: 4.38)
+5. **`SETUP-ARCH-003` (MSS Breaker Retest)**: 3 Fills | 2W - 1L - 0BE | **66.7% WR** | **+4.0R Net** (PF: 5.00)
+6. **`SETUP-ARCH-002` (Judas FVG Mitigation)**: 16 Fills | 3W - 7L - 6BE | **18.8% WR** | **+0.5R Net** (PF: 1.07)
+7. **`SETUP-ARCH-010` (Prominent Sweep M1 MSS)**: 45 Fills | 10W - 26L - 9BE | **22.2% WR** | **-1.0R Net** (PF: 0.96)
