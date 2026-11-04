@@ -71,6 +71,10 @@ The market clock dynamically synchronizes timezones without static hardcoded ass
   1. **Consecutive Structural Breach**: The displacement impulse decisively breaches two consecutive historical swing pivots ($SH_{n-1}$ and $SH_n$), OR
   2. **Sequential Shift**: Price breaks the 1st swing pivot, prints a confirmed Higher Low ($SL_2 > SL_1$ for longs) or Lower High, and prints a secondary displacement break past $SH_2$.
   3. **Performance Edge**: Double MSS generated **+137.0R Net Profit** (PF 1.74) compared to +13.0R for Single MSS.
+  4. **Nested Double MSS (Macro Shift + Pullback Shift)**:
+     - Anatomy: Downtrend sweeps $L_1 \to L_2$, displaces above $H_1$ to $H_2$ (1st Shift / 1st Orange Line). Enters complex pullback $H_2 \to L_3 \to H_3 \to L_4$. Displaces above $H_3$ to $H_4$ (2nd Shift / 2nd Orange Line, confirming pullback exhaustion). Enters on retest at $L_5$.
+     - **Sweep Filter Sensitivity**: With a prior liquidity sweep ($L_2$ sweeps $L_1$ or PDL), win rate is **30.0% (+8.0R, PF 1.62)**. Without a sweep (open air), win rate collapses to **10.0% (-2.0R)**.
+     - **Reversal Mechanics**: As a bottom-picking reversal model, enforcing lagging 1H bullish trend alignment degrades performance (9.5% WR) by entering after the move has already extended; it must be traded directly off the structural sweep.
 - **Liquidity Sweep Hierarchical Rule**:
   - **Tier-1 Priority (Macro Sweeps)**: Sweeps of **Prior Day High (PDH: 85.7% Win Rate, PF 21.00)** and **Prior Day Low (PDL: 57.1% Win Rate, PF 7.00)** represent the highest-conviction reversal setups.
   - **Tier-2 Priority (Session Extremes)**: Sweeps of Asian High/Low during London Open (41.7% Win Rate, PF 3.50).
