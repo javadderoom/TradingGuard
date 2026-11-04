@@ -11,25 +11,30 @@ from typing import Dict, Any, List, Optional, Tuple
 POLICY_FILE = Path(__file__).resolve().parent.parent / "memory" / "optimal_trade_management_policy.json"
 
 
-def get_optimal_trade_management(symbol: str, session_label: str) -> Tuple[float, Optional[float]]:
-    """Retrieves empirical (Target R:R, Breakeven R:R) for a given symbol and session."""
+def get_optimal_trade_management(symbol: str, session_label: str, setup_arch_id: Optional[str] = None) -> Tuple[float, Optional[float]]:
+    """Retrieves empirical (Target R:R, Breakeven R:R) for a given symbol, session, and archetype."""
     sym_clean = "XAUUSD" if "XAU" in symbol.upper() else ("EURUSD" if "EUR" in symbol.upper() else ("GBPUSD" if "GBP" in symbol.upper() else "XAUUSD"))
     
-    s = (session_label or "").lower()
-    if "silver bullet" in s:
-        sess_key = "NY_Silver_Bullet"
-    elif "london" in s:
-        sess_key = "London_Post_Open" if "post" in s else ("London_Pre_Open" if "pre" in s else "London_Open")
-    elif "ny" in s or "new york" in s:
-        sess_key = "NY_Post_Open" if "post" in s else ("NY_Pre_Open" if "pre" in s else "NY_Open")
-    else:
-        sess_key = "London_Open"
-
     if POLICY_FILE.exists():
         try:
             with open(POLICY_FILE, "r", encoding="utf-8") as f:
                 policy = json.load(f)
-                match = policy.get(sym_clean, {}).get(sess_key)
+                sym_policy = policy.get(sym_clean, {})
+                if setup_arch_id and setup_arch_id in sym_policy:
+                    match_arch = sym_policy[setup_arch_id]
+                    return float(match_arch.get("target_rr", 3.5)), match_arch.get("breakeven_rr")
+                
+                s = (session_label or "").lower()
+                if "silver bullet" in s:
+                    sess_key = "NY_Silver_Bullet"
+                elif "london" in s:
+                    sess_key = "London_Post_Open" if "post" in s else ("London_Pre_Open" if "pre" in s else "London_Open")
+                elif "ny" in s or "new york" in s:
+                    sess_key = "NY_Post_Open" if "post" in s else ("NY_Pre_Open" if "pre" in s else "NY_Open")
+                else:
+                    sess_key = "London_Open"
+
+                match = sym_policy.get(sess_key)
                 if match:
                     return float(match.get("target_rr", 3.5)), match.get("breakeven_rr")
         except Exception:

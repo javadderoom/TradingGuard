@@ -1,0 +1,296 @@
+{
+  "HYP-A_FRANKFURT_TRAP_GBPUSD_o": {
+    "total": {
+      "fills": 14,
+      "wins": 2,
+      "losses": 8,
+      "be": 4,
+      "wr": 14.3,
+      "net_r": -3.0,
+      "pf": 0.62
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 4,
+        "wins": 0,
+        "losses": 4,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": -4.0,
+        "pf": 0.0
+      },
+      "Spring": {
+        "fills": 4,
+        "wins": 2,
+        "losses": 0,
+        "be": 2,
+        "wr": 50.0,
+        "net_r": 5.0,
+        "pf": 5000.0
+      },
+      "Summer": {
+        "fills": 3,
+        "wins": 0,
+        "losses": 2,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -2.0,
+        "pf": 0.0
+      },
+      "Autumn": {
+        "fills": 2,
+        "wins": 0,
+        "losses": 1,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -1.0,
+        "pf": 0.0
+      }
+    }
+  },
+  "HYP-A_FRANKFURT_TRAP_XAUUSD_o": {
+    "total": {
+      "fills": 0,
+      "wins": 0,
+      "losses": 0,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": 0.0,
+      "pf": 0.0
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "Spring": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "Summer": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "Autumn": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      }
+    }
+  },
+  "HYP-B_VOLATILITY_COMPRESSION_GBPUSD_o": {
+    "total": {
+      "fills": 9,
+      "wins": 2,
+      "losses": 7,
+      "be": 0,
+      "wr": 22.2,
+      "net_r": -2.0,
+      "pf": 0.71
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 5,
+        "wins": 1,
+        "losses": 4,
+        "be": 0,
+        "wr": 20.0,
+        "net_r": -1.5,
+        "pf": 0.62
+      },
+      "Spring": {
+        "fills": 1,
+        "wins": 0,
+        "losses": 1,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": -1.0,
+        "pf": 0.0
+      },
+      "Summer": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "Autumn": {
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      }
+    }
+  },
+  "HYP-B_VOLATILITY_COMPRESSION_XAUUSD_o": {
+    "total": {
+      "fills": 24,
+      "wins": 3,
+      "losses": 17,
+      "be": 4,
+      "wr": 12.5,
+      "net_r": -6.5,
+      "pf": 0.62
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 3,
+        "wins": 0,
+        "losses": 2,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -2.0,
+        "pf": 0.0
+      },
+      "Spring": {
+        "fills": 5,
+        "wins": 1,
+        "losses": 4,
+        "be": 0,
+        "wr": 20.0,
+        "net_r": -0.5,
+        "pf": 0.88
+      },
+      "Summer": {
+        "fills": 9,
+        "wins": 1,
+        "losses": 5,
+        "be": 3,
+        "wr": 11.1,
+        "net_r": -1.5,
+        "pf": 0.7
+      },
+      "Autumn": {
+        "fills": 6,
+        "wins": 1,
+        "losses": 5,
+        "be": 0,
+        "wr": 16.7,
+        "net_r": -1.5,
+        "pf": 0.7
+      }
+    }
+  },
+  "HYP-C_ADR_EXHAUSTION_GBPUSD_o": {
+    "total": {
+      "fills": 42,
+      "wins": 6,
+      "losses": 22,
+      "be": 14,
+      "wr": 14.3,
+      "net_r": -10.0,
+      "pf": 0.55
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 12,
+        "wins": 3,
+        "losses": 7,
+        "be": 2,
+        "wr": 25.0,
+        "net_r": -1.0,
+        "pf": 0.86
+      },
+      "Spring": {
+        "fills": 10,
+        "wins": 1,
+        "losses": 6,
+        "be": 3,
+        "wr": 10.0,
+        "net_r": -4.0,
+        "pf": 0.33
+      },
+      "Summer": {
+        "fills": 3,
+        "wins": 0,
+        "losses": 2,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -2.0,
+        "pf": 0.0
+      },
+      "Autumn": {
+        "fills": 9,
+        "wins": 1,
+        "losses": 4,
+        "be": 4,
+        "wr": 11.1,
+        "net_r": -2.0,
+        "pf": 0.5
+      }
+    }
+  },
+  "HYP-C_ADR_EXHAUSTION_XAUUSD_o": {
+    "total": {
+      "fills": 34,
+      "wins": 10,
+      "losses": 16,
+      "be": 8,
+      "wr": 29.4,
+      "net_r": 9.0,
+      "pf": 1.56
+    },
+    "seasons": {
+      "Winter": {
+        "fills": 11,
+        "wins": 3,
+        "losses": 6,
+        "be": 2,
+        "wr": 27.3,
+        "net_r": 1.5,
+        "pf": 1.25
+      },
+      "Spring": {
+        "fills": 4,
+        "wins": 0,
+        "losses": 3,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -3.0,
+        "pf": 0.0
+      },
+      "Summer": {
+        "fills": 5,
+        "wins": 1,
+        "losses": 2,
+        "be": 2,
+        "wr": 20.0,
+        "net_r": 0.5,
+        "pf": 1.25
+      },
+      "Autumn": {
+        "fills": 6,
+        "wins": 2,
+        "losses": 4,
+        "be": 0,
+        "wr": 33.3,
+        "net_r": 1.0,
+        "pf": 1.25
+      }
+    }
+  }
+}

@@ -336,6 +336,86 @@ def detect_nested_double_mss(
     return False, "NONE", 0.0, 0.0, ""
 
 
+def detect_adr_exhaustion_snapback(
+    bars_5m: List[Dict[str, Any]],
+    bars_1d: Optional[List[Dict[str, Any]]] = None,
+    bars_1h: Optional[List[Dict[str, Any]]] = None,
+    symbol: str = "XAUUSD"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-012: Macro ADR Exhaustion Mean-Reversion Snapback.
+    Valid strictly on Gold (XAUUSD); prohibited on GBPUSD.
+    Trigger Criteria:
+    1. Intraday price range reaches >= 85% of 20-day Average Daily Range (ADR).
+    2. Active during institutional session hours before 16:00 UTC (19:30 Tehran).
+    3. Rejection candle prints at extreme (Close < Open at High; Close > Open at Low).
+    4. Market order entry on candle close with SL beyond extreme + $1.50 buffer.
+    """
+    if "XAU" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+
+    if len(bars_5m) < 25:
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Calculate 20-day ADR
+    adr_20 = 0.0
+    if bars_1d and len(bars_1d) >= 20:
+        prior_20 = bars_1d[-21:-1] if len(bars_1d) > 20 else bars_1d[-20:]
+        adr_20 = sum(b['high'] - b['low'] for b in prior_20) / len(prior_20)
+    elif bars_1h and len(bars_1h) >= 480:  # ~20 days of 1H
+        ranges = []
+        for d in range(20):
+            block = bars_1h[-(d+2)*24 : -(d+1)*24]
+            if block:
+                ranges.append(max(b['high'] for b in block) - min(b['low'] for b in block))
+        if ranges:
+            adr_20 = sum(ranges) / len(ranges)
+
+    if adr_20 <= 5.0:
+        adr_20 = 45.0  # Conservative fallback
+
+    curr_b = bars_5m[-1]
+    curr_dt = curr_b.get('dt')
+    if curr_dt is not None and hasattr(curr_dt, 'hour') and curr_dt.hour >= 16:
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Intraday range from recent 5M bars
+    lookback = min(len(bars_5m), 72)
+    day_window = bars_5m[-lookback:]
+    high_so_far = max(b['high'] for b in day_window)
+    low_so_far = min(b['low'] for b in day_window)
+    range_so_far = high_so_far - low_so_far
+
+    if range_so_far < (0.85 * adr_20):
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Check rejection at high
+    is_at_high = (curr_b['high'] >= high_so_far - 1.00) and (curr_b['close'] < curr_b['open'])
+    # Check rejection at low
+    is_at_low = (curr_b['low'] <= low_so_far + 1.00) and (curr_b['close'] > curr_b['open'])
+
+    min_sl = 3.50
+    max_sl = 9.00
+
+    if is_at_high:
+        entry = curr_b['close']
+        sl = high_so_far + 1.50
+        dist = abs(entry - sl)
+        if min_sl <= dist <= max_sl:
+            desc = f"ADR Exhaustion Snapback Short (Intraday Range {range_so_far:.2f} >= 85% ADR {adr_20:.2f}; Bearish Rejection at {high_so_far:.2f})"
+            return True, "BEARISH", entry, sl, desc
+
+    elif is_at_low:
+        entry = curr_b['close']
+        sl = low_so_far - 1.50
+        dist = abs(entry - sl)
+        if min_sl <= dist <= max_sl:
+            desc = f"ADR Exhaustion Snapback Long (Intraday Range {range_so_far:.2f} >= 85% ADR {adr_20:.2f}; Bullish Rejection at {low_so_far:.2f})"
+            return True, "BULLISH", entry, sl, desc
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -626,6 +706,15 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-011"
         direction = "LONG" if nested_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{nested_dir}_NESTED_DOUBLE_MSS", nested_entry, nested_sl, nested_desc, direction)
+
+    # Setup H: Macro ADR Exhaustion Mean-Reversion Snapback (SETUP-ARCH-012)
+    has_adr_snap, snap_dir, snap_entry, snap_sl, snap_desc = detect_adr_exhaustion_snapback(
+        bars_5m, bars_1d=bars_1d, bars_1h=bars_1h, symbol=symbol
+    )
+    if has_adr_snap and setup_registry.is_archetype_ratified("SETUP-ARCH-012"):
+        arch_id = "SETUP-ARCH-012"
+        direction = "LONG" if snap_dir == "BULLISH" else "SHORT"
+        return _package_setup(arch_id, f"{snap_dir}_ADR_EXHAUSTION_SNAPBACK", snap_entry, snap_sl, snap_desc, direction)
 
     # Price trapped in mid-range consolidation
     return {

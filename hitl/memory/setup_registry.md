@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-01T14:25:53.182299` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-04T21:52:37.472228` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -21,7 +21,7 @@
 - **Invalidation Anchor:** `Distal edge of FVG plus active session ATR buffer.`
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `Distal FVG edge + max(0.5 * 5M ATR, 1.5 * Real-Time Spread)`
-> **Supervisory Audit Verdict:** RATIFIED | *Authorized for active execution across MULTI portfolio assets. Execution is strictly conditioned on confirmed HTF liquidity run prior to 5M FVG creation during designated high-volume session windows (London & NY Open). Limit orders must verify spread normalization prior to routing.*
+> **Supervisory Audit Verdict:** RATIFIED | *Authorized for active execution across MULTI portfolio assets. Execution is strictly conditioned on confirmed HTF liquidity run prior to 5M FVG creation during designated high-volume session windows (London & NY Open). Limit orders must verify spread normalization prior to routing. [AUDIT 2026-11-04]: Decommissioned on Gold (-17.5R). Highly Ratified on GBPUSD (+6.0R, 40.0% WR, PF 2.50) for London Open / Continuation order block retests.*
 
 ### 🟢 [SETUP-ARCH-003] Confirmed Market Structure Shift (MSS) Breaker Retest (Structural Shift & Breaker Retest)
 - **Description:** Displacement through opposing swing pivot establishing a Breaker Block, followed by a retest.
@@ -29,7 +29,7 @@
 - **Invalidation Anchor:** `Opposing swing extreme or Breaker distal boundary.`
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `Max(2.0 pips + 1.2x Current Spread, 0.25x M15 ATR) beyond the breaker distal boundary or originating swing pivot`
-> **Supervisory Audit Verdict:** RATIFIED | *The structural transition of failed order flow into a breaker block demonstrates robust statistical expectancy and distinct institutional footprints under NY liquidity conditions. Deployment authorized strictly with candle-body displacement confirmation and mandated spread-adjusted buffers.*
+> **Supervisory Audit Verdict:** RATIFIED | *The structural transition of failed order flow into a breaker block demonstrates robust statistical expectancy and distinct institutional footprints under NY liquidity conditions. Deployment authorized strictly with candle-body displacement confirmation and mandated spread-adjusted buffers. [AUDIT 2026-11-04]: Core Tier-1 Flagship on both Gold (+9.0R) and GBPUSD (+15.0R, 31.4% WR, PF 1.60).*
 
 ### 🟢 [SETUP-ARCH-004] Institutional Range Expansion / NY Silver Bullet (Trend Continuation / Range Expansion)
 - **Description:** High-volume displacement breaking past session range high/low leaving an unbalanced FVG.
@@ -63,35 +63,42 @@
 - **Stop Buffer Requirement:** `Distal Edge + 2.0 pips spread buffer (Forex) / .50 (Gold).`
 > **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively by Review Council and Lead Human Partner (Seat #7). Allows selective counter-trend execution exclusively when mitigating an unmitigated ChoCh origin with confirmed SMT divergence. Mandatory deep limit entry (50%-75% depth) guarantees R:R >= 1:3.0 to internal liquidity pools.*
 
----
+### 🟢 [SETUP-ARCH-008] HTF Liquidity Sweep with LTF (M1) Market Structure Shift & Displacement Retest (HTF Liquidity Purge & LTF Execution Confirmation)
+- **Description:** High-probability reversal archetype triggered when price purges a critical Higher-Timeframe liquidity extreme (Previous Day High/Low [PDH/PDL], Previous Week High/Low [PWH/PWL], or Session High/Low) during key Killzone windows (London/NY Open). Instead of taking blind limit orders on 5M/15M, execution requires dropping to the 1-Minute (M1) timeframe to confirm an energetic Market Structure Shift (MSS) displacement body close breaking the preceding micro-swing pivot, followed by entry on the 50%-62% FVG / mitigation retest.
+- **Entry Trigger:** `Limit or market execution upon M1 retest of the Fair Value Gap (FVG) or Breaker/Order Block created by the M1 MSS displacement candle (50% Mean Threshold or OTE zone).`
+- **Invalidation Anchor:** `Pinned strictly beyond the extreme wick of the HTF sweep peak + spread buffer (1.0 pip for GBPUSD per amended RULE-RISK-011; 1.5-2.5 pips for EURUSD per amended RULE-RISK-007).`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `Sweep Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Proven on Monday, September 21, 2026 Cable NY Open sweep (PDH 1.33982 swept to 1.34003 peak; M1 MSS at 1.33925; entry at 1.33933 with 7.8 pip stop at 1.34011; TP hit at 1.33686 for +24.7 pips / 3.17R). Eliminates blind sweep stop-outs.*
 
-### [SETUP-ARCH-008] HTF Liquidity Sweep with LTF (M1) Market Structure Shift & Displacement Retest
-* **Category:** HTF Liquidity Purge & LTF Execution Confirmation
-* **Context:** Active Killzone windows (London Open, NY Open). Price purges a critical Higher-Timeframe liquidity boundary (Previous Day High/Low [PDH/PDL], Previous Week High/Low [PWH/PWL], or Asian Extremes).
-* **Execution Trigger:** Transition from HTF to 1-Minute (M1) timeframe upon sweep. Require an M1 Market Structure Shift (MSS) featuring an energetic displacement body close breaking the preceding micro-swing pivot. Enter upon 50%-62% FVG / mitigation retest (Mean Threshold or OTE).
-* **Invalidation Anchor:** Pinned strictly beyond the HTF sweep peak wick + asset-specific spread buffer (1.0 pip for GBPUSD; 1.5–2.5 pips for EURUSD).
-* **Target Anchor:** Anchored to opposing major HTF liquidity pool (e.g. Session Lows, PDL, or opposing 15M/1H FVG) per `RULE-TARGET-037`.
-* **Minimum R:R:** Mandatory >= 1:3.0.
-* **Status:** **RATIFIED**
-> **Supervisory Audit Verdict:** RATIFIED | *Initiated and proven by Lead Human Partner (Seat #7) on Monday, September 21, 2026 Cable NY Open sweep (PDH 1.33982 swept to 1.34003; M1 MSS at 1.33925; entry at 1.33933 with 7.8 pip stop at 1.34011; TP hit at 1.33686 for +24.7 pips / 3.17R). Eliminates premature blind sweep fills and delivers pristine R:R asymmetry.*
+### 🟢 [SETUP-ARCH-009] Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation) (Pro-Trend POI Mitigation & Trend Continuation)
+- **Description:** High-probability trend continuation archetype executing during the New York session (15:30-17:30 Tehran / 08:00-10:00 NY) when price is aligned with the Macro Directional Filter (SELL_ONLY or BUY_ONLY). Bypasses mid-range chop filters by recognizing internal retracement into the unmitigated origin of the prior session's impulse leg (London Breaker Block, 15M/1H FVG, or 50% Mean Threshold). Requires M1 Market Structure Shift (MSS) displacement confirmation before entry.
+- **Entry Trigger:** `M1 retracement into the displacement FVG / Breaker following confirmed M1 MSS at the London breakdown/breakout origin zone.`
+- **Invalidation Anchor:** `Retracement swing peak + spread buffer (1.0 pip for GBPUSD; 1.5-2.5 pips for EURUSD).`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `Retracement Peak Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Proven on Tuesday, September 22, 2026 Cable NY retracement (London dump from 1.3387 to 1.3326; NY retracement into London breakdown origin at 1.3368-1.3373; M1 MSS trigger at 1.33685 with 6.1 pip stop; dump to 1.33215 yielding +45 pips / 6.9R). Eliminates the mid-range chop blind spot on trend continuation days. [AUDIT 2026-11-04]: Permanently Decommissioned on Gold (-46.5R) and GBPUSD (-20.5R, 13.2% WR, PF 0.46) due to deep retracement failure in trending markets.*
 
----
+### 🟢 [SETUP-ARCH-010] Prominent Liquidity Sweep with Pro-Trend M1 MSS Displacement (Pro-Trend Prominent Sweep & LTF Execution)
+- **Description:** High-conviction trend continuation archetype executing exclusively in the direction of the confirmed HTF trend (Daily/4H). When price sweeps a visually prominent horizontal liquidity ceiling or floor (Equal Highs/Lows [EQH/EQL], Previous Day High/Low [PDH/PDL], or Prior Session Extreme), it bypasses deep HTF retracement requirements. Execution is triggered when price prints an immediate 1-Minute (M1) Market Structure Shift (MSS) with an energetic displacement candle body closing past the micro-swing pivot in the pre-determined trend direction. Entry is placed on the M1 FVG / Breaker retest or immediate execution upon M1 MSS close, with Stop Loss strictly anchored 1.0 pip beyond the sweep wick extreme.
+- **Entry Trigger:** `M1 MSS displacement body close in pre-determined trend direction, followed by retest of M1 FVG / Breaker origin.`
+- **Invalidation Anchor:** `Extreme of the prominent sweep wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `Sweep Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Designed specifically to capture runaway trend expansions (such as September 11 Equal Highs sweep and September 16 PDH sweep) without demanding deep 50% HTF retracements. By locking invalidation to the M1 sweep wick, dollar risk remains strictly within the  cap while providing 1:3R to 1:6R+ asymmetry. [AUDIT 2026-11-04]: Flagship on Gold (+14.0R, PF 1.67) and 100% WR on Cable (+5.0R, 2/2 wins).*
 
-### [SETUP-ARCH-009] Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation)
-* **Category:** Pro-Trend POI Mitigation & Trend Continuation
-* **Context:** Active New York session (15:30–17:30 Tehran / 08:00–10:00 NY). Prior session (London) generated a strong impulse expansion (>30 pips). Macro Directional Filter is strictly aligned (SELL_ONLY or BUY_ONLY).
-* **Execution Trigger:** Bypasses external sweep requirements; detects internal retracement into the unmitigated origin of the prior session breakdown/breakout (Breaker Block, 15M/1H FVG, or 50% Mean Threshold). Drops to 1-Minute (M1) chart to confirm an energetic Market Structure Shift (MSS) displacement body close breaking counter-trend micro-pivot. Enters on the 50%-62% M1 FVG retest.
-* **Invalidation Anchor:** Retracement swing peak wick + asset spread buffer (1.0 pip for GBPUSD; 1.5–2.5 pips for EURUSD).
-* **Target Anchor:** Daily Session Extremes (e.g. London Low 1.3326) and opposing HTF expansion targets per RULE-TARGET-037. Minimum R:R >= 1:3.0.
-* **Status:** **RATIFIED**
-> **Supervisory Audit Verdict:** RATIFIED | *Initiated and proven collaboratively on Tuesday, September 22, 2026 Cable NY retracement (London dump from 1.3387 to 1.3326; NY retracement into London breakdown origin at 1.3368–1.3373; M1 MSS trigger at 1.33685 with 6.1 pip stop; dump to 1.33215 yielding +45 pips / 6.9R). Eliminates the mid-range chop blind spot on trend continuation days.*
+### 🟢 [SETUP-ARCH-011] Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) (Structural Shift & Complex Pullback Exhaustion)
+- **Description:** Multi-wave nested reversal formation. Price sweeps macro liquidity (L1->L2), displaces above H1 (1st MSS to H2), forms an internal pullback (H2->L3->H3->L4), and prints a 2nd MSS displacement breaking H3 to H4. Entry is placed on the retest of H3 / FVG at L5 with Stop Loss anchored below L4.
+- **Entry Trigger:** `Limit order at H3 breaker retest or newly formed displacement FVG at L5.`
+- **Invalidation Anchor:** `Structural extreme of the internal low L4 + $1.50 spread buffer.`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `L4 swing extreme + $1.50 spread buffer (Gold), bounded between $3.50 min and $8.00 max.`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified following comprehensive 2-month empirical audit on Gold (Sep 1 - Nov 4, 2026). Achieved 30.0% Win Rate, +8.0R Net Profit, and 1.62 Profit Factor with sweep confirmation. Unanchored execution without sweep is strictly banned due to 10% win rate collapse.*
 
-### 10. Prominent Liquidity Sweep with Pro-Trend M1 MSS Displacement (SETUP-ARCH-010)
-* **Category**: Pro-Trend Prominent Sweep & LTF Execution
-* **Status**: **RATIFIED**
-* **Proposer**: Lead Discretionary Trader & Human Partner (Seat #7)
-* **Description**: High-conviction trend continuation archetype executing exclusively in the direction of the confirmed HTF trend (Daily/4H). When price sweeps a visually prominent horizontal liquidity ceiling or floor (Equal Highs/Lows [EQH/EQL], Previous Day High/Low [PDH/PDL], or Prior Session Extreme), it bypasses deep HTF retracement requirements. Execution is triggered when price prints an immediate 1-Minute (M1) Market Structure Shift (MSS) with an energetic displacement candle body closing past the micro-swing pivot in the pre-determined trend direction. Entry is placed on the M1 FVG / Breaker retest or immediate execution upon M1 MSS close.
-* **Entry Trigger**: M1 MSS displacement candle body close in pre-determined trend direction, followed by retest of M1 FVG / Breaker origin.
-* **Invalidation Anchor**: Extreme of the prominent sweep wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).
-* **Mandatory Minimum R:R**: 1:3.0 targeting the next major HTF liquidity pool or session extreme.
-* **Auditor Notes**: Ratified collaboratively with Lead Human Partner (Seat #7). Designed specifically to capture runaway trend expansions (such as September 11 Equal Highs sweep and September 16 PDH sweep) without demanding deep 50% HTF retracements. By locking invalidation to the M1 sweep wick, dollar risk remains strictly within the  cap while providing 1:3R to 1:6R+ asymmetry.
+### 🟢 [SETUP-ARCH-012] Macro ADR Exhaustion Mean-Reversion Snapback (Quantitative Statistical Arbitrage & Mean-Reversion)
+- **Description:** Statistical exhaustion pattern triggering when an asset expands >= 85% of its 20-day Average Daily Range (ADR) during institutional session hours before 16:00 UTC, followed by an M5 rejection bar at the intraday extreme. Exploits low probability of unilateral trend continuation past ADR without mean-reverting towards session equilibrium.
+- **Entry Trigger:** `Market order on M5 rejection candle close at intraday extreme (Bearish close at Day High for Short; Bullish close at Day Low for Long).`
+- **Invalidation Anchor:** `Structural extreme of the day + .50 buffer (Gold). Risk strictly bounded within [.50, .00] pts.`
+- **Mandated Minimum R:R:** `1:2.5`
+- **Stop Buffer Requirement:** `Extreme of the day + .50 spread buffer (Gold), bounded between .50 min and .00 max.`
+> **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following multi-seasonal raw broker tick mining across all 4 calendar seasons of 2026 (67.48M ticks on XAUUSD_o). Demonstrated positive expectancy across every single season: Winter +1.5R, Spring +1.0R, Summer +5.5R, Autumn +1.0R (Total: 34 Fills, 10W-16L-8BE, +9.0R Net, Profit Factor 1.56). Strictly specialized for Gold (XAUUSD); prohibited on GBPUSD (-10.0R failure due to non-mean-reverting intraday trends). Target strictly capped at 2.5R (empirical ceiling for mean-reversion counter-trend trades; 0 wins at >=3.5R).*
