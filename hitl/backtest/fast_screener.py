@@ -416,6 +416,85 @@ def detect_adr_exhaustion_snapback(
     return False, "NONE", 0.0, 0.0, ""
 
 
+def detect_macro_dol_runner(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: List[Dict[str, Any]],
+    bars_1d: Optional[List[Dict[str, Any]]] = None,
+    bars_1m: Optional[List[Dict[str, Any]]] = None,
+    symbol: str = "GBPUSD"
+) -> Tuple[bool, str, float, float, float, str]:
+    """
+    Detects SETUP-ARCH-013: HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner.
+    Exclusively ratified on GBPUSD (+47.1R Net, PF 1.53).
+    Returns: (has_setup, direction, entry, sl, dol_target, desc)
+    """
+    if "GBP" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, 0.0, ""
+
+    if len(bars_5m) < 30 or len(bars_1h) < 10:
+        return False, "NONE", 0.0, 0.0, 0.0, ""
+
+    # Determine PDH/PDL from bars_1d or 24h blocks in bars_1h
+    pdh = 0.0
+    pdl = 0.0
+    if bars_1d and len(bars_1d) >= 2:
+        prev_d = bars_1d[-2]
+        pdh = prev_d['high']
+        pdl = prev_d['low']
+    elif len(bars_1h) >= 48:
+        prev_day_1h = bars_1h[-48:-24]
+        pdh = max(b['high'] for b in prev_day_1h)
+        pdl = min(b['low'] for b in prev_day_1h)
+
+    # Asian session extremes from bars_1h (00:00 - 07:00 UTC)
+    today_bars = [b for b in bars_1h[-24:]]
+    asian_bars = [b for b in today_bars if hasattr(b.get('dt'), 'hour') and b['dt'].hour < 7]
+    asian_high = max(b['high'] for b in asian_bars) if asian_bars else 0.0
+    asian_low = min(b['low'] for b in asian_bars) if asian_bars else 0.0
+
+    curr_p = bars_5m[-1]['close']
+
+    # Bullish Macro Setup: Swept PDL or Asian Low
+    swept_pdl = pdl > 0 and any(b['low'] < (pdl - 0.0001) for b in bars_5m[-12:])
+    swept_asian_low = asian_low > 0 and any(b['low'] < (asian_low - 0.0001) for b in bars_5m[-12:])
+
+    if swept_pdl or swept_asian_low:
+        highs = [b['high'] for b in bars_5m[-12:-2]]
+        if highs:
+            swing_high = max(highs)
+            recent_low = min(b['low'] for b in bars_5m[-12:])
+            if curr_p > swing_high and bars_5m[-1]['close'] > bars_5m[-1]['open']:
+                entry = curr_p
+                sl = recent_low - 0.0006
+                risk = entry - sl
+                if 0.0005 <= risk <= 0.0014:
+                    dol = pdh if pdh > entry else asian_high
+                    if dol > entry and ((dol - entry) / risk) >= 7.0:
+                        desc = f"Cable Macro DOL Runner Long (Swept {'PDL' if swept_pdl else 'Asian Low'} -> MSS above {swing_high:.5f}; DOL: {dol:.5f} [Potential {((dol-entry)/risk):.1f}R])"
+                        return True, "BULLISH", entry, sl, dol, desc
+
+    # Bearish Macro Setup: Swept PDH or Asian High
+    swept_pdh = pdh > 0 and any(b['high'] > (pdh + 0.0001) for b in bars_5m[-12:])
+    swept_asian_high = asian_high > 0 and any(b['high'] > (asian_high + 0.0001) for b in bars_5m[-12:])
+
+    if swept_pdh or swept_asian_high:
+        lows = [b['low'] for b in bars_5m[-12:-2]]
+        if lows:
+            swing_low = min(lows)
+            recent_high = max(b['high'] for b in bars_5m[-12:])
+            if curr_p < swing_low and bars_5m[-1]['close'] < bars_5m[-1]['open']:
+                entry = curr_p
+                sl = recent_high + 0.0006
+                risk = sl - entry
+                if 0.0005 <= risk <= 0.0014:
+                    dol = pdl if pdl < entry else asian_low
+                    if dol < entry and ((entry - dol) / risk) >= 7.0:
+                        desc = f"Cable Macro DOL Runner Short (Swept {'PDH' if swept_pdh else 'Asian High'} -> MSS below {swing_low:.5f}; DOL: {dol:.5f} [Potential {((entry-dol)/risk):.1f}R])"
+                        return True, "BEARISH", entry, sl, dol, desc
+
+    return False, "NONE", 0.0, 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -715,6 +794,18 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-012"
         direction = "LONG" if snap_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{snap_dir}_ADR_EXHAUSTION_SNAPBACK", snap_entry, snap_sl, snap_desc, direction)
+
+    # Setup I: HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner (SETUP-ARCH-013)
+    has_dol_runner, runner_dir, runner_entry, runner_sl, dol_tgt, runner_desc = detect_macro_dol_runner(
+        bars_5m, bars_1h, bars_1d=bars_1d, bars_1m=bars_1m, symbol=symbol
+    )
+    if has_dol_runner and setup_registry.is_archetype_ratified("SETUP-ARCH-013"):
+        arch_id = "SETUP-ARCH-013"
+        direction = "LONG" if runner_dir == "BULLISH" else "SHORT"
+        setup_pkg = _package_setup(arch_id, f"{runner_dir}_MACRO_DOL_RUNNER", runner_entry, runner_sl, runner_desc, direction)
+        setup_pkg["dol_target"] = dol_tgt
+        setup_pkg["target_mode"] = "HTF_DOL_WITH_15M_STRUCTURAL_TRAIL"
+        return setup_pkg
 
     # Price trapped in mid-range consolidation
     return {

@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-04T21:52:37.472228` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-04T22:18:05.566268` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -102,3 +102,11 @@
 - **Mandated Minimum R:R:** `1:2.5`
 - **Stop Buffer Requirement:** `Extreme of the day + .50 spread buffer (Gold), bounded between .50 min and .00 max.`
 > **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following multi-seasonal raw broker tick mining across all 4 calendar seasons of 2026 (67.48M ticks on XAUUSD_o). Demonstrated positive expectancy across every single season: Winter +1.5R, Spring +1.0R, Summer +5.5R, Autumn +1.0R (Total: 34 Fills, 10W-16L-8BE, +9.0R Net, Profit Factor 1.56). Strictly specialized for Gold (XAUUSD); prohibited on GBPUSD (-10.0R failure due to non-mean-reverting intraday trends). Target strictly capped at 2.5R (empirical ceiling for mean-reversion counter-trend trades; 0 wins at >=3.5R).*
+
+### 🟢 [SETUP-ARCH-013] HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner (Macro Trend Expansion & Structural Trailing)
+- **Description:** Captures multi-hour higher timeframe expansion legs on Cable (GBPUSD) by identifying liquidity sweeps of Prior Day High/Low (PDH/PDL) or Asian Session extremes, triggering on 1-minute Market Structure Shift displacement, and holding across multi-hour expansions by trailing invalidation behind 15-minute swing pivots.
+- **Entry Trigger:** `1-Minute MSS displacement body close breaking counter-trend micro-pivot following sweep of PDH/PDL or Asian extreme.`
+- **Invalidation Anchor:** `Extreme of 1-minute sweep wick + 0.6 pip spread buffer. Bounded between 5.0 and 12.0 pips.`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `M1 sweep wick extreme + 0.6 pips (0.00006), clamped to [5.0, 12.0] pips.`
+> **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following full-year 2026 multi-seasonal audit on GBPUSD across 22.74M ticks (126 setups). Delivered +47.1R Net Realized Profit (PF 1.53, 24.6% WR) by trailing 15-minute swing structure to capture multi-hour expansions, compared to only +7.0R under static 2.5R target. Produced multiple massive winners: +9.08R (Jun 5), +8.33R (Jul 20), +8.09R (Jun 1), +8.03R (Jun 22), and +7.46R (Oct 6). Positive in 3 of 4 seasons: Summer +37.1R, Winter +8.1R, Autumn +6.0R.*

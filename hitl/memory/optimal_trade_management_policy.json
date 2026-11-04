@@ -104,6 +104,16 @@
       "expected_pf": 0.55,
       "sample_size": 42,
       "status": "BANNED_ON_GBPUSD"
+    },
+    "SETUP-ARCH-013": {
+      "target_mode": "HTF_DOL_WITH_15M_STRUCTURAL_TRAIL",
+      "target_rr": 7.0,
+      "breakeven_rr": 3.0,
+      "trail_mfe_rr": 4.0,
+      "win_rate_pct": 24.6,
+      "expected_pf": 1.53,
+      "sample_size": 126,
+      "status": "RATIFIED_ON_GBPUSD"
     }
   },
   "XAGUSD": {

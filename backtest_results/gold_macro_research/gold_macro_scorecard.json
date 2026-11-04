@@ -1,0 +1,125 @@
+{
+  "G-A_DOUBLE_MSS_REVERSAL": {
+    "fills": 115,
+    "wins": 25,
+    "losses": 81,
+    "be": 9,
+    "wr": 21.7,
+    "net_r": -0.03,
+    "pf": 1.0,
+    "five_r_plus": 3,
+    "eight_r_plus": 1,
+    "seasons": {
+      "Winter": {
+        "fills": 4,
+        "net_r": 6.42,
+        "wins": 3,
+        "losses": 1,
+        "be": 0
+      },
+      "Spring": {
+        "fills": 24,
+        "net_r": -3.11,
+        "wins": 3,
+        "losses": 16,
+        "be": 5
+      },
+      "Summer": {
+        "fills": 49,
+        "net_r": -6.96,
+        "wins": 10,
+        "losses": 36,
+        "be": 3
+      },
+      "Autumn": {
+        "fills": 38,
+        "net_r": 3.62,
+        "wins": 9,
+        "losses": 28,
+        "be": 1
+      }
+    }
+  },
+  "G-B_LONDON_IGNITION_TREND": {
+    "fills": 5,
+    "wins": 2,
+    "losses": 3,
+    "be": 0,
+    "wr": 40.0,
+    "net_r": 7.7,
+    "pf": 3.57,
+    "five_r_plus": 1,
+    "eight_r_plus": 0,
+    "seasons": {
+      "Winter": {
+        "fills": 0,
+        "net_r": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0
+      },
+      "Spring": {
+        "fills": 1,
+        "net_r": 6.23,
+        "wins": 1,
+        "losses": 0,
+        "be": 0
+      },
+      "Summer": {
+        "fills": 0,
+        "net_r": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0
+      },
+      "Autumn": {
+        "fills": 4,
+        "net_r": 1.47,
+        "wins": 1,
+        "losses": 3,
+        "be": 0
+      }
+    }
+  },
+  "G-C_15M_BREAKER_DISPLACEMENT": {
+    "fills": 1,
+    "wins": 0,
+    "losses": 1,
+    "be": 0,
+    "wr": 0.0,
+    "net_r": -1.0,
+    "pf": 0.0,
+    "five_r_plus": 0,
+    "eight_r_plus": 0,
+    "seasons": {
+      "Winter": {
+        "fills": 0,
+        "net_r": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0
+      },
+      "Spring": {
+        "fills": 0,
+        "net_r": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0
+      },
+      "Summer": {
+        "fills": 1,
+        "net_r": -1.0,
+        "wins": 0,
+        "losses": 1,
+        "be": 0
+      },
+      "Autumn": {
+        "fills": 0,
+        "net_r": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0
+      }
+    }
+  }
+}

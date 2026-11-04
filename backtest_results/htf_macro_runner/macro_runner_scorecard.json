@@ -1,0 +1,334 @@
+{
+  "XAUUSD_o": {
+    "p1": {
+      "name": "Policy 1: Static Target (3.5R/2.5R Sweet Spot)",
+      "fills": 165,
+      "wins": 23,
+      "losses": 113,
+      "be": 29,
+      "wr": 13.9,
+      "net_r": -32.5,
+      "pf": 0.71,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 11,
+          "wins": 0,
+          "losses": 8,
+          "be": 3,
+          "net_r": -8.0
+        },
+        "Spring": {
+          "fills": 49,
+          "wins": 6,
+          "losses": 37,
+          "be": 6,
+          "net_r": -16.0
+        },
+        "Summer": {
+          "fills": 60,
+          "wins": 8,
+          "losses": 40,
+          "be": 12,
+          "net_r": -12.0
+        },
+        "Autumn": {
+          "fills": 45,
+          "wins": 9,
+          "losses": 28,
+          "be": 8,
+          "net_r": 3.5
+        }
+      }
+    },
+    "p2": {
+      "name": "Policy 2: All-or-Nothing HTF DOL Target",
+      "fills": 165,
+      "wins": 1,
+      "losses": 117,
+      "be": 47,
+      "wr": 0.6,
+      "net_r": -109.81,
+      "pf": 0.06,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 11,
+          "wins": 0,
+          "losses": 8,
+          "be": 3,
+          "net_r": -8.0
+        },
+        "Spring": {
+          "fills": 49,
+          "wins": 0,
+          "losses": 38,
+          "be": 11,
+          "net_r": -38.0
+        },
+        "Summer": {
+          "fills": 60,
+          "wins": 0,
+          "losses": 41,
+          "be": 19,
+          "net_r": -41.0
+        },
+        "Autumn": {
+          "fills": 45,
+          "wins": 1,
+          "losses": 30,
+          "be": 14,
+          "net_r": -22.81
+        }
+      }
+    },
+    "p3": {
+      "name": "Policy 3: 15-Minute Structural Trailing Engine",
+      "fills": 165,
+      "wins": 27,
+      "losses": 130,
+      "be": 8,
+      "wr": 16.4,
+      "net_r": -22.69,
+      "pf": 0.83,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 11,
+          "wins": 1,
+          "losses": 9,
+          "be": 1,
+          "net_r": -0.09
+        },
+        "Spring": {
+          "fills": 49,
+          "wins": 7,
+          "losses": 41,
+          "be": 1,
+          "net_r": -20.07
+        },
+        "Summer": {
+          "fills": 60,
+          "wins": 9,
+          "losses": 47,
+          "be": 4,
+          "net_r": -15.92
+        },
+        "Autumn": {
+          "fills": 45,
+          "wins": 10,
+          "losses": 33,
+          "be": 2,
+          "net_r": 13.39
+        }
+      }
+    },
+    "p4": {
+      "name": "Policy 4: Institutional Split (70% Static / 30% Macro Runner)",
+      "fills": 165,
+      "wins": 27,
+      "losses": 113,
+      "be": 25,
+      "wr": 16.4,
+      "net_r": -29.57,
+      "pf": 0.75,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 11,
+          "wins": 1,
+          "losses": 8,
+          "be": 2,
+          "net_r": -5.63
+        },
+        "Spring": {
+          "fills": 49,
+          "wins": 7,
+          "losses": 37,
+          "be": 5,
+          "net_r": -17.2
+        },
+        "Summer": {
+          "fills": 60,
+          "wins": 9,
+          "losses": 40,
+          "be": 11,
+          "net_r": -13.19
+        },
+        "Autumn": {
+          "fills": 45,
+          "wins": 10,
+          "losses": 28,
+          "be": 7,
+          "net_r": 6.45
+        }
+      }
+    }
+  },
+  "GBPUSD_o": {
+    "p1": {
+      "name": "Policy 1: Static Target (3.5R/2.5R Sweet Spot)",
+      "fills": 126,
+      "wins": 32,
+      "losses": 73,
+      "be": 21,
+      "wr": 25.4,
+      "net_r": 7.0,
+      "pf": 1.1,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 17,
+          "wins": 5,
+          "losses": 11,
+          "be": 1,
+          "net_r": 1.5
+        },
+        "Spring": {
+          "fills": 53,
+          "wins": 10,
+          "losses": 30,
+          "be": 13,
+          "net_r": -5.0
+        },
+        "Summer": {
+          "fills": 32,
+          "wins": 11,
+          "losses": 19,
+          "be": 2,
+          "net_r": 8.5
+        },
+        "Autumn": {
+          "fills": 24,
+          "wins": 6,
+          "losses": 13,
+          "be": 5,
+          "net_r": 2.0
+        }
+      }
+    },
+    "p2": {
+      "name": "Policy 2: All-or-Nothing HTF DOL Target",
+      "fills": 126,
+      "wins": 9,
+      "losses": 82,
+      "be": 35,
+      "wr": 7.1,
+      "net_r": 0.11,
+      "pf": 1.0,
+      "ten_r_plus_trades": 2,
+      "seasons": {
+        "Winter": {
+          "fills": 17,
+          "wins": 0,
+          "losses": 11,
+          "be": 6,
+          "net_r": -11.0
+        },
+        "Spring": {
+          "fills": 53,
+          "wins": 3,
+          "losses": 36,
+          "be": 14,
+          "net_r": -2.1
+        },
+        "Summer": {
+          "fills": 32,
+          "wins": 5,
+          "losses": 20,
+          "be": 7,
+          "net_r": 20.75
+        },
+        "Autumn": {
+          "fills": 24,
+          "wins": 1,
+          "losses": 15,
+          "be": 8,
+          "net_r": -7.54
+        }
+      }
+    },
+    "p3": {
+      "name": "Policy 3: 15-Minute Structural Trailing Engine",
+      "fills": 126,
+      "wins": 31,
+      "losses": 89,
+      "be": 6,
+      "wr": 24.6,
+      "net_r": 47.13,
+      "pf": 1.53,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 17,
+          "wins": 6,
+          "losses": 11,
+          "be": 0,
+          "net_r": 8.08
+        },
+        "Spring": {
+          "fills": 53,
+          "wins": 10,
+          "losses": 41,
+          "be": 2,
+          "net_r": -4.11
+        },
+        "Summer": {
+          "fills": 32,
+          "wins": 10,
+          "losses": 20,
+          "be": 2,
+          "net_r": 37.14
+        },
+        "Autumn": {
+          "fills": 24,
+          "wins": 5,
+          "losses": 17,
+          "be": 2,
+          "net_r": 6.02
+        }
+      }
+    },
+    "p4": {
+      "name": "Policy 4: Institutional Split (70% Static / 30% Macro Runner)",
+      "fills": 126,
+      "wins": 39,
+      "losses": 73,
+      "be": 14,
+      "wr": 31.0,
+      "net_r": 19.04,
+      "pf": 1.25,
+      "ten_r_plus_trades": 0,
+      "seasons": {
+        "Winter": {
+          "fills": 17,
+          "wins": 6,
+          "losses": 11,
+          "be": 0,
+          "net_r": 3.47
+        },
+        "Spring": {
+          "fills": 53,
+          "wins": 14,
+          "losses": 30,
+          "be": 9,
+          "net_r": -4.73
+        },
+        "Summer": {
+          "fills": 32,
+          "wins": 12,
+          "losses": 19,
+          "be": 1,
+          "net_r": 17.1
+        },
+        "Autumn": {
+          "fills": 24,
+          "wins": 7,
+          "losses": 13,
+          "be": 4,
+          "net_r": 3.2
+        }
+      }
+    }
+  }
+}

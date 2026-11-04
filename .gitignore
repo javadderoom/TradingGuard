@@ -63,4 +63,8 @@ build/
 dist/
 *.spec
 
+# Backtest binary cache
+backtest_results/cache/
+*.parquet
+
 nul

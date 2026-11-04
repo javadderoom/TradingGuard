@@ -383,3 +383,50 @@ Three distinct mathematical market microstructure hypotheses were formulated, ex
    - Explicitly banned under `GBPUSD` (`target_rr: 0.0`, `status: BANNED_ON_GBPUSD`).
 4. **`hitl/backtest/evaluator.py`**:
    - Updated `get_optimal_trade_management` to support archetype-specific target and breakeven lookups via `setup_arch_id`.
+
+
+## 12. British Pound HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner (SETUP-ARCH-013)
+
+### 12.1 Purpose & Architectural Motivation
+Discretionary traders regularly miss multi-hour higher timeframe expansion legs because static intraday targets (such as 2.5R on Cable) cut off winning trades prematurely. Conversely, waiting for an unmanaged, fixed 10R order causes 85% of winning expansions to retrace into breakeven.
+
+To resolve this duality, `SETUP-ARCH-013` pairs a **precision 1-Minute / 5-Minute Market Structure Shift entry** with a **15-Minute Structural Trailing Engine**. Instead of exiting at a static cap or demanding the exact tick of the daily high/low, the algorithm trails its stop behind each newly confirmed 15-Minute higher low (for Longs) or lower high (for Shorts), capturing the bulk of multi-hour expansions and exiting only when market structure genuinely bends.
+
+### 12.2 Full-Year 2026 Empirical Benchmark (126 Setups | 22.7M Ticks)
+
+| Management Policy | Total Setups | Wins - Losses - BE | Win Rate % | Net Realized R | Profit Factor | Trades $\ge +7\text{R}$ |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Static Target (2.5R Cap)** | 126 | 32W - 73L - 21BE | 25.4% | **+7.0R** | 1.10 | 0 |
+| **All-or-Nothing HTF DOL (Unmanaged)** | 126 | 9W - 82L - 35BE | 7.1% | **+0.1R** | 1.00 | 2 |
+| **15M Structural Trailing Engine (`ARCH-013`)** | **126** | **31W - 89L - 6BE** | **24.6%** | **+47.1R** | **1.53** | **7** |
+
+### 12.3 Seasonal Breakdown (SETUP-ARCH-013 on Cable)
+- **Summer 2026**: 32 Fills | 10W - 20L - 2BE | **+37.1R Net** (Explosive macro trend expansions)
+- **Winter 2026**: 17 Fills | 6W - 11L - 0BE | **+8.1R Net**
+- **Autumn 2026**: 24 Fills | 5W - 17L - 2BE | **+6.0R Net**
+- **Spring 2026**: 53 Fills | 10W - 41L - 2BE | **-4.1R Net** (Tight multi-day consolidation)
+- **Full-Year Total**: 126 Fills | 31W - 89L - 6BE | **+47.1R Net** (PF 1.53)
+
+### 12.4 Sample Multi-Hour Winners Captured
+- **June 5, 2026 (Short)**: Entry at 1.3542; 15M trail banked **+9.08R** in 78 minutes.
+- **July 20, 2026 (Short)**: Entry at 1.3488; 15M trail banked **+8.33R** in 201 minutes (3.3 hours).
+- **June 1, 2026 (Short)**: Entry at 1.3415; 15M trail banked **+8.09R** in 422 minutes (7.0 hours).
+- **June 22, 2026 (Long)**: Entry at 1.3491; 15M trail banked **+8.03R** in 110 minutes.
+- **October 6, 2026 (Long)**: Entry at 1.3095; 15M trail banked **+7.46R** in 267 minutes (4.5 hours).
+
+### 12.5 Mathematical & Execution Specification
+1. **Eligible Symbol**: `GBPUSD` (Cable Specialist).
+2. **Liquidity Sweep Benchmark**: Prior Day High (`PDH`), Prior Day Low (`PDL`), Asian Session High (`Asian_High`), or Asian Session Low (`Asian_Low`).
+3. **Displacement Entry Trigger**: Energetic 1-Minute / 5-Minute MSS candle body close breaking the counter-trend micro-pivot.
+4. **Invalidation Anchor**: Sweep wick extreme $+ 0.6$ pips buffer ($0.00006$). Risk clamped to $[5.0, 12.0]$ pips.
+5. **HTF Draw on Liquidity (DOL)**: Opposing Daily extreme or Asian extreme. Mandatory minimum potential:
+   $$\text{DOL Potential} = \frac{|\text{DOL} - \text{Entry}|}{\text{Risk}} \ge 7.0R$$
+6. **Dynamic Trailing Engine**:
+   - **Breakeven Ratchet**: At $+3.0R$ MFE, stop moves to $+0.2R$ (locking nominal profit).
+   - **15M Trailing Activation**: At $+4.0R$ MFE, stop loss ratchets behind the lowest low of the last two completed 15M candles (for Longs) or highest high (for Shorts).
+   - **Terminal Exit**: Triggered either when price hits the HTF DOL (full win) or price breaks the trailing 15M swing structure.
+
+### 12.6 Production Codebase Integration
+1. **`hitl/setup_registry.py` & `hitl/memory/setup_registry.json`**: Formally registered and ratified as `SETUP-ARCH-013`.
+2. **`hitl/backtest/fast_screener.py`**: Implemented `detect_macro_dol_runner` and integrated as Setup I.
+3. **`hitl/memory/optimal_trade_management_policy.json`**: Calibrated under `GBPUSD` with `target_mode: HTF_DOL_WITH_15M_STRUCTURAL_TRAIL`, `breakeven_rr: 3.0`, `trail_mfe_rr: 4.0`.

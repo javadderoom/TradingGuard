@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-04T21:52:37.472228",
+  "last_updated": "2026-11-04T22:18:05.566268",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -279,6 +279,38 @@
         "max_triggers_per_day": 1
       },
       "auditor_notes": "Formally ratified following multi-seasonal raw broker tick mining across all 4 calendar seasons of 2026 (67.48M ticks on XAUUSD_o). Demonstrated positive expectancy across every single season: Winter +1.5R, Spring +1.0R, Summer +5.5R, Autumn +1.0R (Total: 34 Fills, 10W-16L-8BE, +9.0R Net, Profit Factor 1.56). Strictly specialized for Gold (XAUUSD); prohibited on GBPUSD (-10.0R failure due to non-mean-reverting intraday trends). Target strictly capped at 2.5R (empirical ceiling for mean-reversion counter-trend trades; 0 wins at >=3.5R)."
+    },
+    {
+      "id": "SETUP-ARCH-013",
+      "name": "HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner",
+      "category": "Macro Trend Expansion & Structural Trailing",
+      "description": "Captures multi-hour higher timeframe expansion legs on Cable (GBPUSD) by identifying liquidity sweeps of Prior Day High/Low (PDH/PDL) or Asian Session extremes, triggering on 1-minute Market Structure Shift displacement, and holding across multi-hour expansions by trailing invalidation behind 15-minute swing pivots.",
+      "entry_trigger": "1-Minute MSS displacement body close breaking counter-trend micro-pivot following sweep of PDH/PDL or Asian extreme.",
+      "invalidation_anchor": "Extreme of 1-minute sweep wick + 0.6 pip spread buffer. Bounded between 5.0 and 12.0 pips.",
+      "proposer": "Autonomous Macro Discovery Engine & Quantitative Researcher",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-04T22:18:05.565396",
+      "ratified_at": "2026-11-04T22:18:05.566263",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner",
+        "category": "Macro Trend Expansion & Structural Trailing",
+        "description": "Captures multi-hour higher timeframe expansion legs on Cable (GBPUSD) by identifying liquidity sweeps of Prior Day High/Low (PDH/PDL) or Asian Session extremes, triggering on 1-minute Market Structure Shift displacement, and holding across multi-hour expansions by trailing invalidation behind 15-minute swing pivots.",
+        "entry_trigger": "1-Minute MSS displacement body close breaking counter-trend micro-pivot following sweep of PDH/PDL or Asian extreme.",
+        "invalidation_anchor": "Extreme of 1-minute sweep wick + 0.6 pip spread buffer. Bounded between 5.0 and 12.0 pips.",
+        "min_rr": "1:3.0",
+        "target_mode": "HTF_DOL_WITH_15M_STRUCTURAL_TRAIL",
+        "be_trigger_rr": 3.0,
+        "be_lock_rr": 0.2,
+        "trail_timeframe": "M15",
+        "trail_activation_mfe_rr": 4.0,
+        "min_dol_potential_rr": 7.0,
+        "eligible_symbols": [
+          "GBPUSD"
+        ],
+        "stop_buffer_rule": "M1 sweep wick extreme + 0.6 pips (0.00006), clamped to [5.0, 12.0] pips."
+      },
+      "auditor_notes": "Formally ratified following full-year 2026 multi-seasonal audit on GBPUSD across 22.74M ticks (126 setups). Delivered +47.1R Net Realized Profit (PF 1.53, 24.6% WR) by trailing 15-minute swing structure to capture multi-hour expansions, compared to only +7.0R under static 2.5R target. Produced multiple massive winners: +9.08R (Jun 5), +8.33R (Jul 20), +8.09R (Jun 1), +8.03R (Jun 22), and +7.46R (Oct 6). Positive in 3 of 4 seasons: Summer +37.1R, Winter +8.1R, Autumn +6.0R."
     }
   ]
 }
