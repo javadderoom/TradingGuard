@@ -250,6 +250,92 @@ def detect_prominent_sweep_and_mss(
     return False, "NONE", 0.0, 0.0, ""
 
 
+def detect_nested_double_mss(
+    bars_5m: List[Dict[str, Any]],
+    symbol: str = "XAUUSD",
+    lookback: int = 50
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects Nested Double MSS (SETUP-ARCH-011):
+    L1 -> H1 -> L2 (Sweep of L1) -> H2 (Breaks H1: 1st MSS) -> L3 -> H3 -> L4 -> H4 (Breaks H3: 2nd MSS).
+    Entry at H3 breaker retest (L5), SL below L4 + $1.50 spread buffer.
+    Mandatory prior sweep: L2 must sweep L1 or an opposing benchmark.
+    """
+    if len(bars_5m) < 30:
+        return False, "NONE", 0.0, 0.0, ""
+
+    recent = bars_5m[-lookback:]
+    curr_bar = recent[-1]
+    c = curr_bar['close']
+
+    highs = []
+    lows = []
+    for i in range(2, len(recent) - 2):
+        if recent[i]['high'] >= recent[i-1]['high'] and recent[i]['high'] >= recent[i-2]['high'] and \
+           recent[i]['high'] >= recent[i+1]['high'] and recent[i]['high'] >= recent[i+2]['high']:
+            highs.append((i, recent[i]['high']))
+        if recent[i]['low'] <= recent[i-1]['low'] and recent[i]['low'] <= recent[i-2]['low'] and \
+           recent[i]['low'] <= recent[i+1]['low'] and recent[i]['low'] <= recent[i+2]['low']:
+            lows.append((i, recent[i]['low']))
+
+    if len(highs) < 3 or len(lows) < 3:
+        return False, "NONE", 0.0, 0.0, ""
+
+    # 1. Bullish Nested Double MSS
+    h3_idx, h3_price = highs[-1]
+    if c > h3_price and curr_bar['close'] > curr_bar['open']:
+        bars_after_h3 = recent[h3_idx:]
+        if len(bars_after_h3) >= 2:
+            l4_price = min(b['low'] for b in bars_after_h3)
+            prior_h = [h for h in highs if h[0] < h3_idx]
+            prior_l = [l for l in lows if l[0] < h3_idx]
+            if len(prior_h) >= 2 and len(prior_l) >= 2:
+                h2_idx, h2_price = prior_h[-1]
+                h1_idx, h1_price = prior_h[-2]
+                l3_idx, l3_price = prior_l[-1]
+                l2_idx, l2_price = prior_l[-2]
+
+                has_sweep = (len(prior_l) >= 3 and l2_price < prior_l[-3][1]) or (l2_price < prior_l[0][1])
+
+                if has_sweep and (h2_price > h1_price + 1.0) and (h3_price < h2_price - 1.0) and (l3_price > l2_price) and (l4_price > l2_price):
+                    entry = h3_price
+                    sl = l4_price - 1.50
+                    dist = abs(entry - sl)
+                    if dist < 3.50:
+                        sl = entry - 3.50
+                    elif dist > 8.00:
+                        sl = entry - 8.00
+                    return True, "BULLISH", entry, sl, f"Nested Double MSS (Swept {l2_price:.2f} -> 1st MSS {h2_price:.2f} -> Pullback -> 2nd MSS above {h3_price:.2f})"
+
+    # 2. Bearish Nested Double MSS
+    l3_idx, l3_price = lows[-1]
+    if c < l3_price and curr_bar['close'] < curr_bar['open']:
+        bars_after_l3 = recent[l3_idx:]
+        if len(bars_after_l3) >= 2:
+            h4_price = max(b['high'] for b in bars_after_l3)
+            prior_h = [h for h in highs if h[0] < l3_idx]
+            prior_l = [l for l in lows if l[0] < l3_idx]
+            if len(prior_h) >= 2 and len(prior_l) >= 2:
+                l2_idx, l2_price = prior_l[-1]
+                l1_idx, l1_price = prior_l[-2]
+                h3_idx, h3_price = prior_h[-1]
+                h2_idx, h2_price = prior_h[-2]
+
+                has_sweep = (len(prior_h) >= 3 and h2_price > prior_h[-3][1]) or (h2_price > prior_h[0][1])
+
+                if has_sweep and (l2_price < l1_price - 1.0) and (l3_price > l2_price + 1.0) and (h3_price < h2_price) and (h4_price < h2_price):
+                    entry = l3_price
+                    sl = h4_price + 1.50
+                    dist = abs(entry - sl)
+                    if dist < 3.50:
+                        sl = entry + 3.50
+                    elif dist > 8.00:
+                        sl = entry + 8.00
+                    return True, "BEARISH", entry, sl, f"Nested Double MSS (Swept {h2_price:.2f} -> 1st MSS {l2_price:.2f} -> Pullback -> 2nd MSS below {l3_price:.2f})"
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -302,6 +388,13 @@ def screen_ict_session(
         session_label = "London Range"
     else:
         # NY Silver Bullet (17:30 - 18:30 Tehran / 10:00 - 11:00 NY)
+        if "XAU" in symbol.upper():
+            # Banned on Gold per empirical audit (6.2% win rate, -8.5R drag / post-ADR exhaustion)
+            return {
+                "has_setup": False,
+                "reason": "Veto: Late NY PM / Silver Bullet window banned on Gold per empirical audit",
+                "setup_type": "BANNED_SESSION"
+            }
         session_window = bars_5m[-36:-6] if len(bars_5m) >= 36 else bars_5m[:-6]
         session_label = "NY AM Range"
 
@@ -423,23 +516,25 @@ def screen_ict_session(
         return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
 
     # Setup B: Judas Swing + Fair Value Gap (SETUP-ARCH-002)
-    if swept_high and not is_bullish_breakout and fvg_dir == "BEARISH":
-        arch_id = "SETUP-ARCH-002"
-        if not setup_registry.is_archetype_ratified(arch_id):
-            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
-        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-        sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), scaled_entry + sl_dist)
-        return _package_setup(arch_id, "BEARISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG", "SHORT")
+    # Decommissioned on Gold per 2-month empirical audit (-11.0R loss, 12.5% WR)
+    if "XAU" not in symbol.upper():
+        if swept_high and not is_bullish_breakout and fvg_dir == "BEARISH":
+            arch_id = "SETUP-ARCH-002"
+            if not setup_registry.is_archetype_ratified(arch_id):
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
+            sl_dist = 0.25 if is_silver else 0.0015
+            sl_p = max(range_high + 0.0010, scaled_entry + sl_dist)
+            return _package_setup(arch_id, "BEARISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG", "SHORT")
 
-    if swept_low and not is_bearish_breakdown and fvg_dir == "BULLISH":
-        arch_id = "SETUP-ARCH-002"
-        if not setup_registry.is_archetype_ratified(arch_id):
-            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-        scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
-        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-        sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), scaled_entry - sl_dist)
-        return _package_setup(arch_id, "BULLISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG", "LONG")
+        if swept_low and not is_bearish_breakdown and fvg_dir == "BULLISH":
+            arch_id = "SETUP-ARCH-002"
+            if not setup_registry.is_archetype_ratified(arch_id):
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
+            sl_dist = 0.25 if is_silver else 0.0015
+            sl_p = min(range_low - 0.0010, scaled_entry - sl_dist)
+            return _package_setup(arch_id, "BULLISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG", "LONG")
 
     # Setup C: Clean Market Structure Shift (MSS) with Breaker Block retest (SETUP-ARCH-003)
     # Gated: Must NOT be trapped in mid-range equilibrium chop, and must have a tight retest
@@ -460,49 +555,51 @@ def screen_ict_session(
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
     # Gated: Must have broken outside of mid-range equilibrium and cannot be an inside day compression
+    # On Gold: Strictly requires PRO_EXPANSION alignment
     if not (in_mid_equilibrium or is_inside_day):
         if is_bullish_breakout and fvg_dir == "BULLISH":
-            arch_id = "SETUP-ARCH-004"
-            if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            sl_p = fvg_distal - (1.50 if "XAU" in symbol.upper() else 0.0010)
-            return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
+            if "XAU" not in symbol.upper() or long_phase["phase"] == "PRO_EXPANSION":
+                arch_id = "SETUP-ARCH-004"
+                if not setup_registry.is_archetype_ratified(arch_id):
+                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                sl_p = fvg_distal - (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
         if is_bearish_breakdown and fvg_dir == "BEARISH":
-            arch_id = "SETUP-ARCH-004"
-            if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
-            sl_p = fvg_distal + (1.50 if "XAU" in symbol.upper() else 0.0010)
-            return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
+            if "XAU" not in symbol.upper() or short_phase["phase"] == "PRO_EXPANSION":
+                arch_id = "SETUP-ARCH-004"
+                if not setup_registry.is_archetype_ratified(arch_id):
+                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                sl_p = fvg_distal + (1.50 if "XAU" in symbol.upper() else 0.0010)
+                return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
-    # Scaled minimum expansion: >= 12.0 pts on Gold, >= 0.80 on Silver, >= 35 pips on FX.
-    min_expansion_pts = 12.0 if "XAU" in symbol.upper() else (0.80 if is_silver else 0.0035)
-    if total_range >= min_expansion_pts and not (in_mid_equilibrium or is_inside_day) and setup_registry.is_archetype_ratified("SETUP-ARCH-009"):
-        arch_id = "SETUP-ARCH-009"
-        # Bearish: Prior session dumped; price retraced into upper half (>45% retracement)
-        if is_session_bearish and current_price >= (range_low + 0.45 * total_range):
-            if current_price >= (range_low + 0.618 * total_range):
-                ote_entry = range_low + 0.705 * total_range
-                sl_p = range_high + (1.50 if "XAU" in symbol.upper() else 0.0010)
-                return _package_setup(arch_id, "BEARISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bearish Trend Continuation: OTE Premium Retracement", "SHORT")
-            elif (has_fvg and fvg_dir == "BEARISH") or (has_breaker and breaker_type == "BEARISH_BREAKER"):
-                entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BEARISH") else breaker_price
-                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"]) if has_fvg else entry_poi
-                sl_p = range_high + (1.50 if "XAU" in symbol.upper() else 0.0010)
-                return _package_setup(arch_id, "BEARISH_TREND_RETEST", scaled_entry, sl_p, "Bearish Trend Continuation: Retracement to Breakdown POI", "SHORT")
+    # Decommissioned on Gold per 2-month empirical audit (-2.5R loss, 12.5% WR; deep 70.5% retracements fail on Gold)
+    if "XAU" not in symbol.upper():
+        min_expansion_pts = 0.80 if is_silver else 0.0035
+        if total_range >= min_expansion_pts and not (in_mid_equilibrium or is_inside_day) and setup_registry.is_archetype_ratified("SETUP-ARCH-009"):
+            arch_id = "SETUP-ARCH-009"
+            if is_session_bearish and current_price >= (range_low + 0.45 * total_range):
+                if current_price >= (range_low + 0.618 * total_range):
+                    ote_entry = range_low + 0.705 * total_range
+                    sl_p = range_high + 0.0010
+                    return _package_setup(arch_id, "BEARISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bearish Trend Continuation: OTE Premium Retracement", "SHORT")
+                elif (has_fvg and fvg_dir == "BEARISH") or (has_breaker and breaker_type == "BEARISH_BREAKER"):
+                    entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BEARISH") else breaker_price
+                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"]) if has_fvg else entry_poi
+                    sl_p = range_high + 0.0010
+                    return _package_setup(arch_id, "BEARISH_TREND_RETEST", scaled_entry, sl_p, "Bearish Trend Continuation: Retracement to Breakdown POI", "SHORT")
 
-        # Bullish: Prior session rallied; price retraced into lower half (<55% retracement)
-        elif is_session_bullish and current_price <= (range_high - 0.45 * total_range):
-            if current_price <= (range_high - 0.618 * total_range):
-                ote_entry = range_high - 0.705 * total_range
-                sl_p = range_low - (1.50 if "XAU" in symbol.upper() else 0.0010)
-                return _package_setup(arch_id, "BULLISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bullish Trend Continuation: OTE Discount Retracement", "LONG")
-            elif (has_fvg and fvg_dir == "BULLISH") or (has_breaker and breaker_type == "BULLISH_BREAKER"):
-                entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BULLISH") else breaker_price
-                scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"]) if has_fvg else entry_poi
-                sl_p = range_low - (1.50 if "XAU" in symbol.upper() else 0.0010)
-                return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
+            elif is_session_bullish and current_price <= (range_high - 0.45 * total_range):
+                if current_price <= (range_high - 0.618 * total_range):
+                    ote_entry = range_high - 0.705 * total_range
+                    sl_p = range_low - 0.0010
+                    return _package_setup(arch_id, "BULLISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bullish Trend Continuation: OTE Discount Retracement", "LONG")
+                elif (has_fvg and fvg_dir == "BULLISH") or (has_breaker and breaker_type == "BULLISH_BREAKER"):
+                    entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BULLISH") else breaker_price
+                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"]) if has_fvg else entry_poi
+                    sl_p = range_low - 0.0010
+                    return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)
     has_prom_sweep, sweep_dir, sweep_entry, sweep_sl, sweep_desc = detect_prominent_sweep_and_mss(
@@ -512,6 +609,15 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-010"
         direction = "LONG" if sweep_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{sweep_dir}_PROMINENT_SWEEP_MSS", sweep_entry, sweep_sl, sweep_desc, direction)
+
+    # Setup G: Nested Double MSS with Prior Liquidity Sweep (SETUP-ARCH-011)
+    has_nested, nested_dir, nested_entry, nested_sl, nested_desc = detect_nested_double_mss(
+        bars_5m, symbol=symbol
+    )
+    if has_nested and setup_registry.is_archetype_ratified("SETUP-ARCH-011"):
+        arch_id = "SETUP-ARCH-011"
+        direction = "LONG" if nested_dir == "BULLISH" else "SHORT"
+        return _package_setup(arch_id, f"{nested_dir}_NESTED_DOUBLE_MSS", nested_entry, nested_sl, nested_desc, direction)
 
     # Price trapped in mid-range consolidation
     return {

@@ -140,53 +140,54 @@
   },
   "XAUUSD": {
     "London_Open": {
-      "target_rr": 2.5,
-      "breakeven_rr": null,
-      "win_rate_pct": 80.0,
-      "expected_pf": 10.0,
-      "sample_size": 7
+      "target_rr": 3.5,
+      "breakeven_rr": 1.8,
+      "win_rate_pct": 40.0,
+      "expected_pf": 2.5,
+      "sample_size": 15
     },
     "London_Post_Open": {
-      "target_rr": 4.5,
-      "breakeven_rr": null,
-      "win_rate_pct": 60.0,
-      "expected_pf": 6.75,
-      "sample_size": 6
+      "target_rr": 3.5,
+      "breakeven_rr": 1.8,
+      "win_rate_pct": 21.4,
+      "expected_pf": 1.4,
+      "sample_size": 14
     },
     "London_Pre_Open": {
-      "target_rr": 2.0,
-      "breakeven_rr": null,
+      "target_rr": 3.0,
+      "breakeven_rr": 1.8,
       "win_rate_pct": 25.0,
-      "expected_pf": 0.67,
+      "expected_pf": 1.0,
       "sample_size": 5
     },
     "NY_Open": {
-      "target_rr": 2.5,
-      "breakeven_rr": 1.5,
-      "win_rate_pct": 80.0,
-      "expected_pf": 99.0,
-      "sample_size": 6
+      "target_rr": 3.5,
+      "breakeven_rr": 1.8,
+      "win_rate_pct": 31.8,
+      "expected_pf": 2.1,
+      "sample_size": 22
     },
     "NY_Post_Open": {
-      "target_rr": 5.0,
-      "breakeven_rr": null,
+      "target_rr": 3.5,
+      "breakeven_rr": 1.8,
       "win_rate_pct": 25.0,
-      "expected_pf": 1.67,
-      "sample_size": 4
+      "expected_pf": 1.5,
+      "sample_size": 8
     },
     "NY_Pre_Open": {
-      "target_rr": 2.5,
+      "target_rr": 3.5,
       "breakeven_rr": 1.8,
-      "win_rate_pct": 44.4,
-      "expected_pf": 2.5,
-      "sample_size": 13
+      "win_rate_pct": 35.0,
+      "expected_pf": 2.0,
+      "sample_size": 15
     },
     "NY_Silver_Bullet": {
-      "target_rr": 5.0,
-      "breakeven_rr": 1.5,
-      "win_rate_pct": 16.7,
-      "expected_pf": 1.25,
-      "sample_size": 7
+      "target_rr": 0.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 6.2,
+      "expected_pf": 0.2,
+      "sample_size": 16,
+      "status": "BANNED_ON_GOLD"
     }
   }
 }

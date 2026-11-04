@@ -110,16 +110,17 @@ For any detected candidate setup, the system evaluates its directional relations
 
 All setups are strictly gated by Review Council ratification:
 
-| Archetype ID | Name | Trigger Mechanism | Asset-Specific Physical Filters |
+| Archetype ID | Name | Trigger Mechanism | Asset-Specific Physical Filters & Status |
 | :--- | :--- | :--- | :--- |
-| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | Session high/low swept + 5M Breaker Block confirmed. | Breaker tolerance $\le 1.50\text{ pts}$ on Gold. |
-| **`SETUP-ARCH-002`** | Judas Sweep + Fair Value Gap | Session high/low swept + valid 5M FVG printed in reversal direction. | Min FVG gap $\ge \$1.00$, Displacement candle body $\ge \$1.50$ on Gold. |
-| **`SETUP-ARCH-003`** | Clean MSS + Breaker Retest | Structural shift + retest of breaker block. | Vetoed if trapped in mid-range equilibrium. |
-| **`SETUP-ARCH-004`** | Institutional Range Expansion | Breakout beyond session range with fresh directional FVG. | Vetoed on inside day compression. |
-| **`SETUP-ARCH-005`** | Intermarket SMT Mitigation | Metals SMT divergence + FVG/Breaker mitigation. | Only executed on Gold. |
-| **`SETUP-ARCH-007`** | Intermarket SMT at Counter POI | SMT divergence confirming session high/low rejection. | Scaled entry per phase ratio. |
-| **`SETUP-ARCH-009`** | Pro-Trend Session Retest | Retracement into 50% - 70.5% OTE of prior session expansion. | Prior session displacement $\ge \$12.00$ on Gold ($\ge 35\text{ pips}$ on FX). |
-| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. | Structural stop outside sweep extreme. |
+| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | Session high/low swept + 5M Breaker Block confirmed. | Breaker tolerance $\le 1.50\text{ pts}$ on Gold. Active. |
+| **`SETUP-ARCH-002`** | Judas Sweep + Fair Value Gap | Session high/low swept + valid 5M FVG printed in reversal direction. | **DECOMMISSIONED ON GOLD** per 2-month empirical audit (12.5% WR, -$11.0R loss). Active strictly on Forex. |
+| **`SETUP-ARCH-003`** | Clean MSS + Breaker Retest | Structural shift + retest of breaker block. | Vetoed if trapped in mid-range equilibrium. Active on Gold (+5.5R, 37.5% WR). |
+| **`SETUP-ARCH-004`** | Institutional Range Expansion | Breakout beyond session range with fresh directional FVG. | Vetoed on inside day compression. **On Gold, strictly gated to `PRO_EXPANSION` only** (counter-trend expansions vetoed). |
+| **`SETUP-ARCH-005`** | Intermarket SMT Mitigation | Metals SMT divergence + FVG/Breaker mitigation. | Only executed on Gold with Silver as non-executing radar. |
+| **`SETUP-ARCH-007`** | Intermarket SMT at Counter POI | SMT divergence confirming session high/low rejection. | Scaled entry per phase ratio. Only executed on Gold. |
+| **`SETUP-ARCH-009`** | Pro-Trend Session Retest | Retracement into 50% - 70.5% OTE of prior session expansion. | **DECOMMISSIONED ON GOLD** per 2-month empirical audit (12.5% WR, -$2.5R loss; deep retracements fail on Gold). Active on Forex. |
+| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. | Structural stop outside sweep extreme + $1.50 buffer. Gold flagship (+16.0R, 34.8% WR). |
+| **`SETUP-ARCH-011`** | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Downtrend sweeps $L_1 \to L_2$, displaces above $H_1$ to $H_2$ (1st MSS), pulls back in $H_2 \to L_3 \to H_3 \to L_4$, displaces above $H_3$ to $H_4$ (2nd MSS). Entry on retest of $H_3$ / 5M FVG at $L_5$. | **MANDATORY PRIOR LIQUIDITY SWEEP**: $L_2$ must sweep $L_1$ or PDH/PDL. Stop Loss anchored below $L_4$ + $1.50 spread buffer (bracketed between $3.50 min and $8.00 max). Target 3.5R, BE 1.8R. HTF trend filter bypassed (direct reversal execution off sweep). Ratified (+8.0R, 30.0% WR). |
 
 ---
 
@@ -129,31 +130,71 @@ Every trade strictly abides by institutional broker execution realism:
 
 1. **Order Type**: Strict **Limit Orders** (`BUY_LIMIT`, `SELL_LIMIT`). Zero market orders.
 2. **Base Position Sizing**: Fixed **`0.01` Base Lot** on all instruments.
-3. **Firm Stop-Loss Ceiling**: **Strict \$17.00 maximum risk ceiling** per trade. If calculated structural risk exceeds \$17.00, the trade risk is capped strictly at \$17.00.
-4. **Order Inactivity TTL**: **75 Minutes**. If an order does not fill within 75 forward M1 bars, it is automatically cancelled safely (`EXPIRED`).
-5. **Watchdog Momentum Radar**:
+3. **Firm Stop-Loss Ceiling**: **Strict $17.00 maximum risk ceiling** per trade. If calculated structural risk exceeds $17.00, the trade risk is capped strictly at $17.00.
+4. **Gold-Specific Structural Risk Bracketing**:
+   - Minimum Stop Loss: **$3.50** (prevents sub-pip micro-whipsaws from choking entry).
+   - Maximum Stop Loss: **$8.00** (prevents excessive structural float).
+   - Invalidation Buffer: **+$1.50** spread buffer applied outside swing pivots.
+5. **Calibrated Take-Profit & Target Ceilings on Gold**:
+   - **Max Growth Profile**: Target R:R capped at **3.5R** (31.9% WR, +25.5R Net PnL, 1.94 PF).
+   - **High Win-Rate Profile**: Target R:R capped at **3.0R** (34.0% WR, +21.0R Net PnL, 1.78 PF).
+   - **Target Cliff Physics**: Empirical MFE distribution over 64,000 M1 bars proves a severe cliff at 4.0R (only 2.0% reach 4.0R vs 22.5% at 3.5R); capping Gold targets strictly at 3.5R is essential to lock in runaway profits before reversal.
+6. **Dynamic Breakeven Ratchet**:
+   - On Gold (`XAUUSD`): Ratchet triggers at **+1.8R** peak excursion for `PRO_EXPANSION` (converts 5 losses into risk-free scratches, unlocking +25.5R net edge).
+   - On Forex (`EURUSD`, `GBPUSD`): Ratchet triggers at $+2.0R$ (`PRO_EXPANSION`) and $+1.5R$ (`HTF_RETRACEMENT`).
+   - When triggered, Stop Loss is moved to $\text{Entry} + \text{Spread}$ for Buys ($\text{Entry} - \text{Spread}$ for Sells) to ensure a guaranteed risk-free scratch (`$0.00` loss).
+7. **Order Inactivity TTL**: **75 Minutes**. If an order does not fill within 75 forward M1 bars, it is automatically cancelled safely (`EXPIRED`).
+8. **Watchdog Momentum Radar**:
    - Computes rolling 15-period M1 ATR.
    - Detects adverse momentum spikes: $\ge 3.5\times\text{ATR}$ for Precious Metals ($\ge 2.0\times\text{ATR}$ for Forex).
    - If adverse spike occurs within $3.0\times\text{ATR}$ of the pending limit price, order is instantly cancelled (`CANCELLED_WATCHDOG`).
-6. **Realistic Broker Spread Penalties**:
-   - Gold (`XAUUSD`): **\$0.15** spread.
-   - Silver (`XAGUSD`): **\$0.030** spread.
+9. **Realistic Broker Spread Penalties**:
+   - Gold (`XAUUSD`): **$0.15** spread.
+   - Silver (`XAGUSD`): **$0.030** spread.
    - EURUSD: **0.00015** (1.5 pips).
    - GBPUSD: **0.00020** (2.0 pips).
    - **Buy Execution**: Enters at $\text{Ask} = \text{Bid} + \text{Spread}$. Closed at $\text{Bid}$.
    - **Sell Execution**: Enters at $\text{Bid}$. Closed at $\text{Ask} = \text{Bid} + \text{Spread}$.
-7. **Dynamic Breakeven Ratchet**:
-   - For `PRO_EXPANSION`: Ratchet triggers at $+2.0R$ peak excursion.
-   - For `HTF_RETRACEMENT` & `BALANCED_RANGE`: Ratchet triggers at $+1.5R$ peak excursion.
-   - When triggered, Stop Loss is moved to $\text{Entry} + \text{Spread}$ for Buys ($\text{Entry} - \text{Spread}$ for Sells) to ensure a guaranteed risk-free scratch (`$0.00` loss).
 
 ---
 
 ## 8. AI Review Council & Governance Architecture
 
 - **6-Seat Cognitive Assembly**: Evaluates candidates across 4 rendered charts (1D, 1H, 15M, 5M) and textual telemetry.
-- **Zero Bureaucracy Mandate**: When pre-screened edge and MTF alignment are present, the Council must prioritize alpha capture within the \$17 risk limit.
+- **Zero Bureaucracy Mandate**: When pre-screened edge and MTF alignment are present, the Council must prioritize alpha capture within the $17 risk limit.
 - **Counterfactual Shadow Portfolio Replay**: Every passed opportunity (`STAND_ASIDE`) is simulated through forward M1 bars to measure:
   - **`PROTECTIVE_VETO`**: Capital saved by filtering out a losing trade.
   - **`DAMAGING_STAND_ASIDE`**: Alpha missed due to over-filtering a winning trade.
   - **Net Council Capital Impact**: $\text{Capital Saved} - \text{Missed Alpha}$.
+
+---
+
+## 9. Gold (XAUUSD) 2-Month Master Quantitative Audit & Empirical Baseline (Sep 1 – Nov 4, 2026)
+
+### 9.1 Summary of Authentic MT5 Broker Replay (64,000 M1 Bars, 188 Sessions)
+Replay across authentic raw broker data (`XAUUSD_o`) without SMT assistance:
+
+| Configuration | Fills | Wins | Losses | BE | Win Rate % | Net PnL (R) | Profit Factor | Expectancy / Trade |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Baseline (All Sessions & Archetypes) | 102 | 16 | 71 | 15 | 15.7% | -24.3R | 0.66 | -0.24R |
+| Filtered Archetypes (All Sessions) | 62 | 15 | 37 | 10 | 24.2% | +15.5R | 1.42 | +0.25R |
+| **Calibrated Profile 1 (Target 3.5R, BE 1.8R, No Silver Bullet)** | **47** | **15** | **27** | **5** | **31.9%** | **+25.5R** | **1.94** | **+0.54R** |
+| **Calibrated Profile 2 (Target 3.0R, BE 1.8R, No Silver Bullet)** | **47** | **16** | **27** | **4** | **34.0%** | **+21.0R** | **1.78** | **+0.45R** |
+
+### 9.2 Double MSS vs. Single MSS / ChoCh Performance (519 Shifts Audited)
+Empirical analysis of 519 discrete structure shifts:
+
+| Structural Formation | Total Shifts | Fills | Win Rate % | Net PnL (R) | Profit Factor | Reverse MSS Failure Rate | Continuation Rate |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Single MSS (Unconfirmed)** | 86 | 80 | 20.0% | +13.0R | 1.30 | 60.0% | 23.8% |
+| **Double MSS (Consecutive / Sequential)** | 433 | 362 | **25.4%** | **+137.0R** | **1.74** | 55.8% | 28.7% |
+| **Nested Double MSS (With Prior Sweep, ARCH-011)** | 22 | 20 | **30.0%** | **+8.0R** | **1.62** | 65.0% | 30.0% |
+| Nested Double MSS (Without Sweep) | 22 | 20 | 10.0% | -2.0R | 0.78 | 55.0% | 10.0% |
+| Nested Double MSS (Lagging 1H Trend Filter) | 23 | 21 | 9.5% | -6.0R | 0.54 | 61.9% | 19.0% |
+
+### 9.3 Empirical Macro Sweep Hierarchy
+1. **Prior Day High (PDH) Sweep**: **85.7% Win Rate**, **+20.0R Net**, **PF 21.00** (God Tier).
+2. **Prior Day Low (PDL) Sweep**: **57.1% Win Rate**, **+12.0R Net**, **PF 7.00** (God Tier).
+3. **Asian Session High Sweep**: **41.7% Win Rate**, **+12.5R Net**, **PF 3.50** (Prime Tier).
+4. **Asian Session Low Sweep**: **28.6% Win Rate**, **+3.0R Net**, **PF 1.75** (Standard Tier).
+5. **Minor Internal 5M Swing Low Sweep in Downtrend**: **14.8% Win Rate**, **-12.5R Loss**, **PF 0.78** (Strictly Banned Retail Trap).
