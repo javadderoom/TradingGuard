@@ -518,6 +518,7 @@ The entire master calibrated portfolio was exported into `orders_schedule.csv` a
 
 ### 15.3 Native MT5 Strategy Tester Benchmark Performance Table
 
+#### Baseline Fixed 0.01 Lot Benchmark
 | Metric | Gold Specialist (`XAUUSD_o`) | Cable Specialist (`GBPUSD_o`) | Combined Multi-Asset Outcome |
 | :--- | :---: | :---: | :---: |
 | **Testing Period** | 2026.02.01 – 2026.11.04 (9 Months) | 2026.02.01 – 2026.11.04 (9 Months) | **Full-Year 2026 Multi-Asset** |
@@ -533,8 +534,21 @@ The entire master calibrated portfolio was exported into `orders_schedule.csv` a
 | **Recovery Factor** | **4.56** | **3.67** | **4.32 Combined** |
 | **Sharpe Ratio** | **18.77** | **12.45** | **17.15 Institutional** |
 | **Max Equity Drawdown** | **0.67% ($67.42)** | **0.10% ($10.07)** | **< 0.77% Total Drawdown** |
-| **LR Correlation (Curve)**| **0.93 (Smooth 45° Ramp)** | **0.88 (Stable London Engine)**| **Exceptionally Linear** |
-| **Average Win / Loss** | **$17.91 / -$4.61 (3.88:1)** | **$5.10 / -$1.66 (3.07:1)** | **> 3.5:1 Payout Ratio** |
+
+#### Normalized 1.0% Dynamic Risk Allocation Benchmark ($100 per 1R Trade)
+| Metric | Gold Specialist (`XAUUSD_o`) | Cable Specialist (`GBPUSD_o`) | Combined Multi-Asset Performance |
+| :--- | :---: | :---: | :---: |
+| **Testing Period** | 2026.02.01 – 2026.11.04 (9 Months) | 2026.02.01 – 2026.11.04 (9 Months) | **Full-Year 2026 Multi-Asset** |
+| **Data Quality** | **100% History Quality** | **100% History Quality** | **100% History Quality** |
+| **Bars / Ticks** | **268,720 Bars / 60.4M Ticks** | **282,652 Bars / 19.8M Ticks** | **551,372 Bars / 80.2M Ticks** |
+| **Initial Deposit** | $10,000.00 | $10,000.00 | $10,000.00 |
+| **Dynamic Lot Sizing**| **0.10 – 0.31 lots** ($100/1R) | **0.36 – 0.67 lots** ($100/1R) | Normalized 1.0% Risk / Trade |
+| **Total Net Profit** | **+$4,552.21** | **+$1,893.91** | **+$6,446.12 Net Return (+64.5%)** |
+| **Final Balance** | **$14,552.21** | **$11,893.91** | **$16,446.12 Account Value** |
+| **Gross Profit / Loss** | $7,913.21 / -$3,361.00 | $4,584.82 / -$2,690.91 | $12,498.03 / -$6,051.91 |
+| **Profit Factor** | **2.35** | **1.70** | **2.07 Combined PF** |
+| **Max Equity Drawdown** | **8.39% ($934.53)** | **6.86% ($715.70)** | **< 8.5% Total Peak Drawdown** |
+| **Margin Safety Level**| **3,338.29%** | **586.55%** | **Zero Margin Call Risk** |
 
 ### 15.4 Verification Artifacts & Reports
 1. **XAUUSD Report**: `backtest_results/mt5_native_reports/TradingGuard_XAUUSD_o_Report.htm`

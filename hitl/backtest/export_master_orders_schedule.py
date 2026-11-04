@@ -1,7 +1,7 @@
 """
 TradingGuard HITL - Export Master Production Trades Schedule to MT5
 Exports all 149 audited production trades into MetaTrader 5 orders_schedule.csv format.
-Supports full portfolio, standalone Gold (XAUUSD_o), and standalone Cable (GBPUSD_o).
+Supports fixed 0.01 lot or dynamic risk sizing ($100 per 1R / 1% risk per trade).
 """
 
 import sys
@@ -18,7 +18,7 @@ COMMON_FILES = Path(r"C:\Users\Javad\AppData\Roaming\MetaQuotes\Terminal\Common\
 TERMINAL_FILES = Path(r"C:\Users\Javad\AppData\Roaming\MetaQuotes\Terminal\065434634B76DD288A1DDF20131E8DDB\MQL5\Files")
 
 
-def export_schedule(symbol_filter: str = None) -> Path:
+def export_schedule(symbol_filter: str = None, risk_usd: float = 100.0) -> Path:
     if not CSV_SOURCE.exists():
         raise FileNotFoundError(f"Master trades source not found at: {CSV_SOURCE}")
 
@@ -44,14 +44,26 @@ def export_schedule(symbol_filter: str = None) -> Path:
             tp = round(entry - (target_rr * risk), digits)
             o_type = "SELL_LIMIT"
 
+        # Calculate lot size
+        if risk_usd and risk_usd > 0:
+            if is_xau:
+                # 100 oz contract size: risk_usd = lot * 100 * risk
+                lot = round(risk_usd / (100.0 * risk), 2)
+            else:
+                # 100,000 units contract size: risk_usd = lot * 100,000 * risk
+                lot = round(risk_usd / (100000.0 * risk), 2)
+            lot = max(0.01, min(lot, 5.0))
+        else:
+            lot = 0.01
+
         t_str = f"{row['date'].replace('-', '.')} {int(row['session_hour']):02d}:00:00"
         o_id = f"ORD-{sym[:3]}-{row['date'].replace('-', '')}-{int(row['session_hour']):02d}00-{idx+1:03d}"
         
         # Format string
         if is_xau:
-            line = f"{o_id},{sym},{o_type},{t_str},{entry:.2f},{sl:.2f},{tp:.2f},0.01,480\n"
+            line = f"{o_id},{sym},{o_type},{t_str},{entry:.2f},{sl:.2f},{tp:.2f},{lot:.2f},480\n"
         else:
-            line = f"{o_id},{sym},{o_type},{t_str},{entry:.5f},{sl:.5f},{tp:.5f},0.01,480\n"
+            line = f"{o_id},{sym},{o_type},{t_str},{entry:.5f},{sl:.5f},{tp:.5f},{lot:.2f},480\n"
         lines.append(line)
 
     suffix = f"_{symbol_filter.lower()}" if symbol_filter else ""
@@ -59,7 +71,8 @@ def export_schedule(symbol_filter: str = None) -> Path:
     with open(local_out, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    print(f"✅ Exported {len(lines) - 1} orders to {local_out.name}")
+    mode_str = f"Dynamic ${risk_usd:.0f}/trade (1% Risk)" if (risk_usd and risk_usd > 0) else "Fixed 0.01 Lot"
+    print(f"✅ Exported {len(lines) - 1} orders to {local_out.name} [{mode_str}]")
 
     # Copy to MT5 Common/Files and Terminal/MQL5/Files
     for dest_dir in [COMMON_FILES, TERMINAL_FILES]:
@@ -72,5 +85,6 @@ def export_schedule(symbol_filter: str = None) -> Path:
 
 
 if __name__ == "__main__":
-    filter_arg = sys.argv[1] if len(sys.argv) > 1 else None
-    export_schedule(filter_arg)
+    filter_arg = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] not in ("--fixed", "--dynamic") else None
+    risk_val = 0.0 if "--fixed" in sys.argv else 100.0
+    export_schedule(filter_arg, risk_usd=risk_val)
