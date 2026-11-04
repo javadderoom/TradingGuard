@@ -186,15 +186,16 @@ def classify_setup_phase(
         if not dol:
             dol = (curr_p + 35.0) if is_buy else (curr_p - 35.0)
 
+        target_rr = 3.5 if is_gold else 4.5
         mss_str = f"at {mss_lvl:{val_fmt}}" if mss_lvl else ""
         return {
             "phase": "PRO_EXPANSION",
-            "recommended_target_rr": 4.5,       # Bigger Target for Pro-HTF Expansion
-            "recommended_be_rr": None,          # Runner mode (do not choke Judas swings)
+            "recommended_target_rr": target_rr, # Calibrated: 3.5R on Gold (to prevent 4.0R+ target cliff), 4.5R on Forex
+            "recommended_be_rr": 2.0,           # Conservative 2.0R BE ratchet (saves +2.0R vs complete reversal)
             "poi_ratio": 0.20,                  # Proximal edge fill (momentum won't retrace deep)
             "entry_anchor": "PROXIMAL_EDGE",
             "dol_target": dol,
-            "summary": f"Pro-HTF Expansion aligned with 1H {h1_state} {mss_str}. Target set to 4.5R."
+            "summary": f"Pro-HTF Expansion aligned with 1H {h1_state} {mss_str}. Target set to {target_rr}R."
         }
 
     # Case 2: Counter-HTF Retracement Phase
