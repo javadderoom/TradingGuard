@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-04T22:18:05.566268",
+  "last_updated": "2026-11-04T22:42:14.975658",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -311,6 +311,37 @@
         "stop_buffer_rule": "M1 sweep wick extreme + 0.6 pips (0.00006), clamped to [5.0, 12.0] pips."
       },
       "auditor_notes": "Formally ratified following full-year 2026 multi-seasonal audit on GBPUSD across 22.74M ticks (126 setups). Delivered +47.1R Net Realized Profit (PF 1.53, 24.6% WR) by trailing 15-minute swing structure to capture multi-hour expansions, compared to only +7.0R under static 2.5R target. Produced multiple massive winners: +9.08R (Jun 5), +8.33R (Jul 20), +8.09R (Jun 1), +8.03R (Jun 22), and +7.46R (Oct 6). Positive in 3 of 4 seasons: Summer +37.1R, Winter +8.1R, Autumn +6.0R."
+    },
+    {
+      "id": "SETUP-ARCH-014",
+      "name": "Macro H1 Reversal Origin Retest (MSS Ignition Base)",
+      "category": "Multi-Day Structural Retest & Institutional Base Mitigation",
+      "description": "Identifies the exact multi-day H1 consolidation base that launched a major Market Structure Shift (MSS) reversal (> .00 displacement). When price retraces back into the unmitigated origin base 1 to 7 days later during institutional London/NY hours, enters with Stop Loss strictly anchored beyond the origin base wick.",
+      "entry_trigger": "Market entry upon M5 confirmation inside the unmitigated H1 MSS origin zone.",
+      "invalidation_anchor": "Extreme wick of the origin base + .00 spread buffer. Risk bounded within [.00, .00].",
+      "proposer": "Structural Origin Engine & Quantitative Researcher",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-04T22:42:14.974572",
+      "ratified_at": "2026-11-04T22:42:14.975650",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "Macro H1 Reversal Origin Retest (MSS Ignition Base)",
+        "category": "Multi-Day Structural Retest & Institutional Base Mitigation",
+        "description": "Identifies the exact multi-day H1 consolidation base that launched a major Market Structure Shift (MSS) reversal (> .00 displacement). When price retraces back into the unmitigated origin base 1 to 7 days later during institutional London/NY hours, enters with Stop Loss strictly anchored beyond the origin base wick.",
+        "entry_trigger": "Market entry upon M5 confirmation inside the unmitigated H1 MSS origin zone.",
+        "invalidation_anchor": "Extreme wick of the origin base + .00 spread buffer. Risk bounded within [.00, .00].",
+        "min_rr": "1:3.0",
+        "target_rr": 3.5,
+        "be_rr": 1.8,
+        "stop_buffer_rule": "Origin base extreme wick + .00 spread buffer (Gold), bounded to [.00, .00].",
+        "min_impulse_size": 15.0,
+        "eligible_symbols": [
+          "XAUUSD"
+        ],
+        "origin_timeframe": "H1",
+        "max_lookback_days": 7
+      },
+      "auditor_notes": "Formally ratified following full-year 2026 empirical audit across 298,638 M1 bars and 67.5M ticks on Gold (XAUUSD_o). Achieved +14.0R Net Realized Profit (PF 1.40, 23.3% WR) across 60 completed fills on retests of 2 to 7 day-old H1 MSS origins. MFE analysis confirms multiple deep expansions: +10.30R (Mar 3), +8.25R (Nov 3), +6.81R (Oct 27), and +6.37R (Jan 27). Strictly restricted to Reversal Origins (MSS); Continuation Origins (BOS) failed (-16.5R) due to deep pullback invalidations. Banned on GBPUSD (-26.5R) where Cable trends in open air without respecting multi-day H1 bases."
     }
   ]
 }

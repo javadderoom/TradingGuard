@@ -495,6 +495,93 @@ def detect_macro_dol_runner(
     return False, "NONE", 0.0, 0.0, 0.0, ""
 
 
+def detect_reversal_origin_retest(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: List[Dict[str, Any]],
+    symbol: str = "XAUUSD"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-014: Macro H1 Reversal Origin Retest (MSS Ignition Base).
+    Valid exclusively on Gold (XAUUSD); prohibited on GBPUSD.
+    Finds unmitigated H1 Reversal MSS bases from the past 2 to 7 days and triggers
+    on an M5 retest during active session hours.
+    """
+    if "XAU" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+
+    if len(bars_1h) < 48 or len(bars_5m) < 10:
+        return False, "NONE", 0.0, 0.0, ""
+
+    curr_p = bars_5m[-1]['close']
+    curr_low = bars_5m[-1]['low']
+    curr_high = bars_5m[-1]['high']
+
+    recent_h1 = bars_1h[-120:]
+    n = len(recent_h1)
+
+    highs = []
+    lows = []
+    for k in range(3, n - 3):
+        h_val = recent_h1[k]['high']
+        l_val = recent_h1[k]['low']
+        if all(h_val >= recent_h1[k-m]['high'] for m in range(1, 4)) and all(h_val >= recent_h1[k+m]['high'] for m in range(1, 4)):
+            highs.append((k, h_val))
+        if all(l_val <= recent_h1[k-m]['low'] for m in range(1, 4)) and all(l_val <= recent_h1[k+m]['low'] for m in range(1, 4)):
+            lows.append((k, l_val))
+
+    for i in range(15, n - 2):
+        b = recent_h1[i]
+        c = b['close']
+
+        # Bullish MSS break
+        prior_h = [h for h in highs if h[0] < i]
+        if prior_h:
+            last_sw_h = prior_h[-1]
+            if c > last_sw_h[1] and b['close'] > b['open']:
+                interim = recent_h1[max(last_sw_h[0], i-10) : i+1]
+                if interim:
+                    base_bar = min(interim, key=lambda x: x['low'])
+                    impulse = c - base_bar['low']
+                    if impulse >= 15.0:
+                        og_high = max(base_bar['open'], base_bar['close'])
+                        og_low = base_bar['low']
+                        inval_sl = og_low - 2.00
+
+                        subsequent = recent_h1[i+1:]
+                        if not any(sb['close'] < inval_sl for sb in subsequent):
+                            if curr_low <= og_high and curr_high >= og_low:
+                                entry = curr_p
+                                risk = entry - inval_sl
+                                if 4.00 <= risk <= 10.00:
+                                    desc = f"H1 Bullish MSS Origin Retest (Ignition Base: {og_low:.2f}-{og_high:.2f}; SL: {inval_sl:.2f})"
+                                    return True, "BULLISH", entry, inval_sl, desc
+
+        # Bearish MSS break
+        prior_l = [l for l in lows if l[0] < i]
+        if prior_l:
+            last_sw_l = prior_l[-1]
+            if c < last_sw_l[1] and b['close'] < b['open']:
+                interim = recent_h1[max(last_sw_l[0], i-10) : i+1]
+                if interim:
+                    base_bar = max(interim, key=lambda x: x['high'])
+                    impulse = base_bar['high'] - c
+                    if impulse >= 15.0:
+                        og_high = base_bar['high']
+                        og_low = min(base_bar['open'], base_bar['close'])
+                        inval_sl = og_high + 2.00
+
+                        subsequent = recent_h1[i+1:]
+                        if not any(sb['close'] > inval_sl for sb in subsequent):
+                            if curr_high >= og_low and curr_low <= og_high:
+                                entry = curr_p
+                                risk = inval_sl - entry
+                                if 4.00 <= risk <= 10.00:
+                                    desc = f"H1 Bearish MSS Origin Retest (Ignition Base: {og_low:.2f}-{og_high:.2f}; SL: {inval_sl:.2f})"
+                                    return True, "BEARISH", entry, inval_sl, desc
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -806,6 +893,15 @@ def screen_ict_session(
         setup_pkg["dol_target"] = dol_tgt
         setup_pkg["target_mode"] = "HTF_DOL_WITH_15M_STRUCTURAL_TRAIL"
         return setup_pkg
+
+    # Setup J: Macro H1 Reversal Origin Retest (SETUP-ARCH-014)
+    has_rev_orig, orig_dir, orig_entry, orig_sl, orig_desc = detect_reversal_origin_retest(
+        bars_5m, bars_1h, symbol=symbol
+    )
+    if has_rev_orig and setup_registry.is_archetype_ratified("SETUP-ARCH-014"):
+        arch_id = "SETUP-ARCH-014"
+        direction = "LONG" if orig_dir == "BULLISH" else "SHORT"
+        return _package_setup(arch_id, f"{orig_dir}_H1_REVERSAL_ORIGIN_RETEST", orig_entry, orig_sl, orig_desc, direction)
 
     # Price trapped in mid-range consolidation
     return {

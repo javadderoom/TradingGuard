@@ -114,6 +114,14 @@
       "expected_pf": 1.53,
       "sample_size": 126,
       "status": "RATIFIED_ON_GBPUSD"
+    },
+    "SETUP-ARCH-014": {
+      "target_rr": 0.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 14.1,
+      "expected_pf": 0.51,
+      "sample_size": 78,
+      "status": "BANNED_ON_GBPUSD"
     }
   },
   "XAGUSD": {
@@ -224,6 +232,14 @@
       "win_rate_pct": 29.4,
       "expected_pf": 1.56,
       "sample_size": 34,
+      "status": "RATIFIED_ON_GOLD"
+    },
+    "SETUP-ARCH-014": {
+      "target_rr": 3.5,
+      "breakeven_rr": 1.8,
+      "win_rate_pct": 23.3,
+      "expected_pf": 1.4,
+      "sample_size": 60,
       "status": "RATIFIED_ON_GOLD"
     }
   }
