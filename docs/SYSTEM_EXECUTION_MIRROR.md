@@ -33,9 +33,10 @@ The market clock dynamically synchronizes timezones without static hardcoded ass
 | **Summer (BST / EDT)** | 08:00 BST | 07:00 UTC | **10:30 Tehran** | 08:00 EDT | 12:00 UTC | **15:30 Tehran** | **17:00 Tehran** |
 | **Winter (GMT / EST)** | 08:00 GMT | 08:00 UTC | **11:30 Tehran** | 08:00 EST | 13:00 UTC | **16:30 Tehran** | **18:00 Tehran** |
 
-**Silver Bullet Windows**:
+**Silver Bullet Windows & Asset Session Restrictions**:
 - **London Silver Bullet**: 10:00 – 11:00 UK local time.
 - **New York AM Silver Bullet**: 10:00 – 11:00 NY local time (2 to 3 hours after NY Forex Open).
+- **Gold Session Restriction**: The NY AM Silver Bullet window (13:30+ UTC / 17:00+ Tehran) is **strictly banned on Gold** (`XAUUSD`). Empirical 2-month audit proved this late session produces a 6.2% win rate and -$8.5R capital drain due to post-ADR exhaustion and US equity rebalancing. Gold execution is restricted exclusively to **London Open**, **London Continuation**, and **NY Forex Open**.
 
 ---
 
@@ -72,7 +73,7 @@ For any detected candidate setup, the system evaluates its directional relations
 
 | Phase | Alignment Criteria | Target R:R | Breakeven Policy | Entry POI Scaling Ratio | Strategic Purpose |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **`PRO_EXPANSION`** | `BUY` during `BULLISH_MSS`<br>`SELL` during `BEARISH_MSS` | **3.5R** *(Gold Max Cap)*<br>4.5R *(Forex)* | **2.0R Ratchet** | **0.20 (Proximal Edge)** | Capture macro expansion runs to external DOL; avoid getting left behind. On Gold, empirical MFE proves a severe cliff at 4.0R (only 2% reach 4R vs 22.5% at 3.5R); capping Gold at 3.5R preserves +10.0R edge. |
+| **`PRO_EXPANSION`** | `BUY` during `BULLISH_MSS`<br>`SELL` during `BEARISH_MSS` | **3.5R** *(Gold Max Cap)*<br>4.5R *(Forex)* | **1.8R Ratchet** *(Gold)*<br>2.0R Ratchet *(Forex)* | **0.20 (Proximal Edge)** | Capture macro expansion runs to external DOL; avoid getting left behind. On Gold, empirical MFE proves a severe cliff at 4.0R (only 2% reach 4R vs 22.5% at 3.5R); capping Gold at 3.5R with 1.8R BE preserves +25.5R edge. |
 | **`HTF_RETRACEMENT`** | `SELL` during `BULLISH_MSS`<br>`BUY` during `BEARISH_MSS` | **2.2R** | **Fast 1.5R Ratchet** | **0.50 (Deep OTE / MT)** | Scalp counter-trend pullback into internal POI / broken structure; exit quickly before the HTF trend snaps back. |
 | **`BALANCED_RANGE`** | 1H State is `NEUTRAL` | **2.5R** | **1.5R Ratchet** | **0.50 (Mid-body)** | Standard balanced session liquidity sweep. |
 | **`CONSOLIDATION`** | Inside Day Mid-Range Compression | **VETO** | N/A | N/A | Total capital defense; stand aside during dead market chop. |

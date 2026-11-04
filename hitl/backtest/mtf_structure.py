@@ -191,7 +191,7 @@ def classify_setup_phase(
         return {
             "phase": "PRO_EXPANSION",
             "recommended_target_rr": target_rr, # Calibrated: 3.5R on Gold (to prevent 4.0R+ target cliff), 4.5R on Forex
-            "recommended_be_rr": 2.0,           # Conservative 2.0R BE ratchet (saves +2.0R vs complete reversal)
+            "recommended_be_rr": 1.8 if is_gold else 2.0, # Calibrated: 1.8R BE on Gold (+25.5R Net PnL, 31.9% WR), 2.0R on Forex
             "poi_ratio": 0.20,                  # Proximal edge fill (momentum won't retrace deep)
             "entry_anchor": "PROXIMAL_EDGE",
             "dol_target": dol,

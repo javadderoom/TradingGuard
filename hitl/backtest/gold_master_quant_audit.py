@@ -771,10 +771,15 @@ def run_gold_master_audit():
             sim_2r = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=2.0, be_rr=None)
             sim_4r = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=4.0, be_rr=None)
 
-            # 4. Breakeven Variants (at 1.5R BE vs 2.0R BE vs No BE on 3.5R target)
+            # 4. Breakeven Variants (at 1.5R BE vs 1.8R BE vs 2.0R BE vs No BE on 3.5R target)
             sim_be_15 = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=3.5, be_rr=1.5)
+            sim_be_18 = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=3.5, be_rr=1.8)
             sim_be_20 = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=3.5, be_rr=2.0)
             sim_no_be = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=3.5, be_rr=None)
+
+            # 4b. Calibrated Optimal Configurations (Target 3.5R & 3.0R with BE 1.8R)
+            sim_opt_35 = sim_be_18
+            sim_opt_30 = simulate_trade_execution(raw_entry, sl_calibrated, dir_str, forward_m1, target_rr=3.0, be_rr=1.8)
 
             # 5. Multi-Stage Partial Scaling (60% at 2.5R, trail remainder)
             sim_partial_scale = simulate_trade_execution(
@@ -809,8 +814,11 @@ def run_gold_master_audit():
                 'sim_2r': sim_2r,
                 'sim_4r': sim_4r,
                 'sim_be_15': sim_be_15,
+                'sim_be_18': sim_be_18,
                 'sim_be_20': sim_be_20,
                 'sim_no_be': sim_no_be,
+                'sim_opt_35': sim_opt_35,
+                'sim_opt_30': sim_opt_30,
                 'sim_partial_scale': sim_partial_scale,
                 'sim_full_runner': sim_full_runner
             }
@@ -892,7 +900,8 @@ def run_gold_master_audit():
     # SECTION 4: POST-ENTRY TRADE MANAGEMENT MATRIX
     mgmt_matrix = {
         'Policy A: Static Set-and-Forget (No BE)': _calc_stats(all_trade_records, 'sim_no_be'),
-        'Policy B: Early Breakeven at 1.5R': _calc_stats(all_trade_records, 'sim_be_15'),
+        'Policy B1: Early Breakeven at 1.5R': _calc_stats(all_trade_records, 'sim_be_15'),
+        'Policy B2: Optimal Breakeven at 1.8R': _calc_stats(all_trade_records, 'sim_be_18'),
         'Policy C: Conservative Breakeven at 2.0R': _calc_stats(all_trade_records, 'sim_be_20'),
         'Policy D: Multi-Stage Partial Scaling (60% at 2.5R + Runner)': _calc_stats(all_trade_records, 'sim_partial_scale'),
         'Policy E: Full Trailing Runner (Trail 15M Pivots, No Hard Cap)': _calc_stats(all_trade_records, 'sim_full_runner')
@@ -902,6 +911,37 @@ def run_gold_master_audit():
     filter_matrix = {
         'Inside_Day_Chop': _calc_stats([t for t in all_trade_records if t['is_inside_day'] and t['in_mid_equilibrium']], 'sim_dynamic'),
         'Clean_Expansion_Environment': _calc_stats([t for t in all_trade_records if not (t['is_inside_day'] and t['in_mid_equilibrium'])], 'sim_dynamic')
+    }
+
+    # SECTION 6: OPTIMIZED TRADINGGUARD SUITE (Prime Sessions & Positive Edge Setups)
+    prime_sessions = ['London_Open', 'London_Continuation', 'NY_Open']
+    positive_tools = ['PROMINENT_SWEEP_MSS', 'MSS_BREAKER_RETEST', 'JUDAS_SWEEP_BREAKER']
+    
+    prime_trades_35 = []
+    prime_trades_30 = []
+    for t in all_trade_records:
+        if t['session'] in prime_sessions:
+            if t['archetype'] in positive_tools:
+                prime_trades_35.append(t)
+                prime_trades_30.append(t)
+            elif t['archetype'] == 'SESSION_EXPANSION_FVG' and t['phase'] == 'PRO_EXPANSION':
+                prime_trades_35.append(t)
+                prime_trades_30.append(t)
+
+    optimized_suite = {
+        'Config_1_Target_35_BE_18': _calc_stats(prime_trades_35, 'sim_opt_35'),
+        'Config_2_Target_30_BE_18': _calc_stats(prime_trades_30, 'sim_opt_30'),
+        'Config_3_Target_35_BE_15': _calc_stats(prime_trades_35, 'sim_be_15'),
+        'Archetype_Breakdown_Optimal_35': {
+            'PROMINENT_SWEEP_MSS': _calc_stats([t for t in prime_trades_35 if t['archetype'] == 'PROMINENT_SWEEP_MSS'], 'sim_opt_35'),
+            'MSS_BREAKER_RETEST': _calc_stats([t for t in prime_trades_35 if t['archetype'] == 'MSS_BREAKER_RETEST'], 'sim_opt_35'),
+            'JUDAS_SWEEP_BREAKER': _calc_stats([t for t in prime_trades_35 if t['archetype'] == 'JUDAS_SWEEP_BREAKER'], 'sim_opt_35'),
+            'SESSION_EXPANSION_FVG': _calc_stats([t for t in prime_trades_35 if t['archetype'] == 'SESSION_EXPANSION_FVG'], 'sim_opt_35')
+        },
+        'Phase_Breakdown_Optimal_35': {
+            'PRO_EXPANSION': _calc_stats([t for t in prime_trades_35 if t['phase'] == 'PRO_EXPANSION'], 'sim_opt_35'),
+            'HTF_RETRACEMENT': _calc_stats([t for t in prime_trades_35 if t['phase'] == 'HTF_RETRACEMENT'], 'sim_opt_35')
+        }
     }
 
     # Save to JSON
@@ -920,6 +960,7 @@ def run_gold_master_audit():
         'tp_logic_matrix': tp_matrix,
         'trade_management_matrix': mgmt_matrix,
         'filter_audit': filter_matrix,
+        'optimized_core_suite': optimized_suite,
         'trades': all_trade_records
     }
 
