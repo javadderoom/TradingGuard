@@ -46,45 +46,56 @@
   "GBPUSD": {
     "London_Open": {
       "target_rr": 2.5,
-      "breakeven_rr": null,
-      "win_rate_pct": 100.0,
-      "expected_pf": 99.0,
-      "sample_size": 2
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 33.3,
+      "expected_pf": 1.75,
+      "sample_size": 21
+    },
+    "London_Post_Open": {
+      "target_rr": 2.5,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 34.4,
+      "expected_pf": 1.72,
+      "sample_size": 32
     },
     "London_Pre_Open": {
       "target_rr": 2.5,
-      "breakeven_rr": null,
-      "win_rate_pct": 100.0,
-      "expected_pf": 99.0,
-      "sample_size": 4
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 35.0,
+      "expected_pf": 1.8,
+      "sample_size": 15
     },
     "NY_Open": {
-      "target_rr": 5.0,
+      "target_rr": 0.0,
       "breakeven_rr": null,
-      "win_rate_pct": 66.7,
-      "expected_pf": 10.0,
-      "sample_size": 4
+      "win_rate_pct": 22.9,
+      "expected_pf": 0.95,
+      "sample_size": 70,
+      "status": "BYPASSED_ON_GBPUSD"
     },
     "NY_Post_Open": {
-      "target_rr": 2.0,
+      "target_rr": 0.0,
       "breakeven_rr": null,
-      "win_rate_pct": 0.0,
-      "expected_pf": 0.0,
-      "sample_size": 2
+      "win_rate_pct": 20.0,
+      "expected_pf": 0.8,
+      "sample_size": 25,
+      "status": "BYPASSED_ON_GBPUSD"
     },
     "NY_Pre_Open": {
-      "target_rr": 5.0,
-      "breakeven_rr": 1.5,
-      "win_rate_pct": 50.0,
-      "expected_pf": 7.5,
-      "sample_size": 9
+      "target_rr": 0.0,
+      "breakeven_rr": null,
+      "win_rate_pct": 21.0,
+      "expected_pf": 0.85,
+      "sample_size": 20,
+      "status": "BYPASSED_ON_GBPUSD"
     },
     "NY_Silver_Bullet": {
-      "target_rr": 2.0,
+      "target_rr": 0.0,
       "breakeven_rr": null,
-      "win_rate_pct": 0.0,
-      "expected_pf": 0.0,
-      "sample_size": 4
+      "win_rate_pct": 20.4,
+      "expected_pf": 0.91,
+      "sample_size": 98,
+      "status": "BANNED_ON_GBPUSD"
     }
   },
   "XAGUSD": {

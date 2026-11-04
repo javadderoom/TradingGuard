@@ -311,3 +311,16 @@ Empirical verification spanning all 4 calendar seasons of 2026 on Gold (`XAUUSD_
 4. **`SETUP-ARCH-004` (Expansion FVG)**: 44 Fills | 10W - 26L - 8BE | **22.7% WR** | **-1.0R Net** | **PF 0.96** (Breakeven Trap).
 5. **`SETUP-ARCH-001` (Judas Breaker)**: 16 Fills | 2W - 13L - 1BE | **12.5% WR** | **-8.0R Net** | **Decommissioned on Cable**.
 6. **`SETUP-ARCH-009` (OTE Retracement)**: 53 Fills | 7W - 38L - 8BE | **13.2% WR** | **-20.5R Net** | **Permanently Banned on Cable**.
+
+### 10.6 Production Codebase Integration
+1. **`hitl/backtest/fast_screener.py`**:
+   - `screen_ict_session`: Automatically detects `is_gbp = "GBP" in symbol.upper()`.
+   - **London-Only Gate**: New York Open (`session_hour in (14, 15, 16)`) returns `BYPASSED_SESSION` on GBPUSD to prevent negative expectation trading.
+   - **Silver Bullet Ban**: Late NY PM / Silver Bullet returns `BANNED_SESSION` on GBPUSD.
+   - **Archetype 002 Enabled**: `SETUP-ARCH-002` remains enabled on GBPUSD for order block mitigation (+6.0R).
+   - **Archetype 009 Decommissioned**: `SETUP-ARCH-009` permanently disabled on GBPUSD (`if not ("XAU" in symbol.upper() or is_gbp)`).
+2. **`hitl/memory/optimal_trade_management_policy.json`**:
+   - `GBPUSD` London Open / Continuation / Pre-Open calibrated to **`target_rr: 2.5`** and **`breakeven_rr: 1.5`**.
+   - `NY_Open` and `NY_Silver_Bullet` set to `0.0` target and flagged as `BYPASSED_ON_GBPUSD` / `BANNED_ON_GBPUSD`.
+3. **`hitl/memory/setup_registry.json`**:
+   - Updated auditor notes and ratification status reflecting GBPUSD empirical multi-seasonal results.

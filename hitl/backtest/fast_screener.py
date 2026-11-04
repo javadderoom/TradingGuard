@@ -361,7 +361,8 @@ def screen_ict_session(
         }
 
     current_price = bars_5m[-1]['close']
-    is_fx = "EUR" in symbol.upper() or "GBP" in symbol.upper()
+    is_gbp = "GBP" in symbol.upper()
+    is_fx = "EUR" in symbol.upper() or is_gbp
     is_silver = "XAG" in symbol.upper()
     if is_fx:
         fmt = ".5f"
@@ -384,15 +385,22 @@ def screen_ict_session(
         session_window = bars_5m[-84:-10] if len(bars_5m) >= 84 else bars_5m[:-10]
         session_label = "Asian Range"
     elif session_hour in (14, 15, 16):
+        if is_gbp:
+            # NY Open on GBPUSD is an empirical drag (-2.0R, 22.9% WR); institutional alpha is 100% in London
+            return {
+                "has_setup": False,
+                "reason": "Veto: NY Open window bypassed on GBPUSD per 4-season empirical audit (London sessions only)",
+                "setup_type": "BYPASSED_SESSION"
+            }
         session_window = bars_5m[-72:-10] if len(bars_5m) >= 72 else bars_5m[:-10]
         session_label = "London Range"
     else:
         # NY Silver Bullet (17:30 - 18:30 Tehran / 10:00 - 11:00 NY)
-        if "XAU" in symbol.upper():
-            # Banned on Gold per empirical audit (6.2% win rate, -8.5R drag / post-ADR exhaustion)
+        if "XAU" in symbol.upper() or is_gbp:
+            # Banned on Gold and GBPUSD per 4-season empirical audit (persistent negative drag)
             return {
                 "has_setup": False,
-                "reason": "Veto: Late NY PM / Silver Bullet window banned on Gold per empirical audit",
+                "reason": f"Veto: Late NY PM / Silver Bullet window banned on {symbol} per empirical audit",
                 "setup_type": "BANNED_SESSION"
             }
         session_window = bars_5m[-36:-6] if len(bars_5m) >= 36 else bars_5m[:-6]
@@ -574,8 +582,8 @@ def screen_ict_session(
                 return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
-    # Decommissioned on Gold per 2-month empirical audit (-2.5R loss, 12.5% WR; deep 70.5% retracements fail on Gold)
-    if "XAU" not in symbol.upper():
+    # Decommissioned on Gold (-46.5R) and GBPUSD (-20.5R) per 4-season empirical audits
+    if not ("XAU" in symbol.upper() or is_gbp):
         min_expansion_pts = 0.80 if is_silver else 0.0035
         if total_range >= min_expansion_pts and not (in_mid_equilibrium or is_inside_day) and setup_registry.is_archetype_ratified("SETUP-ARCH-009"):
             arch_id = "SETUP-ARCH-009"
