@@ -1,0 +1,104 @@
+{
+  "audit_period": "2026-07-01 to 2026-08-31",
+  "season": "Summer (OOS Validation)",
+  "symbol": "GBPUSD_o",
+  "baseline": {
+    "fills": 46,
+    "wins": 6,
+    "losses": 36,
+    "be": 4,
+    "wr": 13.0,
+    "net_r": -21.0,
+    "pf": 0.42
+  },
+  "calibrated": {
+    "fills": 23,
+    "wins": 2,
+    "losses": 19,
+    "be": 2,
+    "wr": 8.7,
+    "net_r": -14.0,
+    "pf": 0.26
+  },
+  "sessions": {
+    "London_Continuation": {
+      "fills": 5,
+      "wins": 1,
+      "losses": 4,
+      "be": 0,
+      "wr": 20.0,
+      "net_r": -1.5,
+      "pf": 0.62
+    },
+    "London_Open": {
+      "fills": 3,
+      "wins": 0,
+      "losses": 2,
+      "be": 1,
+      "wr": 0.0,
+      "net_r": -2.0,
+      "pf": 0.0
+    },
+    "NY_Open": {
+      "fills": 16,
+      "wins": 1,
+      "losses": 14,
+      "be": 1,
+      "wr": 6.2,
+      "net_r": -11.5,
+      "pf": 0.18
+    },
+    "NY_Silver_Bullet": {
+      "fills": 22,
+      "wins": 4,
+      "losses": 16,
+      "be": 2,
+      "wr": 18.2,
+      "net_r": -6.0,
+      "pf": 0.62
+    }
+  },
+  "archetypes": {
+    "SETUP-ARCH-001": {
+      "fills": 2,
+      "wins": 0,
+      "losses": 2,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": -2.0,
+      "pf": 0.0,
+      "name": "JUDAS_SWEEP_BREAKER"
+    },
+    "SETUP-ARCH-002": {
+      "fills": 1,
+      "wins": 0,
+      "losses": 1,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": -1.0,
+      "pf": 0.0,
+      "name": "JUDAS_SWEEP_FVG"
+    },
+    "SETUP-ARCH-003": {
+      "fills": 15,
+      "wins": 2,
+      "losses": 11,
+      "be": 2,
+      "wr": 13.3,
+      "net_r": -6.0,
+      "pf": 0.45,
+      "name": "MSS_BREAKER_RETEST"
+    },
+    "SETUP-ARCH-004": {
+      "fills": 5,
+      "wins": 0,
+      "losses": 5,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": -5.0,
+      "pf": 0.0,
+      "name": "SESSION_EXPANSION_FVG"
+    }
+  },
+  "execution_wall_time_s": 9.32
+}

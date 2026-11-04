@@ -1,0 +1,199 @@
+{
+  "audit_period": "2026-09-01 to 2026-11-04",
+  "season": "Autumn (DST Transition)",
+  "symbol": "GBPUSD_o",
+  "baseline": {
+    "fills": 57,
+    "wins": 14,
+    "losses": 28,
+    "be": 15,
+    "wr": 24.6,
+    "net_r": 7.0,
+    "pf": 1.25
+  },
+  "sessions": {
+    "London_Continuation": {
+      "fills": 3,
+      "wins": 1,
+      "losses": 2,
+      "be": 0,
+      "wr": 33.3,
+      "net_r": 0.5,
+      "pf": 1.25
+    },
+    "London_Open": {
+      "fills": 8,
+      "wins": 4,
+      "losses": 1,
+      "be": 3,
+      "wr": 50.0,
+      "net_r": 9.0,
+      "pf": 10.0
+    },
+    "NY_Open": {
+      "fills": 24,
+      "wins": 7,
+      "losses": 12,
+      "be": 5,
+      "wr": 29.2,
+      "net_r": 5.5,
+      "pf": 1.46
+    },
+    "NY_Silver_Bullet": {
+      "fills": 22,
+      "wins": 2,
+      "losses": 13,
+      "be": 7,
+      "wr": 9.1,
+      "net_r": -8.0,
+      "pf": 0.38
+    }
+  },
+  "archetypes": {
+    "SETUP-ARCH-001": {
+      "fills": 4,
+      "wins": 0,
+      "losses": 2,
+      "be": 2,
+      "wr": 0.0,
+      "net_r": -2.0,
+      "pf": 0.0,
+      "name": "JUDAS_SWEEP_BREAKER"
+    },
+    "SETUP-ARCH-002": {
+      "fills": 3,
+      "wins": 1,
+      "losses": 2,
+      "be": 0,
+      "wr": 33.3,
+      "net_r": 0.5,
+      "pf": 1.25,
+      "name": "JUDAS_SWEEP_FVG"
+    },
+    "SETUP-ARCH-003": {
+      "fills": 16,
+      "wins": 6,
+      "losses": 7,
+      "be": 3,
+      "wr": 37.5,
+      "net_r": 8.0,
+      "pf": 2.14,
+      "name": "MSS_BREAKER_RETEST"
+    },
+    "SETUP-ARCH-004": {
+      "fills": 23,
+      "wins": 5,
+      "losses": 11,
+      "be": 7,
+      "wr": 21.7,
+      "net_r": 1.5,
+      "pf": 1.14,
+      "name": "SESSION_EXPANSION_FVG"
+    },
+    "SETUP-ARCH-009": {
+      "fills": 11,
+      "wins": 2,
+      "losses": 6,
+      "be": 3,
+      "wr": 18.2,
+      "net_r": -1.0,
+      "pf": 0.83,
+      "name": "PRO_TREND_RETEST_OTE"
+    }
+  },
+  "target_grid": {
+    "Target 1.5R": {
+      "fills": 59,
+      "wins": 27,
+      "losses": 28,
+      "be": 4,
+      "wr": 45.8,
+      "net_r": 12.5,
+      "pf": 1.45
+    },
+    "Target 2.0R": {
+      "fills": 59,
+      "wins": 20,
+      "losses": 28,
+      "be": 11,
+      "wr": 33.9,
+      "net_r": 12.0,
+      "pf": 1.43
+    },
+    "Target 2.5R": {
+      "fills": 57,
+      "wins": 14,
+      "losses": 28,
+      "be": 15,
+      "wr": 24.6,
+      "net_r": 7.0,
+      "pf": 1.25
+    },
+    "Target 3.0R": {
+      "fills": 56,
+      "wins": 11,
+      "losses": 28,
+      "be": 17,
+      "wr": 19.6,
+      "net_r": 5.0,
+      "pf": 1.18
+    },
+    "Target 3.5R": {
+      "fills": 55,
+      "wins": 10,
+      "losses": 32,
+      "be": 13,
+      "wr": 18.2,
+      "net_r": 3.0,
+      "pf": 1.09
+    },
+    "Target 4.0R": {
+      "fills": 53,
+      "wins": 8,
+      "losses": 32,
+      "be": 13,
+      "wr": 15.1,
+      "net_r": 0.0,
+      "pf": 1.0
+    }
+  },
+  "breakeven_grid": {
+    "No Breakeven": {
+      "fills": 53,
+      "wins": 15,
+      "losses": 38,
+      "be": 0,
+      "wr": 28.3,
+      "net_r": -0.5,
+      "pf": 0.99
+    },
+    "BE at 1.0R": {
+      "fills": 57,
+      "wins": 12,
+      "losses": 24,
+      "be": 21,
+      "wr": 21.1,
+      "net_r": 6.0,
+      "pf": 1.25
+    },
+    "BE at 1.5R": {
+      "fills": 57,
+      "wins": 14,
+      "losses": 28,
+      "be": 15,
+      "wr": 24.6,
+      "net_r": 7.0,
+      "pf": 1.25
+    },
+    "BE at 2.0R": {
+      "fills": 56,
+      "wins": 15,
+      "losses": 36,
+      "be": 5,
+      "wr": 26.8,
+      "net_r": 1.5,
+      "pf": 1.04
+    }
+  },
+  "execution_wall_time_s": 11.67
+}

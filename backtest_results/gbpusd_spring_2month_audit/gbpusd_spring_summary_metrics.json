@@ -1,0 +1,94 @@
+{
+  "audit_period": "2026-03-01 to 2026-04-30",
+  "season": "Spring (Dynamic DST Transitions)",
+  "symbol": "GBPUSD_o",
+  "baseline": {
+    "fills": 79,
+    "wins": 18,
+    "losses": 44,
+    "be": 17,
+    "wr": 22.8,
+    "net_r": 1.0,
+    "pf": 1.02
+  },
+  "calibrated": {
+    "fills": 34,
+    "wins": 10,
+    "losses": 15,
+    "be": 9,
+    "wr": 29.4,
+    "net_r": 10.0,
+    "pf": 1.67
+  },
+  "sessions": {
+    "London_Continuation": {
+      "fills": 13,
+      "wins": 3,
+      "losses": 5,
+      "be": 5,
+      "wr": 23.1,
+      "net_r": 2.5,
+      "pf": 1.5
+    },
+    "London_Open": {
+      "fills": 10,
+      "wins": 4,
+      "losses": 5,
+      "be": 1,
+      "wr": 40.0,
+      "net_r": 5.0,
+      "pf": 2.0
+    },
+    "NY_Open": {
+      "fills": 28,
+      "wins": 4,
+      "losses": 17,
+      "be": 7,
+      "wr": 14.3,
+      "net_r": -7.0,
+      "pf": 0.59
+    },
+    "NY_Silver_Bullet": {
+      "fills": 28,
+      "wins": 7,
+      "losses": 17,
+      "be": 4,
+      "wr": 25.0,
+      "net_r": 0.5,
+      "pf": 1.03
+    }
+  },
+  "archetypes": {
+    "SETUP-ARCH-001": {
+      "fills": 5,
+      "wins": 1,
+      "losses": 4,
+      "be": 0,
+      "wr": 20.0,
+      "net_r": -1.5,
+      "pf": 0.62,
+      "name": "JUDAS_SWEEP_BREAKER"
+    },
+    "SETUP-ARCH-003": {
+      "fills": 11,
+      "wins": 4,
+      "losses": 4,
+      "be": 3,
+      "wr": 36.4,
+      "net_r": 6.0,
+      "pf": 2.5,
+      "name": "MSS_BREAKER_RETEST"
+    },
+    "SETUP-ARCH-004": {
+      "fills": 18,
+      "wins": 5,
+      "losses": 7,
+      "be": 6,
+      "wr": 27.8,
+      "net_r": 5.5,
+      "pf": 1.79,
+      "name": "SESSION_EXPANSION_FVG"
+    }
+  },
+  "execution_wall_time_s": 8.97
+}
