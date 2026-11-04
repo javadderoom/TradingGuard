@@ -123,14 +123,19 @@ void OnTick()
    datetime now = TimeCurrent();
    int total = ArraySize(g_plans);
 
+   // 1. Process Pending Order Plans
    for(int i = 0; i < total; i++)
    {
       if(g_plans[i].placed) continue;
 
+      // Filter by current chart symbol if running in Strategy Tester single-symbol mode
+      if(g_plans[i].symbol != _Symbol && g_plans[i].symbol != "AUTO")
+         continue;
+
       if(now >= g_plans[i].trigger_time)
       {
-         string sym = g_plans[i].symbol;
-         int ttl = (g_plans[i].ttl_minutes > 0) ? g_plans[i].ttl_minutes : 360;
+         string sym = (g_plans[i].symbol == "AUTO") ? _Symbol : g_plans[i].symbol;
+         int ttl = (g_plans[i].ttl_minutes > 0) ? g_plans[i].ttl_minutes : 480;
          datetime expiry = g_plans[i].trigger_time + (ttl * 60);
 
          if(now >= expiry)
@@ -253,6 +258,93 @@ void OnTick()
          {
             PrintFormat("[TradingGuard_Executor] Order placement FAILED for %s. Retcode: %d (%s)",
                         g_plans[i].id, g_trade.ResultRetcode(), g_trade.ResultRetcodeDescription());
+         }
+      }
+   }
+
+   // 2. Dynamic Position Lifecycle Management (Breakeven Ratchet & Session Expiry)
+   ManageActivePositions();
+}
+
+//+------------------------------------------------------------------+
+//| Manage Active Positions (Breakeven & Session Expiry)             |
+//+------------------------------------------------------------------+
+void ManageActivePositions()
+{
+   datetime now = TimeCurrent();
+   for(int p = PositionsTotal() - 1; p >= 0; p--)
+   {
+      ulong ticket = PositionGetTicket(p);
+      if(ticket == 0) continue;
+      if(PositionGetInteger(POSITION_MAGIC) != InpMagicNumber) continue;
+
+      string comment = PositionGetString(POSITION_COMMENT);
+      string sym = PositionGetString(POSITION_SYMBOL);
+      ENUM_POSITION_TYPE pos_type = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+      double open_price = PositionGetDouble(POSITION_PRICE_OPEN);
+      double cur_sl = PositionGetDouble(POSITION_SL);
+      double cur_tp = PositionGetDouble(POSITION_TP);
+      datetime open_time = (datetime)PositionGetInteger(POSITION_TIME);
+
+      // Match plan
+      int plan_idx = -1;
+      for(int i = 0; i < ArraySize(g_plans); i++)
+      {
+         if(g_plans[i].id == comment || StringFind(comment, g_plans[i].id) >= 0)
+         {
+            plan_idx = i;
+            break;
+         }
+      }
+
+      if(plan_idx < 0) continue;
+
+      double risk = MathAbs(g_plans[plan_idx].entry - g_plans[plan_idx].sl);
+      if(risk <= 0) continue;
+
+      int digits = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+      double point = SymbolInfoDouble(sym, SYMBOL_POINT);
+      double spread = SymbolInfoDouble(sym, SYMBOL_ASK) - SymbolInfoDouble(sym, SYMBOL_BID);
+
+      // A. Session Expiry Check (8 hours = 480 minutes)
+      if(now - open_time >= 480 * 60)
+      {
+         PrintFormat("[TradingGuard_Executor] Max held time exceeded (480 min) for ticket %d (%s). Closing at market.", ticket, comment);
+         g_trade.PositionClose(ticket);
+         continue;
+      }
+
+      // B. Breakeven Ratchet Protocol
+      // Gold threshold: 1.8R, Forex threshold: 1.5R
+      double be_thresh = (StringFind(sym, "XAU") >= 0) ? 1.8 : 1.5;
+
+      MqlTick tick;
+      if(!SymbolInfoTick(sym, tick))
+      {
+         tick.bid = SymbolInfoDouble(sym, SYMBOL_BID);
+         tick.ask = SymbolInfoDouble(sym, SYMBOL_ASK);
+      }
+
+      if(pos_type == POSITION_TYPE_BUY)
+      {
+         double mfe_r = (tick.bid - open_price) / risk;
+         if(mfe_r >= be_thresh && cur_sl < open_price)
+         {
+            double new_sl = NormalizeDouble(open_price + point, digits);
+            PrintFormat("[TradingGuard_Executor] BREAKEVEN TRIGGERED: Ticket %d (%s) MFE=%.2fR >= %.1fR. Ratcheting SL to %.5f",
+                        ticket, comment, mfe_r, be_thresh, new_sl);
+            g_trade.PositionModify(ticket, new_sl, cur_tp);
+         }
+      }
+      else if(pos_type == POSITION_TYPE_SELL)
+      {
+         double mfe_r = (open_price - tick.ask) / risk;
+         if(mfe_r >= be_thresh && (cur_sl > open_price || cur_sl == 0))
+         {
+            double new_sl = NormalizeDouble(open_price - point, digits);
+            PrintFormat("[TradingGuard_Executor] BREAKEVEN TRIGGERED: Ticket %d (%s) MFE=%.2fR >= %.1fR. Ratcheting SL to %.5f",
+                        ticket, comment, mfe_r, be_thresh, new_sl);
+            g_trade.PositionModify(ticket, new_sl, cur_tp);
          }
       }
    }
