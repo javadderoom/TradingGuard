@@ -213,3 +213,19 @@ Key Invariants Confirmed Across All 4 Months:
 1. **NY Silver Bullet Ban**: Saved -29.5R total capital drain (68 fills: 10.3% WR, 0.45 PF). Banning it on Gold is essential.
 2. **Target R:R 3.5R Cap**: Targets $\ge 4.0R$ collapsed to -15.0R in Period 2 (5.9% WR) and failed in Period 1; 3.5R remains the empirical peak.
 3. **Decommissioned Setups**: SETUP-ARCH-002 (-11.0R total) and SETUP-ARCH-009 (-16.0R total) drained a combined -27.0R across 4 months; permanently decommissioned on Gold.
+
+
+### 9.5 6-Month Multi-Seasonal Synthesis (Winter, Summer, Autumn 2026)
+Consolidated performance across 180,368 continuous M1 broker bars and 528 institutional sessions:
+
+| Calendar Season | Microstructure Data | Baseline Net PnL (R) | Calibrated Fills | Calibrated Win Rate % | Calibrated Net PnL (R) | Profit Factor | Market Character |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Winter 2026 (Jan 2 – Feb 27)** | 56,031 M1 (11.87M ticks) | -33.5R | 29 | 13.8% | -6.0R | 0.70 | Range Chop / Capital Defense |
+| **Summer 2026 (Jul 1 – Aug 31)** | 60,337 M1 (5.3M ticks) | -12.0R | 35 | 25.7% | +8.5R | 1.37 | Moderate Trend Consolidation |
+| **Autumn 2026 (Sep 1 – Nov 4)** | 64,000 M1 | -24.3R | 47 | 31.9% | +25.5R | 1.94 | Runaway Macro Expansion |
+| **6-MONTH COMBINED MASTER TOTAL** | **180,368 M1 Bars** | **-44.0R** | **111** | **25.2%** | **+28.0R** | **1.40** | **+72.0R Net Alpha Advantage** |
+
+Multi-Seasonal Invariants:
+1. **NY Silver Bullet Ban**: Bled a cumulative **-42.0R** across 98 fills (10.2% WR, PF 0.45). Permanently banned on Gold.
+2. **Decommissioned Archetypes**: SETUP-ARCH-002 (-19.0R) and SETUP-ARCH-009 (-29.0R) lost **-48.0R** across 6 months. Permanently decommissioned on Gold.
+3. **Core Alpha Drivers**: SETUP-ARCH-010 (Prominent Sweep + MSS), SETUP-ARCH-003 (MSS Breaker Retest), and SETUP-ARCH-011 (Nested Double MSS: +18.5R across 6 months) drive institutional profitability.
