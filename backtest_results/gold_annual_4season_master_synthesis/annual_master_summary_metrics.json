@@ -1,0 +1,200 @@
+{
+  "audit_scope": "Full-Year 2026 (Winter, Spring, Summer, Autumn)",
+  "trading_days": 175,
+  "institutional_sessions": 700,
+  "symbol": "XAUUSD_o",
+  "baseline_annual": {
+    "fills": 414,
+    "wins": 66,
+    "losses": 285,
+    "be": 63,
+    "wr": 15.9,
+    "net_r": -54.0,
+    "pf": 0.81,
+    "ev": -0.13
+  },
+  "calibrated_annual": {
+    "fills": 137,
+    "wins": 30,
+    "losses": 88,
+    "be": 19,
+    "wr": 21.9,
+    "net_r": 17.0,
+    "pf": 1.19,
+    "ev": 0.124
+  },
+  "seasonal_breakdown": {
+    "Winter": {
+      "fills": 29,
+      "wins": 4,
+      "losses": 20,
+      "be": 5,
+      "wr": 13.8,
+      "net_r": -6.0,
+      "pf": 0.7,
+      "ev": -0.207
+    },
+    "Spring": {
+      "fills": 26,
+      "wins": 2,
+      "losses": 18,
+      "be": 6,
+      "wr": 7.7,
+      "net_r": -11.0,
+      "pf": 0.39,
+      "ev": -0.423
+    },
+    "Summer": {
+      "fills": 35,
+      "wins": 9,
+      "losses": 23,
+      "be": 3,
+      "wr": 25.7,
+      "net_r": 8.5,
+      "pf": 1.37,
+      "ev": 0.243
+    },
+    "Autumn": {
+      "fills": 47,
+      "wins": 15,
+      "losses": 27,
+      "be": 5,
+      "wr": 31.9,
+      "net_r": 25.5,
+      "pf": 1.94,
+      "ev": 0.543
+    }
+  },
+  "archetype_breakdown": {
+    "SETUP-ARCH-001": {
+      "fills": 12,
+      "wins": 3,
+      "losses": 9,
+      "be": 0,
+      "wr": 25.0,
+      "net_r": 1.5,
+      "pf": 1.17,
+      "ev": 0.125,
+      "name": "JUDAS_SWEEP_BREAKER"
+    },
+    "SETUP-ARCH-003": {
+      "fills": 31,
+      "wins": 8,
+      "losses": 19,
+      "be": 4,
+      "wr": 25.8,
+      "net_r": 9.0,
+      "pf": 1.47,
+      "ev": 0.29,
+      "name": "MSS_BREAKER_RETEST"
+    },
+    "SETUP-ARCH-004": {
+      "fills": 54,
+      "wins": 9,
+      "losses": 37,
+      "be": 8,
+      "wr": 16.7,
+      "net_r": -5.5,
+      "pf": 0.85,
+      "ev": -0.102,
+      "name": "SESSION_EXPANSION_FVG"
+    },
+    "SETUP-ARCH-010": {
+      "fills": 36,
+      "wins": 10,
+      "losses": 21,
+      "be": 5,
+      "wr": 27.8,
+      "net_r": 14.0,
+      "pf": 1.67,
+      "ev": 0.389,
+      "name": "PROMINENT_SWEEP_MSS"
+    },
+    "SETUP-ARCH-011": {
+      "fills": 4,
+      "wins": 0,
+      "losses": 2,
+      "be": 2,
+      "wr": 0.0,
+      "net_r": -2.0,
+      "pf": 0.0,
+      "ev": -0.5,
+      "name": "NESTED_DOUBLE_MSS"
+    }
+  },
+  "session_breakdown": {
+    "London_Continuation": {
+      "fills": 41,
+      "wins": 7,
+      "losses": 30,
+      "be": 4,
+      "wr": 17.1,
+      "net_r": -5.5,
+      "pf": 0.82,
+      "ev": -0.134
+    },
+    "London_Open": {
+      "fills": 32,
+      "wins": 9,
+      "losses": 19,
+      "be": 4,
+      "wr": 28.1,
+      "net_r": 12.5,
+      "pf": 1.66,
+      "ev": 0.391
+    },
+    "NY_Open": {
+      "fills": 64,
+      "wins": 14,
+      "losses": 39,
+      "be": 11,
+      "wr": 21.9,
+      "net_r": 10.0,
+      "pf": 1.26,
+      "ev": 0.156
+    }
+  },
+  "nested_double_mss_annual": {
+    "fills": 128,
+    "wins": 24,
+    "losses": 71,
+    "be": 33,
+    "wr": 18.8,
+    "net_r": 13.0,
+    "pf": 1.18,
+    "ev": 0.102
+  },
+  "decommissioned_drag": {
+    "ny_silver_bullet": {
+      "fills": 140,
+      "wins": 22,
+      "losses": 100,
+      "be": 18,
+      "wr": 15.7,
+      "net_r": -23.0,
+      "pf": 0.77,
+      "ev": -0.164
+    },
+    "arch_002": {
+      "fills": 67,
+      "wins": 9,
+      "losses": 49,
+      "be": 9,
+      "wr": 13.4,
+      "net_r": -17.5,
+      "pf": 0.64,
+      "ev": -0.261
+    },
+    "arch_009": {
+      "fills": 142,
+      "wins": 15,
+      "losses": 99,
+      "be": 28,
+      "wr": 10.6,
+      "net_r": -46.5,
+      "pf": 0.53,
+      "ev": -0.327
+    },
+    "total_drag_saved_r": -87.0
+  }
+}

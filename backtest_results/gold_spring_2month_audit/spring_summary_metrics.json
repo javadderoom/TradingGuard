@@ -1,0 +1,24 @@
+{
+  "audit_period": "2026-03-01 to 2026-04-30",
+  "season": "Spring (DST Transitions)",
+  "symbol": "XAUUSD_o",
+  "baseline": {
+    "fills": 102,
+    "wins": 16,
+    "losses": 66,
+    "be": 20,
+    "wr": 15.7,
+    "net_r": -10.0,
+    "pf": 0.85
+  },
+  "calibrated": {
+    "fills": 24,
+    "wins": 2,
+    "losses": 16,
+    "be": 6,
+    "wr": 8.3,
+    "net_r": -9.0,
+    "pf": 0.44
+  },
+  "execution_wall_time_s": 11.62
+}
