@@ -65,6 +65,17 @@ The market clock dynamically synchronizes timezones without static hardcoded ass
 - **Mid-Range Equilibrium**: Price is trapped between $PDL + 0.25 \times PDR$ and $PDL + 0.75 \times PDR$.
 - **`CONSOLIDATION` Veto**: If `is_inside_day` AND `in_mid_equilibrium` AND 1H State is `NEUTRAL`, all trades are suppressed (Stand Aside).
 
+### 3.3 Single MSS vs. Double MSS / ChoCh Governance
+- **Single MSS Failure Vulnerability**: Empirical testing over 519 shifts proved Single MSS suffers a 60.0% failure rate (reverse MSS before target) and collapses to a 9.4% win rate when filtered by HTF. Single MSS in isolation is treated as an unconfirmed candidate.
+- **Double MSS Confirmation Standard**:
+  1. **Consecutive Structural Breach**: The displacement impulse decisively breaches two consecutive historical swing pivots ($SH_{n-1}$ and $SH_n$), OR
+  2. **Sequential Shift**: Price breaks the 1st swing pivot, prints a confirmed Higher Low ($SL_2 > SL_1$ for longs) or Lower High, and prints a secondary displacement break past $SH_2$.
+  3. **Performance Edge**: Double MSS generated **+137.0R Net Profit** (PF 1.74) compared to +13.0R for Single MSS.
+- **Liquidity Sweep Hierarchical Rule**:
+  - **Tier-1 Priority (Macro Sweeps)**: Sweeps of **Prior Day High (PDH: 85.7% Win Rate, PF 21.00)** and **Prior Day Low (PDL: 57.1% Win Rate, PF 7.00)** represent the highest-conviction reversal setups.
+  - **Tier-2 Priority (Session Extremes)**: Sweeps of Asian High/Low during London Open (41.7% Win Rate, PF 3.50).
+  - **Prohibited Sweeps**: Sweeping minor internal 5M swing lows in a downtrend is banned (14.8% Win Rate, -12.5R drag; represents trend continuation, not reversal).
+
 ---
 
 ## 4. Directional Phase Classification & Dynamic Sizing
