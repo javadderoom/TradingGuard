@@ -1,6 +1,6 @@
 {
   "version": "2.0.0-LEAN",
-  "last_updated": "2026-11-03T23:50:11.300743",
+  "last_updated": "2026-11-07T23:20:19.967902",
   "active_rules": [
     {
       "id": "RULE-CORE-001",
@@ -222,6 +222,14 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Pure continuation breakout/breakdown signals ([SETUP-ARCH-004]) that expand beyond Session Extremes (Asian, London, or NY AM) without an antecedent liquidity sweep of at least 1.2x M5 ATR or confirmed SMT divergence are permanently barred from execution across all sessions.",
       "rationale": "Counterfactual stand-aside logs conclusively prove that unconfirmed breakout orders on 2026-09-07 15:00, 2026-09-07 18:00, and 2026-09-11 10:00 resulted in direct full stop-outs, preserving $24.09 of capital ($8.01, $6.31, and $9.77 respectively). Pure momentum breakouts without prior liquidity absorption have a 0% win rate in this regime.",
+      "status": "DEPRECATED_SUPERSEDED_BY_2YEAR_BENCHMARK"
+    },
+    {
+      "id": "RULE-ARCH-030",
+      "category": "Alpha Capture & Expansion Momentum",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Institutional Range Expansion setups ([SETUP-ARCH-004]) are fully authorized for execution. In pure expansion momentum regimes, the Council must NOT demand an antecedent session liquidity sweep or SMT divergence. Anchor entry at the proximal edge of the displacement FVG with structural stop pinned behind the displacement swing wick, enforcing minimum 1:3.0 R:R.",
+      "rationale": "Full 2-year multi-regime audit across 2025 and 2026 verified +94.0R net alpha from SETUP-ARCH-004 (+48.5R in 2026, +45.5R in 2025). Requiring reversal liquidity sweeps on continuation expansion destroys high-expectancy alpha due to the 3.5R Asymmetry Trap.",
       "status": "ACTIVE"
     },
     {

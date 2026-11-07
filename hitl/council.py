@@ -373,6 +373,7 @@ def convene_investment_council(
     symbol: str = "XAUUSD",
     mode: str = "tactical",
     screener_result: Optional[Dict[str, Any]] = None,
+    historical_dossier: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
     Convenes the TradingGuard Institutional Multi-Agent Investment Council.
@@ -388,7 +389,10 @@ def convene_investment_council(
     else:
         sym = "XAUUSD"
         
-    intel = assemble_council_intelligence(sym)
+    if historical_dossier:
+        intel = historical_dossier
+    else:
+        intel = assemble_council_intelligence(sym)
     if not intel["charts_ready"]:
         missing = [str(p) for p in intel["chart_paths"] if not p.exists()]
         print(f"[Council] Incomplete multi-timeframe chart package: {missing}")
@@ -441,17 +445,19 @@ def convene_investment_council(
     # -------------------------------------------------------------
     ict_role = (
         "You are the Chief ICT & Order Flow Strategist for TradingGuard.\n"
-        "Your exclusive mandate is technical order flow analysis based strictly on ICT/SMC principles.\n"
-        "Focus on: Liquidity sweeps (Judas Swings), Market Structure Shifts (MSS), displacement candles, "
-        "and anchoring limit entries at the Proximal Edge of confirmed Fair Value Gaps (FVG) or Breakers.\n"
-        "Strict rules: Limit orders ONLY. Stop loss must be structurally pinned behind the sweep wick. "
-        "Minimum R:R must be 1:3.0 or higher. Max risk $12.00 (0.01 lot)."
+        "Your exclusive mandate is technical order flow analysis based on institutional ICT/SMC principles.\n"
+        "Core Rules & Archetype Awareness:\n"
+        "1. Reversal Archetypes (ARCH-001/002/003/010): Require validated liquidity sweep (Judas Swing) + M5 displacement MSS.\n"
+        "2. Continuation & Expansion Archetypes (ARCH-004/014): Do NOT demand an external liquidity sweep. "
+        "Expansion setups legitimately break away from equilibrium via energetic FVG displacement. Anchor limit entry at proximal FVG edge.\n"
+        "3. Limit orders ONLY. Stop loss must be structurally pinned behind the recent swing wick. "
+        "Minimum R:R must be 1:3.0 or higher. Max risk $12.00 (0.01 lot base)."
     )
     ict_task = (
         f"{memory_prompt}\n\n"
         f"{market_dossier}\n\n"
         f"Deliver your technical findings strictly in the following structure:\n"
-        f"• Liquidity Sweep & Judas Swing Validation:\n"
+        f"• Liquidity Sweep / Expansion Displacement Validation:\n"
         f"• Active POI & Displacement FVG Retracement:\n"
         f"• Market Structure Shift (MSS) Confirmation:\n"
         f"• Proposed Technical Execution Plan (or NO_SETUP):\n"
@@ -498,55 +504,60 @@ def convene_investment_council(
     print(f"[Council] Round 1 complete: ICT ({dt_ict:.1f}s), Macro ({dt_macro:.1f}s)")
 
     # -------------------------------------------------------------
-    # ROUND 2: Adversarial Invalidation & Trap Audit (Skeptic)
+    # ROUND 2: Quantitative Risk & Structural Friction Audit (Skeptic)
     # -------------------------------------------------------------
     skeptic_role = (
-        "You are the Adversarial Invalidation Auditor for TradingGuard.\n"
-        "Your sole duty is CAPITAL DEFENSE, TRAP EXPOSURE, and PREVENTING THE 3.5R ASYMMETRY TRAP.\n"
-        "You are explicitly incentivized to destroy the trade thesis and find why it is a false breakout or retail trap.\n"
-        "Stress-test against:\n"
-        "1. Shallow Sweeps: On Gold, sweeps under 2.0 pts are often retail inducement fakeouts.\n"
-        "2. Micro-Stops: Stop losses placed too tight (< 4.0 pts on Gold or < 6.0 pips on FX) get hunted by broker spreads.\n"
-        "3. Inducement Traps: Is the trade buying into higher timeframe resistance or selling into discount support?\n"
-        "4. Macro / Exposure Violations: Did the Macro Officer report an embargo or duplicate exposure?"
+        "You are the Quantitative Risk & Structural Invalidation Auditor for TradingGuard.\n"
+        "Your mandate is OBJECTIVE FRICTION QUANTIFICATION & STRUCTURAL AUDITING, not indiscriminate vetoes.\n"
+        "Core Philosophy:\n"
+        "1. Probabilistic Expectancy: Trading is a game of probabilities. With 1:3.5+ payout geometry, we only need a 22.2% win rate to break even. Imperfections and market noise are normal.\n"
+        "2. Structural Invalidation: Verify that the stop loss is structurally pinned behind a swing wick or FVG distal edge, and strictly within the $12 cap.\n"
+        "3. Archetype Awareness: For continuation/expansion setups (SETUP-ARCH-004), do NOT demand an external liquidity sweep; evaluate displacement momentum and FVG retest.\n"
+        "4. Classify Risk:\n"
+        "   - ACCEPTABLE_RISK: Clean structural geometry with positive expectancy.\n"
+        "   - MODERATE_FRICTION: Minor counter-trend pull, shallow sweep, or nearby minor obstacle (recommend 0.5R half-risk or trailing stop).\n"
+        "   - FATAL_STRUCTURAL_TRAP: Trading directly inside dead mid-range consolidation with zero displacement, or unanchored micro-stop."
     )
     skeptic_task = (
         f"{market_dossier}\n\n"
         f"=== PROPOSED ICT STRATEGIST TRADE ===\n{out_ict}\n\n"
         f"=== MACRO & EXPOSURE REPORT ===\n{out_macro}\n\n"
-        f"Deliver your adversarial stress-test strictly in the following structure:\n"
+        f"Deliver your quantitative risk audit strictly in the following structure:\n"
         f"• Structural Invalidation Level & Stop Vulnerability (Is SL pinned safely per RULE-CORE-005?):\n"
-        f"• Retail Inducement & Liquidity Trap Exposure:\n"
+        f"• Market Friction & Trap Assessment (Differentiate fatal traps from normal market noise):\n"
         f"• Risk Geometry & Cap Verification (Strict $12 cap, R:R >= 1:3.0):\n"
-        f"• Adversarial Invalidation Verdict: [CHALLENGE_ACCEPTED | ADVISE_HALF_RISK | VETO_STRUCTURAL_TRAP]\n"
+        f"• Risk Audit Classification: [ACCEPTABLE_RISK | MODERATE_FRICTION_ADVISE_0.5R | FATAL_STRUCTURAL_TRAP]\n"
         f"Keep under 180 words."
     )
 
     _, dt_skeptic, out_skeptic = _execute_agent_prompt(
         agy_bin, "Adversarial Auditor", skeptic_role, skeptic_task, "gemini-3.8-flash-low"
     )
-    print(f"[Council] Round 2 complete: Adversarial Auditor ({dt_skeptic:.1f}s)")
+    print(f"[Council] Round 2 complete: Risk Auditor ({dt_skeptic:.1f}s)")
 
     # -------------------------------------------------------------
     # ROUND 3: CIO Consensus Arbitration & Executive Directive
     # -------------------------------------------------------------
     cio_role = (
-        "You are the Chief Investment Officer (CIO) and Final Arbitrator of TradingGuard.\n"
-        "You evaluate the three independent, adversarial committee briefs:\n"
-        "1. Chief ICT & Technical Strategist (Proposes technical edge)\n"
-        "2. Chief Macro & Exposure Officer (Macro catalysts, news embargo, RULE-RISK-010 duplicate check)\n"
-        "3. Adversarial Invalidation Auditor (Stress-tests stops, exposes traps, prevents Asymmetry Trap)\n\n"
-        "Institutional Mandates:\n"
-        "1. If Macro Officer or Adversarial Auditor vetoed the setup, order STAND ASIDE.\n"
-        "2. If R:R is below 1:3.0, order STAND ASIDE.\n"
-        "3. If setup is confirmed with sound invalidation and R:R >= 1:3.0, approve BUY LIMIT or SELL LIMIT.\n"
-        "4. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling."
+        "You are the Chief Investment Officer (CIO) of an elite quantitative proprietary trading desk.\n"
+        "=== EXPECTED VALUE (EV) GOVERNANCE MANDATE ===\n"
+        "TradingGuard operates on asymmetric payouts (average win is +3.5R, max risk is -1.0R / $12).\n"
+        "Mathematically, a 1:3.5 R:R setup requires only a 22.2% win rate to break even. At our baseline 38% win rate, each trade has an Expected Value (EV) of +0.71R!\n"
+        "Core Directives:\n"
+        "1. Perfection is a myth; EVERY real-market trade carries uncertainty and friction. Inaction on a positive-expectancy setup is CAPITAL DESTRUCTION through opportunity loss.\n"
+        "2. If the candidate setup has a strictly defined stop loss within our $12 ceiling and target is >= 1:3.0, you MUST APPROVE the trade [BUY LIMIT | SELL LIMIT] unless there is an OBJECTIVE FATAL DISQUALIFIER:\n"
+        "   - Active high-impact red-folder news release within +-15 minutes (CPI, NFP, FOMC).\n"
+        "   - RULE-RISK-010 violation (open position or pending order already exists on this asset).\n"
+        "   - Dead mid-range chop with zero displacement or non-compliant R:R (< 1:3.0).\n"
+        "   - The Risk Auditor classified the setup as a FATAL_STRUCTURAL_TRAP.\n"
+        "3. If the Risk Auditor identified MODERATE_FRICTION, APPROVE the trade with 0.5R Risk or standard 1.0R rather than standing aside!\n"
+        "4. For SETUP-ARCH-004 (Expansion Momentum), do NOT demand an external sweep; expansion moves legitimately break away from equilibrium."
     )
     cio_task = (
         f"Asset: {sym} | Current Bid: {bid_str} | Ask: {ask_str}\n\n"
         f"=== 1. ICT STRATEGIST BRIEF ===\n{out_ict}\n\n"
         f"=== 2. MACRO & EXPOSURE OFFICER BRIEF ===\n{out_macro}\n\n"
-        f"=== 3. ADVERSARIAL AUDITOR BRIEF ===\n{out_skeptic}\n\n"
+        f"=== 3. RISK AUDITOR BRIEF ===\n{out_skeptic}\n\n"
         f"Render the final executive consensus directive strictly formatted as follows:\n\n"
         f"⚖️ **CIO Executive Consensus Directive**\n"
         f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"

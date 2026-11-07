@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Institutional AI Playbook & Memory Ledger
-**Last Calibration:** `2026-11-03T23:50:11.300743` | **Version:** `2.0.0-LEAN`
+**Last Calibration:** `2026-11-07T23:20:19.967902` | **Version:** `2.0.0-LEAN`
 
 This playbook represents the continuous learning feedback loop of the Antigravity 6-Seat Investment Council.
 It is updated dynamically after every executed trade and every counterfactual audit of debated stand-asides.
@@ -73,7 +73,7 @@ It is updated dynamically after every executed trade and every counterfactual au
 
 ### ⚪ [RULE-RISK-017] Risk Calibration (XAUUSD & XAGUSD)
 **Directive:** Dynamic position sizing must enforce a strict, uncompromised pre-trade check against the $2.00 maximum dollar risk limit. For broker instruments where the minimum contract increment (0.01 lot) results in a dollar loss greater than $2.00 at the structural Stop Loss level (e.g., XAUUSD stop distance > 2.00 pts, or XAGUSD stop distance > 0.04 pts at standard contract specifications), the trade signal must be automatically aborted prior to order submission. Under no circumstances may an order route with > $2.00 potential risk.
-> **Empirical Rationale:** Audit logs revealed realized losses between -$5.21 and -$16.50 on single trades, directly violating the intended $2.00 hard cap due to minimum lot sizing constraints overriding structural stops. Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts.
+> **Empirical Rationale:** Audit logs revealed realized losses between -$5.21 and -$16.50 on single trades, directly violating the intended $2.00 hard cap due to minimum lot sizing constraints overriding structural stops.
 
 ### 🟢 [RULE-EXEC-018] Capital Preservation (XAUUSD & XAGUSD)
 **Directive:** The post-17:00 UTC order gate under [RULE-EXEC-009] is elevated to a critical execution killswitch: all order entry handlers must hard-block order generation at the tick level from 17:00:00 UTC through 23:59:59 UTC across all precious metals. Any existing pending limit order residing in the book past 17:00:00 UTC must be immediately cancelled by an automated watchdog sweep within 100ms.
@@ -85,7 +85,7 @@ It is updated dynamically after every executed trade and every counterfactual au
 
 ### ⚪ [RULE-RISK-020] Risk Calibration (XAUUSD & XAGUSD)
 **Directive:** Dynamic Pre-Trade Abort Gate & Sizing Alignment: The execution handler must enforce a deterministic pre-trade validation check against the maximum permissible account loss ($2.00). If the minimum structural Stop Loss distance (hard floor $\ge 4.50$ points on XAUUSD, or 1.2x M5 ATR) multiplied by the broker's absolute minimum contract size (0.01 lot = $1.00/pt on standard account contracts) yields a potential loss exceeding the $2.00 ceiling, the order generation must be hard-blocked and aborted with status `REJECTED_RISK_CAP_EXCEEDED`. No trade may be submitted to the broker order book with unhedged risk exposure exceeding $2.00.
-> **Empirical Rationale:** In the 2026-09-21 audit logs, Trade 11:00 resulted in -$5.21 and Trade 16:00 resulted in -$7.32. Both breached the explicit $2.00 maximum dollar loss threshold codified in [RULE-RISK-013] and [RULE-RISK-017] because 0.01 lot XAUUSD orders were routed with 5.21 pt and 7.32 pt stops. Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts.
+> **Empirical Rationale:** In the 2026-09-21 audit logs, Trade 11:00 resulted in -$5.21 and Trade 16:00 resulted in -$7.32. Both breached the explicit $2.00 maximum dollar loss threshold codified in [RULE-RISK-013] and [RULE-RISK-017] because 0.01 lot XAUUSD orders were routed with 5.21 pt and 7.32 pt stops.
 
 ### 🟢 [RULE-EXEC-021] Setup Selection (XAUUSD & XAGUSD)
 **Directive:** NY Afternoon Liquidity Sweep Carve-Out to [RULE-EXEC-018]: The absolute post-17:00:00 UTC execution killswitch under [RULE-EXEC-018] is conditionally relaxed between 17:00:00 UTC and 18:30:00 UTC strictly for Grade-A [SETUP-ARCH-002] session liquidity sweep setups, provided: (1) An established NY AM Range extreme has been swept by $\ge 1.5\times$ M5 ATR, (2) A displacement M5 Market Structure Shift forms a valid fair value gap (FVG), and (3) Order entry is filled prior to 18:30:00 UTC. All non-sweep, breakout, or discretionary limit orders remain hard-blocked past 17:00:00 UTC.
@@ -111,9 +111,13 @@ It is updated dynamically after every executed trade and every counterfactual au
 **Directive:** Any confirmed Bullish or Bearish SMT Divergence between XAUUSD and XAGUSD occurring within the London Open (07:00–10:30 UTC) or NY Session (13:00–17:00 UTC) with an M5 Fair Value Gap (FVG) is designated an Unconditional Execution Mandate. Automated stand-aside filters, discretionary council vetoes, and conservative volatility gates are strictly disabled for these setups.
 > **Empirical Rationale:** SMT divergence setups on 2026-09-08 11:00 and 2026-09-11 15:30 caused an aggregate alpha leakage of $40.97 with massive post-target extensions exceeding 1:7.4 R:R and 1:10.0 R:R (+36 to +38 points). Over-conservative vetoes on inter-market divergence surrendered the desk's highest-efficiency trades.
 
-### 🟢 [RULE-ARCH-027] Capital Preservation (XAUUSD & XAGUSD)
+### ⚪ [RULE-ARCH-027] Capital Preservation (XAUUSD & XAGUSD)
 **Directive:** Pure continuation breakout/breakdown signals ([SETUP-ARCH-004]) that expand beyond Session Extremes (Asian, London, or NY AM) without an antecedent liquidity sweep of at least 1.2x M5 ATR or confirmed SMT divergence are permanently barred from execution across all sessions.
 > **Empirical Rationale:** Counterfactual stand-aside logs conclusively prove that unconfirmed breakout orders on 2026-09-07 15:00, 2026-09-07 18:00, and 2026-09-11 10:00 resulted in direct full stop-outs, preserving $24.09 of capital ($8.01, $6.31, and $9.77 respectively). Pure momentum breakouts without prior liquidity absorption have a 0% win rate in this regime.
+
+### 🟢 [RULE-ARCH-030] Alpha Capture & Expansion Momentum (XAUUSD & XAGUSD)
+**Directive:** Institutional Range Expansion setups ([SETUP-ARCH-004]) are fully authorized for execution. In pure expansion momentum regimes, the Council must NOT demand an antecedent session liquidity sweep or SMT divergence. Anchor entry at the proximal edge of the displacement FVG with structural stop pinned behind the displacement swing wick, enforcing minimum 1:3.0 R:R.
+> **Empirical Rationale:** Full 2-year multi-regime audit across 2025 and 2026 verified +94.0R net alpha from SETUP-ARCH-004 (+48.5R in 2026, +45.5R in 2025). Requiring reversal liquidity sweeps on continuation expansion destroys high-expectancy alpha due to the 3.5R Asymmetry Trap.
 
 ### 🟢 [RULE-MGMT-028] Risk Calibration (XAUUSD & XAGUSD)
 **Directive:** Dynamic Breakeven triggers must enforce an immutable double-lock check: (1) Unrealized favorable excursion must strictly reach $\ge 1:2.50\text{ R:R}$ verified on bid/ask pricing, AND (2) An M5 candle must print a complete close beyond the displacement swing pivot. Any breakeven modification executed below $1:2.00\text{ R:R}$ excursion is classified as a critical system fault and hard-blocked at the routing layer.
@@ -129,7 +133,7 @@ It is updated dynamically after every executed trade and every counterfactual au
 
 ### ⚪ [RULE-RISK-031] Risk Calibration (XAUUSD & XAGUSD)
 **Directive:** Contract-Specification Hard Abort Filter: Prior to routing any order, the execution engine must evaluate the exact monetary risk using the instrument's contract multiplier: Risk = (Entry - SL) * ContractMultiplier * MinimumLotSize. If calculated Risk > MaximumAccountRiskCeiling ($2.00), the order submission is strictly blocked with status `REJECTED_CONTRACT_RISK_BREACH`. Discretionary stop widenings or standard 0.01 lot entries on instruments where point risk exceeds $2.00 are mathematically prohibited.
-> **Empirical Rationale:** Both losing trades on 2026-09-08 (-$5.27) and 2026-09-11 (-$7.50) materially breached the $2.00 maximum account loss ceiling mandated in RULE-RISK-020, revealing that minimum lot sizes (0.01) on gold with structural stops > 2.0 pts require either account leverage/contract adjustment or absolute pre-trade vetoes. Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts.
+> **Empirical Rationale:** Both losing trades on 2026-09-08 (-$5.27) and 2026-09-11 (-$7.50) materially breached the $2.00 maximum account loss ceiling mandated in RULE-RISK-020, revealing that minimum lot sizes (0.01) on gold with structural stops > 2.0 pts require either account leverage/contract adjustment or absolute pre-trade vetoes.
 
 ### 🟢 [RULE-SETUP-032] Setup Selection (EURUSD & GBPUSD)
 **Directive:** Prohibit naked Asian Range High/Low counter-trend fade setups (SMT divergences or MSS sweeps) initiated between 10:00 and 12:00 UTC unless accompanied by an M15/H1 HTF Order Block rejection and an M5 displacement candle closing below/above the Asian Range boundary by $\ge 1.5\times$ M5 ATR. Counter-trend limit orders placed during this London midday transition window without HTF structural exhaustion are placed under an unconditional council veto.
@@ -214,6 +218,13 @@ It is updated dynamically after every executed trade and every counterfactual au
 ### 🟢 [RULE-SETUP-052] Setup Selection (XAUUSD & XAGUSD)
 **Directive:** Same-Day Counter-Trend SMT Cap Under Sustained H1 Directional Expansion. When the active daily profile exhibits directional trend expansion (H1 printing consecutive structural swing breaks without completing an opposing M15 MSS), all counter-trend [SETUP-ARCH-005] and [SETUP-ARCH-007] SMT signals are restricted to a maximum of one executed attempt per trading session. If that single counter-trend setup incurs a stop-out or invalidation, all subsequent counter-trend SMT orders for that asset are locked under hard Council Stand-Aside for the remainder of that calendar day.
 > **Empirical Rationale:** Empirical replay on 2026-07-29 and 2026-07-30 showed consecutive failing counter-trend SMT attempts during ongoing directional runs. The Stand-Aside protocol successfully averted consecutive -$5.50 and -$9.68 losses; formalizing this cap prevents knife-catching in persistent expansion regimes.
+
+---
+## ⏳ Pending Rules Awaiting Human Approval
+
+Rules proposed by the LLM review council. They do **not** affect live council decisions until a human approves them (Telegram Approve button), which moves them into Active Rules above.
+
+*No pending rule proposals.*
 
 ---
 ## 🔍 Recent Counterfactual Stand-Aside Audits
