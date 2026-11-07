@@ -40,6 +40,17 @@ def _convert_records(bars) -> List[Dict[str, Any]]:
     ]
 
 
+def _ceil_to_5m_boundary(dt: datetime.datetime) -> datetime.datetime:
+    """Rounds a timestamp up to the next 5-minute bar boundary (unchanged if
+    already on one). A 5M bar that starts at T closes at T+5m, so a forward
+    window starting inside that bar would include the signal bar itself."""
+    if dt.second == 0 and dt.microsecond == 0 and dt.minute % 5 == 0:
+        return dt
+    base = dt.replace(second=0, microsecond=0)
+    add = 5 - (dt.minute % 5)
+    return base + datetime.timedelta(minutes=add)
+
+
 class HistoricalDataFeed:
     def __init__(self):
         self.engine = MT5Engine()
@@ -169,12 +180,26 @@ class HistoricalDataFeed:
         self,
         symbol: str,
         start_time: datetime.datetime,
-        hours_forward: int = 8
+        hours_forward: int = 8,
+        closed_bars_only: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Fetches M1 bars forward from start_time to start_time + hours_forward.
         Used to simulate order filling, watchdog cancellations, and SL/TP hits.
+
+        Closed-bars only (closed_bars_only=True, the default): start_time is
+        the close of the signal bar, so the first forward M1 bar must be the
+        minute *after* that close. mt5.copy_rates_range() includes the bar
+        starting at start_time, which is the signal bar itself if start_time
+        falls inside a 5M bar — a trade could then fill / hit TP / hit SL
+        during the very bar whose close created the signal, i.e. before the
+        signal existed. With the default, start_time is rounded up to the
+        next 5M boundary first (a no-op when it is already on one, which is
+        the case for the session milestones the runners use).
         """
+        if closed_bars_only:
+            start_time = _ceil_to_5m_boundary(start_time)
+
         resolved = self.engine.resolve_symbol(symbol)
         if not resolved:
             return []

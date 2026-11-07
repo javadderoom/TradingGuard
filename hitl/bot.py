@@ -181,15 +181,33 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
         # 1. Deliver 4-photo album immediately
         client.send_media_group(chat_id, media_items)
 
+        # Pack 5 — Screener gate: the council is only convened after
+        # screen_ict_session() (closed bars) passes on live MT5 bars.
+        # A veto means no council call at all, not a silent STAND_ASIDE.
+        from hitl.screener_gate import run_screener_gate, format_screener_veto
+        screener = run_screener_gate(sym_name)
+        if not screener.get("has_setup"):
+            from hitl.council_decisions import log_council_decision
+            log_council_decision(
+                symbol=sym_name,
+                decision="STAND_ASIDE",
+                reason=f"Screener veto (closed bars): {screener.get('reason')}",
+                full_report="",
+                screener=screener,
+                parse_status="SCREENER_VETO",
+            )
+            client.send_message(chat_id, format_screener_veto(sym_name, screener))
+            return
+
         # 2. Convene Tactical Council Silently (No raw transcript spam)
         try:
-            report = convene_investment_council(sym_name, mode="tactical")
+            report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
             if report:
                 from hitl.live_radar import PENDING_EXECUTION_PLANS
                 from hitl.council_decisions import log_council_decision
 
-                from hitl.council import parse_council_decision
-                decision = parse_council_decision(report)
+                from hitl.council import parse_council_decision_detailed
+                decision, parse_status = parse_council_decision_detailed(report)
 
                 m_exec = re.search(r'(?i)Executive Summary & Critical Trigger[:\* ]+\s*(.+)', report)
                 if m_exec:
@@ -243,7 +261,9 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                     decision=decision,
                     reason=clean_verdict,
                     full_report=report,
-                    plan=plan
+                    plan=plan,
+                    screener=screener,
+                    parse_status=parse_status
                 )
 
                 btn_row = [
@@ -299,14 +319,30 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
         pack_key = "gold"
 
     try:
-        report = convene_investment_council(sym_name, mode="tactical")
+        # Pack 5 — Screener gate (see _chart_worker): no setup, no council.
+        from hitl.screener_gate import run_screener_gate, format_screener_veto
+        screener = run_screener_gate(sym_name)
+        if not screener.get("has_setup"):
+            from hitl.council_decisions import log_council_decision
+            log_council_decision(
+                symbol=sym_name,
+                decision="STAND_ASIDE",
+                reason=f"Screener veto (closed bars): {screener.get('reason')}",
+                full_report="",
+                screener=screener,
+                parse_status="SCREENER_VETO",
+            )
+            client.send_message(chat_id, format_screener_veto(sym_name, screener))
+            return
+
+        report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
         if report:
             from hitl.live_radar import PENDING_EXECUTION_PLANS
             from hitl.council_decisions import log_council_decision
             from hitl.council import assemble_council_intelligence
 
-            from hitl.council import parse_council_decision
-            decision = parse_council_decision(report)
+            from hitl.council import parse_council_decision_detailed
+            decision, parse_status = parse_council_decision_detailed(report)
 
             m_exec = re.search(r'(?i)Executive Summary & Critical Trigger[:\* ]+\s*(.+)', report)
             if m_exec:
@@ -362,7 +398,9 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                 decision=decision,
                 reason=clean_verdict,
                 full_report=report,
-                plan=plan
+                plan=plan,
+                screener=screener,
+                parse_status=parse_status
             )
 
             btn_row = [
@@ -397,6 +435,36 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
     except Exception as e:
         print(f"[Council Worker] Error: {e}")
         client.send_message(chat_id, f"⚠️ *Error convening council:*\n`{e}`")
+
+
+def _send_pending_rules_card(client: TelegramClient, chat_id: int | str):
+    """Lists PENDING rule proposals (Pack 5) with Approve/Reject buttons.
+
+    Proposed rules are NOT active and are NOT injected into council prompts
+    until a human approves them here. If there is nothing pending, sends
+    nothing.
+    """
+    from hitl.council_memory import memory_engine
+    pending = memory_engine.get_pending_rules()
+    if not pending:
+        return
+    lines = [
+        "⏳ *Pending Rule Proposals (LLM Review Council)*\n",
+        "These rules are NOT active yet. Approve to add them to the playbook, "
+        "or reject to keep them out.\n",
+    ]
+    keyboard = []
+    for r in pending:
+        lines.append(f"• *[{r['id']}] {r['category']}*\n  _{r['rule']}_")
+        keyboard.append([
+            {"text": f"✅ Approve {r['id']}", "callback_data": f"approve_rule_{r['id']}"},
+            {"text": f"❌ Reject {r['id']}", "callback_data": f"reject_rule_{r['id']}"},
+        ])
+    client.send_message(
+        chat_id,
+        "\n".join(lines),
+        reply_markup={"inline_keyboard": keyboard},
+    )
 
 
 def handle_council_command(client: TelegramClient, chat_id: int | str, symbol: str = "XAUUSD"):
@@ -661,8 +729,15 @@ def run_bot():
                     elif any(k in text.lower() for k in ["🥇", "طلا", "gold", "/gold", "/chart", "چارت", "پکیج"]):
                         handle_chart_command(client, sender_id, "XAUUSD")
                     elif any(k in text.lower() for k in ["/review", "review", "/audit", "audit", "بازبینی", "شورای بازبینی", "review council", "/postmortem", "postmortem", "post-mortem", "جلسه بازبینی"]):
-                        from hitl.review_engine import convene_review_council
-                        convene_review_council(engine, client, sender_id)
+                        # Pack 5: this is the DETERMINISTIC decision audit
+                        # (audit_past_decisions, formerly convene_review_council
+                        # in review_engine.py). The LLM supervisory review
+                        # council (hitl/review_council.py) runs off-hours via
+                        # the backtest runners and only PROPOSES rules — it is
+                        # not what the live Review button runs.
+                        from hitl.review_engine import audit_past_decisions
+                        audit_past_decisions(engine, client, sender_id)
+                        _send_pending_rules_card(client, sender_id)
                     elif any(k in text.lower() for k in ["/briefing", "briefing", "morning", "صبحگاهی", "شروع روز", "morning briefing"]):
                         from hitl.review_engine import run_morning_briefing
                         run_morning_briefing(engine, client, sender_id)
@@ -806,6 +881,33 @@ def run_bot():
                                 sender_id,
                                 "🛡️ *Order Vetoed by Seat #7 (Lead Human Partner).*\nCapital preserved. No order was placed."
                             )
+                        elif data.startswith("approve_rule_"):
+                            from hitl.council_memory import memory_engine
+                            rule_id = data[len("approve_rule_"):]
+                            if memory_engine.approve_pending_rule(rule_id):
+                                client.send_message(
+                                    sender_id,
+                                    f"✅ *Rule approved:* `{rule_id}` is now an active playbook rule "
+                                    f"and will be injected into council prompts."
+                                )
+                            else:
+                                client.send_message(
+                                    sender_id,
+                                    f"⚠️ No pending rule `{rule_id}` found (already decided?)."
+                                )
+                        elif data.startswith("reject_rule_"):
+                            from hitl.council_memory import memory_engine
+                            rule_id = data[len("reject_rule_"):]
+                            if memory_engine.reject_pending_rule(rule_id):
+                                client.send_message(
+                                    sender_id,
+                                    f"❌ *Rule rejected:* `{rule_id}` stays out of the playbook."
+                                )
+                            else:
+                                client.send_message(
+                                    sender_id,
+                                    f"⚠️ No pending rule `{rule_id}` found (already decided?)."
+                                )
                         elif data.startswith("show_report_"):
                             from hitl.live_radar import PENDING_EXECUTION_PLANS
                             plan_id = data.replace("show_report_", "")

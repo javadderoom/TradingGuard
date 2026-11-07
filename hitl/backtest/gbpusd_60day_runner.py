@@ -26,7 +26,7 @@ import MetaTrader5 as mt5
 from hitl.backtest.data_feed import HistoricalDataFeed, _convert_records
 from hitl.backtest.fast_screener import screen_ict_session
 from hitl.backtest.council_replay import convene_council_on_historical_dossier
-from hitl.backtest.evaluator import evaluate_council_decision
+from hitl.backtest.evaluator import evaluate_council_decision, summarize_pnl
 from hitl.backtest.logger import BacktestLogger
 from hitl.setup_registry import setup_registry
 from hitl.review_council import convene_review_council
@@ -244,6 +244,9 @@ def run_expanded_gbpusd_60day_backtest(
             "rr": res.get("rr"),
             "status": status,
             "realized_pnl_usd": pnl,
+            # Pack 6: persist the evaluator's realised flag so the ledger
+            # itself records that OPEN_AT_END PnL is floating, not cash.
+            "is_realized": eval_res.get("is_realized", status != "OPEN_AT_END"),
             "fill_minute": eval_res.get("fill_minute"),
             "exit_minute": eval_res.get("exit_minute"),
             "notes": eval_res.get("notes"),
@@ -262,10 +265,12 @@ def run_expanded_gbpusd_60day_backtest(
     expired = sum(1 for r in session_records if r['status'] == 'EXPIRED')
     watchdog_cancels = sum(1 for r in session_records if r['status'] == 'CANCELLED_WATCHDOG')
     filled = wins + losses
-    net_pnl = sum(r['realized_pnl_usd'] for r in session_records)
-    gross_profit = sum(r['realized_pnl_usd'] for r in session_records if r['realized_pnl_usd'] > 0)
-    gross_loss = abs(sum(r['realized_pnl_usd'] for r in session_records if r['realized_pnl_usd'] < 0))
-    pf = (gross_profit / gross_loss) if gross_loss > 0 else (99.0 if gross_profit > 0 else 0.0)
+    # Pack 6: net/gross/PF are REALISED only (see eurusd_90day_runner).
+    pnl_summary = summarize_pnl(session_records)
+    net_pnl = pnl_summary["realized_net_usd"]
+    gross_profit = pnl_summary["realized_gross_profit_usd"]
+    gross_loss = pnl_summary["realized_gross_loss_usd"]
+    pf = pnl_summary["realized_profit_factor"]
     win_rate = (wins / filled * 100) if filled > 0 else 0.0
 
     scorecard = {
@@ -285,6 +290,8 @@ def run_expanded_gbpusd_60day_backtest(
         "gross_loss_usd": round(gross_loss, 2),
         "net_pnl_usd": round(net_pnl, 2),
         "profit_factor": round(pf, 2),
+        "unrealized_pnl_usd": pnl_summary["unrealized_net_usd"],
+        "open_at_end_trades": pnl_summary["open_trades"],
         "runtime_seconds": round(elapsed, 1)
     }
 
@@ -316,6 +323,7 @@ def run_expanded_gbpusd_60day_backtest(
     print(f"• Performance on Fills:                       {wins} Wins | {losses} Losses")
     print(f"• Win Rate on Fills:                          {win_rate:.1f}%")
     print(f"• Net Realized Profit:                        ${net_pnl:+.2f}")
+    print(f"• Unrealised PnL (open at end, NOT counted):    ${pnl_summary['unrealized_net_usd']:+.2f} ({pnl_summary['open_trades']} open)")
     print(f"• Profit Factor:                              {pf:.2f}")
     print(f"• Total Execution Time:                       {elapsed / 60:.1f} minutes")
     print("=" * 80)
@@ -330,7 +338,7 @@ def run_expanded_gbpusd_60day_backtest(
         )
         if rev_res:
             print("✅ Review Council Completed! Playbook calibrated.")
-            print(f"   Ratified Rules: {len(rev_res['ratified_rules'])}")
+            print(f"   Proposed Rules (pending human approval): {len(rev_res['proposed_rules'])}")
 
     return scorecard
 

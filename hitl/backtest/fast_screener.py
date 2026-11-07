@@ -589,7 +589,8 @@ def screen_ict_session(
     session_hour: int,
     smt_info: Optional[Dict[str, Any]] = None,
     bars_1m: Optional[List[Dict[str, Any]]] = None,
-    bars_1d: Optional[List[Dict[str, Any]]] = None
+    bars_1d: Optional[List[Dict[str, Any]]] = None,
+    closed_bars_only: bool = True
 ) -> Dict[str, Any]:
     """
     Advanced SMC Pre-Screener combining:
@@ -598,12 +599,38 @@ def screen_ict_session(
     3. Market Structure Shifts (MSS) & Breaker Blocks (BB)
     4. Optimal Trade Entry (OTE) alignment in Discount/Premium
     5. Daily Regime & Range Compression Gate (suppresses continuation setups in chop)
+
+    Closed-bars only (closed_bars_only=True, the default): the last bar of
+    every series passed in is the *forming* bar at the decision moment — its
+    close/high/low are not final, so using it is lookahead/repainting (a
+    setup that "fires" on the forming bar can un-fire before the bar
+    closes, and the forward M1 window would then include the signal bar
+    itself). With the default, the forming bar is dropped from every
+    series, the signal is formed only on the last *closed* bar, and the
+    entry is a limit order to be filled on the *next* bar (forward M1
+    must start at/after the signal bar's close — see
+    HistoricalDataFeed.get_forward_m1_bars(closed_bars_only=True)).
+    Pass closed_bars_only=False only for research that explicitly wants
+    the old forming-bar behaviour; the returned dict always reports
+    which mode was used and the signal bar's time.
     """
+    # Drop the forming bar from every series before any detector runs.
+    if closed_bars_only:
+        bars_5m = bars_5m[:-1]
+        bars_1h = bars_1h[:-1]
+        if bars_1d is not None:
+            bars_1d = bars_1d[:-1]
+        if bars_1m is not None:
+            bars_1m = bars_1m[:-1]
+    signal_bar_time = bars_5m[-1]['time'] if bars_5m else None
+
     if len(bars_5m) < 40 or len(bars_1h) < 10:
         return {
             "has_setup": False,
             "reason": "Insufficient bar history",
-            "setup_type": "NONE"
+            "setup_type": "NONE",
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time
         }
 
     current_price = bars_5m[-1]['close']
@@ -636,7 +663,9 @@ def screen_ict_session(
             return {
                 "has_setup": False,
                 "reason": "Veto: NY Open window bypassed on GBPUSD per 4-season empirical audit (London sessions only)",
-                "setup_type": "BYPASSED_SESSION"
+                "setup_type": "BYPASSED_SESSION",
+                "closed_bars_only": closed_bars_only,
+                "signal_bar_time": signal_bar_time
             }
         session_window = bars_5m[-72:-10] if len(bars_5m) >= 72 else bars_5m[:-10]
         session_label = "London Range"
@@ -647,13 +676,15 @@ def screen_ict_session(
             return {
                 "has_setup": False,
                 "reason": f"Veto: Late NY PM / Silver Bullet window banned on {symbol} per empirical audit",
-                "setup_type": "BANNED_SESSION"
+                "setup_type": "BANNED_SESSION",
+                "closed_bars_only": closed_bars_only,
+                "signal_bar_time": signal_bar_time
             }
         session_window = bars_5m[-36:-6] if len(bars_5m) >= 36 else bars_5m[:-6]
         session_label = "NY AM Range"
 
     if not session_window:
-        return {"has_setup": False, "reason": "No session window data", "setup_type": "NONE"}
+        return {"has_setup": False, "reason": "No session window data", "setup_type": "NONE", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
 
     range_high = max(b['high'] for b in session_window)
     range_low = min(b['low'] for b in session_window)
@@ -669,7 +700,9 @@ def screen_ict_session(
         return {
             "has_setup": False,
             "reason": f"Dead market: {session_label} range compressed ({disp_range:{fmt}} {unit})",
-            "setup_type": "NONE"
+            "setup_type": "NONE",
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time
         }
 
     # 2. Liquidity Sweeps vs Breakouts in recent 10 bars
@@ -699,6 +732,8 @@ def screen_ict_session(
             "has_setup": False,
             "reason": f"Dead market: Mid-range equilibrium compression ({mtf_state.get('h1_state', 'NEUTRAL')})",
             "setup_type": "NONE",
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time,
             "mtf_info": mtf_state
         }
 
@@ -720,7 +755,11 @@ def screen_ict_session(
             "phase": p_info["phase"],
             "poi_ratio": p_info["poi_ratio"],
             "dol_target": p_info["dol_target"],
-            "phase_summary": p_info["summary"]
+            "phase_summary": p_info["summary"],
+            # Signal formed on the last closed bar; entry is a limit order
+            # to be filled on the next bar (see closed_bars_only above).
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time
         }
 
     short_phase = classify_setup_phase(mtf_state, "SHORT", symbol)
@@ -736,7 +775,7 @@ def screen_ict_session(
     if smt_info and smt_info.get("has_smt"):
         arch_id = "SETUP-ARCH-007" if (setup_registry.is_archetype_ratified("SETUP-ARCH-007") and (swept_low or swept_high)) else ("SETUP-ARCH-006" if is_fx else "SETUP-ARCH-005")
         if not setup_registry.is_archetype_ratified(arch_id):
-            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
 
         smt_type = smt_info.get("smt_type")
         if smt_type == "BEARISH_SMT" and not is_bullish_breakout and (swept_high or fvg_dir == "BEARISH" or breaker_type == "BEARISH_BREAKER"):
@@ -756,7 +795,7 @@ def screen_ict_session(
     if swept_high and not is_bullish_breakout and breaker_type == "BEARISH_BREAKER":
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
-            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
         sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
         sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price + sl_dist)
         return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
@@ -764,7 +803,7 @@ def screen_ict_session(
     if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER":
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
-            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+            return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
         sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
         sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price - sl_dist)
         return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
@@ -775,7 +814,7 @@ def screen_ict_session(
         if swept_high and not is_bullish_breakout and fvg_dir == "BEARISH":
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
             scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
             sl_dist = 0.25 if is_silver else 0.0015
             sl_p = max(range_high + 0.0010, scaled_entry + sl_dist)
@@ -784,7 +823,7 @@ def screen_ict_session(
         if swept_low and not is_bearish_breakdown and fvg_dir == "BULLISH":
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
             scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
             sl_dist = 0.25 if is_silver else 0.0015
             sl_p = min(range_low - 0.0010, scaled_entry - sl_dist)
@@ -796,14 +835,14 @@ def screen_ict_session(
         if breaker_type == "BEARISH_BREAKER" and abs(current_price - breaker_price) <= breaker_tol:
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
             sl_p = breaker_price + (6.0 if "XAU" in symbol.upper() else 0.0015)
             return _package_setup(arch_id, "BEARISH_BREAKER_RETEST", breaker_price, sl_p, f"Bearish Breaker Block retest at {breaker_price:{fmt}}", "SHORT")
 
         if breaker_type == "BULLISH_BREAKER" and abs(current_price - breaker_price) <= breaker_tol:
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
-                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
             sl_p = breaker_price - (6.0 if "XAU" in symbol.upper() else 0.0015)
             return _package_setup(arch_id, "BULLISH_BREAKER_RETEST", breaker_price, sl_p, f"Bullish Breaker Block retest at {breaker_price:{fmt}}", "LONG")
 
@@ -815,7 +854,7 @@ def screen_ict_session(
             if "XAU" not in symbol.upper() or long_phase["phase"] == "PRO_EXPANSION":
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
-                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
                 sl_p = fvg_distal - (1.50 if "XAU" in symbol.upper() else 0.0010)
                 return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
@@ -823,7 +862,7 @@ def screen_ict_session(
             if "XAU" not in symbol.upper() or short_phase["phase"] == "PRO_EXPANSION":
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
-                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED"}
+                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
                 sl_p = fvg_distal + (1.50 if "XAU" in symbol.upper() else 0.0010)
                 return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
@@ -907,5 +946,7 @@ def screen_ict_session(
     return {
         "has_setup": False,
         "reason": f"Mid-range chop within {session_label} ({range_low:{fmt}} - {range_high:{fmt}})",
-        "setup_type": "NONE"
+        "setup_type": "NONE",
+        "closed_bars_only": closed_bars_only,
+        "signal_bar_time": signal_bar_time
     }

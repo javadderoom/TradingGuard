@@ -262,6 +262,7 @@ class LiveMarketRadar:
         p_5m = out_dir / f"{sym}_5M.png"
         p_grid = out_dir / f"{sym}_MTF_GRID.png"
 
+        r1d = r1h = r5m = None
         try:
             engine = MT5Engine()
             res = engine.resolve_symbol(sym)
@@ -283,6 +284,49 @@ class LiveMarketRadar:
         except Exception as e:
             print(f"[LiveRadar] Chart generation error: {e}")
 
+        # Pack 5 — Screener gate: run the same screen_ict_session()
+        # (closed bars) the backtests use, on the bars just fetched for the
+        # charts. A veto means no council call at all.
+        screener = None
+        try:
+            from hitl.backtest.fast_screener import screen_ict_session
+            from hitl.screener_gate import tehran_hour_from_bar_time
+            if r5m and r1h:
+                screener = screen_ict_session(
+                    bars_5m=r5m,
+                    bars_1h=r1h,
+                    symbol=sym,
+                    session_hour=tehran_hour_from_bar_time(r5m[-1]["time"]),
+                    bars_1d=r1d,
+                    closed_bars_only=True,
+                )
+        except Exception as e:
+            print(f"[LiveRadar] Screener gate error: {e}")
+            screener = None
+        if not screener or not screener.get("has_setup"):
+            veto = (screener or {}).get("reason", "live bars unavailable for screening")
+            self.client.send_message(
+                chat_id,
+                f"🛡️ *{sym_icon} {sym} · STAND ASIDE*\n"
+                f"🛑 *Final Verdict:* Screener veto (closed bars): {veto}"
+            )
+            try:
+                from hitl.council_decisions import log_council_decision
+                log_council_decision(
+                    symbol=sym,
+                    decision="STAND_ASIDE",
+                    reason=f"Screener veto (closed bars): {veto}",
+                    full_report="",
+                    plan=None,
+                    sweep_target=setup.get("swept_target"),
+                    sweep_extreme=setup.get("sweep_extreme"),
+                    screener=screener,
+                    parse_status="SCREENER_VETO",
+                )
+            except Exception as log_err:
+                print(f"[LiveRadar] Decision logging error: {log_err}")
+            return
+
         # 2. Convene Tactical Council (Tier 2 Execution Strike Team)
         try:
             dossier = assemble_council_intelligence(sym)
@@ -290,7 +334,7 @@ class LiveMarketRadar:
                 print(f"[LiveRadar] Failed to assemble intelligence for {sym}")
                 return
 
-            report = convene_investment_council(sym, mode="tactical")
+            report = convene_investment_council(sym, mode="tactical", screener_result=screener)
             if not report:
                 print(f"[LiveRadar] Council failed to convene for {sym}")
                 return
@@ -301,8 +345,8 @@ class LiveMarketRadar:
             landmarks = dossier.get("landmarks")
             macro_filter = dossier.get("macro_bias_data", {}).get("execution_filter", "")
 
-            from hitl.council import parse_council_decision
-            decision = parse_council_decision(report)
+            from hitl.council import parse_council_decision_detailed
+            decision, parse_status = parse_council_decision_detailed(report)
 
             plan = None
             reason = ""
@@ -477,7 +521,9 @@ class LiveMarketRadar:
                         full_report=report,
                         plan=plan,
                         sweep_target=setup.get("swept_target"),
-                        sweep_extreme=setup.get("sweep_extreme")
+                        sweep_extreme=setup.get("sweep_extreme"),
+                        screener=screener,
+                        parse_status=parse_status
                     )
                 except Exception as log_err:
                     print(f"[LiveRadar] Decision logging error: {log_err}")
@@ -533,7 +579,9 @@ class LiveMarketRadar:
                         full_report=report,
                         plan=None,
                         sweep_target=setup.get("swept_target"),
-                        sweep_extreme=setup.get("sweep_extreme")
+                        sweep_extreme=setup.get("sweep_extreme"),
+                        screener=screener,
+                        parse_status=parse_status
                     )
                 except Exception as log_err:
                     print(f"[LiveRadar] Decision logging error: {log_err}")

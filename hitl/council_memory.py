@@ -57,7 +57,12 @@ DEFAULT_PLAYBOOK: Dict[str, Any] = {
         }
     ],
     "trade_post_mortems": [],
-    "counterfactual_audits": []
+    "counterfactual_audits": [],
+    # Pack 5: rules proposed by the LLM review council sit here as PENDING
+    # until a human approves them. They are NEVER injected into council
+    # prompts (get_playbook_prompt_section reads active_rules only) and
+    # NEVER become active via add_active_rule() from the review council.
+    "pending_rules": []
 }
 
 
@@ -168,6 +173,69 @@ class CouncilMemory:
         })
         self.save()
 
+    # --- Pack 5: pending-rule governance -----------------------------------
+    # The LLM review council may only *propose* rules. A proposal lands in
+    # pending_rules and stays out of council prompts until a human approves
+    # it (approve_pending_rule, via the Telegram buttons in hitl/bot.py).
+    # Nothing in this codebase may call add_active_rule() on behalf of the
+    # review council.
+    def add_pending_rule(self, rule_id: str, category: str, symbol: str,
+                         rule: str, rationale: str,
+                         source: str = "review_council") -> Dict[str, Any]:
+        """Stores a proposed rule as PENDING. Returns its stored entry."""
+        pending = self.data.setdefault("pending_rules", [])
+        now = datetime.datetime.now().isoformat()
+        for r in pending:
+            if r["id"] == rule_id and r.get("status") == "PENDING":
+                r.update({"category": category, "symbol": symbol, "rule": rule,
+                          "rationale": rationale, "source": source})
+                self.save()
+                return r
+        entry = {
+            "id": rule_id,
+            "category": category,
+            "symbol": symbol,
+            "rule": rule,
+            "rationale": rationale,
+            "source": source,
+            "status": "PENDING",
+            "proposed_at": now,
+            "reviewed_at": None,
+        }
+        pending.append(entry)
+        self.save()
+        return entry
+
+    def approve_pending_rule(self, rule_id: str) -> bool:
+        """Human approval: moves a PENDING proposal into active_rules."""
+        for r in self.data.setdefault("pending_rules", []):
+            if r["id"] == rule_id and r.get("status") == "PENDING":
+                r["status"] = "APPROVED"
+                r["reviewed_at"] = datetime.datetime.now().isoformat()
+                self.add_active_rule(
+                    rule_id=r["id"], category=r["category"], symbol=r["symbol"],
+                    rule=r["rule"], rationale=r["rationale"],
+                )
+                # add_active_rule() already saved; keep the APPROVED stamp.
+                self.save()
+                return True
+        return False
+
+    def reject_pending_rule(self, rule_id: str) -> bool:
+        """Human rejection: keeps the proposal on record, marked REJECTED."""
+        for r in self.data.setdefault("pending_rules", []):
+            if r["id"] == rule_id and r.get("status") == "PENDING":
+                r["status"] = "REJECTED"
+                r["reviewed_at"] = datetime.datetime.now().isoformat()
+                self.save()
+                return True
+        return False
+
+    def get_pending_rules(self) -> List[Dict[str, Any]]:
+        """Pending (undecided) proposals awaiting human approval."""
+        return [r for r in self.data.get("pending_rules", [])
+                if r.get("status") == "PENDING"]
+
     def get_playbook_prompt_section(self, symbol: str = "XAUUSD") -> str:
         """
         Generates the institutional memory prompt injection for the Council.
@@ -226,6 +294,23 @@ class CouncilMemory:
             md_lines.append(f"### {status_icon} [{r.get('id')}] {r.get('category')} ({r.get('symbol')})")
             md_lines.append(f"**Directive:** {r.get('rule')}")
             md_lines.append(f"> **Empirical Rationale:** {r.get('rationale')}\n")
+
+        # Pack 5: pending proposals — NOT active, NOT injected into prompts.
+        md_lines.append("---\n## ⏳ Pending Rules Awaiting Human Approval\n")
+        md_lines.append(
+            "Rules proposed by the LLM review council. They do **not** affect "
+            "live council decisions until a human approves them (Telegram "
+            "Approve button), which moves them into Active Rules above.\n"
+        )
+        pending = data.get("pending_rules", [])
+        if not pending:
+            md_lines.append("*No pending rule proposals.*\n")
+        else:
+            for r in pending:
+                icon = {"PENDING": "🟡", "APPROVED": "✅", "REJECTED": "❌"}.get(r.get("status"), "⚪")
+                md_lines.append(f"### {icon} [{r.get('id')}] {r.get('category')} ({r.get('symbol')}) — {r.get('status')}")
+                md_lines.append(f"**Proposed:** {r.get('rule')}")
+                md_lines.append(f"> **Rationale:** {r.get('rationale')} (source: {r.get('source')}, proposed {r.get('proposed_at')})\n")
 
         # Counterfactual Audits
         md_lines.append("---\n## 🔍 Recent Counterfactual Stand-Aside Audits\n")
