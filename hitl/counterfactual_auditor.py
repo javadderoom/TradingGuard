@@ -54,7 +54,7 @@ class CounterfactualOpportunityAuditor:
         sym = symbol.upper()
         if "XAU" in sym:
             # Gold: $1.00 per point on 0.01 lot. Mandate min 5.5 to 7.0 pt buffer
-            sl_dist = min(17.0, max(5.5, 1.5 * atr_5m))
+            sl_dist = min(12.0, max(5.5, 1.5 * atr_5m))
             entry = round(entry_ref, 2)
             min_target_dist = target_rr * sl_dist
             if is_buy:
@@ -70,8 +70,8 @@ class CounterfactualOpportunityAuditor:
                     cand_tp = pdl if (pdl and (entry - pdl) >= min_target_dist) else (entry - min_target_dist)
                 tp = round(cand_tp, 2)
         elif "XAG" in sym:
-            # Silver: $50.00 per point on 0.01 lot ($0.50/cent). Max stop ceiling 0.34 pts ($17)
-            sl_dist = min(0.34, max(0.20, 1.5 * atr_5m))
+            # Silver: $50.00 per point on 0.01 lot ($0.50/cent). Max stop ceiling 0.24 pts ($12)
+            sl_dist = min(0.24, max(0.20, 1.5 * atr_5m))
             entry = round(entry_ref, 3)
             min_target_dist = target_rr * sl_dist
             if is_buy:

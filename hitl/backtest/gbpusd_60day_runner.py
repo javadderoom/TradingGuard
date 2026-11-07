@@ -89,7 +89,7 @@ def run_expanded_gbpusd_60day_backtest(
     print("🏛️ TRADINGGUARD HITL - DENSE 60-DAY (2-MONTH) GBPUSD EXPANDED BACKTEST")
     print(f"ASSET: {symbol} | HORIZON: {days_back} Days (~{total_checkpoints // 8} Trading Days)")
     print(f"TOTAL CHECKPOINTS: {total_checkpoints} Across London, NY Open & NY Silver Bullet Windows")
-    print("GOVERNANCE: Strict $17.00 Max Risk | 75m TTL | 12h M1 Hold | Base Lot 0.01")
+    print("GOVERNANCE: Strict $12.00 Max Risk | 75m TTL | 12h M1 Hold | Base Lot 0.01")
     print("REGISTRY GATE: Only Ratified SMC Archetypes (SETUP-ARCH-001..004) Trigger Council")
     print("=" * 80)
 
@@ -293,7 +293,7 @@ def run_expanded_gbpusd_60day_backtest(
         "engine": "TradingGuard 6-Seat AI Council + Ratified Archetypes Gate + 12h Hold Window",
         "symbol": symbol,
         "days_back": days_back,
-        "max_risk_ceiling_usd": 17.00,
+        "max_risk_ceiling_usd": 12.00,
         "inactivity_ttl_minutes": 75,
         "hours_forward_simulation": 12,
         "windows": "London (10:00-11:00), NY Open (15:00-16:00), NY Silver Bullet (17:30-18:00)",

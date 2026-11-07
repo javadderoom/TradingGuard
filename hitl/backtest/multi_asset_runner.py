@@ -6,7 +6,7 @@ Backtests the optimized AI Council across 3 instruments:
 - GBPUSD (British Pound)
 
 Parameters:
-- Risk Ceiling: $17.00 per trade (0.01 lot)
+- Risk Ceiling: $12.00 per trade (0.01 lot)
 - Inactivity TTL: 75 Minutes
 - Entry Model: Proximal Edge / 50% Consequent Encroachment (C.E.)
 - Horizon: Past 90 Days (3 Months)
@@ -73,7 +73,7 @@ def run_multi_asset_backtest(
 
     print("=" * 70)
     print("🏛️ MULTI-ASSET AI INVESTMENT COUNCIL BACKTEST (3-MONTH HORIZON)")
-    print(f"BASKET: {', '.join(symbols)} | MAX RISK: $17.00 | TTL: 75m | BASE LOT: 0.01")
+    print(f"BASKET: {', '.join(symbols)} | MAX RISK: $12.00 | TTL: 75m | BASE LOT: 0.01")
     print(f"Targeting {len(selected_milestones)} evenly spaced milestones per asset across past 90 days")
     print("=" * 70)
 

@@ -62,8 +62,8 @@
       "id": "RULE-EXEC-008",
       "category": "Risk Calibration",
       "symbol": "EURUSD & GBPUSD",
-      "rule": "Minimum stop buffer beyond the liquidity sweep wick must be calibrated to spread regime: GBPUSD minimum buffer is widened from 1.0 pip to 1.8 pips; EURUSD minimum buffer is set to 1.5 pips. Total trade risk must remain strictly capped under the $2.00 limit via proportional lot size reduction.",
-      "rationale": "2026-09-14 15:00 GBPUSD was stopped out by a 0.1 pip spread graze (Ask 1.34997 vs SL 1.34996) before resuming downward momentum, and 2026-09-18 15:00 EURUSD stopped out at exact tick parity (1.14917).",
+      "rule": "Minimum stop buffer beyond the liquidity sweep wick must be calibrated to spread regime: GBPUSD minimum buffer is widened from 1.0 pip to 1.8 pips; EURUSD minimum buffer is set to 1.5 pips. Total trade risk must remain strictly capped under the $12.00 limit via proportional lot size reduction.",
+      "rationale": "2026-09-14 15:00 GBPUSD was stopped out by a 0.1 pip spread graze (Ask 1.34997 vs SL 1.34996) before resuming downward momentum, and 2026-09-18 15:00 EURUSD stopped out at exact tick parity (1.14917). [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
       "status": "ACTIVE"
     },
     {
@@ -86,8 +86,8 @@
       "id": "RULE-METALS-011",
       "category": "Risk Calibration",
       "symbol": "XAUUSD & XAGUSD",
-      "rule": "Watchdog adverse-spike cancellation thresholds for pending limit orders on XAUUSD and XAGUSD must not evaluate single-candle M1 spikes below 3.5x M1 ATR (or minimum 1.5x M5 ATR). Furthermore, stop loss placement for precious metals must not use FX pip rules: Stop Loss buffer beyond the sweep wick must be pegged strictly to a minimum of 0.80 points on XAUUSD and 0.08 points on XAGUSD (or 0.5x M5 ATR), while maintaining the total dollar risk cap under $2.00 via dynamic position sizing.",
-      "rationale": "Multiple orders (e.g., 2026-10-27 10:30 XAUUSD/XAGUSD and 2026-10-28 10:00 XAGUSD) were prematurely purged at $+0.00 by 2xATR watchdog sensitivity during pre-entry spread widening and routine volatility probes right before massive winning runs.",
+      "rule": "Watchdog adverse-spike cancellation thresholds for pending limit orders on XAUUSD and XAGUSD must not evaluate single-candle M1 spikes below 3.5x M1 ATR (or minimum 1.5x M5 ATR). Furthermore, stop loss placement for precious metals must not use FX pip rules: Stop Loss buffer beyond the sweep wick must be pegged strictly to a minimum of 0.80 points on XAUUSD and 0.08 points on XAGUSD (or 0.5x M5 ATR), while maintaining the total dollar risk cap under $12.00 via dynamic position sizing.",
+      "rationale": "Multiple orders (e.g., 2026-10-27 10:30 XAUUSD/XAGUSD and 2026-10-28 10:00 XAGUSD) were prematurely purged at $+0.00 by 2xATR watchdog sensitivity during pre-entry spread widening and routine volatility probes right before massive winning runs. [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
       "status": "ACTIVE"
     },
     {
@@ -102,8 +102,8 @@
       "id": "RULE-RISK-013",
       "category": "Risk Calibration",
       "symbol": "XAUUSD & XAGUSD",
-      "rule": "For XAUUSD, the minimum Stop Loss distance from entry must be structurally anchored with a hard floor of no less than 4.50 points (or 1.2x M5 ATR, whichever is greater). Placing sub-3.0 point stops on XAUUSD during active session liquidity sweeps is strictly prohibited. Furthermore, dynamic lot sizing must enforce a strict, hard-stop max loss ceiling of $2.00; if the structural stop distance requires a lot size below the broker minimum (0.01 lots), the trade must be aborted immediately rather than executed with outsized dollar risk.",
-      "rationale": "The 2026-10-20 16:00 Gold buy was stopped out due to a choked 2.54 pt stop right before a +37 pt expansion. On 2026-10-21, the Silver buy took a -$7.50 loss, violating the $2.00 risk ceiling because lot size was not properly scaled down for the required volatility buffer.",
+      "rule": "For XAUUSD, the minimum Stop Loss distance from entry must be structurally anchored with a hard floor of no less than 4.50 points (or 1.2x M5 ATR, whichever is greater). Placing sub-3.0 point stops on XAUUSD during active session liquidity sweeps is strictly prohibited. Furthermore, dynamic lot sizing must enforce a strict, hard-stop max loss ceiling of $12.00; if the structural stop distance requires a lot size below the broker minimum (0.01 lots), the trade must be aborted immediately rather than executed with outsized dollar risk.",
+      "rationale": "The 2026-10-20 16:00 Gold buy was stopped out due to a choked 2.54 pt stop right before a +37 pt expansion. On 2026-10-21, the Silver buy took a -$7.50 loss, violating the $2.00 risk ceiling because lot size was not properly scaled down for the required volatility buffer. [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
       "status": "ACTIVE"
     },
     {
@@ -136,7 +136,10 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Dynamic position sizing must enforce a strict, uncompromised pre-trade check against the $2.00 maximum dollar risk limit. For broker instruments where the minimum contract increment (0.01 lot) results in a dollar loss greater than $2.00 at the structural Stop Loss level (e.g., XAUUSD stop distance > 2.00 pts, or XAGUSD stop distance > 0.04 pts at standard contract specifications), the trade signal must be automatically aborted prior to order submission. Under no circumstances may an order route with > $2.00 potential risk.",
       "rationale": "Audit logs revealed realized losses between -$5.21 and -$16.50 on single trades, directly violating the intended $2.00 hard cap due to minimum lot sizing constraints overriding structural stops.",
-      "status": "ACTIVE"
+      "status": "SUPERSEDED",
+      "superseded_by": "RULE-CORE-001",
+      "superseded_on": "2026-11-07",
+      "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
     },
     {
       "id": "RULE-EXEC-018",
@@ -160,7 +163,10 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Dynamic Pre-Trade Abort Gate & Sizing Alignment: The execution handler must enforce a deterministic pre-trade validation check against the maximum permissible account loss ($2.00). If the minimum structural Stop Loss distance (hard floor $\\ge 4.50$ points on XAUUSD, or 1.2x M5 ATR) multiplied by the broker's absolute minimum contract size (0.01 lot = $1.00/pt on standard account contracts) yields a potential loss exceeding the $2.00 ceiling, the order generation must be hard-blocked and aborted with status `REJECTED_RISK_CAP_EXCEEDED`. No trade may be submitted to the broker order book with unhedged risk exposure exceeding $2.00.",
       "rationale": "In the 2026-09-21 audit logs, Trade 11:00 resulted in -$5.21 and Trade 16:00 resulted in -$7.32. Both breached the explicit $2.00 maximum dollar loss threshold codified in [RULE-RISK-013] and [RULE-RISK-017] because 0.01 lot XAUUSD orders were routed with 5.21 pt and 7.32 pt stops.",
-      "status": "ACTIVE"
+      "status": "SUPERSEDED",
+      "superseded_by": "RULE-CORE-001",
+      "superseded_on": "2026-11-07",
+      "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
     },
     {
       "id": "RULE-EXEC-021",
@@ -248,7 +254,10 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Contract-Specification Hard Abort Filter: Prior to routing any order, the execution engine must evaluate the exact monetary risk using the instrument's contract multiplier: Risk = (Entry - SL) * ContractMultiplier * MinimumLotSize. If calculated Risk > MaximumAccountRiskCeiling ($2.00), the order submission is strictly blocked with status `REJECTED_CONTRACT_RISK_BREACH`. Discretionary stop widenings or standard 0.01 lot entries on instruments where point risk exceeds $2.00 are mathematically prohibited.",
       "rationale": "Both losing trades on 2026-09-08 (-$5.27) and 2026-09-11 (-$7.50) materially breached the $2.00 maximum account loss ceiling mandated in RULE-RISK-020, revealing that minimum lot sizes (0.01) on gold with structural stops > 2.0 pts require either account leverage/contract adjustment or absolute pre-trade vetoes.",
-      "status": "ACTIVE"
+      "status": "SUPERSEDED",
+      "superseded_by": "RULE-CORE-001",
+      "superseded_on": "2026-11-07",
+      "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
     },
     {
       "id": "RULE-SETUP-032",

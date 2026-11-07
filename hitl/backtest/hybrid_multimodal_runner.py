@@ -33,7 +33,7 @@ def run_hybrid_pilot(num_sessions: int = 5):
     print("=" * 75)
     print("🔬 MULTIMODAL HYBRID SMC EVALUATION (NUMERICAL TELEMETRY + 4 MTF CHARTS)")
     print(f"INSTRUMENT: XAUUSD | MILESTONES: {len(milestones)} Cross-Regime Sessions")
-    print("GOVERNANCE: Max Risk $17.00 | TTL 75m | FVG/Breaker Execution | Base Lot 0.01")
+    print("GOVERNANCE: Max Risk $12.00 | TTL 75m | FVG/Breaker Execution | Base Lot 0.01")
     print("=" * 75)
 
     for idx, milestone in enumerate(milestones, 1):

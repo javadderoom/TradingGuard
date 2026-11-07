@@ -135,7 +135,7 @@ class BacktestLogger:
             f"| **Filled Institutional Trades** | **{tot_filled} ({target_sc.get('wins', 0)}W / {target_sc.get('losses', 0)}L / {target_sc.get('breakevens', 0)}BE)** | Executed with dynamic BE & target cap |",
             f"| **Win Rate on Fills** | **{wr:.1f}%** | Won / Total Filled |",
             f"| **Gross Profit** | **+${gp:.2f}** | Cumulative winning trades |",
-            f"| **Gross Loss** | **-${gl:.2f}** | Strictly contained under $17 cap |",
+            f"| **Gross Loss** | **-${gl:.2f}** | Strictly contained under $12 cap |",
             f"| **Net Realized PnL** | **${net_pnl:+.2f}** | **Bottom-line cash flow on 0.01 base lots** |",
             f"| **Profit Factor** | **{pf:.2f}** | Gross Profit / Gross Loss |",
             ""

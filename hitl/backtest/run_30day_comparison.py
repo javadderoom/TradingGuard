@@ -4,7 +4,7 @@ Evaluates every trading session across the past 30 calendar days on Gold (XAUUSD
 - London Open (10:30 Tehran) & NY Open (16:30 Tehran)
 - 6-Seat AI Investment Council (ICT, Macro, TV Sentiment, CRO, CIO, CDO)
 - Exact Mathematical SMC Telemetry + 4 MTF Chart PNGs (1D, 1H, 15M, 5M)
-- Forward M1 Execution Simulator (75m TTL, 3s ATR Momentum Radar, $17 Risk Ceiling)
+- Forward M1 Execution Simulator (75m TTL, 3s ATR Momentum Radar, $12 Risk Ceiling)
 - Complete Persistence to CSV, JSON, and Markdown via BacktestLogger
 """
 
@@ -58,7 +58,7 @@ def run_30day_comparison(max_council_triggers: int = 15):
     print("🏆 30-DAY GOLD (XAUUSD) COMPARATIVE AUDIT: 6-SEAT MULTIMODAL COUNCIL")
     print(f"HORIZON: Past 30 Days (~{total_sessions // 2} Trading Days = {total_sessions} Full Sessions)")
     print("NEW ENGINE: Multimodal Numerical Telemetry + 4 MTF Charts + 6th Seat (CDO)")
-    print("GOVERNANCE: Strict $17.00 Max Risk | 75m TTL | 3s Momentum Radar | Base Lot 0.01")
+    print("GOVERNANCE: Strict $12.00 Max Risk | 75m TTL | 3s Momentum Radar | Base Lot 0.01")
     print("=" * 75)
 
     resolved = feed.engine.resolve_symbol("XAUUSD")
@@ -135,7 +135,7 @@ def run_30day_comparison(max_council_triggers: int = 15):
         if dec != "STAND_ASIDE":
             print(f"   Entry: {res['entry']} | SL: {res['sl']} | TP: {res['tp']} | R:R: {res['rr']}")
 
-        # 3. Forward M1 Execution Simulator (75m TTL, Watchdog radar, $17 cap)
+        # 3. Forward M1 Execution Simulator (75m TTL, Watchdog radar, $12 cap)
         forward_m1 = feed.get_forward_m1_bars("XAUUSD", milestone, hours_forward=6)
         eval_res = evaluate_council_decision(res, forward_m1, "XAUUSD")
 
@@ -201,7 +201,7 @@ def run_30day_comparison(max_council_triggers: int = 15):
     metadata = {
         "instrument": "XAUUSD",
         "horizon_days": 30,
-        "risk_cap_usd": 17.0,
+        "risk_cap_usd": 12.0,
         "ttl_minutes": 75,
         "lot_size": 0.01,
         "council_seats": 6,

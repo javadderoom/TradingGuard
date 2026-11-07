@@ -494,7 +494,7 @@ class LiveMarketRadar:
                     elif "below mandatory" in reason:
                         veto_reason = "Risk-to-Reward ratio is below mandatory 1:3.0 institutional threshold."
                     elif "exceeds maximum permitted" in reason:
-                        veto_reason = "Structural invalidation exceeds strict $17.00 maximum risk ceiling."
+                        veto_reason = "Structural invalidation exceeds strict $12.00 maximum risk ceiling."
                     elif "POIs are at or" in reason:
                         veto_reason = "All Fair Value Gaps are beyond current market price (pending limit impossible without chasing)."
                     else:

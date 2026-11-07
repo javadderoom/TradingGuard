@@ -100,10 +100,10 @@ def main():
         })
 
         if decision in ("BUY_LIMIT", "SELL_LIMIT") and entry and sl and tp:
-            # Check CRO rules: Min R:R >= 2.5R, risk cap <= $17
+            # Check CRO rules: Min R:R >= 2.5R, risk cap <= $12 (risk_pips is pips; $0.10/pip on 0.01 lot)
             risk_pips = abs(entry - sl) * 10000
-            if risk_pips > 17.0:
-                print(f"  🛑 CRO VETO: Risk {risk_pips:.1f} pips exceeds 17-pip cap! Overriding to STAND_ASIDE.")
+            if risk_pips * 0.10 > 12.0:
+                print(f"  🛑 CRO VETO: Risk {risk_pips:.1f} pips (${risk_pips * 0.10:.2f}) exceeds $12 cap! Overriding to STAND_ASIDE.")
                 continue
 
             calc_rr = abs(tp - entry) / max(0.0001, abs(entry - sl))

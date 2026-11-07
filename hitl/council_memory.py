@@ -27,7 +27,7 @@ DEFAULT_PLAYBOOK: Dict[str, Any] = {
             "id": "RULE-EXEC-001",
             "category": "Risk & Execution Calibration",
             "symbol": "XAUUSD",
-            "rule": "Mandate Minimum 4.0 to 7.0 Point Structural Stop Buffer on Gold (Risk $4.00 - $7.00, well below $17 ceiling).",
+            "rule": "Mandate Minimum 4.0 to 7.0 Point Structural Stop Buffer on Gold (Risk $4.00 - $7.00, well below $12 ceiling).",
             "rationale": "Empirical data shows Gold 5M ATR fluctuates between 3.5 and 5.0 points. Stops tighter than 3.0 points (e.g., 1.64 pt and 2.65 pt stops in October) are choked by broker spread expansion and normal volatility noise before the thesis can mature.",
             "status": "ACTIVE"
         },

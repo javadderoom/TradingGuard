@@ -151,8 +151,8 @@ def evaluate_council_decision(
 
     # Risk Check
     price_risk_usd = abs(entry - sl) * pip_val
-    if price_risk_usd > 17.0:
-        price_risk_usd = 17.0  # Hard ceiling enforcement ($17.00)
+    if price_risk_usd > 12.0:
+        price_risk_usd = 12.0  # Hard ceiling enforcement ($12.00)
 
     # Target R:R Realism Cap: Capping fantasy intraday targets (e.g. max 3.5 to 4.0 R:R)
     risk_pts = abs(entry - sl)
@@ -284,7 +284,7 @@ def evaluate_council_decision(
                             "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Capital defended!"
                         }
                     else:
-                        loss_amount = -min(17.0, price_risk_usd)
+                        loss_amount = -min(12.0, price_risk_usd)
                         mfe_full = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
                         max_fav_dist = max(0.0, mfe_full - entry)
                         max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
@@ -368,7 +368,7 @@ def evaluate_council_decision(
                             "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Capital defended!"
                         }
                     else:
-                        loss_amount = -min(17.0, price_risk_usd)
+                        loss_amount = -min(12.0, price_risk_usd)
                         mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
                         max_fav_dist = max(0.0, entry - (mfe_full + spread))
                         max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)

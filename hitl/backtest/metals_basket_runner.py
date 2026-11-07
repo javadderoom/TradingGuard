@@ -4,8 +4,8 @@ Simultaneously evaluates Gold (XAUUSD) and Silver (XAGUSD) across strategic sess
 1. Intermarket SMT Divergence Radar: Real-time non-confirmation analysis between Gold and Silver.
 2. Gated by Ratified Archetypes: Including SETUP-ARCH-005 (Precious Metals Intermarket SMT).
 3. Contract Physics Enforcement:
-   - Gold: 0.01 lot = $1.00/pt. Max SL = $17.00.
-   - Silver: 0.01 lot = 50 oz contract -> $50.00/pt ($0.50/cent). Max SL = 0.34 pts ($17.00).
+   - Gold: 0.01 lot = $1.00/pt. Max SL = $12.00.
+   - Silver: 0.01 lot = 50 oz contract -> $50.00/pt ($0.50/cent). Max SL = 0.34 pts ($12.00).
 4. Realistic Broker Bid/Ask Spread Simulation:
    - Gold: $0.15 spread penalty on BUY fills and SHORT stops/TPs.
    - Silver: $0.030 spread penalty (3.0 cents).
@@ -149,7 +149,7 @@ def run_metals_basket_backtest(
     print(f"TOTAL CHECKPOINTS: {total_checkpoints} Dual-Asset Session Milestones")
     print("INTERMARKET RADAR: Relative High/Low SMT Divergence Engine Active")
     print("EXECUTION REALISM: True Bid/Ask Spread (Gold $0.15 | Silver $0.030) | 12h Forward M1 Hold")
-    print("RISK CEILING: Strict $17.00 Max Risk per Trade | 0.01 Base Lot | 75m TTL")
+    print("RISK CEILING: Strict $12.00 Max Risk per Trade | 0.01 Base Lot | 75m TTL")
     print("GOVERNANCE: Gated strictly by Review Council Ratified Archetypes (SETUP-ARCH-001..005)")
     print("=" * 85)
 
@@ -282,7 +282,7 @@ def run_metals_basket_backtest(
                 f"• Target Strategy: Aim for {rec_target_rr}R Take Profit ({'BIG EXPANSION RUNNER' if mtf_phase == 'PRO_EXPANSION' else 'SCALED RETRACEMENT'}).\n"
                 f"• Alpha Execution Directive: This setup has passed algorithmic MTF pre-screening.\n"
                 f"  The Council's primary mandate is ALPHA CAPTURE WITH CONTROLLED RISK.\n"
-                f"  If risk <= $17 and R:R >= 1:2.0, APPROVE [BUY LIMIT] or [SELL LIMIT].\n"
+                f"  If risk <= $12 and R:R >= 1:2.0, APPROVE [BUY LIMIT] or [SELL LIMIT].\n"
                 f"  Do NOT invent bureaucratic reasons to stand aside when valid displacement/sweep is present.\n"
                 f"================================================\n"
             )
@@ -462,7 +462,7 @@ def run_metals_basket_backtest(
         "days_back": days_back,
         "spread_simulated": True,
         "spreads": {"XAUUSD": "$0.15", "XAGUSD": "$0.030 (3.0 cents)"},
-        "max_risk_ceiling_usd": 17.00,
+        "max_risk_ceiling_usd": 12.00,
         "inactivity_ttl_minutes": 75,
         "hours_forward_simulation": 12,
         "windows": "London (10:00-11:00), NY Open (15:00-16:00), NY Silver Bullet (17:30-18:00)",

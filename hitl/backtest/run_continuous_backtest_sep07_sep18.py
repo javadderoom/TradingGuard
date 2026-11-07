@@ -167,9 +167,9 @@ def main():
             risk_pips = abs(entry - sl) * 10000
             calc_rr = abs(tp - entry) / max(0.0001, abs(entry - sl))
 
-            # CRO Risk Check ($17 ceiling & 2.5R floor)
-            if risk_pips > 17.0:
-                print(f"  🛑 CRO VETO: Risk {risk_pips:.1f} pips exceeds $17 cap! Overriding to STAND_ASIDE.")
+            # CRO Risk Check ($12 ceiling & 2.5R floor)
+            if risk_pips * 0.10 > 12.0:
+                print(f"  🛑 CRO VETO: Risk {risk_pips:.1f} pips (${risk_pips * 0.10:.2f}) exceeds $12 cap! Overriding to STAND_ASIDE.")
                 continue
 
             if calc_rr < 2.5:

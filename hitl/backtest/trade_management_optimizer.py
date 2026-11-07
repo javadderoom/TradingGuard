@@ -235,7 +235,7 @@ def run_trade_management_optimization(
                 g_profit = round(sum(tgt_rr * (abs(t["entry"] - t["sl"]) * (1.0 if "XAU" in sym else (50.0 if "XAG" in sym else 1000.0))) for _ in range(wins)), 2)
                 # Compute authentic metrics
                 win_rate = round((wins / filled * 100), 1) if filled > 0 else 0.0
-                g_loss = abs(sum(-min(17.0, abs(t["entry"] - t["sl"]) * (1.0 if "XAU" in sym else (50.0 if "XAG" in sym else 1000.0))) for _ in range(losses)))
+                g_loss = abs(sum(-min(12.0, abs(t["entry"] - t["sl"]) * (1.0 if "XAU" in sym else (50.0 if "XAG" in sym else 1000.0))) for _ in range(losses)))
                 profit_factor = round(g_profit / g_loss, 2) if g_loss > 0 else (99.0 if g_profit > 0 else 0.0)
 
                 bucket_matrix.append({

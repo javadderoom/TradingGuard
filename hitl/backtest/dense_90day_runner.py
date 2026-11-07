@@ -7,7 +7,7 @@ Evaluates EVERY trading day across the past 3 months (90 days):
 - Architecture:
   * Tier 1: Fast Algorithmic ICT Screener (<5ms) filters low-probability chop into instant STAND_ASIDE.
   * Tier 2: AI Investment Council deliberates on genuine liquidity sweeps and FVG setups.
-  * Tier 3: Forward M1 Execution Simulator (75m Inactivity TTL, Watchdog radar, $17 hard risk cap).
+  * Tier 3: Forward M1 Execution Simulator (75m Inactivity TTL, Watchdog radar, $12 hard risk cap).
 """
 
 import sys
@@ -74,7 +74,7 @@ def run_dense_90day_backtest(
     print(f"BASKET: {', '.join(symbols)} | HORIZON: {days_back} Days (~{total_calendar_sessions // 2} Trading Days)")
     print(f"SESSIONS PER ASSET: {total_calendar_sessions} (London 10:30 & NY 16:30)")
     print(f"TOTAL EVALUATION SCOPE: {total_calendar_sessions * len(symbols)} Session Milestones")
-    print("PARAMETERS: Max Risk $17.00 | TTL 75m | FVG Proximal Edge | Base Lot 0.01")
+    print("PARAMETERS: Max Risk $12.00 | TTL 75m | FVG Proximal Edge | Base Lot 0.01")
     print("=" * 75)
 
     asset_scorecards = {}
@@ -146,7 +146,7 @@ def run_dense_90day_backtest(
             if dec != "STAND_ASIDE":
                 print(f"   Entry: {decision_dict['entry']} | SL: {decision_dict['sl']} | TP: {decision_dict['tp']} | R:R: {decision_dict['rr']}")
 
-            # 4. Tier-3 Forward M1 Execution Simulator (75m TTL, Watchdog, $17 Cap)
+            # 4. Tier-3 Forward M1 Execution Simulator (75m TTL, Watchdog, $12 Cap)
             forward_m1 = feed.get_forward_m1_bars(sym, milestone, hours_forward=6)
             eval_res = evaluate_council_decision(decision_dict, forward_m1, sym)
 

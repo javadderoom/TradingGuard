@@ -130,7 +130,7 @@ Every trade strictly abides by institutional broker execution realism:
 
 1. **Order Type**: Strict **Limit Orders** (`BUY_LIMIT`, `SELL_LIMIT`). Zero market orders.
 2. **Base Position Sizing**: Fixed **`0.01` Base Lot** on all instruments.
-3. **Firm Stop-Loss Ceiling**: **Strict $17.00 maximum risk ceiling** per trade. If calculated structural risk exceeds $17.00, the trade risk is capped strictly at $17.00.
+3. **Firm Stop-Loss Ceiling**: **Strict $12.00 maximum risk ceiling** per trade. If calculated structural risk exceeds $12.00, the trade risk is capped strictly at $12.00.
 4. **Gold-Specific Structural Risk Bracketing**:
    - Minimum Stop Loss: **$3.50** (prevents sub-pip micro-whipsaws from choking entry).
    - Maximum Stop Loss: **$8.00** (prevents excessive structural float).
@@ -161,7 +161,7 @@ Every trade strictly abides by institutional broker execution realism:
 ## 8. AI Review Council & Governance Architecture
 
 - **6-Seat Cognitive Assembly**: Evaluates candidates across 4 rendered charts (1D, 1H, 15M, 5M) and textual telemetry.
-- **Zero Bureaucracy Mandate**: When pre-screened edge and MTF alignment are present, the Council must prioritize alpha capture within the $17 risk limit.
+- **Zero Bureaucracy Mandate**: When pre-screened edge and MTF alignment are present, the Council must prioritize alpha capture within the $12 risk limit.
 - **Counterfactual Shadow Portfolio Replay**: Every passed opportunity (`STAND_ASIDE`) is simulated through forward M1 bars to measure:
   - **`PROTECTIVE_VETO`**: Capital saved by filtering out a losing trade.
   - **`DAMAGING_STAND_ASIDE`**: Alpha missed due to over-filtering a winning trade.

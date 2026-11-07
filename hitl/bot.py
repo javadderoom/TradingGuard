@@ -710,7 +710,7 @@ def run_bot():
                             "`/selllimit 3885 3892 3865`\n"
                             "or named:\n"
                             "`Buy Limit 3865 SL=3858 TP=3885`\n\n"
-                            "💡 *Risk Cap:* Strict $17.00 maximum risk ceiling including friction.",
+                            "💡 *Risk Cap:* Strict $12.00 maximum risk ceiling including friction.",
                             reply_markup=MAIN_KEYBOARD
                         )
                     else:
