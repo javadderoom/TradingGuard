@@ -6,7 +6,7 @@
       "id": "RULE-CORE-001",
       "category": "Capital Defense & Absolute Risk Cap",
       "symbol": "ALL",
-      "rule": "Strict .00 maximum dollar risk per trade (0.01 lot base). Stop loss distance must never exceed .00. Absolute price quotes within ±2.5% of entry are required.",
+      "rule": "Strict $12.00 maximum dollar risk per trade (0.01 lot base). Stop loss distance must never exceed $12.00. Absolute price quotes within ±2.5% of entry are required.",
       "rationale": "Foundational firm risk governance. Unbreakable safety ceiling.",
       "status": "ACTIVE"
     },

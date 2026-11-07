@@ -29,6 +29,7 @@ def _convert_records(bars) -> List[Dict[str, Any]]:
     return [
         {
             'time': int(b[0]),
+            'dt': datetime.datetime.fromtimestamp(int(b[0]), tz=datetime.timezone.utc),
             'open': float(b[1]),
             'high': float(b[2]),
             'low': float(b[3]),
