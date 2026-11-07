@@ -7,7 +7,8 @@ import os
 
 # ─── Risk Limits ───────────────────────────────────────────────────────────────
 RISK_PER_TRADE_USD = 12.0       # Max loss per single trade ($)
-MAX_DAILY_LOSS_USD = 24.0       # Daily loss shutdown threshold ($)
+MAX_DAILY_LOSS_USD = 34.0       # Daily loss shutdown threshold ($)
+# Reconciled 2026-11-07 to $34 (was $24) to match hitl/config.py MAX_DAILY_LOSS_USD default.
 MAX_DAILY_PROFIT_USD = 35.0     # Daily profit lock threshold ($)
 MAX_TRADES_PER_DAY = 3          # Maximum trades allowed per session
 MAX_CONSECUTIVE_LOSSES = 2      # Stop trading after N consecutive losses
