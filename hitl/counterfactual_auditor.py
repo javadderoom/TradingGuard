@@ -14,7 +14,7 @@ When the Council decides STAND_ASIDE on an identified setup:
 """
 
 from typing import Dict, Any, List, Optional
-from hitl.backtest.evaluator import evaluate_council_decision, get_default_broker_spread
+from hitl.backtest.evaluator import evaluate_council_decision, get_default_broker_spread, summarize_pnl
 from hitl.council_memory import memory_engine
 
 
@@ -236,10 +236,17 @@ class CounterfactualOpportunityAuditor:
         actual_fills = [t for t in executed_trades if t.get("status") in ("WIN", "LOSS")]
         actual_wins = [t for t in actual_fills if t.get("status") == "WIN"]
         actual_losses = [t for t in actual_fills if t.get("status") == "LOSS"]
-        actual_net_pnl = sum(t.get("realized_pnl", 0.0) for t in executed_trades)
-        actual_gross_profit = sum(t.get("realized_pnl", 0.0) for t in actual_wins)
-        actual_gross_loss = abs(sum(t.get("realized_pnl", 0.0) for t in actual_losses))
-        actual_pf = (actual_gross_profit / actual_gross_loss) if actual_gross_loss > 0 else (99.0 if actual_gross_profit > 0 else 0.0)
+        # Pack 6: net/gross are REALISED only. The old code summed
+        # realized_pnl over ALL executed trades, so OPEN_AT_END
+        # floating PnL leaked into the council's net (and, through
+        # compile_master_review.py, into the Master 2-Month review).
+        _pnl = summarize_pnl(executed_trades, pnl_key="realized_pnl")
+        actual_net_pnl = _pnl["realized_net_usd"]
+        actual_gross_profit = _pnl["realized_gross_profit_usd"]
+        actual_gross_loss = _pnl["realized_gross_loss_usd"]
+        actual_pf = _pnl["realized_profit_factor"]
+        actual_unrealized_pnl = _pnl["unrealized_net_usd"]
+        actual_open_trades = _pnl["open_trades"]
         actual_wr = (len(actual_wins) / len(actual_fills) * 100) if actual_fills else 0.0
 
         # 2. Missed Opportunities Performance (Counterfactual Replay)
@@ -275,7 +282,11 @@ class CounterfactualOpportunityAuditor:
                 "gross_profit_usd": round(actual_gross_profit, 2),
                 "gross_loss_usd": round(actual_gross_loss, 2),
                 "net_pnl_usd": round(actual_net_pnl, 2),
-                "profit_factor": round(actual_pf, 2)
+                "profit_factor": round(actual_pf, 2),
+                # Pack 6: floating PnL on trades still open at end of
+                # window — shown separately, never added to net_pnl_usd.
+                "unrealized_pnl_usd": round(actual_unrealized_pnl, 2),
+                "open_at_end_trades": actual_open_trades
             },
             "counterfactual_stand_aside_breakdown": {
                 "total_stand_asides": len(stand_aside_audits),

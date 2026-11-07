@@ -23,6 +23,70 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR = BASE_DIR / "backtest_results" / "gold_annual_4season_master_synthesis"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+CALIBRATED_EXCLUSIONS = "NY Silver Bullet session, SETUP-ARCH-002, SETUP-ARCH-009"
+
+
+def build_annual_summary(
+    *,
+    symbol: str,
+    baseline_annual,
+    calibrated_annual,
+    seasonal_breakdown,
+    archetype_breakdown,
+    session_breakdown,
+    seasonal_breakdown_all_fills,
+    archetype_breakdown_all_fills,
+    session_breakdown_all_fills,
+    nested_double_mss_annual,
+    decommissioned_drag,
+):
+    """Assemble the annual summary JSON with explicit populations.
+
+    Pack 6: the historical file labelled its seasonal / archetype /
+    session breakdowns as if they described the full year, but they
+    were computed on CALIBRATED fills only (Gold: 137 of 414 fills;
+    e.g. Winter 29 fills vs 102 in the full ledger). The old keys
+    are kept unchanged for back-compat, but they are now explicitly
+    labelled, and the all-fills variants are shipped alongside so any
+    reader can see both populations without re-running the audit.
+    """
+    calib_fills = calibrated_annual["fills"]
+    base_fills = baseline_annual["fills"]
+    return {
+        'audit_scope': 'Full-Year 2026 (Winter, Spring, Summer, Autumn)',
+        'trading_days': 175,
+        'institutional_sessions': 700,
+        'symbol': symbol,
+        'baseline_annual': baseline_annual,
+        'calibrated_annual': calibrated_annual,
+        'breakdown_population': {
+            'seasonal_breakdown': (
+                f'CALIBRATED fills only ({calib_fills} fills; excludes '
+                f'{CALIBRATED_EXCLUSIONS}). NOT the full year.'
+            ),
+            'archetype_breakdown': (
+                f'CALIBRATED fills only ({calib_fills} fills; excludes '
+                f'{CALIBRATED_EXCLUSIONS}). NOT the full year.'
+            ),
+            'session_breakdown': (
+                f'CALIBRATED fills only ({calib_fills} fills; excludes '
+                f'{CALIBRATED_EXCLUSIONS}). NOT the full year.'
+            ),
+            'seasonal_breakdown_all_fills': f'ALL fills ({base_fills} fills, unfiltered).',
+            'archetype_breakdown_all_fills': f'ALL fills ({base_fills} fills, unfiltered).',
+            'session_breakdown_all_fills': f'ALL fills ({base_fills} fills, unfiltered).',
+        },
+        'seasonal_breakdown': seasonal_breakdown,
+        'archetype_breakdown': archetype_breakdown,
+        'session_breakdown': session_breakdown,
+        'seasonal_breakdown_all_fills': seasonal_breakdown_all_fills,
+        'archetype_breakdown_all_fills': archetype_breakdown_all_fills,
+        'session_breakdown_all_fills': session_breakdown_all_fills,
+        'nested_double_mss_annual': nested_double_mss_annual,
+        'decommissioned_drag': decommissioned_drag,
+    }
+
+
 def run_annual_master_synthesis():
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -120,6 +184,20 @@ def run_annual_master_synthesis():
         sess_metrics[sess] = st
         print(f"  * {sess:<25}: {st['fills']:>3} Fills | {st['wins']:>2}W - {st['losses']:>2}L - {st['be']:>2}BE | WR: {st['wr']:>5.1f}% | Net: {st['net_r']:>+6.1f}R | PF: {st['pf']:>4.2f}")
 
+    # Pack 6: same breakdowns on ALL fills (baseline population), so
+    # the JSON no longer presents the calibrated subset as the year.
+    season_metrics_all = {}
+    for s_name in ['Winter', 'Spring', 'Summer', 'Autumn']:
+        season_metrics_all[s_name] = calc_stats(base_fills[base_fills['season'] == s_name])
+    arch_metrics_all = {}
+    for arch in sorted(base_fills['archetype_id'].dropna().unique()):
+        a_sub = base_fills[base_fills['archetype_id'] == arch]
+        arch_name = a_sub['archetype'].iloc[0] if len(a_sub) > 0 and 'archetype' in a_sub else arch
+        arch_metrics_all[arch] = {**calc_stats(a_sub), 'name': arch_name}
+    sess_metrics_all = {}
+    for sess in sorted(base_fills['session'].unique()):
+        sess_metrics_all[sess] = calc_stats(base_fills[base_fills['session'] == sess])
+
     # Banned / Decommissioned Verification Across Full Year
     print("\n📍 BANNED & DECOMMISSIONED DRAG AUDIT (FULL-YEAR):")
     sb_sub = master_df[(master_df['session'] == 'NY_Silver_Bullet') & (master_df['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))]
@@ -166,24 +244,24 @@ def run_annual_master_synthesis():
 
     total_drag_r = st_sb['net_r'] + st_arch2['net_r'] + st_arch9['net_r']
 
-    summary = {
-        'audit_scope': 'Full-Year 2026 (Winter, Spring, Summer, Autumn)',
-        'trading_days': 175,
-        'institutional_sessions': 700,
-        'symbol': 'XAUUSD_o',
-        'baseline_annual': st_base_annual,
-        'calibrated_annual': st_calib_annual,
-        'seasonal_breakdown': season_metrics,
-        'archetype_breakdown': arch_metrics,
-        'session_breakdown': sess_metrics,
-        'nested_double_mss_annual': st_nest_annual,
-        'decommissioned_drag': {
+    summary = build_annual_summary(
+        symbol='XAUUSD_o',
+        baseline_annual=st_base_annual,
+        calibrated_annual=st_calib_annual,
+        seasonal_breakdown=season_metrics,
+        archetype_breakdown=arch_metrics,
+        session_breakdown=sess_metrics,
+        seasonal_breakdown_all_fills=season_metrics_all,
+        archetype_breakdown_all_fills=arch_metrics_all,
+        session_breakdown_all_fills=sess_metrics_all,
+        nested_double_mss_annual=st_nest_annual,
+        decommissioned_drag={
             'ny_silver_bullet': st_sb,
             'arch_002': st_arch2,
             'arch_009': st_arch9,
             'total_drag_saved_r': round(total_drag_r, 2)
-        }
-    }
+        },
+    )
 
     with open(OUTPUT_DIR / "annual_master_summary_metrics.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)

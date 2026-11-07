@@ -1,6 +1,8 @@
 # TradingGuard System Execution Mirror
 > **The Exact Single Source of Truth (SSOT) of What the Trading Pipeline Executes in the Live Market and Strategy Tester.**
 > Every rule, formula, threshold, timeframe interaction, and risk gate documented here corresponds 1:1 with the executable codebase.
+>
+> ⚠️ **Reconciliation note (2026-11-07, Pack 6):** the headline figures in §9, §9.6 and §14.2 come from different rule sets, sessions and simulators and cannot be read as one system (47 fills +25.5R is one Gold season, calibrated; 137 fills +17.0R is the full-year Gold calibrated subset; 149 fills +116.5R is a different master-portfolio simulation with zero exact trade overlap). See `docs/MIRROR_RECONCILIATION_2026-11-07.md` for the traced sources. The Nov 05–06 "+2.50R Net Alpha" claim from commit 550feeb has no supporting artifact and is withdrawn — see `docs/NOV05_NOV06_VISION_CLAIM_WITHDRAWAL.md`. The numbers below are left as published; read them with those notes.
 
 ---
 

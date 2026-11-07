@@ -1,11 +1,20 @@
 """
 TradingGuard HITL - Closed-Loop Institutional Review Engine
-1. Review Council (شورای بازبینی - Decision Audit):
+1. Decision Audit (شورای بازبینی - Decision Audit):
    - Audits past Council decisions (Stand Asides and Placed Orders) against real MT5 market outcomes.
    - Evaluates whether Stand Asides were protective (saved capital) or flawed (missed winners).
    - Evaluates whether order plans were filled, reached TP, or stopped out.
    - Synthesizes institutional corrections and persists them to `hitl/memory/council_playbook.json`.
    - Dispatches a concise, high-density Decision Audit Card to Telegram.
+
+   NOTE (Pack 5): this is a DETERMINISTIC audit — no LLM is involved. It
+   used to be named convene_review_council(), the same name as the LLM
+   Supervisory Review Council in hitl/review_council.py, which is a
+   different thing entirely (it convenes agy.exe over trade logs and
+   proposes playbook rules). The audit is now audit_past_decisions() so
+   the two can never be confused again. The LLM review council is invoked
+   by the backtest runners and off-hours review, NOT by the bot's live
+   Review button — the live button runs this fast deterministic audit.
 
 2. Pre-Market Morning Briefing (10:30 Tehran / 07:00 UTC):
    - Injects prior day's lessons learned and active calibration rules.
@@ -34,15 +43,18 @@ from hitl.macro_bias import calculate_htf_fundamental_bias
 from hitl.backtest.data_feed import _convert_records
 
 
-def convene_review_council(
+def audit_past_decisions(
     engine: MT5Engine,
     client: TelegramClient,
     chat_id: Optional[int | str] = None
 ) -> Dict[str, Any]:
     """
-    Convenes the Institutional Review Council (شورای بازبینی).
+    Deterministic audit of past Council decisions (شورای بازبینی).
     Audits previous Council decisions and their real-world outcomes.
     Dispatches a concise, high-impact Telegram card without lengthy debate transcripts.
+    This is NOT the LLM review council (hitl/review_council.py) — see the
+    module docstring. It writes no playbook rules; it only records a
+    counterfactual-audit synthesis in institutional memory.
     """
     target_chat = chat_id or TELEGRAM_CHAT_ID
     now_dt = datetime.datetime.now()
@@ -185,8 +197,8 @@ def run_session_post_mortem(
     client: TelegramClient,
     chat_id: Optional[int | str] = None
 ) -> Dict[str, Any]:
-    """Alias for end-of-session review council."""
-    return convene_review_council(engine, client, chat_id)
+    """Alias for end-of-session decision audit."""
+    return audit_past_decisions(engine, client, chat_id)
 
 
 def run_morning_briefing(

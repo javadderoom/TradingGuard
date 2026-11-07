@@ -1,0 +1,573 @@
+{
+  "frozen_rule_set": "TradingGuard holdout — frozen 2026-11-07 (Pack 7)",
+  "frozen_at": "2026-11-07T13:30:18.425752+00:00",
+  "base_commit": "e921bb7a5bf77362070d1f3a9b4d9f092cd8cef6",
+  "working_tree_dirty_at_freeze": true,
+  "dirty_files_at_freeze": [
+    "M hitl/backtest/data_feed.py",
+    " M hitl/backtest/evaluator.py",
+    " M hitl/backtest/fast_screener.py"
+  ],
+  "source_file_sha256": {
+    "hitl/backtest/fast_screener.py": "99e285f69061953c92c14bc7c34272b137b8ad7460003ec7d0c6d665dd0c3f4b",
+    "hitl/backtest/evaluator.py": "cba107d77ef19a51ec510478472dd5eeacc271cef90b6f4593cebf056baa96f9",
+    "hitl/backtest/data_feed.py": "fc6a629a4051dd83efae92e9d30126c203f8523d7c3e16174abdb21fcae400cd",
+    "hitl/memory/council_playbook.json": "00c22bb70c23cdeb9d3b9e1aaa1e4149773837c9ac810801dd817b79d5451d0b",
+    "hitl/memory/setup_registry.json": "a6b737072a07586abd936c8c556a96f9a4270a26536c9fe863232fbab98cd4ca",
+    "hitl/setup_registry.py": "9cc3e1eb8439c0115dc9d7918e281649f4b08490adc4ccc78ea13c9e445963f4"
+  },
+  "tuning_period": {
+    "start": "2026-01-01",
+    "end": "2026-11-06"
+  },
+  "default_holdout_period": {
+    "start": "2026-11-07",
+    "end": "2026-12-31"
+  },
+  "risk_caps": {
+    "max_risk_usd_per_trade": 12.0,
+    "max_daily_loss_usd": 34.0,
+    "max_daily_profit_usd": 35.0,
+    "max_trades_per_day_per_symbol": 3,
+    "lot": 0.01,
+    "note": "RULE-CORE-001 ($12) + live daily limits. $34 daily loss set 2026-11-07."
+  },
+  "simulator": {
+    "closed_bars_only": true,
+    "sl_first": true,
+    "commission_usd_per_001_lot": 0.1,
+    "slippage_pts": 0.0,
+    "ttl_minutes": 75,
+    "forward_window_hours": 12,
+    "breakeven_rr": 2.0,
+    "target_rr_cap": 3.5,
+    "spreads_pts": {
+      "XAUUSD": 0.15,
+      "XAGUSD": 0.03,
+      "EURUSD": 0.00018,
+      "GBPUSD": 0.00025
+    }
+  },
+  "screener": {
+    "checkpoints": [
+      {
+        "hour": 10,
+        "minute": 0,
+        "label": "London Pre-Open",
+        "window": "London"
+      },
+      {
+        "hour": 10,
+        "minute": 30,
+        "label": "London Open",
+        "window": "London"
+      },
+      {
+        "hour": 11,
+        "minute": 0,
+        "label": "London Post-Open",
+        "window": "London"
+      },
+      {
+        "hour": 15,
+        "minute": 0,
+        "label": "NY Pre-Open",
+        "window": "NY"
+      },
+      {
+        "hour": 15,
+        "minute": 30,
+        "label": "NY Open",
+        "window": "NY"
+      },
+      {
+        "hour": 16,
+        "minute": 0,
+        "label": "NY Post-Open",
+        "window": "NY"
+      },
+      {
+        "hour": 17,
+        "minute": 30,
+        "label": "NY Silver Bullet Open",
+        "window": "Silver Bullet"
+      },
+      {
+        "hour": 18,
+        "minute": 0,
+        "label": "NY Silver Bullet Mid",
+        "window": "Silver Bullet"
+      }
+    ],
+    "one_trade_per_symbol_day_window": true,
+    "bans_coded_in_screener": {
+      "silver_bullet_banned_symbols": [
+        "XAUUSD",
+        "GBPUSD"
+      ],
+      "gbp_ny_open_bypass": true,
+      "note": "Bans are hard-coded in fast_screener.py and therefore covered by its frozen hash. No additional bans are applied by this runner."
+    },
+    "ratified_archetypes_at_freeze": [
+      "SETUP-ARCH-001",
+      "SETUP-ARCH-002",
+      "SETUP-ARCH-003",
+      "SETUP-ARCH-004",
+      "SETUP-ARCH-005",
+      "SETUP-ARCH-006",
+      "SETUP-ARCH-007",
+      "SETUP-ARCH-008",
+      "SETUP-ARCH-009",
+      "SETUP-ARCH-010",
+      "SETUP-ARCH-011",
+      "SETUP-ARCH-012",
+      "SETUP-ARCH-013",
+      "SETUP-ARCH-014"
+    ]
+  },
+  "symbols": [
+    "XAUUSD",
+    "XAGUSD",
+    "EURUSD",
+    "GBPUSD"
+  ],
+  "playbook": {
+    "version": "2.0.0-LEAN",
+    "last_updated": "2026-11-03T23:50:11.300743",
+    "active_rules": [
+      {
+        "id": "RULE-CORE-001",
+        "category": "Capital Defense & Absolute Risk Cap",
+        "symbol": "ALL",
+        "rule": "Strict $12.00 maximum dollar risk per trade (0.01 lot base). Stop loss distance must never exceed $12.00. Absolute price quotes within ±2.5% of entry are required.",
+        "rationale": "Foundational firm risk governance. Unbreakable safety ceiling.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-CORE-002",
+        "category": "Macro Directional Alignment",
+        "symbol": "ALL",
+        "rule": "Trades must strictly align with the Higher-Timeframe Macro Directional Filter (SELL_ONLY or BUY_ONLY). Fading strong pro-trend expansions is strictly prohibited.",
+        "rationale": "Prevents counter-trend knife-catching and aligns execution with institutional sovereign order flow.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-CORE-003",
+        "category": "Prominent Liquidity Sweep Trigger",
+        "symbol": "ALL",
+        "rule": "Execution requires price to sweep a visually prominent horizontal liquidity pool (Equal Highs/Lows [EQH/EQL], Previous Day High/Low [PDH/PDL], or Prior Session Extreme).",
+        "rationale": "Guarantees institutional liquidity absorption before order commitment.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-CORE-004",
+        "category": "LTF Structure Shift Confirmation (M1/5M MSS)",
+        "symbol": "ALL",
+        "rule": "Following a liquidity sweep, require an energetic displacement candle body close breaking the preceding micro-swing pivot in the trend direction (M1 or 5M Market Structure Shift).",
+        "rationale": "Confirms smart money rejection and directional commitment, eliminating sweep wick-outs.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-CORE-005",
+        "category": "Pro-Trend Entry Anchor & Invalidation Pinning",
+        "symbol": "ALL",
+        "rule": "In a confirmed trend, limit order entry must anchor directly at the M1 MSS close or Proximal Zone Edge (0%). Deep 50%-75% retracement requirements are explicitly waived to prevent missing runaway moves. Stop Loss must pin strictly 1.0 pip beyond the sweep peak wick on GBPUSD (1.5-2.5 pips on EURUSD).",
+        "rationale": "Mandated by Lead Human Partner (Seat #7). Strong trend continuation days produce shallow 5-15 pip pullbacks. Waiting for deep 50% discount causes high-conviction trades to be left behind by less than 1 pip.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-CORE-006",
+        "category": "External Structural Swing Targeting",
+        "symbol": "ALL",
+        "rule": "Take Profit must anchor strictly at or beyond the major External Structural Swing Low (SSL) or Swing High (BSL) of that structure, or opposing HTF expansion pool (Weekly Low / 1.5x Daily ATR extension). Exiting prematurely at internal minor support/resistance is strictly prohibited. Mandatory minimum R:R >= 1:3.0.",
+        "rationale": "Mandated by Lead Human Partner (Seat #7). In a trend trade, internal support is just speedbumps; the true institutional liquidity draw is the external structural swing extreme. Unlocks 1:4.0R to 1:10.0R asymmetry.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-007",
+        "category": "Capital Preservation",
+        "symbol": "EURUSD & GBPUSD",
+        "rule": "Once an active trade achieves an unrealized favorable excursion of >= 1:2.5 R:R, the Stop Loss must be automatically moved to Breakeven + 0.5 pips. At >= 1:3.5 R:R, the stop must trail the most recent M5 structural swing pivot, guaranteeing no less than +1.0 R profit lock.",
+        "rationale": "On 2026-09-18 15:00 EURUSD, a trade reached 1.14549 (1:3.86 R:R / +29.6 pips favorable excursion) but fully retraced to take a -$0.72 loss at 1.14917. Unprotected open runs in high-volatility sessions cause severe equity drawdowns.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-008",
+        "category": "Risk Calibration",
+        "symbol": "EURUSD & GBPUSD",
+        "rule": "Minimum stop buffer beyond the liquidity sweep wick must be calibrated to spread regime: GBPUSD minimum buffer is widened from 1.0 pip to 1.8 pips; EURUSD minimum buffer is set to 1.5 pips. Total trade risk must remain strictly capped under the $12.00 limit via proportional lot size reduction.",
+        "rationale": "2026-09-14 15:00 GBPUSD was stopped out by a 0.1 pip spread graze (Ask 1.34997 vs SL 1.34996) before resuming downward momentum, and 2026-09-18 15:00 EURUSD stopped out at exact tick parity (1.14917). [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-009",
+        "category": "Setup Selection",
+        "symbol": "EURUSD & GBPUSD",
+        "rule": "New order generation is strictly prohibited after 17:00 UTC (NY Silver Bullet / Post-Fix window). Any pending limit orders unfilled after 17:00 UTC must be immediately purged.",
+        "rationale": "2026-09-18 18:00 GBPUSD failed immediately at 18:00 UTC (-$1.66) amidst fading session liquidity and wide institutional spreads. Over 90% of all winning volume and cleanest expansions occurred between 15:00 and 16:30 UTC.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-METALS-010",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "When an Intermarket SMT Divergence is confirmed at a key session transition (Asian/London/NY Open) between XAUUSD and XAGUSD—defined as one metal sweeping a session/range extreme while the opposing metal forms a failure swing—the setup carries priority execution status. The Higher-Timeframe Macro Directional Filter [RULE-CORE-002] is conditionally relaxed to counter-trend reversal mode, provided an M1/M5 Market Structure Shift with energetic displacement body close confirms the reversal.",
+        "rationale": "2026-10-26 17:30, 2026-10-27 10:00, and 2026-10-27 15:00 logs show +$110+ in missed alpha directly caused by over-conservative macro-trend vetoes against prime SMT divergence sweeps.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-METALS-011",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Watchdog adverse-spike cancellation thresholds for pending limit orders on XAUUSD and XAGUSD must not evaluate single-candle M1 spikes below 3.5x M1 ATR (or minimum 1.5x M5 ATR). Furthermore, stop loss placement for precious metals must not use FX pip rules: Stop Loss buffer beyond the sweep wick must be pegged strictly to a minimum of 0.80 points on XAUUSD and 0.08 points on XAGUSD (or 0.5x M5 ATR), while maintaining the total dollar risk cap under $12.00 via dynamic position sizing.",
+        "rationale": "Multiple orders (e.g., 2026-10-27 10:30 XAUUSD/XAGUSD and 2026-10-28 10:00 XAGUSD) were prematurely purged at $+0.00 by 2xATR watchdog sensitivity during pre-entry spread widening and routine volatility probes right before massive winning runs. [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-METALS-012",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Intermarket SMT Divergence signals that meet [RULE-METALS-010] criteria (session extreme sweep + failure swing + M1 displacement close) carry mandatory execution status during London Open (07:00–10:30 UTC) and NY Open (13:00–16:00 UTC). The Supervisory Council is strictly prohibited from applying discretionary trend-vetoes or post-fix stand-asides to SMT setups during these killzones, provided the minimum sweep threshold is >= 0.50 pts on XAUUSD or >= 0.06 pts on XAGUSD.",
+        "rationale": "Counterfactual logs from 2026-10-19 and 2026-10-20 confirmed 6 distinct SMT divergence setups that delivered 100% win-rate and over $146.44 in lost alpha. Council vetoes generated severe alpha drag by filtering valid institutional accumulation/distribution phases.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-013",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "For XAUUSD, the minimum Stop Loss distance from entry must be structurally anchored with a hard floor of no less than 4.50 points (or 1.2x M5 ATR, whichever is greater). Placing sub-3.0 point stops on XAUUSD during active session liquidity sweeps is strictly prohibited. Furthermore, dynamic lot sizing must enforce a strict, hard-stop max loss ceiling of $12.00; if the structural stop distance requires a lot size below the broker minimum (0.01 lots), the trade must be aborted immediately rather than executed with outsized dollar risk.",
+        "rationale": "The 2026-10-20 16:00 Gold buy was stopped out due to a choked 2.54 pt stop right before a +37 pt expansion. On 2026-10-21, the Silver buy took a -$7.50 loss, violating the $2.00 risk ceiling because lot size was not properly scaled down for the required volatility buffer. [Cap clause updated 2026-11-07 from $2.00 to $12.00 per RULE-CORE-001 firm cap; the $2.00 cap was unachievable at the 0.01-lot minimum.]",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-014",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Modify [RULE-RISK-007] for precious metals: Once unrealized favorable excursion reaches >= 1:2.0 R:R (lowered from 1:2.5 R:R), the Stop Loss must automatically step to Breakeven + spread buffer. At >= 1:3.0 R:R, the stop must trail the prior M5 structural pivot to lock in >= +1.0 R.",
+        "rationale": "Trade [2026-10-21 10:00] on XAUUSD reached a peak excursion of 1:2.39 R:R (+11.64 pts) but suffered a full -$4.87 loss because the legacy 1:2.5 R:R threshold prevented breakeven protection by just 0.11 R.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-METALS-015",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Any Breaker Block retest setup that forms strictly following a confirmed session liquidity sweep (Asian or London extreme sweep >= 1.5x M5 ATR) during the NY Pre-Open / Open window (14:30–16:00 UTC) is classified as an Institutional Grade-A setup and is exempt from discretionary Council trend vetoes, provided the entry is anchored at the Breaker Block proximal edge with an SL no smaller than 5.50 points on XAUUSD (0.25 points on XAGUSD).",
+        "rationale": "Counterfactual audit on 2026-10-05 15:00 demonstrated a loss of +$19.83 alpha (1:6.85 R:R, 45+ point drop) when a post-London sweep Breaker Block retest was vetoed by over-conservative macro filters.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-016",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "On XAUUSD and XAGUSD, moving the Stop Loss to Breakeven under [RULE-RISK-014] is strictly prohibited until the trade achieves an unrealized favorable excursion of no less than 1:2.5 R:R (restoring the threshold from 1:2.0 R:R) AND closes an M5 bar past the initial displacement swing high/low.",
+        "rationale": "Trade [2026-10-05 16:00] was prematurely choked at BE +$0.10 during normal intra-candle metal volatility before the trade could transition into full target expansion.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-018",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "The post-17:00 UTC order gate under [RULE-EXEC-009] is elevated to a critical execution killswitch: all order entry handlers must hard-block order generation at the tick level from 17:00:00 UTC through 23:59:59 UTC across all precious metals. Any existing pending limit order residing in the book past 17:00:00 UTC must be immediately cancelled by an automated watchdog sweep within 100ms.",
+        "rationale": "Trade [2026-09-22 17:30 XAUUSD SELL] was entered 30 minutes past the established curfew, directly resulting in an unforced -$14.73 loss during illiquid post-fix chop.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-019",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Execution of [RULE-RISK-016] breakeven adjustments must be programmatically gated by an excursion assertion: Stop Loss modification to Breakeven (+ spread buffer) is strictly blocked until bid/ask tick data verifies an unrealized favorable excursion $\\ge$ 1:2.50 R:R AND an M5 bar closes beyond the initial displacement swing point. Premature adjustments below 1:2.50 R:R are completely disabled. Furthermore, for Grade-A institutional displacement setups exceeding 1:3.0 R:R, a multi-tranche model (50% TP1, 50% M5 structural trailing runner) must be deployed to capture post-target expansion.",
+        "rationale": "On 2026-09-22 10:30, XAGUSD was prematurely stopped at BE (+$0.50) after achieving only 1:0.45 R:R, choking off a high-conviction runner toward $62.93, while XAUUSD hit fixed TP at 40.4% efficiency, leaving +31.0 points of subsequent trend expansion unmonetized.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-021",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "NY Afternoon Liquidity Sweep Carve-Out to [RULE-EXEC-018]: The absolute post-17:00:00 UTC execution killswitch under [RULE-EXEC-018] is conditionally relaxed between 17:00:00 UTC and 18:30:00 UTC strictly for Grade-A [SETUP-ARCH-002] session liquidity sweep setups, provided: (1) An established NY AM Range extreme has been swept by $\\ge 1.5\\times$ M5 ATR, (2) A displacement M5 Market Structure Shift forms a valid fair value gap (FVG), and (3) Order entry is filled prior to 18:30:00 UTC. All non-sweep, breakout, or discretionary limit orders remain hard-blocked past 17:00:00 UTC.",
+        "rationale": "Counterfactual audit logs on 2026-09-24 17:30 UTC (missed +$26.05 / +26.0 pts) and 2026-09-25 18:00 UTC (missed +$16.63 / +16.6 pts, running +36.2 pts past TP to 1:9.53 R:R) demonstrated severe alpha leakage totaling +$42.68 due to the blanket 17:00 UTC killswitch blocking textbook NY session extreme sweeps.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-022",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Asymmetric Runner Tranche Deployment on Macro Extensions: For all institutional-grade entries capturing session liquidity sweeps, positions achieving $\\ge 1:3.0$ R:R must execute a partial Take Profit of 60% of volume at the predefined technical target (TP1). The remaining 40% volume must transition into an automated structural trailing runner pegged behind the trailing swing point of the M5/M15 timeframe (cushioned by 1.0x M5 ATR) to capture macro post-target expansion, terminating only upon an opposing structural market structure shift or at 20:00 UTC.",
+        "rationale": "On 2026-09-22 10:30 UTC, the executed sell closed at TP 4322.69 (+21.03 pts) but extended to 4291.52 (peak 1:9.38 R:R, leaving +31.0 pts uncaptured, 40.4% efficiency). Similarly, the 2026-09-25 18:00 UTC counterfactual trade reached 1:9.53 R:R (+36.2 pts beyond TP, 31.5% efficiency). Full fixed-target closures severely truncate terminal expectancy on high-velocity trend expansions.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-023",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Any confirmed Bullish or Bearish SMT Divergence between XAUUSD and XAGUSD (where one metal sweeps a key Asian, London, or NY AM session extreme while the other creates a non-sweeping higher-low or lower-high) coupled with an M5 Fair Value Gap (FVG) is designated an Institutional Grade-A+ Signal. Stand-aside discretionary vetoes on these setups are strictly disabled during London Open (07:00–10:30 UTC) and NY Pre-Open / Open (13:30–16:30 UTC).",
+        "rationale": "Empirical stand-aside logs show $66.31 in pure alpha leakage across three SMT setups (2026-09-15 15:30 [+$23.02], 2026-09-15 18:00 [+$0.10], and 2026-09-16 15:00 [+$20.27]), all achieving $\\ge 1:5.5$ R:R with zero thesis failures.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-024",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Hard-assert the excursion threshold for Breakeven modifications: The order management handler is strictly prohibited from stepping Stop Loss to Breakeven (+ spread buffer) prior to bid/ask price reaching $\\ge 1:2.50$ R:R excursion AND closing an M5 bar beyond the initial displacement pivot. Any internal logic or trigger executing BE moves at micro-excursions (< 1:2.0 R:R) must trigger an immediate fatal execution exception.",
+        "rationale": "Trade 2026-09-18 15:00 moved to Breakeven after an excursion of only 1:0.28 R:R (+0.10 win), choking an active institutional trade immediately before primary target realization.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-ARCH-025",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Retests of isolated Breaker Blocks ([SETUP-ARCH-003]) lacking an antecedent session liquidity sweep ($\\ge 1.2\\times$ M5 ATR) or cross-asset SMT divergence are placed under an unconditional, automated Stand-Aside Veto across all trading sessions.",
+        "rationale": "Counterfactual audit logs confirmed two consecutive stop-outs on naked Breaker Blocks on 2026-09-14 at 11:00 (-$5.50) and 17:30 (-$5.88). The Council's stand-aside veto successfully prevented $11.38 in capital destruction on these specific structures.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-026",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Any confirmed Bullish or Bearish SMT Divergence between XAUUSD and XAGUSD occurring within the London Open (07:00–10:30 UTC) or NY Session (13:00–17:00 UTC) with an M5 Fair Value Gap (FVG) is designated an Unconditional Execution Mandate. Automated stand-aside filters, discretionary council vetoes, and conservative volatility gates are strictly disabled for these setups.",
+        "rationale": "SMT divergence setups on 2026-09-08 11:00 and 2026-09-11 15:30 caused an aggregate alpha leakage of $40.97 with massive post-target extensions exceeding 1:7.4 R:R and 1:10.0 R:R (+36 to +38 points). Over-conservative vetoes on inter-market divergence surrendered the desk's highest-efficiency trades.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-ARCH-027",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Pure continuation breakout/breakdown signals ([SETUP-ARCH-004]) that expand beyond Session Extremes (Asian, London, or NY AM) without an antecedent liquidity sweep of at least 1.2x M5 ATR or confirmed SMT divergence are permanently barred from execution across all sessions.",
+        "rationale": "Counterfactual stand-aside logs conclusively prove that unconfirmed breakout orders on 2026-09-07 15:00, 2026-09-07 18:00, and 2026-09-11 10:00 resulted in direct full stop-outs, preserving $24.09 of capital ($8.01, $6.31, and $9.77 respectively). Pure momentum breakouts without prior liquidity absorption have a 0% win rate in this regime.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-028",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Dynamic Breakeven triggers must enforce an immutable double-lock check: (1) Unrealized favorable excursion must strictly reach $\\ge 1:2.50\\text{ R:R}$ verified on bid/ask pricing, AND (2) An M5 candle must print a complete close beyond the displacement swing pivot. Any breakeven modification executed below $1:2.00\\text{ R:R}$ excursion is classified as a critical system fault and hard-blocked at the routing layer.",
+        "rationale": "Trade 2026-09-08 15:00 moved Stop Loss to Breakeven at a micro-excursion of 1:0.25 R:R, choking the position for a nominal +$0.10 win before the market had room to develop, directly violating risk-reward optimization protocols.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-029",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "For any active position where unrealized favorable excursion achieves >= 1:2.50 R:R, the trade management handler must immediately execute a mandatory profit-protection sequence: (1) If the multi-tranche model is active, immediately bank 50% partial Take Profit (TP1); (2) Hard-ratchet the Stop Loss to a guaranteed protected level of at least Breakeven + 0.5x M5 ATR (or +1.0 pt spread/slippage buffer), regardless of whether an M5 candle has closed beyond the displacement pivot. Under no circumstances may an active trade that has attained >= 1:2.50 R:R terminate in a negative PnL.",
+        "rationale": "Empirical audit logs from Trade 2026-09-08 15:00 (peak excursion 1:2.80 R:R / +14.73 pts) and Trade 2026-09-11 11:00 (peak excursion 1:4.67 R:R / +35.03 pts) demonstrated that awaiting secondary displacement pivot closes caused winning setups to fully reverse into -$5.27 and -$7.50 losses.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-030",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Dynamic High-Excursion Structural Trailing Mandate: For positions reaching >= 1:3.50 R:R unrealized excursion, the order management engine must activate an automated high-water trailing stop pegged to the most recent M1/M5 swing low (for long positions) or swing high (for short positions), capped at a maximum giveback distance of 30% of peak unrealized profit points.",
+        "rationale": "Trade 2026-09-11 11:00 expanded to 4360.92 (+35.03 pts, 1:4.67 R:R) but bled the entire gain and triggered the original Stop Loss at 4318.39. A trailing mechanism capped at 30% giveback would have secured a minimum of +24.52 pts (~1:3.27 R:R, realizing over +$24.50 profit instead of a -$7.50 loss).",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-032",
+        "category": "Setup Selection",
+        "symbol": "EURUSD & GBPUSD",
+        "rule": "Prohibit naked Asian Range High/Low counter-trend fade setups (SMT divergences or MSS sweeps) initiated between 10:00 and 12:00 UTC unless accompanied by an M15/H1 HTF Order Block rejection and an M5 displacement candle closing below/above the Asian Range boundary by $\\ge 1.5\\times$ M5 ATR. Counter-trend limit orders placed during this London midday transition window without HTF structural exhaustion are placed under an unconditional council veto.",
+        "rationale": "In the 2026-11-03 audit, both EURUSD and GBPUSD 10:00–11:00 UTC counter-trend short signals (including a textbook Asian High sweep SMT divergence on GBPUSD) suffered 100% loss rates, absorbing multi-hour adverse drift without showing any directional follow-through.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-ARCH-033",
+        "category": "Capital Preservation",
+        "symbol": "EURUSD & GBPUSD",
+        "rule": "Counter-trend retests of M5 Bearish/Bullish Breaker Blocks ([SETUP-ARCH-003]) formed during the London session are barred from execution if the retest takes $\\ge 30\\text{ minutes}$ to fill from formation time. Limit orders that remain unfilled after 25 minutes must be canceled automatically prior to fill.",
+        "rationale": "The GBPUSD Breaker Block retest at 1.34116 took 36 minutes to fill post-signal generation, indicating a lack of impulsive rejection and leading to a slow, grinding 171-minute failure into the stop loss. Slow-filling breaker retests indicate structural absorption rather than institutional defense.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-034",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Fail-Safe Breakeven Lock: The trade management handler must register a hard-ratchet stop modification at the routing layer immediately upon tick-level verification of unrealized excursion >= 1:2.50 R:R. The modified stop must guarantee a minimum lock of Entry +/- (Spread + 0.50 pts). The engine is strictly prohibited from deferring, delaying, or queuing this modification for candle close confirmation once >= 1:2.50 R:R is breached. Any position achieving >= 1:2.50 R:R that closes in a negative PnL constitutes an unhandled execution engine fault.",
+        "rationale": "Trades on 2026-09-02 15:00 (1:3.55 R:R peak) and 2026-09-03 15:00 (1:9.53 R:R peak) both reversed to trigger initial Stop Losses for full capital drawdowns (-$6.51 and -$2.32) due to candle-close lag or failure to trigger existing BE protections.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-035",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Priority Execution Override for London/NY SMT Judas Sweeps: Any [SETUP-ARCH-007] setup triggered between 07:00 and 11:00 UTC or 13:00 and 17:00 UTC comprising a confirmed Asian Range extreme sweep (Judas swing >= 1.0x M5 ATR) coupled with confirmed XAU/XAG SMT divergence is classified as a Tier-1 Non-Discretionary Execution. All secondary session filters, counter-trend restrictions, and discretionary council stand-asides are suspended; limit orders must be automatically posted at the concurrent M5 FVG boundary.",
+        "rationale": "Stand-Aside on 2026-09-02 10:30 vetoed a classic Asian Low Judas sweep + Silver SMT divergence that rallied +68.1 points beyond target, leaking $27.47 in net alpha at an efficiency of 1:10.43 R:R.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-036",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Dynamic Volatility & Spread-Buffer Stop Sizing: Stop Loss boundaries on limit and market orders must append an active spread and volatility clearance buffer equal to: SL_Buffer = max(Current_Ask_Bid_Spread * 1.5, 0.35 * M5_ATR). Placing hard Stop Loss orders directly on structural swing ticks without clearing the dynamic spread cushion is hard-blocked at the order compilation stage.",
+        "rationale": "Multiple short orders (2026-08-31 15:00 and 2026-09-01 18:00) were tagged out solely due to Ask spread widening (e.g., Ask 4451.30 vs. SL 4449.46) during NY pre-open transitions before directionally rotating.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-MGMT-037",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Hard Multi-Tranche De-risking at 1:2.00 R:R. For any active order exceeding 1:2.00 R:R unrealized excursion, the execution engine must execute a split-bracket modification: (1) Automatically bank 33% of the position size at the next available tick; and (2) Elevate the protective stop of all remaining volume to Entry - 0.5x Risk (halving maximum residual risk). The full Breakeven ratchet continues to execute unconditionally at >= 1:2.50 R:R per RULE-MGMT-034.",
+        "rationale": "Trade [2026-08-26 17:30] achieved peak excursion of 1:2.07 R:R (+13.85 pts) before reversing into a -$6.69 loss. Implementing a structural de-risking tier at 1:2.00 R:R captures intermediate excursion, dampens drawdowns, and prevents viable swings from reversing into full monetary penalties.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-038",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Synchronous Tick-Level Pre-Emptive Ratchet Enforcement. The order routing engine must register the Breakeven Stop Loss modification concurrently with the broker as an algorithmic conditional order pegged to Bid >= Entry + (2.50 * RiskPoints) (for Longs) or Ask <= Entry - (2.50 * RiskPoints) (for Shorts) upon order fill. The engine is barred from relying on asynchronous polling or candle completion to transmit the protective order.",
+        "rationale": "Trade [2026-08-24 15:30] attained 1:2.89 R:R (+38.64 pts), well above the 1:2.50 R:R threshold mandated by RULE-MGMT-029 and RULE-MGMT-034, yet concluded in a -$13.38 loss due to delayed state synchronization during peak reversal momentum. Conditional broker-side or low-latency tick triggers eliminate execution lag.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-039",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Any session-boundary breakout setup ([SETUP-ARCH-004]) occurring within 45 minutes of the NY Cash Open (13:30–14:15 UTC) or London Midday (10:30–11:30 UTC) requires a secondary confirmation candle on the M15 timeframe closing outside the session range boundary prior to limit order placement. Standalone M5 FVG breakouts during these transition phases are placed under mandatory Council veto.",
+        "rationale": "Counterfactual replays of breakout setups at 2026-08-12 16:00 (-$6.44) and 2026-08-13 10:30 (-$5.50) suffered severe structural decay due to lack of higher-timeframe displacement volume during liquidity transition windows.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-040",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "For SMT divergence setups ([SETUP-ARCH-005] and [SETUP-ARCH-007]), the non-sweeping asset must exhibit an established swing structure with minimum excursion >= 1.0x M5 ATR away from the divergence pivot before routing orders on the sweeping asset. SMT signals where the non-sweeping asset sits within <= 0.25x M5 ATR of its corresponding range extreme are categorized as \"Unconfirmed Compression\" and blocked.",
+        "rationale": "Counterfactual audit of 2026-08-12 18:00 (Silver swept Low by 0.000 pts while Gold held) and 2026-08-13 11:00 resulted in direct -$5.50 losses because the non-sweeping asset lacked structural momentum away from the extreme, causing immediate secondary break-throughs.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-041",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Priority Routing Exemption for Session Range SMT Divergences: Any [SETUP-ARCH-007] setup triggered during London (07:00–11:30 UTC) or NY Session (13:00–18:30 UTC) that demonstrates a confirmed sweep of an established Session High or Low (London Range, NY AM Range) accompanied by inter-market SMT divergence against XAGUSD is strictly exempt from counter-trend stand-aside vetoes and transition window filters. If an M5 displacement candle forms with FVG clearance >= 1.0x M5 ATR, the order compilation engine must immediately dispatch the limit order without requiring secondary M15 closing confirmations.",
+        "rationale": "Counterfactual logs from 2026-08-06 15:30 and 2026-08-07 18:00 prove institutional distribution setups at session extremes yielded 1:7.74 and 1:3.95 R:R excursions ($39.61 missed alpha). Vetoing confirmed session-extreme SMTs creates severe opportunity drag.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-042",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Intraday Compression Range Lockout for OTE Continuations: All [SETUP-ARCH-009] (Optimal Trade Entry trend continuation) orders are hard-vetoed if the active parent dealing range is <= 30.0 points on XAUUSD and the price is oscillating within the prior session's value area without breaking and retesting a session extreme. Trend continuation orders cannot be routed unless an H1 structural break of structure (BOS) has occurred within the preceding 4 hours.",
+        "rationale": "All 3 consecutive OTE losses on 2026-08-04 (11:00, 15:30, 18:00 UTC) occurred inside compressed dealing ranges (18.86 to 26.71 pts) during rotational churn, each failing within 0 to 60 minutes.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-043",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Any [SETUP-ARCH-007] or [SETUP-ARCH-005] SMT divergence signal is strictly barred from execution if the sweeping asset breaches the reference range extreme by $< 0.50\\text{ pts}$ on XAUUSD or $< 0.050\\text{ pts}$ on XAGUSD. Sub-threshold breaches are categorized as \"Phantom Liquidity Sweeps\" and must be vetoed at the order compilation layer.",
+        "rationale": "Empirically evidenced by the failure of Stand-Aside logs on 2026-07-30 11:00 (sweep of 0.012 pts) and 2026-07-31 18:00 (sweep of 0.000 pts), both of which hit stop-losses within 12 minutes. Valid institutional re-pricing requires an authentic run on liquidity.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-EXEC-044",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Stand-aside vetoes are hard-blocked from overriding [RULE-SETUP-041] whenever an active Bearish/Bullish SMT setup displays a verified liquidity sweep $\\ge 1.50\\text{ pts}$ on XAUUSD during the NY Afternoon Window (16:30–18:30 UTC / NY PM Killzone). Such orders must route immediately as Tier-1 Non-Discretionary Limit Orders at the proximate M5 FVG.",
+        "rationale": "Directly eliminates the alpha leakage observed in Stand-Aside [2026-07-27 17:30], where an over-conservative discretionary veto prevented a $+16.50\\text{ pt}$ gain ($1:6.34\\text{ peak R:R}$) on a textbook 2.00 pt liquidity sweep of the NY AM session high.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-045",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Sequential Same-Session SMT Sweep Lockout: If a counter-trend SMT divergence setup ([SETUP-ARCH-005] or [SETUP-ARCH-007]) triggers a sweep of a session extreme that fails or incurs a structural breach within the same or contiguous trading session (within 120 minutes), all subsequent SMT signals in the same direction on that asset are placed under mandatory Council Stand-Aside veto until price prints a confirmed opposing M15 Market Structure Shift (MSS) with an energetic displacement candle closing beyond the prior swing high/low.",
+        "rationale": "On 2026-07-23 at 15:30 and 16:00 UTC, the system generated repeated Bullish SMT signals as XAUUSD cascaded lower (sweeping London Lows repeatedly). Both would have been stopped out within 60 seconds (saving -$6.53 and -$5.78). Forcing a confirmed M15 structural shift prevents rapid-fire consecutive limit execution into ongoing liquidation cascades.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-046",
+        "category": "Capital Preservation",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Minimum Post-Sweep Displacement Confirmation Filter for Non-Discretionary SMT Overrides: The automated limit execution override granted under [RULE-SETUP-041] and [RULE-EXEC-044] is conditioned upon the sweeping asset completing an M5 displacement candle whose body closes back inside the reference session range. If the sweep candle or subsequent candle closes outside the reference range boundary, the Tier-1 Non-Discretionary override is revoked, and the order compilation layer must veto the setup as an \"Expansion Breakout in Progress.\"",
+        "rationale": "Empirical replay of 2026-07-23 15:30, 16:00, and 17:30 UTC demonstrated that all three failed long setups penetrated range lows and closed decisively outside the boundary rather than showing sharp mean-reversion displacement back into the value area. This filter distinguishes true institutional absorption sweeps from genuine trend expansions.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-047",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Absolute Dynamic Floor on Protective Stop Loss Width. For all limit orders on XAUUSD routed during the London Open (07:00–11:30 UTC) or NY Sessions (13:00–18:30 UTC), the protective stop loss distance must never be set narrower than max(3.50 pts, 1.25x M5 ATR). If the structural invalidation level requires a stop distance < 3.50 pts, the order execution engine must either: (1) Synthetically widen the stop to 3.50 pts while proportionally scaling down lot size to preserve fixed dollar risk; or (2) Veto the order placement entirely under \"Micro-Stop Volatility Hazard.\"",
+        "rationale": "Empirical audit of Trade [2026-07-27 17:30] showed a 2.40 pt stop loss was stopped out at 4103.07 despite the price reaching a 1:1.24 R:R favorable excursion (4097.00). Sub-3.0 pt stops on XAUUSD suffer micro-choking from normal spread expansion and intraday noise during high-velocity killzones.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-048",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Pre-Requisite M5 Close Inside Session Boundary for Counter-Trend SMT Limit Routing. Any SMT divergence setup ([SETUP-ARCH-005] or [SETUP-ARCH-007]) that breaches a Session High or Low is permanently disqualified from non-discretionary limit placement if the sweeping candle closes its body outside the reference boundary. Routing is strictly conditional upon observing an immediate follow-through M5 candle body closing completely back inside the established session range within 15 minutes of the breach. In the absence of an internal close, the setup is classified as an \"Impulse Session Expansion\" and must be vetoed.",
+        "rationale": "Counterfactual audit of Stand-Aside [2026-07-30 15:30] verified that Gold swept London High by 2.86 pts and closed outside the range, continuing upward to hit theoretical SL for a -$9.68 loss. Enforcing an internal M5 body close eliminates the failure mode of stepping in front of unexhausted runaway expansion legs.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-049",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "During the NY PM Killzone (16:30–18:30 UTC), if a [SETUP-ARCH-007] Bearish/Bullish SMT Divergence exhibits an established session extreme sweep >= 2.00 pts on XAUUSD and inter-market non-confirmation by XAGUSD, the requirement under [RULE-RISK-046] and [RULE-SETUP-048] for an immediate M5 candle body close back inside the session boundary is waived, provided an M5 Fair Value Gap (FVG) >= 1.0x M5 ATR forms in the reversal direction within 30 minutes of the sweep peak. Order compilation engines must dispatch limit routing at the proximate FVG midpoint without waiting for full session-boundary body absorption.",
+        "rationale": "On 2026-07-27 17:30 UTC, XAUUSD delivered a confirmed 2.00 pt sweep of the NY AM High with non-confirmation in Silver. Overly strict internal boundary close rules caused a DAMAGING_STAND_ASIDE veto, leaking +13.75 pts of direct target alpha and +35.02 pts of peak excursion (1:6.34 R:R).",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-050",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "All automated limit order compilations on XAUUSD must run a pre-dispatch validation asserting Stop Distance >= max(3.50 pts, 1.25x M5 ATR). If an algorithmic limit order produces an invalidation stop distance < 3.50 pts (e.g., the 3.23 pt stop generated on 2026-07-27 18:00 UTC), the compilation layer must automatically expand the protective stop to exactly 3.50 pts and recompute lot sizing downward to preserve the strict account dollar risk limit before order dispatch. Under no circumstances may an order with SL distance < 3.50 pts be placed on the broker gateway.",
+        "rationale": "Execution logs on 2026-07-27 18:00 revealed a SELL_LIMIT order dispatched with a 3.23 pt stop loss (4100.88 to 4104.11), violating [RULE-RISK-047] specifications and introducing micro-stop choking risk into live routing.",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-RISK-051",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Hard Pre-Dispatch Gateway Assertion for Synthetic Stop Expansion. The broker order dispatch bridge must reject any limit order on XAUUSD where the calculated raw Stop Distance is $< 3.50\\text{ pts}$. Upon rejection, the execution compiler must automatically adjust the protective stop to $\\max(3.50\\text{ pts}, 1.25\\times \\text{M5 ATR})$, re-scale the position lot size downward to enforce the exact invariant fixed dollar account risk, and re-submit. Under no bypass condition may a sub-3.50 pt order reach the broker OMS.",
+        "rationale": "Trade [2026-07-27 17:30] was prematurely stopped out on Ask spread expansion ($4103.07$) due to a compressed $2.40\\text{ pt}$ stop, despite reaching $+2.97\\text{ pts}$ in target excursion. This rule eliminates micro-stop choking and mechanically enforces compliance with [RULE-RISK-047] and [RULE-RISK-050].",
+        "status": "ACTIVE"
+      },
+      {
+        "id": "RULE-SETUP-052",
+        "category": "Setup Selection",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Same-Day Counter-Trend SMT Cap Under Sustained H1 Directional Expansion. When the active daily profile exhibits directional trend expansion (H1 printing consecutive structural swing breaks without completing an opposing M15 MSS), all counter-trend [SETUP-ARCH-005] and [SETUP-ARCH-007] SMT signals are restricted to a maximum of one executed attempt per trading session. If that single counter-trend setup incurs a stop-out or invalidation, all subsequent counter-trend SMT orders for that asset are locked under hard Council Stand-Aside for the remainder of that calendar day.",
+        "rationale": "Empirical replay on 2026-07-29 and 2026-07-30 showed consecutive failing counter-trend SMT attempts during ongoing directional runs. The Stand-Aside protocol successfully averted consecutive -$5.50 and -$9.68 losses; formalizing this cap prevents knife-catching in persistent expansion regimes.",
+        "status": "ACTIVE"
+      }
+    ],
+    "superseded_rules_preserved_for_history": [
+      {
+        "id": "RULE-RISK-017",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Dynamic position sizing must enforce a strict, uncompromised pre-trade check against the $2.00 maximum dollar risk limit. For broker instruments where the minimum contract increment (0.01 lot) results in a dollar loss greater than $2.00 at the structural Stop Loss level (e.g., XAUUSD stop distance > 2.00 pts, or XAGUSD stop distance > 0.04 pts at standard contract specifications), the trade signal must be automatically aborted prior to order submission. Under no circumstances may an order route with > $2.00 potential risk.",
+        "rationale": "Audit logs revealed realized losses between -$5.21 and -$16.50 on single trades, directly violating the intended $2.00 hard cap due to minimum lot sizing constraints overriding structural stops.",
+        "status": "SUPERSEDED",
+        "superseded_by": "RULE-CORE-001",
+        "superseded_on": "2026-11-07",
+        "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
+      },
+      {
+        "id": "RULE-RISK-020",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Dynamic Pre-Trade Abort Gate & Sizing Alignment: The execution handler must enforce a deterministic pre-trade validation check against the maximum permissible account loss ($2.00). If the minimum structural Stop Loss distance (hard floor $\\ge 4.50$ points on XAUUSD, or 1.2x M5 ATR) multiplied by the broker's absolute minimum contract size (0.01 lot = $1.00/pt on standard account contracts) yields a potential loss exceeding the $2.00 ceiling, the order generation must be hard-blocked and aborted with status `REJECTED_RISK_CAP_EXCEEDED`. No trade may be submitted to the broker order book with unhedged risk exposure exceeding $2.00.",
+        "rationale": "In the 2026-09-21 audit logs, Trade 11:00 resulted in -$5.21 and Trade 16:00 resulted in -$7.32. Both breached the explicit $2.00 maximum dollar loss threshold codified in [RULE-RISK-013] and [RULE-RISK-017] because 0.01 lot XAUUSD orders were routed with 5.21 pt and 7.32 pt stops.",
+        "status": "SUPERSEDED",
+        "superseded_by": "RULE-CORE-001",
+        "superseded_on": "2026-11-07",
+        "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
+      },
+      {
+        "id": "RULE-RISK-031",
+        "category": "Risk Calibration",
+        "symbol": "XAUUSD & XAGUSD",
+        "rule": "Contract-Specification Hard Abort Filter: Prior to routing any order, the execution engine must evaluate the exact monetary risk using the instrument's contract multiplier: Risk = (Entry - SL) * ContractMultiplier * MinimumLotSize. If calculated Risk > MaximumAccountRiskCeiling ($2.00), the order submission is strictly blocked with status `REJECTED_CONTRACT_RISK_BREACH`. Discretionary stop widenings or standard 0.01 lot entries on instruments where point risk exceeds $2.00 are mathematically prohibited.",
+        "rationale": "Both losing trades on 2026-09-08 (-$5.27) and 2026-09-11 (-$7.50) materially breached the $2.00 maximum account loss ceiling mandated in RULE-RISK-020, revealing that minimum lot sizes (0.01) on gold with structural stops > 2.0 pts require either account leverage/contract adjustment or absolute pre-trade vetoes.",
+        "status": "SUPERSEDED",
+        "superseded_by": "RULE-CORE-001",
+        "superseded_on": "2026-11-07",
+        "superseded_note": "Superseded 2026-11-07 by RULE-CORE-001 ($12.00 firm cap). The $2.00 cap was unachievable at the 0.01-lot minimum on Gold (a 2-pt stop is $2.00) and was breached in practice (-$5.21 to -$16.50); rule text preserved for history, rule no longer injected into council prompts."
+      }
+    ],
+    "note": "ACTIVE rules are the frozen set. SUPERSEDED rules (the old $2 caps) are preserved verbatim for history and are NOT part of the frozen set."
+  },
+  "honesty_notes": [
+    "The 2026-11-06 analysis showed the +17.0R calibrated result was post-hoc: its bans were picked after seeing Jan–Nov 2026. This holdout therefore tests the rules AS THEY STAND at freeze time, including ARCH-002 and ARCH-009, which are RATIFIED in the registry at freeze time — no re-tuned subset is applied.",
+    "The LLM council is NOT in this loop (non-deterministic, no temperature/seed flag). This holdout measures the rule-based screener + canonical simulator only.",
+    "If any source file hash differs from this record at run time, the runner refuses to run. Re-freeze with --freeze to bless a new rule set, and record why in the commit message — a re-freeze after seeing holdout results is itself tuning on the holdout and must be disclosed as such."
+  ]
+}

@@ -74,10 +74,16 @@ def convene_review_council(
             )
     audits_block = "\n".join(audits_summary) if audits_summary else "No debated stand-asides in this cycle."
 
-    # Current active rules (limit to latest 10 to stay safely within Windows CLI limits)
-    current_rules = memory_engine.data.get("active_rules", [])[-10:]
+    # Current active rules: full text of the latest 10 (Windows CLI prompt
+    # size), plus the IDs of ALL active rules so the committee knows the
+    # full playbook it is calibrating against — previously it saw only the
+    # last 10 while the live council gets all 52.
+    all_rules = memory_engine.data.get("active_rules", [])
+    current_rules = all_rules[-10:]
     rules_summary = [f"- [{r.get('id')}]: {r.get('rule')}" for r in current_rules]
+    all_ids = ", ".join(r.get("id", "?") for r in all_rules)
     current_rules_block = "\n".join(rules_summary) if rules_summary else "None"
+    current_rules_block += f"\n\nAll active rule IDs ({len(all_rules)}): {all_ids}"
 
     prompt = (
         f"You are the Antigravity Supervisory Review Council, an elite proprietary post-mortem committee.\n"
@@ -98,8 +104,11 @@ def convene_review_council(
         f"• Validate whether capital preservation vetoes correctly avoided falling knives.\n\n"
         f"⚖️ **3. Chief Governance Arbiter (Rule Synthesis & Ratification)**\n"
         f"• Formulate 1 to 3 explicit, mathematically rigorous operational rules to add or update in the Playbook.\n"
-        f"• Format each ratified rule EXACTLY as follows:\n"
-        f"  [RATIFIED RULE]\n"
+        f"• These are PROPOSALS only — a proposed rule does NOT become an active "
+        f"playbook rule until a human approves it. Never claim a rule is ratified "
+        f"or already in force.\n"
+        f"• Format each proposed rule EXACTLY as follows:\n"
+        f"  [PROPOSED RULE]\n"
         f"  ID: RULE-XXX-00X\n"
         f"  Category: [Risk Calibration | Setup Selection | Capital Preservation | Macro Alignment]\n"
         f"  Rule: <Clear, actionable operational directive>\n"
@@ -129,10 +138,14 @@ def convene_review_council(
 
         report = proc.stdout.strip()
 
-        # Parse ratified rules
+        # Parse proposed rules. Both [PROPOSED RULE] (current prompt) and
+        # the legacy [RATIFIED RULE] header are accepted, so older LLM
+        # outputs still parse — but either way the rule is stored as a
+        # PENDING proposal, never as an active rule (Pack 5 governance:
+        # the review council may propose, only a human may ratify).
         ratified_rules = []
         rule_blocks = re.findall(
-            r'\[RATIFIED RULE\]\s*\nID:\s*([^\n]+)\s*\nCategory:\s*([^\n]+)\s*\nRule:\s*([^\n]+)\s*\nRationale:\s*([^\n]+)',
+            r'\[(?:PROPOSED|RATIFIED) RULE\]\s*\nID:\s*([^\n]+)\s*\nCategory:\s*([^\n]+)\s*\nRule:\s*([^\n]+)\s*\nRationale:\s*([^\n]+)',
             report,
             re.MULTILINE
         )
@@ -146,18 +159,23 @@ def convene_review_council(
                 "rationale": rat.strip()
             }
             ratified_rules.append(rule_entry)
-            # Register directly into memory engine
-            memory_engine.add_active_rule(
+            # PENDING proposal only — see CouncilMemory.add_pending_rule().
+            memory_engine.add_pending_rule(
                 rule_id=rule_entry["id"],
                 category=rule_entry["category"],
                 symbol=symbol,
                 rule=rule_entry["rule"],
-                rationale=rule_entry["rationale"]
+                rationale=rule_entry["rationale"],
+                source="review_council:convene_review_council",
             )
 
         return {
             "full_report": report,
-            "ratified_rules": ratified_rules
+            # "proposed_rules" is the honest name; "ratified_rules" is kept
+            # only so the backtest runners' len(rev_res['ratified_rules'])
+            # print still works — these rules are NOT ratified.
+            "proposed_rules": ratified_rules,
+            "ratified_rules": ratified_rules,
         }
 
     except Exception as e:

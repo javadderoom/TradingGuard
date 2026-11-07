@@ -12,6 +12,8 @@ import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
+from hitl.backtest.evaluator import summarize_pnl
+
 RESULTS_DIR = Path(__file__).resolve().parent.parent.parent / "backtest_results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -41,6 +43,7 @@ class BacktestLogger:
         fieldnames = [
             "session_id", "symbol", "timestamp", "session", "decision",
             "entry", "sl", "tp", "rr", "status", "realized_pnl_usd",
+            "is_realized",
             "fill_minute", "exit_minute", "mfe_price", "max_rr_potential",
             "extension_beyond_tp", "capture_efficiency_pct", "notes", "cdo_watchlist_trigger"
         ]
@@ -61,6 +64,9 @@ class BacktestLogger:
                     "rr": s.get("rr"),
                     "status": s.get("status"),
                     "realized_pnl_usd": s.get("realized_pnl_usd", 0.0),
+                    # Pack 6: True for closed trades, False for
+                    # OPEN_AT_END floating PnL (see evaluator).
+                    "is_realized": s.get("is_realized", s.get("status") != "OPEN_AT_END"),
                     "fill_minute": s.get("fill_minute"),
                     "exit_minute": s.get("exit_minute"),
                     "mfe_price": t_opt.get("mfe_price", ""),
@@ -105,25 +111,84 @@ class BacktestLogger:
         scorecard: Dict[str, Any],
         sessions: List[Dict[str, Any]]
     ) -> str:
-        # Support nested multi-asset scorecard
-        target_sc = scorecard.get('consolidated_basket', scorecard)
-        tot_sess = target_sc.get('total_sessions', scorecard.get('total_sessions', len(sessions)))
-        tot_sa = target_sc.get('stand_asides', scorecard.get('stand_asides', 0))
+        # Pack 6: the headline numbers are DERIVED from `sessions` — the
+        # same records written to full_dataset.json — instead of trusting
+        # the caller-supplied scorecard. Three historical reports shipped
+        # with zeroed headers (0 orders / $0 net / 0.0% win rate) while
+        # their own datasets showed real trades, because the scorecard
+        # keys the generator read did not match what the runner passed.
+        # Deriving here makes the report and its dataset agree by
+        # construction. The caller scorecard is still cross-checked and
+        # any disagreement is flagged loudly in the report itself.
+        # Filled = WIN + LOSS + BREAKEVEN (a fill is a fill; the old
+        # single-asset runners excluded BREAKEVEN from `filled`).
+        pnl = summarize_pnl(sessions)
+        tot_sess = len(sessions)
+        tot_sa = sum(1 for s in sessions if s.get("decision") == "STAND_ASIDE")
         sa_pct = (tot_sa / tot_sess * 100) if tot_sess > 0 else 0.0
-        tot_orders = target_sc.get('orders_approved', scorecard.get('orders', 0))
-        tot_exp = target_sc.get('expired_unfilled', scorecard.get('expired', 0))
-        tot_canc = target_sc.get('watchdog_cancelled', scorecard.get('watchdog_cancels', 0))
-        tot_filled = target_sc.get('filled_trades', scorecard.get('filled', 0))
-        wr = target_sc.get('win_rate_pct', scorecard.get('win_rate', 0.0))
-        gp = target_sc.get('gross_profit_usd', scorecard.get('gross_profit', 0.0))
-        gl = target_sc.get('gross_loss_usd', scorecard.get('gross_loss', 0.0))
-        net_pnl = target_sc.get('net_pnl_usd', scorecard.get('net_pnl', 0.0))
-        pf = target_sc.get('profit_factor', scorecard.get('profit_factor', 0.0))
+        tot_orders = tot_sess - tot_sa
+        tot_exp = sum(1 for s in sessions if s.get("status") == "EXPIRED")
+        tot_canc = sum(1 for s in sessions if s.get("status") == "CANCELLED_WATCHDOG")
+        wins = sum(1 for s in sessions if s.get("status") == "WIN")
+        losses = sum(1 for s in sessions if s.get("status") == "LOSS")
+        bes = sum(1 for s in sessions if s.get("status") == "BREAKEVEN")
+        tot_filled = wins + losses + bes
+        wr = (wins / tot_filled * 100) if tot_filled > 0 else 0.0
+        gp = pnl["realized_gross_profit_usd"]
+        gl = pnl["realized_gross_loss_usd"]
+        net_pnl = pnl["realized_net_usd"]
+        pf = pnl["realized_profit_factor"]
+        unreal_pnl = pnl["unrealized_net_usd"]
+        n_open = pnl["open_trades"]
+
+        # Cross-check against the caller-supplied scorecard (flat keys
+        # or the consolidated_basket nest). A mismatch means the runner
+        # and the dataset disagree — report it, do not silently pick one.
+        target_sc = scorecard.get('consolidated_basket', scorecard)
+        reported = {
+            "orders": target_sc.get('orders_approved', scorecard.get('orders')),
+            "filled": target_sc.get('filled_trades', scorecard.get('filled')),
+            "wins": target_sc.get('wins', scorecard.get('wins')),
+            "losses": target_sc.get('losses', scorecard.get('losses')),
+            "net_pnl_usd": target_sc.get('net_pnl_usd', scorecard.get('net_pnl')),
+        }
+        derived = {
+            "orders": tot_orders,
+            "filled": tot_filled,
+            "wins": wins,
+            "losses": losses,
+            "net_pnl_usd": net_pnl,
+        }
+        mismatches = []
+        for key, rep in reported.items():
+            if rep is None:
+                continue
+            try:
+                if round(float(rep), 2) != round(float(derived[key]), 2):
+                    mismatches.append(
+                        f"{key}: scorecard {rep} vs dataset {derived[key]}"
+                    )
+            except (TypeError, ValueError):
+                continue
+        if mismatches:
+            print("⚠️ [BacktestLogger] SCORECARD MISMATCH — report header "
+                  "is derived from the session dataset; the caller "
+                  f"scorecard disagrees: {'; '.join(mismatches)}")
 
         lines = [
             f"# 🏆 Executive Backtest Audit Report: {self.run_name.upper()}",
             f"> **Run ID**: `{self.run_id}` | **Generated**: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S Tehran Time')}",
             "",
+        ]
+        if mismatches:
+            lines.extend([
+                "> ⚠️ **SCORECARD MISMATCH (Pack 6):** the runner-supplied scorecard disagrees with "
+                "the session dataset in this same run. The numbers below are derived from the "
+                "dataset (`full_dataset.json`); the scorecard values were: "
+                + "; ".join(mismatches) + ".",
+                "",
+            ])
+        lines.extend([
             "## 📊 Portfolio Summary Scorecard",
             "| Metric | Result | Benchmark Significance |",
             "| :--- | :---: | :--- |",
@@ -132,14 +197,15 @@ class BacktestLogger:
             f"| **Approved Limit Orders** | **{tot_orders}** | Strict SMC confluences satisfied |",
             f"| **Unfilled Orders (75m TTL)** | **{tot_exp}** | Safely cancelled after 75 minutes |",
             f"| **Watchdog Radar Interceptions** | **{tot_canc}** | Adverse spikes killed before execution |",
-            f"| **Filled Institutional Trades** | **{tot_filled} ({target_sc.get('wins', 0)}W / {target_sc.get('losses', 0)}L / {target_sc.get('breakevens', 0)}BE)** | Executed with dynamic BE & target cap |",
+            f"| **Filled Institutional Trades** | **{tot_filled} ({wins}W / {losses}L / {bes}BE)** | Executed with dynamic BE & target cap |",
             f"| **Win Rate on Fills** | **{wr:.1f}%** | Won / Total Filled |",
-            f"| **Gross Profit** | **+${gp:.2f}** | Cumulative winning trades |",
-            f"| **Gross Loss** | **-${gl:.2f}** | Strictly contained under $12 cap |",
+            f"| **Gross Profit (realised)** | **+${gp:.2f}** | Cumulative winning trades |",
+            f"| **Gross Loss (realised)** | **-${gl:.2f}** | Strictly contained under $12 cap |",
             f"| **Net Realized PnL** | **${net_pnl:+.2f}** | **Bottom-line cash flow on 0.01 base lots** |",
-            f"| **Profit Factor** | **{pf:.2f}** | Gross Profit / Gross Loss |",
+            f"| **Unrealised PnL — open at end ({n_open} trade(s), NOT counted above)** | **${unreal_pnl:+.2f}** | Floating mark-to-market on still-open trades; excluded from realised totals |",
+            f"| **Profit Factor (realised)** | **{pf:.2f}** | Gross Profit / Gross Loss |",
             ""
-        ]
+        ])
 
         if "gold_performance" in scorecard and "silver_performance" in scorecard:
             g = scorecard["gold_performance"]
@@ -172,8 +238,8 @@ class BacktestLogger:
                 f"| **Filled Trades** | **{act.get('filled_trades', 0)}** | **{bld.get('total_filled_if_traded_all', 0)}** | Filtered {cfa.get('total_stand_asides', 0)} questionable sessions |",
                 f"| **Win / Loss Record** | **{act.get('wins', 0)} W / {act.get('losses', 0)} L** | **{bld.get('wins', 0)} W / {bld.get('losses', 0)} L** | Prevented {cfa.get('protective_vetoes_losses_prevented', 0)} direct stop-outs |",
                 f"| **Win Rate on Fills** | **{act.get('win_rate_pct', 0.0):.1f}%** | **{bld.get('win_rate_pct', 0.0):.1f}%** | Council delta: {act.get('win_rate_pct', 0.0) - bld.get('win_rate_pct', 0.0):+.1f}% |",
-                f"| **Gross Losses Incurred** | **-${abs(act.get('net_pnl_usd', 0.0) - act.get('wins', 0)*15.0):.2f}** | **-${bld.get('gross_loss_usd', 0.0):.2f}** | **Saved +${cfa.get('capital_saved_usd', 0.0):.2f} from bad entries** |",
-                f"| **Gross Profits Captured** | **+${act.get('net_pnl_usd', 0.0) + abs(act.get('losses', 0)*10.0):.2f}** | **+${bld.get('gross_profit_usd', 0.0):.2f}** | Missed -${cfa.get('missed_alpha_usd', 0.0):.2f} in passed winners |",
+                f"| **Gross Losses Incurred** | **-${act.get('gross_loss_usd', 0.0):.2f}** | **-${bld.get('gross_loss_usd', 0.0):.2f}** | **Saved +${cfa.get('capital_saved_usd', 0.0):.2f} from bad entries** |",
+                f"| **Gross Profits Captured** | **+${act.get('gross_profit_usd', 0.0):.2f}** | **+${bld.get('gross_profit_usd', 0.0):.2f}** | Missed -${cfa.get('missed_alpha_usd', 0.0):.2f} in passed winners |",
                 f"| **Net Realized PnL** | **${act.get('net_pnl_usd', 0.0):+.2f}** | **${bld.get('net_pnl_usd', 0.0):+.2f}** | **Net Council Value: {val_sign}${abs(val):.2f}** |",
                 f"| **Profit Factor** | **{act.get('profit_factor', 0.0):.2f}** | **{bld.get('profit_factor', 0.0):.2f}** | Risk-adjusted quality improvement |",
                 ""
@@ -186,7 +252,16 @@ class BacktestLogger:
         ])
 
         for idx, s in enumerate(sessions, 1):
-            pnl_str = f"${s.get('realized_pnl_usd', 0.0):+.2f}" if s.get('status') in ('WIN', 'LOSS') else "$0.00"
+            # Pack 6: WIN/LOSS/BREAKEVEN show their (realised) PnL — the
+            # old code printed $0.00 for BREAKEVEN even when it banked
+            # spread-minus-commission. OPEN_AT_END shows $0.00 realised
+            # and its floating PnL separately, never as realised profit.
+            if s.get('status') == 'OPEN_AT_END':
+                pnl_str = f"$0.00 realised (unrealised ${s.get('realized_pnl_usd', 0.0):+.2f})"
+            elif s.get('status') in ('WIN', 'LOSS', 'BREAKEVEN'):
+                pnl_str = f"${s.get('realized_pnl_usd', 0.0):+.2f}"
+            else:
+                pnl_str = "$0.00"
             cdo_note = s.get("cdo_trigger", "N/A")
             lines.append(
                 f"| {idx} | {s.get('timestamp')} ({s.get('session')}) | {s.get('price_at_t', 'N/A')} | "

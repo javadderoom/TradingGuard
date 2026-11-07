@@ -46,10 +46,16 @@ def log_council_decision(
     full_report: str,
     plan: Optional[Dict[str, Any]] = None,
     sweep_target: Optional[str] = None,
-    sweep_extreme: Optional[float] = None
+    sweep_extreme: Optional[float] = None,
+    screener: Optional[Dict[str, Any]] = None,
+    parse_status: Optional[str] = None
 ) -> str:
     """
     Appends a structured Council decision to the persistent ledger.
+    screener: the passing screen_ict_session() result (Pack 5) — records
+        that the council was convened only after the screener gate passed.
+    parse_status: from parse_council_decision_detailed() (Pack 5) — records
+        whether the decision came from an explicit line or a flagged fallback.
     """
     now = datetime.datetime.now()
     log_data = _load_log()
@@ -81,6 +87,8 @@ def log_council_decision(
         "decision": decision,
         "reason": reason,
         "full_report": full_report,
+        "screener": screener,
+        "parse_status": parse_status,
         "price_at_decision": curr_price,
         "sweep_target": sweep_target,
         "sweep_extreme": sweep_extreme,

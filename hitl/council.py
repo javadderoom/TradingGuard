@@ -31,29 +31,58 @@ from hitl.council_memory import get_institutional_memory_prompt
 import MetaTrader5 as mt5
 
 
-def parse_council_decision(report: Optional[str]) -> str:
+def parse_council_decision_detailed(report: Optional[str]) -> tuple:
     """
-    Strictly extracts the Council's final consensus decision from the report.
-    Returns: 'BUY_LIMIT', 'SELL_LIMIT', or 'STAND_ASIDE'
+    Extracts the Council's final consensus decision and reports *how* it
+    was found, so a silent fallback can never be mistaken for a real
+    decision. Returns (decision, parse_status) where parse_status is one of:
+      EXPLICIT_DECISION        — a "Council Decision: [BUY/SELL/STAND ASIDE]" line
+      CIO_CONSENSUS            — a Consensus/Directive/Verdict line
+      AMBIGUOUS_STAND_ASIDE    — no decision line; "STAND ASIDE" merely appears
+                                 somewhere in the report (e.g. a veto discussion)
+      PARSE_FAILURE_EMPTY      — report is None/empty (agy timeout, crash, empty output)
+      PARSE_FAILURE            — no decision line and no STAND ASIDE mention at all
+    The decision is still STAND_ASIDE in the last three cases (safe default),
+    but callers must record parse_status in the decision log — a flagged
+    failure is auditable, a silent one is not.
     """
     if not report:
-        return "STAND_ASIDE"
+        return "STAND_ASIDE", "PARSE_FAILURE_EMPTY"
 
     # 1. Match explicit Council Decision line (e.g. "• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]")
     m = re.search(r'(?i)Council\s+Decision[:\* ]+\s*\[?\s*(BUY[ _]LIMIT|SELL[ _]LIMIT|STAND[ _]ASIDE)', report)
     if m:
-        return m.group(1).upper().replace(' ', '_')
+        return m.group(1).upper().replace(' ', '_'), "EXPLICIT_DECISION"
 
     # 2. Match CIO Executive Consensus line
     m_cio = re.search(r'(?i)(?:Consensus|Directive|Verdict)[:\* ]+\s*\[?\s*(BUY[ _]LIMIT|SELL[ _]LIMIT|STAND[ _]ASIDE)', report)
     if m_cio:
-        return m_cio.group(1).upper().replace(' ', '_')
+        return m_cio.group(1).upper().replace(' ', '_'), "CIO_CONSENSUS"
 
     # 3. If explicit STAND ASIDE is stated in directive section
     if re.search(r'(?i)\bSTAND[ _]ASIDE\b', report):
-        return "STAND_ASIDE"
+        return "STAND_ASIDE", "AMBIGUOUS_STAND_ASIDE"
 
-    return "STAND_ASIDE"
+    return "STAND_ASIDE", "PARSE_FAILURE"
+
+
+def parse_council_decision(report: Optional[str]) -> str:
+    """
+    Strictly extracts the Council's final consensus decision from the report.
+    Returns: 'BUY_LIMIT', 'SELL_LIMIT', or 'STAND_ASIDE'
+    Kept for backward compatibility — see parse_council_decision_detailed()
+    for the auditable version. A parse failure is logged here (not silent)
+    and the raw report is retained in the decision log (full_report) so the
+    failure can be re-examined.
+    """
+    decision, status = parse_council_decision_detailed(report)
+    if status in ("PARSE_FAILURE", "PARSE_FAILURE_EMPTY", "AMBIGUOUS_STAND_ASIDE"):
+        print(
+            f"[Council] PARSE {status}: no explicit Council Decision line found; "
+            f"defaulting to STAND_ASIDE (safe default). Raw report retained in "
+            f"the decision log for audit."
+        )
+    return decision
 
 
 def find_agy_binary() -> str:
@@ -268,12 +297,22 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
     }
 
 
-def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -> Optional[str]:
+def convene_investment_council(
+    symbol: str = "XAUUSD",
+    mode: str = "tactical",
+    screener_result: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
     """
     Convenes the Antigravity AI Investment Council.
     mode='tactical': High-speed 4-seat execution strike team (ICT, CRO, CIO, CDO)
                      with pre-locked Tier 1 Macro & Sentiment directives.
     mode='full': Deep strategic 6-seat committee review with full macro/sentiment debates.
+    screener_result: the dict returned by screen_ict_session() (see
+        hitl/screener_gate.py). Live callers MUST pass a passing result —
+        the council is only convened after the screener gate passes, and the
+        prompt then truthfully states the setup was pre-screened. Pass None
+        only for research/backtest calls that do their own gating; the prompt
+        then says nothing about pre-screening.
     """
     if "GBP" in symbol.upper():
         sym = "GBPUSD"
@@ -301,11 +340,32 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
 
     tools_str = intel.get('tools_prompt', '')
 
+    # Screener pre-screening (Pack 5): only present when a live caller passed
+    # a passing screen_ict_session() result. The prompt must never assert
+    # pre-screening that did not happen.
+    screener_section = ""
+    if screener_result:
+        screener_section = (
+            f"=== SCREENER PRE-SCREENING (CLOSED BARS ONLY) ===\n"
+            f"The quantitative ICT screener HAS pre-screened this session on closed "
+            f"bars and flagged a candidate setup: "
+            f"{screener_result.get('setup_type')} "
+            f"({screener_result.get('archetype_id', 'n/a')}).\n"
+            f"• Screener reason: {screener_result.get('reason')}\n"
+            f"• Signal bar (closed): {screener_result.get('signal_bar_time')} | "
+            f"Entry ref: {screener_result.get('entry_ref')} | "
+            f"SL ref: {screener_result.get('sl_ref')}\n"
+            f"• Phase: {screener_result.get('phase')} | "
+            f"Recommended target: {screener_result.get('recommended_target_rr')}R\n"
+            f"Evaluate this flagged setup — do not invent a different one.\n"
+        )
+
     if mode == "tactical":
         prompt = (
             f"You are the Antigravity Tactical Execution Strike Team, an elite proprietary trading committee.\n"
             f"Execute an institutional tactical review for {sym}.\n\n"
             f"{memory_prompt}\n\n"
+            f"{screener_section}\n"
             f"=== TIER 1: PRE-LOCKED SESSION MACRO & SENTIMENT DIRECTIVE ===\n"
             f"• Mandatory Directional Filter: {intel.get('macro_bias_prompt', '')}\n"
             f"• Macro & Calendar Catalysts: {intel['macro_brief']}\n"
@@ -361,6 +421,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"You are the Antigravity Trading & Investment Council, an elite proprietary trading committee.\n"
             f"Conduct an institutional committee review for {sym}.\n\n"
             f"{memory_prompt}\n\n"
+            f"{screener_section}\n"
             f"{intel.get('macro_bias_prompt', '')}\n\n"
             f"{tools_str}\n\n"
             f"{tel_prompt}\n\n"
@@ -415,6 +476,17 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"Keep the entire council report concise, punchy, and under 500 words total. Avoid excessive fluff or boilerplate."
         )
 
+    # Determinism (Pack 5): the agy CLI is invoked exactly as
+    # `--dangerously-skip-permissions --model gemini-3.8-flash-low -p <prompt>`.
+    # No temperature/seed (or equivalent) flag for this binary exists anywhere
+    # in the repo, and the Windows-only binary cannot be probed from this
+    # Linux clone — so no determinism flag is invented here. The council is
+    # therefore non-deterministic by construction: the same session can give
+    # a different report on rerun. Mitigation (not a fix): the raw report is
+    # stored verbatim in the decision log (full_report, Pack 2) together with
+    # the parse status (parse_council_decision_detailed), so any decision can
+    # be re-audited after the fact. If agy later exposes a temperature/seed
+    # flag, set it here (temperature 0 / fixed seed) and note it in the PR.
     cmd = [
         agy_bin,
         "--dangerously-skip-permissions",
@@ -439,6 +511,11 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
         output = proc.stdout.strip()
         lines = [line for line in output.splitlines() if not line.startswith("jetski:")]
         clean_text = "\n".join(lines).strip()
+        # Raw-output audit trail: the verbatim report is what the decision
+        # log stores (full_report). Log its size here so a missing/empty
+        # deliberation is visible even if the caller swallows the return.
+        print(f"[Council] agy returned {len(clean_text)} chars for {sym} "
+              f"(model gemini-3.8-flash-low; non-deterministic — no seed flag available).")
         return clean_text if clean_text else None
 
     except subprocess.TimeoutExpired:
