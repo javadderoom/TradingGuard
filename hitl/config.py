@@ -27,7 +27,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 TELEGRAM_PROXY = os.getenv("TELEGRAM_PROXY", "http://127.0.0.1:10808")
 
 # Risk & Execution Constraints
-MAX_RISK_USD = float(os.getenv("MAX_RISK_USD", "17.0"))
+MAX_RISK_USD = float(os.getenv("MAX_RISK_USD", "12.0"))
 BASE_LOT = float(os.getenv("BASE_LOT", "0.01"))
 MAX_DAILY_LOSS_USD = float(os.getenv("MAX_DAILY_LOSS_USD", "34.0"))
 MAX_TRADES_PER_DAY = int(os.getenv("MAX_TRADES_PER_DAY", "3"))

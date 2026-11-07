@@ -324,7 +324,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"{intel.get('active_exposure_prompt', '')}\n\n"
             f"=== ADVANCED SMC & FIRM GOVERNANCE RULES ===\n"
             f"1. Limit Orders ONLY. Market orders are strictly prohibited.\n"
-            f"2. Strict $17.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling.\n"
+            f"2. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling.\n"
             f"3. Anchor limit entry at the Proximal Edge of a Fair Value Gap (FVG) or Breaker Block following MSS. On pro-trend sweeps, enter at FVG proximal edge.\n"
             f"4. Objective Structural Targets: Aim Take Profit at major Targeted Weak Swings (BSL/SSL) or HTF ATR expansion pool (RULE-TARGET-041).\n"
             f"5. SMT Alignment: Confirm correlation alignment or SMT divergence against USDX / sister FX pair.\n"
@@ -343,7 +343,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"• Market Structure Shift (MSS) Confirmation:\n\n"
             f"🛡️ **2. Chief Risk Officer (CRO - Capital Defense & Invalidation)**\n"
             f"• Structural Invalidation Level (Pinned SL per RULE-CORE-005):\n"
-            f"• Risk Geometry & Cap Verification (Strict $17 cap, R:R >= 1:3.0):\n\n"
+            f"• Risk Geometry & Cap Verification (Strict $12 cap, R:R >= 1:3.0):\n\n"
             f"⚖️ **3. CIO Executive Consensus Directive**\n"
             f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"
             f"• **Actionable Execution Plan (if applicable):** Entry: `X.XX` | SL: `X.XX` | TP: `X.XX` | Lot: `0.01` | R:R: `1:X.X` (Mandatory >= 1:3.0)\n"
@@ -353,7 +353,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"• **Developing Setup Context:**\n"
             f"• **Actionable 'IF-THEN' Re-Activation Trigger:**\n"
             f"• **Setup Invalidation Anchor:**\n\n"
-            f"Maintain institutional discipline, precise numbers, and strict adherence to the $17 risk cap.\n"
+            f"Maintain institutional discipline, precise numbers, and strict adherence to the $12 risk cap.\n"
             f"Keep the entire tactical report punchy, concise, and under 300 words total."
         )
     else:
@@ -378,7 +378,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"{intel['sentiment_brief']}\n\n"
             f"=== ADVANCED SMC & FIRM GOVERNANCE RULES ===\n"
             f"1. Limit Orders ONLY. Market orders are strictly prohibited.\n"
-            f"2. Strict $17.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling including spread/commission.\n"
+            f"2. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling including spread/commission.\n"
             f"3. Advanced SMC Execution Models: Anchor limit entry at the Proximal Edge of a Fair Value Gap (FVG), a confirmed Breaker Block (BB), or an Optimal Trade Entry (OTE 62%-79% Fibonacci discount/premium zone) following a Market Structure Shift (MSS).\n"
             f"   - [RULE-EXEC-036 POI Depth Scaling]: If the POI or zone width exceeds 6.0 pips (FX) or $2.00 (Gold), outer proximal edge entry (0%) is strictly prohibited. Scale entry deeper to the 50% Mean Threshold (MT) or 70%-75% Deep Retracement (OTE) to compress SL and guarantee R:R >= 1:3.0.\n"
             f"4. Inducement & Liquidity Targets: Identify internal liquidity inducement (IDM) and aim Take Profit at major Buy-Side (BSL), Sell-Side (SSL), or Equal Highs/Lows (EQH/EQL).\n"
@@ -401,7 +401,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"• Retail Trap / Liquidity Engineering Analysis (Where are retail stops clustered?):\n\n"
             f"🛡️ **4. Chief Risk Officer (CRO - Capital Defense & Invalidation)**\n"
             f"• Structural Invalidation Level (Where is the setup objectively dead?):\n"
-            f"• Playbook Calibration & Risk Check (Mandate min 4.0-7.0 pt SL buffer on Gold, no micro-stops, strict $17 cap, verify R:R >= 1:3.0):\n\n"
+            f"• Playbook Calibration & Risk Check (Mandate min 4.0-7.0 pt SL buffer on Gold, no micro-stops, strict $12 cap, verify R:R >= 1:3.0):\n\n"
             f"⚖️ **5. CIO Executive Consensus Directive**\n"
             f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"
             f"• **Actionable Execution Plan (if applicable):** Entry: `X.XX` | SL: `X.XX` | TP: `X.XX` | Lot: `0.01` | R:R: `1:X.X` (Mandatory >= 1:3.0)\n"
@@ -411,7 +411,7 @@ def convene_investment_council(symbol: str = "XAUUSD", mode: str = "tactical") -
             f"• **Developing Setup Context:** (What setup is currently incubating or incomplete? e.g. Unswept Asian high/low, shallow retracement, pending CPI/NFP news).\n"
             f"• **Actionable 'IF-THEN' Re-Activation Trigger:** (Exact conditional trigger: e.g. 'IF price sweeps X.XX and prints a 5M bullish displacement candle, THEN re-evaluate for a BUY LIMIT at Y.YY').\n"
             f"• **Setup Invalidation Anchor:** (Price level where this potential watchlist idea is completely invalidated).\n\n"
-            f"Maintain institutional discipline, precise numbers, and strict adherence to the $17 risk cap.\n"
+            f"Maintain institutional discipline, precise numbers, and strict adherence to the $12 risk cap.\n"
             f"Keep the entire council report concise, punchy, and under 500 words total. Avoid excessive fluff or boilerplate."
         )
 

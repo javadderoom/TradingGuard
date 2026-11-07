@@ -136,7 +136,7 @@ def run_forex_basket_backtest(
     print("SMT RADAR: Relative High/Low Intermarket SMT Engine Active (SETUP-ARCH-006)")
     print("INDEPENDENT TRADES: Fully Preserved (SETUP-ARCH-001..004 on Both Pairs)")
     print("EXECUTION REALISM: True Bid/Ask Spread (EUR 1.8 pips | GBP 2.5 pips) | 12h Forward Replay")
-    print("RISK CEILING: Strict $17.00 Max Risk per Trade | 0.01 Base Lot | 75m TTL")
+    print("RISK CEILING: Strict $12.00 Max Risk per Trade | 0.01 Base Lot | 75m TTL")
     print("=" * 85)
 
     res_eur = feed.engine.resolve_symbol("EURUSD")
@@ -249,7 +249,7 @@ def run_forex_basket_backtest(
             cand_block += (
                 f"• Alpha Execution Directive: This setup has passed pre-screening for institutional edge.\n"
                 f"  The Council's primary mandate is ALPHA CAPTURE WITH CONTROLLED RISK.\n"
-                f"  If risk <= $17 and R:R >= 1:3.0, APPROVE [BUY LIMIT] or [SELL LIMIT] anchored at the PROXIMAL edge.\n"
+                f"  If risk <= $12 and R:R >= 1:3.0, APPROVE [BUY LIMIT] or [SELL LIMIT] anchored at the PROXIMAL edge.\n"
                 f"  Do NOT invent bureaucratic reasons to stand aside when valid displacement/sweep is present.\n"
                 f"================================================\n"
             )
@@ -427,7 +427,7 @@ def run_forex_basket_backtest(
         "days_back": days_back,
         "spread_simulated": True,
         "spreads": {"EURUSD": "1.8 pips", "GBPUSD": "2.5 pips"},
-        "max_risk_ceiling_usd": 17.00,
+        "max_risk_ceiling_usd": 12.00,
         "inactivity_ttl_minutes": 75,
         "hours_forward_simulation": 12,
         "windows": "London (10:00-11:00), NY Open (15:00-16:00), NY Silver Bullet (17:30-18:00)",

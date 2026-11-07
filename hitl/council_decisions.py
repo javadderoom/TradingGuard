@@ -5,6 +5,7 @@ Persists all Council decisions (Approved orders & Stand Asides) and audits their
 
 import json
 import time
+import uuid
 import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -52,7 +53,11 @@ def log_council_decision(
     """
     now = datetime.datetime.now()
     log_data = _load_log()
-    dec_id = f"DEC-{symbol}-{int(time.time())}"
+    # Collision-proof ID: millisecond timestamp + random suffix.
+    # The old second-resolution ID (DEC-{symbol}-{int(time.time())})
+    # collided in the log (DEC-XAUUSD-1793624797, once STAND_ASIDE and
+    # once BUY_LIMIT on 2026-11-02).
+    dec_id = f"DEC-{symbol}-{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}"
 
     # Query current price if possible
     curr_price = 0.0
@@ -75,6 +80,7 @@ def log_council_decision(
         "symbol": symbol,
         "decision": decision,
         "reason": reason,
+        "full_report": full_report,
         "price_at_decision": curr_price,
         "sweep_target": sweep_target,
         "sweep_extreme": sweep_extreme,

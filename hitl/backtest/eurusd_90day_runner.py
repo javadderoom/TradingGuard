@@ -93,7 +93,7 @@ def run_expanded_eurusd_90day_backtest(
     print(f"ASSET: {symbol} | HORIZON: {days_back} Days (~{total_checkpoints // 8} Trading Days)")
     print(f"TOTAL CHECKPOINTS: {total_checkpoints} Across London, NY Open & NY Silver Bullet Windows")
     print("NEW ENGINE: Rolling Killzone Scans + 12-Hour Forward M1 Holding + Memory Playbook (EURUSD Rules)")
-    print("GOVERNANCE: Strict $17.00 Max Risk | 75m TTL | 3s Momentum Radar | Base Lot 0.01")
+    print("GOVERNANCE: Strict $12.00 Max Risk | 75m TTL | 3s Momentum Radar | Base Lot 0.01")
     print("=" * 80)
 
     resolved = feed.engine.resolve_symbol(symbol)
@@ -295,7 +295,7 @@ def run_expanded_eurusd_90day_backtest(
         "engine": "TradingGuard 6-Seat AI Council + Expanded Windows + 12h M1 Hold + Playbook Memory",
         "symbol": symbol,
         "days_back": days_back,
-        "max_risk_ceiling_usd": 17.00,
+        "max_risk_ceiling_usd": 12.00,
         "inactivity_ttl_minutes": 75,
         "hours_forward_simulation": 12,
         "windows": "London (10:00-11:00), NY Open (15:00-16:00), NY Silver Bullet (17:30-18:00)",

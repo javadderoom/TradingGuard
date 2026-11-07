@@ -181,7 +181,7 @@ def validate_order_ticket(
     sl: float,
     tp: float,
     pip_size: float = 0.00010,
-    max_risk_usd: float = 17.0,
+    max_risk_usd: float = 12.0,
     min_rr: float = 3.0
 ) -> Dict[str, Any]:
     """
@@ -353,7 +353,7 @@ def build_validated_order_plan(
         entry = valid_candidates[0]
 
         sl = landmarks.get("sl_sell_pinned")
-        if not is_fx and sl and abs(sl - entry) > 17.0:
+        if not is_fx and sl and abs(sl - entry) > 12.0:
             sl = round(entry + 7.50, 2)
         targeted_low = landmarks.get("targeted_swing_low")
         htf_tp = landmarks.get("htf_expansion_bearish")
@@ -393,7 +393,7 @@ def build_validated_order_plan(
         entry = valid_candidates[0]
 
         sl = landmarks.get("sl_buy_pinned")
-        if not is_fx and sl and abs(entry - sl) > 17.0:
+        if not is_fx and sl and abs(entry - sl) > 12.0:
             sl = round(entry - 7.50, 2)
         targeted_high = landmarks.get("targeted_swing_high")
         htf_tp = landmarks.get("htf_expansion_bullish")
@@ -417,7 +417,7 @@ def build_validated_order_plan(
         sl=sl,
         tp=tp,
         pip_size=landmarks["pip_size"],
-        max_risk_usd=17.0,
+        max_risk_usd=12.0,
         min_rr=3.0
     )
 

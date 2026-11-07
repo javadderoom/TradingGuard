@@ -10,7 +10,7 @@ Evaluates EVERY single trading session across the past 3 months (90 days):
   * Fair Value Gaps (FVG) with Proximal Edge Execution
   * Optimal Trade Entry (OTE 0.62 - 0.79) Discount/Premium zones
   * SMT Divergence against USDX
-  * Strict $17.00 Max Risk Ceiling & 75m Inactivity TTL
+  * Strict $12.00 Max Risk Ceiling & 75m Inactivity TTL
 """
 
 import sys
@@ -64,7 +64,7 @@ def run_gold_dense_backtest(days_back: int = 90, max_council_calls: int = 25) ->
     print(f"INSTRUMENT: XAUUSD | HORIZON: {days_back} Days (~{total_sessions // 2} Trading Days)")
     print(f"TOTAL EVALUATION SCOPE: {total_sessions} Full Sessions (Every Single Trading Day)")
     print("SMC STRATEGIES: Breaker Blocks | FVGs | Liquidity Sweeps | OTE | SMT Divergence")
-    print("RISK GOVERNANCE: Max Risk $17.00 | TTL 75m | 3s Momentum Radar | Base Lot 0.01")
+    print("RISK GOVERNANCE: Max Risk $12.00 | TTL 75m | 3s Momentum Radar | Base Lot 0.01")
     print("=" * 75)
 
     results = []
@@ -132,7 +132,7 @@ def run_gold_dense_backtest(days_back: int = 90, max_council_calls: int = 25) ->
                 if "Executive Summary" in line or "Critical Trigger" in line:
                     print(f"   📋 {line.strip()}")
 
-        # 4. Forward M1 Execution Simulator (75m TTL, Watchdog, $17 Cap)
+        # 4. Forward M1 Execution Simulator (75m TTL, Watchdog, $12 Cap)
         forward_m1 = feed.get_forward_m1_bars("XAUUSD", milestone, hours_forward=6)
         eval_res = evaluate_council_decision(decision_dict, forward_m1, "XAUUSD")
 

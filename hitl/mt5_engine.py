@@ -218,7 +218,7 @@ class MT5Engine:
         is_autonomous: bool = False
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
-        Validates price sanity, direction constraints, discipline locks, and strict $17 risk cap.
+        Validates price sanity, direction constraints, discipline locks, and strict $12 risk cap.
         Returns (is_valid, error_message, details_dict).
         """
         if not self.ensure_connected():
