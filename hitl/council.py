@@ -491,13 +491,14 @@ def convene_investment_council(
         agy_bin,
         "--dangerously-skip-permissions",
         "--model", "gemini-3.8-flash-low",
-        "-p", prompt
+        "--print", "-"
     ]
 
     try:
         proc = subprocess.run(
             cmd,
             cwd=str(BASE_DIR),
+            input=prompt,
             capture_output=True,
             text=True,
             encoding="utf-8",

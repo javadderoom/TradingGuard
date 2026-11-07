@@ -47,3 +47,8 @@ COOLDOWN_LOSS_MINUTES = int(os.getenv("COOLDOWN_LOSS_MINUTES", "25"))
 
 # MT5 Details
 DEFAULT_SYMBOL = os.getenv("DEFAULT_SYMBOL", "XAUUSD_o")
+
+# SubQ Snap Decision Engine Configuration
+SNAP_API_KEY = os.getenv("SNAP_API_KEY", "")
+SNAP_API_URL = os.getenv("SNAP_API_URL", "https://api.subq.ai/v1/systemone")
+SNAP_MODEL = os.getenv("SNAP_MODEL", "subq-snap-1.1")

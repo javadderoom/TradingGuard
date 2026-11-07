@@ -1,0 +1,43 @@
+{
+  "total_candidate_setups": 150,
+  "stand_aside_rate_pct": 52.0,
+  "latency_stats_ms": {
+    "mean": 864.1,
+    "median_p50": 834.0,
+    "p90": 1000.1,
+    "min": 628.1,
+    "max": 1771.0
+  },
+  "blind_screener_baseline": {
+    "closed_trades": 70,
+    "wins": 14,
+    "losses": 56,
+    "win_rate_pct": 20.0,
+    "net_realized_pnl_usd": -29.53,
+    "profit_factor": 0.89
+  },
+  "subq_snap_gated": {
+    "approved_orders": 72,
+    "closed_trades": 35,
+    "wins": 8,
+    "losses": 27,
+    "win_rate_pct": 22.86,
+    "net_realized_pnl_usd": 1.72,
+    "profit_factor": 1.01
+  },
+  "counterfactual_veto_value": {
+    "protective_vetoes_count": 29,
+    "damaging_stand_asides_count": 6,
+    "avoided_expired_count": 24,
+    "capital_saved_usd": 115.41,
+    "missed_alpha_usd": 84.16,
+    "net_snap_alpha_usd": 31.25
+  },
+  "veto_driver_breakdown": {
+    "NO_VETO": 73,
+    "MID_RANGE_CHOP": 48,
+    "MACRO_DISALIGNMENT": 13,
+    "UNCONFIRMED_SWEEP": 12,
+    "EXCESSIVE_RISK": 4
+  }
+}

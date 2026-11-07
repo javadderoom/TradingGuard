@@ -13,6 +13,8 @@ Covers:
   * the counterfactual auditor's actual net excludes OPEN_AT_END.
 """
 import sys, json, types, pathlib
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
 # --- Stub MetaTrader5 + MT5 engine so hitl modules import on Linux ---
@@ -92,7 +94,7 @@ check("empty record list sums to zero",
 DATA = pathlib.Path(__file__).resolve().parents[2] / "backtest_results" / \
     "90day_eurusd_6seat_audit_20261031_233557" / "full_dataset.json"
 if DATA.exists():
-    d = json.loads(DATA.read_text())
+    d = json.loads(DATA.read_text(encoding="utf-8"))
     sessions = d["sessions"]
     lg = BacktestLogger(run_name="probe_pack6")
     zeroed = {"total_sessions": 0, "stand_asides": 0, "orders_approved": 0,

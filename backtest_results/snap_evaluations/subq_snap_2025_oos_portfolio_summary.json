@@ -1,0 +1,455 @@
+{
+  "total_evaluated": 117,
+  "baseline_overall": {
+    "total_evaluated": 117,
+    "fills": 117,
+    "wins": 30,
+    "losses": 56,
+    "be": 17,
+    "expired": 14,
+    "closed": 103,
+    "wr": 29.1,
+    "gross_win_r": 99.0,
+    "gross_loss_r": 56.0,
+    "net_r": 43.0,
+    "pf": 1.77
+  },
+  "gated_overall": {
+    "total_evaluated": 117,
+    "fills": 90,
+    "wins": 21,
+    "losses": 42,
+    "be": 14,
+    "expired": 13,
+    "closed": 77,
+    "wr": 27.3,
+    "gross_win_r": 69.5,
+    "gross_loss_r": 42.0,
+    "net_r": 27.5,
+    "pf": 1.65
+  },
+  "counterfactual_summary": {
+    "APPROVED_LOSS": 43,
+    "APPROVED_WIN": 21,
+    "APPROVED_BREAKEVEN": 15,
+    "PROTECTIVE_VETO": 13,
+    "APPROVED_EXPIRED": 13,
+    "DAMAGING_STAND_ASIDE": 9,
+    "NEUTRAL_SCRATCH_VETO": 2,
+    "AVOIDED_EXPIRED": 1
+  },
+  "latency_stats": {
+    "mean_ms": 927.4,
+    "median_ms": 961.8,
+    "p90_ms": 1039.1
+  },
+  "seasons": {
+    "Summer": {
+      "baseline": {
+        "total_evaluated": 54,
+        "fills": 54,
+        "wins": 12,
+        "losses": 25,
+        "be": 6,
+        "expired": 11,
+        "closed": 43,
+        "wr": 27.9,
+        "gross_win_r": 41.0,
+        "gross_loss_r": 25.0,
+        "net_r": 16.0,
+        "pf": 1.64
+      },
+      "gated": {
+        "total_evaluated": 54,
+        "fills": 44,
+        "wins": 10,
+        "losses": 19,
+        "be": 5,
+        "expired": 10,
+        "closed": 34,
+        "wr": 29.4,
+        "gross_win_r": 34.0,
+        "gross_loss_r": 19.0,
+        "net_r": 15.0,
+        "pf": 1.79
+      },
+      "roles": {
+        "APPROVED_LOSS": 20,
+        "APPROVED_WIN": 10,
+        "APPROVED_EXPIRED": 10,
+        "PROTECTIVE_VETO": 5,
+        "APPROVED_BREAKEVEN": 5,
+        "DAMAGING_STAND_ASIDE": 2,
+        "AVOIDED_EXPIRED": 1,
+        "NEUTRAL_SCRATCH_VETO": 1
+      }
+    },
+    "Autumn": {
+      "baseline": {
+        "total_evaluated": 54,
+        "fills": 54,
+        "wins": 15,
+        "losses": 28,
+        "be": 8,
+        "expired": 3,
+        "closed": 51,
+        "wr": 29.4,
+        "gross_win_r": 48.5,
+        "gross_loss_r": 28.0,
+        "net_r": 20.5,
+        "pf": 1.73
+      },
+      "gated": {
+        "total_evaluated": 54,
+        "fills": 37,
+        "wins": 8,
+        "losses": 20,
+        "be": 6,
+        "expired": 3,
+        "closed": 34,
+        "wr": 23.5,
+        "gross_win_r": 26.0,
+        "gross_loss_r": 20.0,
+        "net_r": 6.0,
+        "pf": 1.3
+      },
+      "roles": {
+        "APPROVED_LOSS": 20,
+        "PROTECTIVE_VETO": 8,
+        "APPROVED_WIN": 8,
+        "APPROVED_BREAKEVEN": 7,
+        "DAMAGING_STAND_ASIDE": 7,
+        "APPROVED_EXPIRED": 3,
+        "NEUTRAL_SCRATCH_VETO": 1
+      }
+    },
+    "Winter": {
+      "baseline": {
+        "total_evaluated": 9,
+        "fills": 9,
+        "wins": 3,
+        "losses": 3,
+        "be": 3,
+        "expired": 0,
+        "closed": 9,
+        "wr": 33.3,
+        "gross_win_r": 9.5,
+        "gross_loss_r": 3.0,
+        "net_r": 6.5,
+        "pf": 3.17
+      },
+      "gated": {
+        "total_evaluated": 9,
+        "fills": 9,
+        "wins": 3,
+        "losses": 3,
+        "be": 3,
+        "expired": 0,
+        "closed": 9,
+        "wr": 33.3,
+        "gross_win_r": 9.5,
+        "gross_loss_r": 3.0,
+        "net_r": 6.5,
+        "pf": 3.17
+      },
+      "roles": {
+        "APPROVED_WIN": 3,
+        "APPROVED_BREAKEVEN": 3,
+        "APPROVED_LOSS": 3
+      }
+    }
+  },
+  "archetypes": {
+    "SETUP-ARCH-001": {
+      "baseline": {
+        "total_evaluated": 10,
+        "fills": 10,
+        "wins": 1,
+        "losses": 5,
+        "be": 3,
+        "expired": 1,
+        "closed": 9,
+        "wr": 11.1,
+        "gross_win_r": 3.5,
+        "gross_loss_r": 5.0,
+        "net_r": -1.5,
+        "pf": 0.7
+      },
+      "gated": {
+        "total_evaluated": 10,
+        "fills": 9,
+        "wins": 0,
+        "losses": 5,
+        "be": 3,
+        "expired": 1,
+        "closed": 8,
+        "wr": 0.0,
+        "gross_win_r": 0.0,
+        "gross_loss_r": 5.0,
+        "net_r": -5.0,
+        "pf": 0.0
+      },
+      "roles": {
+        "APPROVED_LOSS": 5,
+        "APPROVED_BREAKEVEN": 3,
+        "APPROVED_EXPIRED": 1,
+        "DAMAGING_STAND_ASIDE": 1
+      }
+    },
+    "SETUP-ARCH-002": {
+      "baseline": {
+        "total_evaluated": 9,
+        "fills": 9,
+        "wins": 2,
+        "losses": 4,
+        "be": 2,
+        "expired": 1,
+        "closed": 8,
+        "wr": 25.0,
+        "gross_win_r": 5.0,
+        "gross_loss_r": 4.0,
+        "net_r": 1.0,
+        "pf": 1.25
+      },
+      "gated": {
+        "total_evaluated": 9,
+        "fills": 4,
+        "wins": 1,
+        "losses": 1,
+        "be": 1,
+        "expired": 1,
+        "closed": 3,
+        "wr": 33.3,
+        "gross_win_r": 2.5,
+        "gross_loss_r": 1.0,
+        "net_r": 1.5,
+        "pf": 2.5
+      },
+      "roles": {
+        "PROTECTIVE_VETO": 3,
+        "NEUTRAL_SCRATCH_VETO": 1,
+        "APPROVED_EXPIRED": 1,
+        "APPROVED_WIN": 1,
+        "APPROVED_LOSS": 1,
+        "DAMAGING_STAND_ASIDE": 1,
+        "APPROVED_BREAKEVEN": 1
+      }
+    },
+    "SETUP-ARCH-003": {
+      "baseline": {
+        "total_evaluated": 1,
+        "fills": 1,
+        "wins": 0,
+        "losses": 0,
+        "be": 1,
+        "expired": 0,
+        "closed": 1,
+        "wr": 0.0,
+        "gross_win_r": 0.0,
+        "gross_loss_r": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "gated": {
+        "total_evaluated": 1,
+        "fills": 1,
+        "wins": 0,
+        "losses": 0,
+        "be": 1,
+        "expired": 0,
+        "closed": 1,
+        "wr": 0.0,
+        "gross_win_r": 0.0,
+        "gross_loss_r": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "roles": {
+        "APPROVED_BREAKEVEN": 1
+      }
+    },
+    "SETUP-ARCH-004": {
+      "baseline": {
+        "total_evaluated": 22,
+        "fills": 22,
+        "wins": 15,
+        "losses": 6,
+        "be": 1,
+        "expired": 0,
+        "closed": 22,
+        "wr": 68.2,
+        "gross_win_r": 51.5,
+        "gross_loss_r": 6.0,
+        "net_r": 45.5,
+        "pf": 8.58
+      },
+      "gated": {
+        "total_evaluated": 22,
+        "fills": 17,
+        "wins": 11,
+        "losses": 6,
+        "be": 0,
+        "expired": 0,
+        "closed": 17,
+        "wr": 64.7,
+        "gross_win_r": 37.5,
+        "gross_loss_r": 6.0,
+        "net_r": 31.5,
+        "pf": 6.25
+      },
+      "roles": {
+        "APPROVED_WIN": 11,
+        "APPROVED_LOSS": 6,
+        "DAMAGING_STAND_ASIDE": 4,
+        "NEUTRAL_SCRATCH_VETO": 1
+      }
+    },
+    "SETUP-ARCH-010": {
+      "baseline": {
+        "total_evaluated": 46,
+        "fills": 46,
+        "wins": 6,
+        "losses": 28,
+        "be": 7,
+        "expired": 5,
+        "closed": 41,
+        "wr": 14.6,
+        "gross_win_r": 18.0,
+        "gross_loss_r": 28.0,
+        "net_r": -10.0,
+        "pf": 0.64
+      },
+      "gated": {
+        "total_evaluated": 46,
+        "fills": 37,
+        "wins": 5,
+        "losses": 21,
+        "be": 6,
+        "expired": 5,
+        "closed": 32,
+        "wr": 15.6,
+        "gross_win_r": 15.5,
+        "gross_loss_r": 21.0,
+        "net_r": -5.5,
+        "pf": 0.74
+      },
+      "roles": {
+        "APPROVED_LOSS": 22,
+        "APPROVED_BREAKEVEN": 7,
+        "PROTECTIVE_VETO": 6,
+        "APPROVED_WIN": 5,
+        "APPROVED_EXPIRED": 5,
+        "DAMAGING_STAND_ASIDE": 1
+      }
+    },
+    "SETUP-ARCH-011": {
+      "baseline": {
+        "total_evaluated": 7,
+        "fills": 7,
+        "wins": 1,
+        "losses": 4,
+        "be": 2,
+        "expired": 0,
+        "closed": 7,
+        "wr": 14.3,
+        "gross_win_r": 3.5,
+        "gross_loss_r": 4.0,
+        "net_r": -0.5,
+        "pf": 0.88
+      },
+      "gated": {
+        "total_evaluated": 7,
+        "fills": 6,
+        "wins": 1,
+        "losses": 3,
+        "be": 2,
+        "expired": 0,
+        "closed": 6,
+        "wr": 16.7,
+        "gross_win_r": 3.5,
+        "gross_loss_r": 3.0,
+        "net_r": 0.5,
+        "pf": 1.17
+      },
+      "roles": {
+        "APPROVED_LOSS": 3,
+        "APPROVED_BREAKEVEN": 2,
+        "APPROVED_WIN": 1,
+        "PROTECTIVE_VETO": 1
+      }
+    },
+    "SETUP-ARCH-012": {
+      "baseline": {
+        "total_evaluated": 1,
+        "fills": 1,
+        "wins": 1,
+        "losses": 0,
+        "be": 0,
+        "expired": 0,
+        "closed": 1,
+        "wr": 100.0,
+        "gross_win_r": 3.5,
+        "gross_loss_r": 0.0,
+        "net_r": 3.5,
+        "pf": 99.0
+      },
+      "gated": {
+        "total_evaluated": 1,
+        "fills": 0,
+        "wins": 0,
+        "losses": 0,
+        "be": 0,
+        "expired": 0,
+        "closed": 0,
+        "wr": 0.0,
+        "gross_win_r": 0.0,
+        "gross_loss_r": 0.0,
+        "net_r": 0.0,
+        "pf": 0.0
+      },
+      "roles": {
+        "DAMAGING_STAND_ASIDE": 1
+      }
+    },
+    "SETUP-ARCH-014": {
+      "baseline": {
+        "total_evaluated": 21,
+        "fills": 21,
+        "wins": 4,
+        "losses": 9,
+        "be": 1,
+        "expired": 7,
+        "closed": 14,
+        "wr": 28.6,
+        "gross_win_r": 14.0,
+        "gross_loss_r": 9.0,
+        "net_r": 5.0,
+        "pf": 1.56
+      },
+      "gated": {
+        "total_evaluated": 21,
+        "fills": 16,
+        "wins": 3,
+        "losses": 6,
+        "be": 1,
+        "expired": 6,
+        "closed": 10,
+        "wr": 30.0,
+        "gross_win_r": 10.5,
+        "gross_loss_r": 6.0,
+        "net_r": 4.5,
+        "pf": 1.75
+      },
+      "roles": {
+        "APPROVED_LOSS": 6,
+        "APPROVED_EXPIRED": 6,
+        "PROTECTIVE_VETO": 3,
+        "APPROVED_WIN": 3,
+        "DAMAGING_STAND_ASIDE": 1,
+        "AVOIDED_EXPIRED": 1,
+        "APPROVED_BREAKEVEN": 1
+      }
+    }
+  },
+  "net_value_added_r": -15.5
+}

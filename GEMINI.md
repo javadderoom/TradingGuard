@@ -43,4 +43,13 @@
 - **Strict Synchronization Requirement**: Whenever any code modification, algorithmic refactoring, parameter calibration, threshold adjustment, timeframe handling, or execution rule is altered in the codebase (`hitl/`, `screener`, `runner`, `evaluator`, `mtf_structure`, `session_clock`, etc.), `docs/SYSTEM_EXECUTION_MIRROR.md` MUST be updated in the same turn to reflect the exact executable reality.
 - **Zero Discrepancy**: The codebase and `docs/SYSTEM_EXECUTION_MIRROR.md` must remain 100% identical in definitions, numbers, thresholds, and logic at all times. Having undocumented code behaviors or documenting theoretical mechanisms that the code does not genuinely execute is strictly forbidden.
 
+## Zero Cheerleading & Brutal Neutral Reporting Mandate (Unvarnished Truth)
+- **Zero cheerleading, zero salesmanship, zero spin, and zero sugarcoating.**
+- **Never highlight only what went well while hiding, downplaying, or rationalizing what degraded or failed.**
+- Never frame underperformance, alpha destruction, or reduced profit factors as "discipline", "resilience", or a disguised victory.
+- When reporting performance, **present degradations, losses, and negative deltas with equal or greater prominence than gains**.
+- If an AI model, gatekeeper, or filter degraded Profit Factor, Win Rate, or Net Alpha compared to the baseline, state the exact failure bluntly upfront (e.g., *"Model X degraded Profit Factor from 1.77 down to 1.65 and destroyed -15.5R of net alpha compared to the standalone screener"*).
+- Treat profit and loss with identical, unemotional analytical dispassion.
+
+
 

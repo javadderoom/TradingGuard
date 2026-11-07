@@ -1,0 +1,40 @@
+{
+  "period": "2026-03-01 to 2026-05-31",
+  "total_checkpoints_scanned": 840,
+  "candidate_setups_evaluated": 50,
+  "subq_snap_calls": 50,
+  "blind_screener_portfolio": {
+    "filled_trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "breakevens": 0,
+    "win_rate_pct": 0.0,
+    "net_pnl_usd": 0,
+    "profit_factor": 0.0
+  },
+  "subq_snap_gated_portfolio": {
+    "approved_orders": 24,
+    "stand_asides": 26,
+    "stand_aside_rate_pct": 52.0,
+    "filled_trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "breakevens": 0,
+    "win_rate_pct": 0.0,
+    "net_pnl_usd": 0,
+    "profit_factor": 0.0
+  },
+  "counterfactual_analysis": {
+    "protective_vetoes": 0,
+    "damaging_stand_asides": 0,
+    "avoided_expired": 12,
+    "capital_saved_usd": 0,
+    "missed_alpha_usd": 0,
+    "net_snap_value_usd": 0
+  },
+  "latency_stats": {
+    "avg_ms": 864.2,
+    "min_ms": 689.2,
+    "max_ms": 1455.3
+  }
+}

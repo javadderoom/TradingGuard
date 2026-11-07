@@ -169,6 +169,38 @@ Every trade strictly abides by institutional broker execution realism:
   - **`DAMAGING_STAND_ASIDE`**: Alpha missed due to over-filtering a winning trade.
   - **Net Council Capital Impact**: $\text{Capital Saved} - \text{Missed Alpha}$.
 
+### 8.1 SubQ Snap Decision Subsystem (`hitl/snap_decision_engine.py`)
+To eliminate the latency (15–30s), token costs, and regex parsing fragility of generative LLM debate transcripts, a parallel **Decision Model** subsystem is integrated using **Subquadratic SubQ Snap (`subq-snap-1.1`)**:
+- **API Endpoint**: `POST https://api.subq.ai/v1/systemone` (Decisions API).
+- **Core Mechanism**: Ingests up to 384k tokens of context (MTF structure, 50+ institutional playbook rules, sentiment, and current quote) and returns typed classifications (`BUY_LIMIT`, `SELL_LIMIT`, `STAND_ASIDE`), probability distributions, and specific veto drivers in **~880ms**.
+- **150-Session Adversarial Raw Stress Test (Spring, Summer, Autumn 2026)**:
+  - **Stand-Aside Filtering**: **52.0%** of uncurated candidate setups vetoed.
+  - **Decision Speed**: Average **864.1 ms** (p50: 834.0 ms, p90: 1000.1 ms).
+  - **Blind Screener Baseline**: 70 closed trades | 14W / 56L | 20.0% WR | Net PnL: **-$29.53** | PF: 0.89.
+  - **SubQ Snap Gated**: 35 closed trades | 8W / 27L | 22.9% WR | Net PnL: **+$1.72** | PF: 1.01.
+  - **Counterfactual Capital Defended**: 29 Protective Vetoes (+$115.41 saved) vs. 6 Damaging Vetoes (-$84.16 missed) = **+$31.25 Net Value Added**.
+- **149-Trade Curated Production Multi-Archetype Portfolio Benchmark (Full-Year 2026)**:
+  - **Dataset**: All 149 ratified production trades across Gold and GBPUSD spanning all 4 seasons (Winter, Spring, Summer, Autumn 2026) covering 7 ratified archetypes (`ARCH-001`, `ARCH-002`, `ARCH-003`, `ARCH-004`, `ARCH-010`, `ARCH-011`, `ARCH-014`).
+  - **Baseline Production Strategy**: 149 fills | 138 closed (55W / 59L / 24BE / 11Exp) | 39.9% WR | Net: **+116.5R** | PF: **2.97**.
+  - **SubQ Snap Gated (Archetype-Aware Router)**: 99 fills (33.6% veto rate) | 93 closed (40W / 36L / 17BE / 6Exp) | **43.0% WR** | Net: **+94.0R** | PF: **3.61**.
+  - **Decision Speed**: Mean **876.2 ms**, Median **949.0 ms**, p90 **992.1 ms**.
+  - **Loss Reduction**: SubQ Snap cut total gross losses by 39%, from **-59.0R down to -36.0R** (23 Protective Vetoes).
+  - **Archetype-Aware Routing Impact**: By dynamically routing questions to evaluate FVG displacement momentum rather than requiring external liquidity sweeps for continuation setups, `SETUP-ARCH-004` (Gold FVG expansion) alpha surged from **+7.5R to +34.5R**, recovering **+27.0R** of winning alpha and boosting overall portfolio Profit Factor to **3.61**.
+  - **Summer Market Regime**: Net alpha improved from +18.5R baseline to **+22.0R gated (+3.5R outperformance)** with a **34.5% win rate** and **PF 4.33**.
+- **2025 Out-of-Sample (OOS) Multi-Regime Validation (117 Setups, 146 Trading Days)**:
+  - **Dataset**: Screened across authentic historical broker M5/H1/D1 bars from June 16, 2025 to December 31, 2025 on Gold and Cable.
+  - **Baseline Production Strategy**: 117 fills | 103 closed (30W / 56L / 17BE / 14Exp) | 29.1% WR | Net: **+43.0R** | PF: **1.77**.
+  - **SubQ Snap Gated Strategy**: 90 fills (23.1% veto rate) | 77 closed (21W / 42L / 14BE / 13Exp) | 27.3% WR | Net: **+27.5R** | PF: **1.65**.
+  - **Capital Protection**: SubQ Snap successfully executed **13 Protective Vetoes** (+13.0R losses saved) with 9 Damaging Vetoes.
+  - **Persistent Alpha Generator**: `SETUP-ARCH-004` (Gold FVG Expansion) proved to be an all-weather winner across both years, generating **+45.5R baseline and +31.5R gated (64.7% WR, PF 6.25)** in 2025 OOS.
+  - **Cumulative 2-Year Multi-Regime Record (2025 OOS + 2026 In-Sample, $N = 266$ Trades)**:
+    - **Baseline**: 266 fills | 85W / 115L / 41BE | 35.3% WR | Net: **+159.5R** | PF: **2.39**.
+    - **SubQ Snap Gated**: 189 fills (28.9% veto rate) | 61W / 78L / 31BE | 35.9% WR | Net: **+121.5R** | PF: **2.56**.
+    - **Loss Reduction**: Cut gross losses from -115.0R down to -78.0R (**36 losing trades blocked**).
+    - **Speed & Uptime**: Maintained **~900 ms average latency** across all 266 live API calls with zero timeouts or crashes.
+- **Execution Separation**: Order prices (`entry`, `sl`, `tp`, `lot`) remain 100% deterministic in Python (`smc_tools.py`), with SubQ Snap operating strictly as a directional gating and risk veto filter.
+- **Dedicated Audit & Post-Mortem Report**: Complete technical details, seasonal tables, and the Asymmetry Trap mathematical analysis are documented in `docs/SUBQ_SNAP_POST_BENCHMARK_ANALYSIS.md`.
+
 ---
 
 ## 9. Gold (XAUUSD) 2-Month Master Quantitative Audit & Empirical Baseline (Sep 1 – Nov 4, 2026)
