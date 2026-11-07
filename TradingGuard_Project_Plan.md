@@ -69,7 +69,7 @@ The EA must:
 
 ### Daily Limits
 
--   Maximum daily loss: $24
+-   Maximum daily loss: $34
 -   Maximum daily profit: $35
 -   Maximum trades per day: 3
 -   Stop immediately after 2 consecutive losses
@@ -216,7 +216,7 @@ The Windows App must:
 ## Risk Management
 
 -   $12 max loss per trade
--   $24 max daily loss
+-   $34 max daily loss
 -   $35 max daily profit
 -   3 trades max per day
 -   2 consecutive losses = shutdown

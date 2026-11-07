@@ -12,7 +12,7 @@
 // Inputs
 input string   InpSessionFile   = "session.json";
 input double   InpRiskPerTrade  = 12.0;
-input double   InpMaxDailyLoss  = 24.0;
+input double   InpMaxDailyLoss  = 34.0;  // Reconciled 2026-11-07 to $34 (was $24) to match hitl/config.py
 input double   InpMaxDailyProfit= 35.0;
 input int      InpMaxTrades     = 3;
 input int      InpMaxConsecLoss = 2;

@@ -42,9 +42,14 @@ def get_optimal_trade_management(symbol: str, session_label: str, setup_arch_id:
     return 3.5, 2.0
 
 
-def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14) -> float:
+def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14, symbol: str = "XAUUSD") -> float:
+    # Fallback ATR when there are too few bars to compute one. Was a flat
+    # 1.0 for every asset: ~10,000 pips on FX, which effectively disabled
+    # the watchdog on short histories. Scaled per asset (M1 ATR scale).
+    sym = symbol.upper()
+    fallback_atr = 1.0 if "XAU" in sym else (0.05 if "XAG" in sym else 0.0005)
     if len(bars) < period:
-        return 1.0
+        return fallback_atr
     tr_list = []
     for i in range(1, len(bars)):
         h = bars[i]['high']
@@ -52,7 +57,7 @@ def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14) -> float:
         c_prev = bars[i-1]['close']
         tr = max(h - l, abs(h - c_prev), abs(l - c_prev))
         tr_list.append(tr)
-    return sum(tr_list[-period:]) / period if tr_list else 1.0
+    return sum(tr_list[-period:]) / period if tr_list else fallback_atr
 
 
 def get_default_broker_spread(symbol: str) -> float:
@@ -195,7 +200,7 @@ def evaluate_council_decision(
 
             # 2. Watchdog Momentum Radar Check (Adverse Candle Spike)
             if len(recent_m1_history) >= 15:
-                atr = _calculate_atr_m1(recent_m1_history)
+                atr = _calculate_atr_m1(recent_m1_history, symbol=symbol)
                 candle_body = abs(bar['close'] - bar['open'])
                 is_adverse = (bar['close'] < bar['open']) if is_buy else (bar['close'] > bar['open'])
                 

@@ -21,7 +21,7 @@ This project is designed to reduce discretionary mistakes by automating guardrai
 ## Current Rule Set (From Implementation)
 
 - Max loss per trade: `$12`
-- Max daily loss: `$24`
+- Max daily loss: `$34`
 - Max daily profit: `$35`
 - Max trades per day: `3`
 - Consecutive-loss trigger: `2` losses (starts a 1-hour break)

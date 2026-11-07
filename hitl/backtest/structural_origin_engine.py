@@ -483,6 +483,9 @@ def run_structural_origin_research():
             df_sub = df_sym if orig_type == 'ALL' else df_sym[df_sym['origin_type'] == orig_type]
             if df_sub.empty: continue
 
+            # scorecard was created as {} and never populated, so the saved
+            # structural_origin_scorecard.json contained only empty dicts.
+            scorecard[sym][orig_type] = {"fills": int(len(df_sub))}
             print(f"\n  [Origin Category: {orig_type}] ({len(df_sub)} Fills)")
             for p_key, p_name in [('p1', 'Policy 1: Static Target'), ('p3', 'Policy 3: 15M Structural Trailing')]:
                 net = df_sub[f"{p_key}_net_r"].sum()
@@ -497,16 +500,30 @@ def run_structural_origin_research():
                 five_r = len(df_sub[df_sub[f"{p_key}_net_r"] >= 5.0])
                 eight_r = len(df_sub[df_sub[f"{p_key}_net_r"] >= 8.0])
 
+                scorecard[sym][orig_type][p_key] = {
+                    "net_r": round(float(net), 2),
+                    "win_rate_pct": round(float(wr), 1),
+                    "wins": int(wins), "losses": int(losses), "breakevens": int(bes),
+                    "profit_factor": round(float(pf), 2),
+                    "fills_ge_5r": int(five_r), "fills_ge_8r": int(eight_r),
+                }
                 print(f"    * {p_name}: Net {net:+6.1f}R | WR: {wr:4.1f}% ({wins}W - {losses}L - {bes}BE) | PF: {pf:4.2f} | >=+5R: {five_r} | >=+8R: {eight_r}")
 
         # Seasonal performance on Policy 3
         print("\n  Seasonal Breakdown on Policy 3 (15M Trailing):")
+        scorecard[sym]["seasonal"] = {}
         for s in ['Winter', 'Spring', 'Summer', 'Autumn']:
             df_s = df_sym[df_sym['season'] == s]
             s_net_p3 = df_s['p3_net_r'].sum() if len(df_s) > 0 else 0.0
             s_net_p1 = df_s['p1_net_r'].sum() if len(df_s) > 0 else 0.0
             s_w = len(df_s[df_s['p3_net_r'] > 0.5])
             s_l = len(df_s[df_s['p3_net_r'] <= -0.5])
+            scorecard[sym]["seasonal"][s] = {
+                "fills": int(len(df_s)),
+                "p3_net_r": round(float(s_net_p3), 2),
+                "p1_net_r": round(float(s_net_p1), 2),
+                "wins": int(s_w), "losses": int(s_l),
+            }
             print(f"    - {s:6s}: {len(df_s):2d} Fills | Trailing Net: {s_net_p3:+5.1f}R ({s_w}W - {s_l}L) | Static Net: {s_net_p1:+5.1f}R")
 
     # Save JSON scorecard

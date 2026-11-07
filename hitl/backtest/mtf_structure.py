@@ -64,6 +64,10 @@ def analyze_mtf_state(
     last_mss_level = None
     invalidation_level = None
     min_mss_disp = 6.0 if is_gold else (0.40 if is_silver else 0.0025)
+    # Breakout-confirmation buffer for the H1 swing break (was a flat +2.0 for
+    # every asset: 2,000 pips on FX, so that branch was dead for FX, and
+    # 2.0 pts on Silver is ~$100 of risk. Scaled to ~1/3 of min_mss_disp.)
+    breakout_buffer = 2.0 if is_gold else (0.20 if is_silver else 0.0010)
 
     if bars_1h and len(bars_1h) >= 10:
         n = len(bars_1h)
@@ -112,7 +116,7 @@ def analyze_mtf_state(
                         relevant_sls = prior_sls[-2:]
                     trough_sl = min(relevant_sls, key=lambda s: s[3])
 
-                    if (c > last_sh[3] or h > last_sh[3] + 2.0) and (last_sh[3] - trough_sl[3]) >= min_mss_disp:
+                    if (c > last_sh[3] or h > last_sh[3] + breakout_buffer) and (last_sh[3] - trough_sl[3]) >= min_mss_disp:
                         h1_state = 'BULLISH_MSS'
                         last_mss_level = last_sh[3]
                         invalidation_level = trough_sl[3]
@@ -125,7 +129,7 @@ def analyze_mtf_state(
                         relevant_shs = prior_shs[-2:]
                     crest_sh = max(relevant_shs, key=lambda s: s[3])
 
-                    if (c < last_sl[3] or l < last_sl[3] - 2.0) and (crest_sh[3] - last_sl[3]) >= min_mss_disp:
+                    if (c < last_sl[3] or l < last_sl[3] - breakout_buffer) and (crest_sh[3] - last_sl[3]) >= min_mss_disp:
                         h1_state = 'BEARISH_MSS'
                         last_mss_level = last_sl[3]
                         invalidation_level = crest_sh[3]
@@ -184,7 +188,10 @@ def classify_setup_phase(
     if (is_buy and h1_state == "BULLISH_MSS") or ((not is_buy) and h1_state == "BEARISH_MSS"):
         dol = mtf_state.get("dol_external")
         if not dol:
-            dol = (curr_p + 35.0) if is_buy else (curr_p - 35.0)
+            # Fallback DOL distance, asset-scaled (was a flat 35.0 for every
+            # asset: 350,000 pips on FX, $1,750 on Silver at $50/pt).
+            dol_dist = 35.0 if is_gold else (0.35 if "XAG" in symbol.upper() else 0.0035)
+            dol = (curr_p + dol_dist) if is_buy else (curr_p - dol_dist)
 
         target_rr = 3.5 if is_gold else 4.5
         mss_str = f"at {mss_lvl:{val_fmt}}" if mss_lvl else ""

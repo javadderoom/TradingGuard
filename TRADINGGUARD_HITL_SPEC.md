@@ -109,7 +109,7 @@ The **TradingGuard HITL (Human-In-The-Loop)** system is a disciplined, remote tr
 | :--- | :--- | :--- |
 | **Power or ISP Outage** | Home PC loses connection while in an open trade. | **Broker-side SL/TP**: Hard SL and TP exist directly on LiteFinance servers; position is protected regardless of PC status. |
 | **VPN / Proxy Drop** | Telegram messages fail to deliver. | **Heartbeat Watchdog**: Periodic pulse notification. If no heartbeat within 15 min, user knows local connection requires attention. |
-| **Daily Loss Limit Hit** | Risk of revenge trading via mobile. | **Hard Daily Lock**: TradingGuard blocks any new limit orders once cumulative daily loss hits the daily threshold (e.g., $24.00). |
+| **Daily Loss Limit Hit** | Risk of revenge trading via mobile. | **Hard Daily Lock**: TradingGuard blocks any new limit orders once cumulative daily loss hits the daily threshold (e.g., $34.00). |
 | **Syntax / Typing Error** | Accidental invalid price or misplaced SL. | **Strict Regex & Semantic Validator**: Ensures price, SL, and TP logic align (e.g., Buy Limit must have entry < market, SL < entry, TP > entry). Rejects anomalies instantly. |
 
 ---
