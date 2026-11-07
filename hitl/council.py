@@ -1,11 +1,13 @@
 """
 TradingGuard HITL - Institutional AI Investment Council Engine
-Simulates an elite 5-member proprietary trading & investment committee:
-1. Chief ICT & SMC Technical Strategist
-2. Chief Macro & Geopolitical Economist
-3. Head of Market Sentiment & TradingView Community Intelligence
-4. Chief Risk Officer (CRO - Enforces $12 Risk Ceiling & Invalidation)
-5. Chief Investment Officer (CIO - Final Executive Consensus Directive)
+Authentic 3-Round Adversarial Multi-Agent Deliberation Architecture:
+  Round 1 (Parallel):
+    - Seat 1: Chief ICT & Order Flow Strategist (Technical edge, FVG/MSS, Order Plan)
+    - Seat 2: Chief Macro & Exposure Officer (Macro calendar, USDX, Broker Exposure RULE-RISK-010)
+  Round 2 (Adversarial):
+    - Seat 3: Adversarial Invalidation Auditor (Stress-tests Stop Loss, detects Inducement Traps)
+  Round 3 (Arbitration):
+    - Seat 4: Chief Investment Officer (CIO / Final Consensus Directive & Risk Sizing)
 
 Executed via native Google Antigravity binary (agy.exe) with zero financial cost.
 """
@@ -13,11 +15,14 @@ Executed via native Google Antigravity binary (agy.exe) with zero financial cost
 import os
 import sys
 import re
+import time
 import shutil
+import tempfile
 import subprocess
 import datetime
+import concurrent.futures
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 
 # Ensure workspace root is in sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +36,7 @@ from hitl.council_memory import get_institutional_memory_prompt
 import MetaTrader5 as mt5
 
 
-def parse_council_decision_detailed(report: Optional[str]) -> tuple:
+def parse_council_decision_detailed(report: Optional[str]) -> Tuple[str, str]:
     """
     Extracts the Council's final consensus decision and reports *how* it
     was found, so a silent fallback can never be mistaken for a real
@@ -42,9 +47,6 @@ def parse_council_decision_detailed(report: Optional[str]) -> tuple:
                                  somewhere in the report (e.g. a veto discussion)
       PARSE_FAILURE_EMPTY      — report is None/empty (agy timeout, crash, empty output)
       PARSE_FAILURE            — no decision line and no STAND ASIDE mention at all
-    The decision is still STAND_ASIDE in the last three cases (safe default),
-    but callers must record parse_status in the decision log — a flagged
-    failure is auditable, a silent one is not.
     """
     if not report:
         return "STAND_ASIDE", "PARSE_FAILURE_EMPTY"
@@ -70,10 +72,6 @@ def parse_council_decision(report: Optional[str]) -> str:
     """
     Strictly extracts the Council's final consensus decision from the report.
     Returns: 'BUY_LIMIT', 'SELL_LIMIT', or 'STAND_ASIDE'
-    Kept for backward compatibility — see parse_council_decision_detailed()
-    for the auditable version. A parse failure is logged here (not silent)
-    and the raw report is retained in the decision log (full_report) so the
-    failure can be re-examined.
     """
     decision, status = parse_council_decision_detailed(report)
     if status in ("PARSE_FAILURE", "PARSE_FAILURE_EMPTY", "AMBIGUOUS_STAND_ASIDE"):
@@ -91,7 +89,6 @@ def find_agy_binary() -> str:
     if found:
         return found
     
-    # Common default paths on Windows
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     candidates = [
         os.path.join(local_app_data, "agy", "bin", "agy.exe"),
@@ -102,6 +99,80 @@ def find_agy_binary() -> str:
             return c
             
     return "agy"
+
+
+def _execute_agent_prompt(
+    agy_bin: str,
+    seat_name: str,
+    system_role: str,
+    task_payload: str,
+    model: str = "gemini-3.8-flash-low",
+    timeout: int = 50
+) -> Tuple[str, float, str]:
+    """
+    Executes a single institutional seat via agy CLI using file-based prompt piping.
+    Avoids Windows CLI character limits and ensures clean execution.
+    Returns: (seat_name, elapsed_seconds, response_text)
+    """
+    t0 = time.time()
+    full_prompt = (
+        f"You are operating as a dedicated, specialized institutional agent in TradingGuard.\n\n"
+        f"=== SYSTEM IDENTITY & MANDATE ===\n{system_role}\n\n"
+        f"=== TASK CONTEXT & MARKET DATA ===\n{task_payload}\n\n"
+        f"Deliver your findings strictly in clear, professional English. Be quantitative, precise, and concise."
+    )
+
+    temp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".txt") as tf:
+            tf.write(full_prompt)
+            temp_name = tf.name
+
+        cmd = [
+            agy_bin,
+            "--dangerously-skip-permissions",
+            "--model", model,
+            "-p", f"@{temp_name}"
+        ]
+
+        proc = subprocess.run(
+            cmd,
+            cwd=str(BASE_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=timeout
+        )
+
+        try:
+            if os.path.exists(temp_name):
+                os.remove(temp_name)
+        except Exception:
+            pass
+
+        dt = time.time() - t0
+        if proc.returncode != 0:
+            err_msg = f"[ERROR: Seat {seat_name} returned exit code {proc.returncode}: {proc.stderr.strip()}]"
+            return seat_name, dt, err_msg
+
+        lines = [line for line in proc.stdout.splitlines() if not line.startswith("jetski:")]
+        clean_text = "\n".join(lines).strip()
+        return seat_name, dt, clean_text if clean_text else f"[ERROR: Seat {seat_name} returned empty output]"
+
+    except subprocess.TimeoutExpired:
+        try:
+            if temp_name and os.path.exists(temp_name):
+                os.remove(temp_name)
+        except Exception:
+            pass
+        return seat_name, time.time() - t0, f"[ERROR: Seat {seat_name} timed out after {timeout}s]"
+    except Exception as e:
+        try:
+            if temp_name and os.path.exists(temp_name):
+                os.remove(temp_name)
+        except Exception:
+            pass
+        return seat_name, time.time() - t0, f"[ERROR: Seat {seat_name} encountered exception: {e}]"
 
 
 def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
@@ -213,7 +284,7 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
                 lines.append(f"• ACTIVE POSITION #{p['ticket']}: {p['side']} {p['volume']} lot @ {p['price_open']} (SL: {p['sl']}, TP: {p['tp']}, PnL: ${p['profit']:.2f}, Opened: {p['time']})")
             for o in pending_orders:
                 lines.append(f"• PENDING ORDER #{o['ticket']}: {o['type']} {o['volume']} lot @ {o['price_open']} (SL: {o['sl']}, TP: {o['tp']}, Placed: {o['time']})")
-            lines.append("⚠️ CRITICAL GOVERNANCE MANDATE (RULE-RISK-010): An active position/order is ALREADY OPEN on this symbol. Do NOT suggest a duplicate trade in the same direction or within the same structural zone. CRO must immediately VETO (STAND ASIDE) duplicate exposure.")
+            lines.append("⚠️ CRITICAL GOVERNANCE MANDATE (RULE-RISK-010): An active position/order is ALREADY OPEN on this symbol. Do NOT suggest a duplicate trade in the same direction or within the same structural zone. Risk Officer must immediately VETO (STAND ASIDE) duplicate exposure.")
             active_exposure_prompt = "\n".join(lines)
         else:
             active_exposure_prompt = "=== ACTIVE BROKER EXPOSURE ===\n• Zero open positions or pending orders on this symbol. Account is flat."
@@ -226,6 +297,7 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
     
     # Active HTF Fundamental Directional Bias Engine
     macro_bias_prompt = ""
+    bias_data = {}
     try:
         from hitl.macro_bias import calculate_htf_fundamental_bias, format_fundamental_bias_prompt
         bias_data = calculate_htf_fundamental_bias(sym)
@@ -244,7 +316,6 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
         from hitl.backtest.data_feed import _convert_records
         from hitl.backtest.hybrid_telemetry import extract_hybrid_telemetry, format_telemetry_prompt
         from hitl.tools.smc_tools import get_smc_landmarks, format_smc_tools_block
-        import datetime
         now = datetime.datetime.now()
         r_1d = mt5.copy_rates_from_pos(resolved_sym, mt5.TIMEFRAME_D1, 0, 30)
         r_1h = mt5.copy_rates_from_pos(resolved_sym, mt5.TIMEFRAME_H1, 0, 30)
@@ -287,6 +358,7 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
         "usdx_ask": usdx_ask,
         "macro_brief": macro_brief,
         "macro_bias_prompt": macro_bias_prompt,
+        "macro_bias_data": bias_data,
         "sentiment_brief": sentiment_brief,
         "telemetry_prompt": telemetry_prompt,
         "tools_prompt": tools_prompt,
@@ -303,16 +375,11 @@ def convene_investment_council(
     screener_result: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """
-    Convenes the Antigravity AI Investment Council.
-    mode='tactical': High-speed 4-seat execution strike team (ICT, CRO, CIO, CDO)
-                     with pre-locked Tier 1 Macro & Sentiment directives.
-    mode='full': Deep strategic 6-seat committee review with full macro/sentiment debates.
-    screener_result: the dict returned by screen_ict_session() (see
-        hitl/screener_gate.py). Live callers MUST pass a passing result —
-        the council is only convened after the screener gate passes, and the
-        prompt then truthfully states the setup was pre-screened. Pass None
-        only for research/backtest calls that do their own gating; the prompt
-        then says nothing about pre-screening.
+    Convenes the TradingGuard Institutional Multi-Agent Investment Council.
+    Implements an authentic 3-Round Adversarial Deliberation Protocol:
+      - Round 1 (Parallel): Seat 1 (ICT Strategist) & Seat 2 (Macro & Exposure Officer)
+      - Round 2 (Adversarial): Seat 3 (Adversarial Invalidation Auditor) stress-tests setup
+      - Round 3 (Consensus Directive): Seat 4 (CIO Consensus Arbitrator) issues binding order
     """
     if "GBP" in symbol.upper():
         sym = "GBPUSD"
@@ -320,8 +387,8 @@ def convene_investment_council(
         sym = "EURUSD"
     else:
         sym = "XAUUSD"
+        
     intel = assemble_council_intelligence(sym)
-    
     if not intel["charts_ready"]:
         missing = [str(p) for p in intel["chart_paths"] if not p.exists()]
         print(f"[Council] Incomplete multi-timeframe chart package: {missing}")
@@ -337,204 +404,198 @@ def convene_investment_council(
     fmt = ".5f" if is_fx else ".2f"
     bid_str = f"{intel['bid']:{fmt}}"
     ask_str = f"{intel['ask']:{fmt}}"
-
     tools_str = intel.get('tools_prompt', '')
 
-    # Screener pre-screening (Pack 5): only present when a live caller passed
-    # a passing screen_ict_session() result. The prompt must never assert
-    # pre-screening that did not happen.
     screener_section = ""
     if screener_result:
         screener_section = (
             f"=== SCREENER PRE-SCREENING (CLOSED BARS ONLY) ===\n"
             f"The quantitative ICT screener HAS pre-screened this session on closed "
-            f"bars and flagged a candidate setup: "
-            f"{screener_result.get('setup_type')} "
+            f"bars and flagged candidate setup: {screener_result.get('setup_type')} "
             f"({screener_result.get('archetype_id', 'n/a')}).\n"
             f"• Screener reason: {screener_result.get('reason')}\n"
-            f"• Signal bar (closed): {screener_result.get('signal_bar_time')} | "
+            f"• Signal bar: {screener_result.get('signal_bar_time')} | "
             f"Entry ref: {screener_result.get('entry_ref')} | "
             f"SL ref: {screener_result.get('sl_ref')}\n"
             f"• Phase: {screener_result.get('phase')} | "
             f"Recommended target: {screener_result.get('recommended_target_rr')}R\n"
-            f"Evaluate this flagged setup — do not invent a different one.\n"
+            f"Evaluate this specific flagged setup — do not invent an imaginary setup.\n"
         )
 
-    if mode == "tactical":
-        prompt = (
-            f"You are the Antigravity Tactical Execution Strike Team, an elite proprietary trading committee.\n"
-            f"Execute an institutional tactical review for {sym}.\n\n"
-            f"{memory_prompt}\n\n"
-            f"{screener_section}\n"
-            f"=== TIER 1: PRE-LOCKED SESSION MACRO & SENTIMENT DIRECTIVE ===\n"
-            f"• Mandatory Directional Filter: {intel.get('macro_bias_prompt', '')}\n"
-            f"• Macro & Calendar Catalysts: {intel['macro_brief']}\n"
-            f"• Retail Sentiment Baseline: {intel['sentiment_brief']}\n"
-            f"⚠️ Operational Mandate: Macro bias is PRE-LOCKED. You are the real-time Execution Team (ICT, CRO, CIO, CDO). Do NOT debate macroeconomics. Focus 100% on sweep validation, displacement MSS, structural stop pinning, and risk asymmetry.\n\n"
-            f"{tools_str}\n\n"
-            f"{tel_prompt}\n\n"
-            f"=== MULTI-TIMEFRAME CHART DOSSIER ===\n"
-            f"- 1D Daily Chart: '{p_1d.as_posix()}'\n"
-            f"- 1H Trend Chart: '{p_1h.as_posix()}'\n"
-            f"- 15M Structure Chart: '{p_15m.as_posix()}'\n"
-            f"- 5M Execution Chart: '{p_5m.as_posix()}'\n\n"
-            f"=== LIVE MARKET DATA & BROKER METRICS ===\n"
-            f"- Current Bid: {bid_str} | Ask: {ask_str} (Spread: {intel['spread_pts']} pts)\n"
-            f"- US Dollar Index (USDX): {intel['usdx_bid']:.2f} / {intel['usdx_ask']:.2f}\n\n"
-            f"{intel.get('active_exposure_prompt', '')}\n\n"
-            f"=== ADVANCED SMC & FIRM GOVERNANCE RULES ===\n"
-            f"1. Limit Orders ONLY. Market orders are strictly prohibited.\n"
-            f"2. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling.\n"
-            f"3. Anchor limit entry at the Proximal Edge of a Fair Value Gap (FVG) or Breaker Block following MSS. On pro-trend sweeps, enter at FVG proximal edge.\n"
-            f"4. Objective Structural Targets: Aim Take Profit at major Targeted Weak Swings (BSL/SSL) or HTF ATR expansion pool (RULE-TARGET-041).\n"
-            f"5. SMT Alignment: Confirm correlation alignment or SMT divergence against USDX / sister FX pair.\n"
-            f"6. Minimum Risk-to-Reward (R:R) must be 1:3.0 or higher. Veto any setup below 1:3.0.\n"
-            f"7. Directional Confluence & Session Sweep Rule:\n"
-            f"   - Pro-trend setups aligning with Tier 1 Macro Filter aim for External Liquidity Pools / Daily High-Low expansions.\n"
-            f"   - SELECTIVE COUNTER-TREND IS FULLY AUTHORIZED: If price sweeps a prominent session benchmark (Asian High/Low or Prior Day High/Low) and confirms a Market Structure Shift (MSS) with displacement FVG on M1/M5, the Council is explicitly AUTHORIZED to trade the counter-trend retracement.\n"
-            f"   - Counter-trend setups must strictly target Internal Liquidity (opposing session FVG / Equilibrium / Asian Range midpoint) with R:R >= 1:3.0.\n"
-            f"8. Zero Duplicate Exposure Defense (RULE-RISK-010): If an active position or pending order is already open for this symbol in the same direction or within the same structural zone, the Chief Risk Officer (CRO) must immediately issue a MANDATORY VETO (STAND ASIDE). The Council is strictly prohibited from proposing duplicate trades or stacking risk into an already-active trade zone.\n"
-            f"9. Internal vs External Sweep Nuance: When HTF Macro is strongly locked pro-trend (e.g. BUY ONLY on Gold), a confirmed raid of Internal Liquidity (e.g. New York opening range micro-lows, session equal lows, or 15M discount swing lows) followed by M5 displacement MSS is an authentic, valid entry trigger. Do not demand that price completely sweep the outer London Low if institutional accumulation in discount is already confirmed by displacement body candle closes.\n\n"
-            f"Deliver the Tactical Execution findings strictly in the following format:\n\n"
-            f"🏛️ **TRADINGGUARD TACTICAL EXECUTION COUNCIL: {sym}**\n\n"
-            f"👨‍💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**\n"
-            f"• Liquidity Sweep & Judas Swing Validation:\n"
-            f"• Active POI & Displacement FVG Retracement:\n"
-            f"• Market Structure Shift (MSS) Confirmation:\n\n"
-            f"🛡️ **2. Chief Risk Officer (CRO - Capital Defense & Invalidation)**\n"
-            f"• Structural Invalidation Level (Pinned SL per RULE-CORE-005):\n"
-            f"• Risk Geometry & Cap Verification (Strict $12 cap, R:R >= 1:3.0):\n\n"
-            f"⚖️ **3. CIO Executive Consensus Directive**\n"
-            f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"
-            f"• **Actionable Execution Plan (if applicable):** Entry: `X.XX` | SL: `X.XX` | TP: `X.XX` | Lot: `0.01` | R:R: `1:X.X` (Mandatory >= 1:3.0)\n"
-            f"• **Playbook Alignment:** (Confirm alignment with Active Institutional Rules e.g. entry anchor / stop buffer).\n"
-            f"• **Executive Summary & Critical Trigger:** (Clear 2-sentence institutional synthesis).\n\n"
-            f"📋 **4. Chief Watchlist Officer (CDO - Tactical Reconnaissance)**\n"
-            f"• **Developing Setup Context:**\n"
-            f"• **Actionable 'IF-THEN' Re-Activation Trigger:**\n"
-            f"• **Setup Invalidation Anchor:**\n\n"
-            f"Maintain institutional discipline, precise numbers, and strict adherence to the $12 risk cap.\n"
-            f"Keep the entire tactical report punchy, concise, and under 300 words total."
-        )
-    else:
-        prompt = (
-            f"You are the Antigravity Trading & Investment Council, an elite proprietary trading committee.\n"
-            f"Conduct an institutional committee review for {sym}.\n\n"
-            f"{memory_prompt}\n\n"
-            f"{screener_section}\n"
-            f"{intel.get('macro_bias_prompt', '')}\n\n"
-            f"{tools_str}\n\n"
-            f"{tel_prompt}\n\n"
-            f"=== MULTI-TIMEFRAME CHART DOSSIER ===\n"
-            f"- 1D Daily Chart: '{p_1d.as_posix()}'\n"
-            f"- 1H Trend Chart: '{p_1h.as_posix()}'\n"
-            f"- 15M Structure Chart: '{p_15m.as_posix()}'\n"
-            f"- 5M Execution Chart: '{p_5m.as_posix()}'\n\n"
-            f"=== LIVE MARKET DATA & BROKER METRICS ===\n"
-            f"- Current Bid: {bid_str} | Ask: {ask_str} (Spread: {intel['spread_pts']} pts)\n"
-            f"- US Dollar Index (USDX): {intel['usdx_bid']:.2f} / {intel['usdx_ask']:.2f}\n\n"
-            f"=== MACROECONOMIC & GEOPOLITICAL ENVIRONMENT ===\n"
-            f"{intel['macro_brief']}\n\n"
-            f"=== TRADINGVIEW COMMUNITY & SENTIMENT RECONNAISSANCE ===\n"
-            f"{intel['sentiment_brief']}\n\n"
-            f"=== ADVANCED SMC & FIRM GOVERNANCE RULES ===\n"
-            f"1. Limit Orders ONLY. Market orders are strictly prohibited.\n"
-            f"2. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling including spread/commission.\n"
-            f"3. Advanced SMC Execution Models: Anchor limit entry at the Proximal Edge of a Fair Value Gap (FVG), a confirmed Breaker Block (BB), or an Optimal Trade Entry (OTE 62%-79% Fibonacci discount/premium zone) following a Market Structure Shift (MSS).\n"
-            f"   - [RULE-EXEC-036 POI Depth Scaling]: If the POI or zone width exceeds 6.0 pips (FX) or $2.00 (Gold), outer proximal edge entry (0%) is strictly prohibited. Scale entry deeper to the 50% Mean Threshold (MT) or 70%-75% Deep Retracement (OTE) to compress SL and guarantee R:R >= 1:3.0.\n"
-            f"4. Inducement & Liquidity Targets: Identify internal liquidity inducement (IDM) and aim Take Profit at major Buy-Side (BSL), Sell-Side (SSL), or Equal Highs/Lows (EQH/EQL).\n"
-            f"5. SMT Alignment: Confirm correlation alignment or SMT divergence against USDX.\n"
-            f"6. Minimum Risk-to-Reward (R:R) must be 1:3.0 or higher. Any setup targeting an opposing liquidity pool that yields less than 1:3.0 must be strictly vetoed (STAND ASIDE).\n"
-            f"7. Directional Confluence & Session Sweep Rule: Pro-trend setups align with HTF Macro Bias targeting external pools. Selective counter-trend mean-reversion is authorized if price sweeps prominent session liquidity (Asian High/Low or PDH/PDL) with confirmed M5 displacement MSS, targeting internal liquidity (opposing FVG or Asian range equilibrium) with R:R >= 1:3.0.\n"
-            f"8. If technical, macro, or sentiment factors are conflicting or risk is asymmetric against us, order STAND ASIDE.\n\n"
-            f"Deliver the Council's deliberative findings strictly in the following format:\n\n"
-            f"🏛️ **ANTIGRAVITY AI INVESTMENT COUNCIL: {sym}**\n\n"
-            f"👨‍💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**\n"
-            f"• 1D Macro Order Flow & Institutional Bias:\n"
-            f"• SMC POIs (FVGs, Breaker Blocks, OTE 62-79% Discount/Premium):\n"
-            f"• Liquidity Sweeps (Judas Swings) & Market Structure Shift (MSS):\n\n"
-            f"🌐 **2. Chief Macro & Geopolitical Economist**\n"
-            f"• Central Bank Policy & USDX / SMT Divergence Alignment:\n"
-            f"• HTF Fundamental Bias & Mandatory Directional Filter [BUY ONLY / SELL ONLY / SELECTIVE]:\n"
-            f"• Scheduled Economic Events & Volatility Window Risk:\n\n"
-            f"👥 **3. Head of Sentiment & TradingView Community Intelligence**\n"
-            f"• Retail Crowd Positioning & Consensus Assessment:\n"
-            f"• Retail Trap / Liquidity Engineering Analysis (Where are retail stops clustered?):\n\n"
-            f"🛡️ **4. Chief Risk Officer (CRO - Capital Defense & Invalidation)**\n"
-            f"• Structural Invalidation Level (Where is the setup objectively dead?):\n"
-            f"• Playbook Calibration & Risk Check (Mandate min 4.0-7.0 pt SL buffer on Gold, no micro-stops, strict $12 cap, verify R:R >= 1:3.0):\n\n"
-            f"⚖️ **5. CIO Executive Consensus Directive**\n"
-            f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"
-            f"• **Actionable Execution Plan (if applicable):** Entry: `X.XX` | SL: `X.XX` | TP: `X.XX` | Lot: `0.01` | R:R: `1:X.X` (Mandatory >= 1:3.0)\n"
-            f"• **Playbook Alignment:** (Confirm alignment with Active Institutional Rules e.g. entry anchor / stop buffer).\n"
-            f"• **Executive Summary & Critical Trigger:** (Clear 2-sentence institutional synthesis on why this decision was reached and what condition triggers immediate stand-down).\n\n"
-            f"📋 **6. Chief Watchlist & Developing Opportunities Officer (CDO - Tactical Reconnaissance)**\n"
-            f"• **Developing Setup Context:** (What setup is currently incubating or incomplete? e.g. Unswept Asian high/low, shallow retracement, pending CPI/NFP news).\n"
-            f"• **Actionable 'IF-THEN' Re-Activation Trigger:** (Exact conditional trigger: e.g. 'IF price sweeps X.XX and prints a 5M bullish displacement candle, THEN re-evaluate for a BUY LIMIT at Y.YY').\n"
-            f"• **Setup Invalidation Anchor:** (Price level where this potential watchlist idea is completely invalidated).\n\n"
-            f"Maintain institutional discipline, precise numbers, and strict adherence to the $12 risk cap.\n"
-            f"Keep the entire council report concise, punchy, and under 500 words total. Avoid excessive fluff or boilerplate."
-        )
+    market_dossier = (
+        f"=== MULTI-TIMEFRAME ASSET DOSSIER ===\n"
+        f"• Asset: {sym} | Current Bid: {bid_str} | Ask: {ask_str} (Spread: {intel['spread_pts']} pts)\n"
+        f"• US Dollar Index (USDX): {intel['usdx_bid']:.2f} / {intel['usdx_ask']:.2f}\n"
+        f"• Charts: 1D: '{p_1d.as_posix()}', 1H: '{p_1h.as_posix()}', 15M: '{p_15m.as_posix()}', 5M: '{p_5m.as_posix()}'\n\n"
+        f"{screener_section}\n"
+        f"{tools_str}\n\n"
+        f"{tel_prompt}\n\n"
+        f"{intel.get('active_exposure_prompt', '')}"
+    )
 
-    # Determinism (Pack 5): the agy CLI is invoked exactly as
-    # `--dangerously-skip-permissions --model gemini-3.8-flash-low -p <prompt>`.
-    # No temperature/seed (or equivalent) flag for this binary exists anywhere
-    # in the repo, and the Windows-only binary cannot be probed from this
-    # Linux clone — so no determinism flag is invented here. The council is
-    # therefore non-deterministic by construction: the same session can give
-    # a different report on rerun. Mitigation (not a fix): the raw report is
-    # stored verbatim in the decision log (full_report, Pack 2) together with
-    # the parse status (parse_council_decision_detailed), so any decision can
-    # be re-audited after the fact. If agy later exposes a temperature/seed
-    # flag, set it here (temperature 0 / fixed seed) and note it in the PR.
-    cmd = [
-        agy_bin,
-        "--dangerously-skip-permissions",
-        "--model", "gemini-3.8-flash-low",
-        "--print", "-"
-    ]
+    t_start = time.time()
+    print(f"[Council] Convening authentic 3-Round Multi-Agent Council for {sym}...")
 
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(BASE_DIR),
-            input=prompt,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=60
-        )
+    # -------------------------------------------------------------
+    # ROUND 1: Isolated Independent Evaluations (Parallel)
+    # -------------------------------------------------------------
+    ict_role = (
+        "You are the Chief ICT & Order Flow Strategist for TradingGuard.\n"
+        "Your exclusive mandate is technical order flow analysis based strictly on ICT/SMC principles.\n"
+        "Focus on: Liquidity sweeps (Judas Swings), Market Structure Shifts (MSS), displacement candles, "
+        "and anchoring limit entries at the Proximal Edge of confirmed Fair Value Gaps (FVG) or Breakers.\n"
+        "Strict rules: Limit orders ONLY. Stop loss must be structurally pinned behind the sweep wick. "
+        "Minimum R:R must be 1:3.0 or higher. Max risk $12.00 (0.01 lot)."
+    )
+    ict_task = (
+        f"{memory_prompt}\n\n"
+        f"{market_dossier}\n\n"
+        f"Deliver your technical findings strictly in the following structure:\n"
+        f"• Liquidity Sweep & Judas Swing Validation:\n"
+        f"• Active POI & Displacement FVG Retracement:\n"
+        f"• Market Structure Shift (MSS) Confirmation:\n"
+        f"• Proposed Technical Execution Plan (or NO_SETUP):\n"
+        f"  - Order Type: [BUY LIMIT | SELL LIMIT | NO_SETUP]\n"
+        f"  - Entry Price: `X.XX` (Proximal FVG edge)\n"
+        f"  - Stop Loss: `X.XX` (Structural invalidation)\n"
+        f"  - Take Profit: `X.XX` (Major BSL/SSL pool)\n"
+        f"  - Risk:Reward Ratio: `1:X.X` (Must be >= 1:3.0)\n"
+        f"Keep under 200 words. Be precise with exact price numbers."
+    )
 
-        if proc.returncode != 0:
-            print(f"[Council] agy execution failed ({proc.returncode}): {proc.stderr}")
-            return None
+    macro_role = (
+        "You are the Chief Macro & Exposure Risk Officer for TradingGuard.\n"
+        "You do NOT analyze 5-minute candlestick patterns. Your sole mandate is macro catalysts, "
+        "economic news calendar volatility, USDX correlation alignment, and enforcing account exposure limits.\n"
+        "Critical Rules:\n"
+        "1. High-Impact News Embargo: Strict trading embargo if CPI, NFP, FOMC or high-impact catalyst is within +-15 minutes.\n"
+        "2. RULE-RISK-010 Zero Duplicate Exposure: VETO any trade if an active position or pending order is already open on this symbol.\n"
+        "3. USDX Correlation: Confirm dollar trend alignment."
+    )
+    macro_task = (
+        f"{memory_prompt}\n\n"
+        f"Asset: {sym} | USDX: {intel['usdx_bid']:.2f} / {intel['usdx_ask']:.2f}\n"
+        f"Directional Macro Filter: {intel.get('macro_bias_prompt', '')}\n\n"
+        f"=== MACROECONOMIC & GEOPOLITICAL ENVIRONMENT ===\n"
+        f"{intel['macro_brief']}\n\n"
+        f"=== RETAIL SENTIMENT RECONNAISSANCE ===\n"
+        f"{intel['sentiment_brief']}\n\n"
+        f"{intel.get('active_exposure_prompt', '')}\n\n"
+        f"Deliver your macro assessment strictly in the following structure:\n"
+        f"• Central Bank Policy & USDX Correlation Alignment:\n"
+        f"• Scheduled Economic Events & High-Volatility Embargo Status:\n"
+        f"• Broker Exposure & RULE-RISK-010 Compliance:\n"
+        f"• Macro Recommendation: [PERMIT_FULL | PERMIT_HALF_RISK | VETO_MACRO_NEWS | VETO_DUPLICATE_EXPOSURE]\n"
+        f"Keep under 150 words."
+    )
 
-        output = proc.stdout.strip()
-        lines = [line for line in output.splitlines() if not line.startswith("jetski:")]
-        clean_text = "\n".join(lines).strip()
-        # Raw-output audit trail: the verbatim report is what the decision
-        # log stores (full_report). Log its size here so a missing/empty
-        # deliberation is visible even if the caller swallows the return.
-        print(f"[Council] agy returned {len(clean_text)} chars for {sym} "
-              f"(model gemini-3.8-flash-low; non-deterministic — no seed flag available).")
-        return clean_text if clean_text else None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        f_ict = executor.submit(_execute_agent_prompt, agy_bin, "ICT Strategist", ict_role, ict_task, "gemini-3.8-flash-low")
+        f_macro = executor.submit(_execute_agent_prompt, agy_bin, "Macro Officer", macro_role, macro_task, "gemini-3.8-flash-low")
+        _, dt_ict, out_ict = f_ict.result()
+        _, dt_macro, out_macro = f_macro.result()
 
-    except subprocess.TimeoutExpired:
-        print("[Council] Council deliberation timed out after 60 seconds.")
-        return None
-    except Exception as e:
-        print(f"[Council] Exception during council invocation: {e}")
-        return None
+    print(f"[Council] Round 1 complete: ICT ({dt_ict:.1f}s), Macro ({dt_macro:.1f}s)")
+
+    # -------------------------------------------------------------
+    # ROUND 2: Adversarial Invalidation & Trap Audit (Skeptic)
+    # -------------------------------------------------------------
+    skeptic_role = (
+        "You are the Adversarial Invalidation Auditor for TradingGuard.\n"
+        "Your sole duty is CAPITAL DEFENSE, TRAP EXPOSURE, and PREVENTING THE 3.5R ASYMMETRY TRAP.\n"
+        "You are explicitly incentivized to destroy the trade thesis and find why it is a false breakout or retail trap.\n"
+        "Stress-test against:\n"
+        "1. Shallow Sweeps: On Gold, sweeps under 2.0 pts are often retail inducement fakeouts.\n"
+        "2. Micro-Stops: Stop losses placed too tight (< 4.0 pts on Gold or < 6.0 pips on FX) get hunted by broker spreads.\n"
+        "3. Inducement Traps: Is the trade buying into higher timeframe resistance or selling into discount support?\n"
+        "4. Macro / Exposure Violations: Did the Macro Officer report an embargo or duplicate exposure?"
+    )
+    skeptic_task = (
+        f"{market_dossier}\n\n"
+        f"=== PROPOSED ICT STRATEGIST TRADE ===\n{out_ict}\n\n"
+        f"=== MACRO & EXPOSURE REPORT ===\n{out_macro}\n\n"
+        f"Deliver your adversarial stress-test strictly in the following structure:\n"
+        f"• Structural Invalidation Level & Stop Vulnerability (Is SL pinned safely per RULE-CORE-005?):\n"
+        f"• Retail Inducement & Liquidity Trap Exposure:\n"
+        f"• Risk Geometry & Cap Verification (Strict $12 cap, R:R >= 1:3.0):\n"
+        f"• Adversarial Invalidation Verdict: [CHALLENGE_ACCEPTED | ADVISE_HALF_RISK | VETO_STRUCTURAL_TRAP]\n"
+        f"Keep under 180 words."
+    )
+
+    _, dt_skeptic, out_skeptic = _execute_agent_prompt(
+        agy_bin, "Adversarial Auditor", skeptic_role, skeptic_task, "gemini-3.8-flash-low"
+    )
+    print(f"[Council] Round 2 complete: Adversarial Auditor ({dt_skeptic:.1f}s)")
+
+    # -------------------------------------------------------------
+    # ROUND 3: CIO Consensus Arbitration & Executive Directive
+    # -------------------------------------------------------------
+    cio_role = (
+        "You are the Chief Investment Officer (CIO) and Final Arbitrator of TradingGuard.\n"
+        "You evaluate the three independent, adversarial committee briefs:\n"
+        "1. Chief ICT & Technical Strategist (Proposes technical edge)\n"
+        "2. Chief Macro & Exposure Officer (Macro catalysts, news embargo, RULE-RISK-010 duplicate check)\n"
+        "3. Adversarial Invalidation Auditor (Stress-tests stops, exposes traps, prevents Asymmetry Trap)\n\n"
+        "Institutional Mandates:\n"
+        "1. If Macro Officer or Adversarial Auditor vetoed the setup, order STAND ASIDE.\n"
+        "2. If R:R is below 1:3.0, order STAND ASIDE.\n"
+        "3. If setup is confirmed with sound invalidation and R:R >= 1:3.0, approve BUY LIMIT or SELL LIMIT.\n"
+        "4. Strict $12.00 max risk per trade (0.01 lot base). Stop loss must never exceed this ceiling."
+    )
+    cio_task = (
+        f"Asset: {sym} | Current Bid: {bid_str} | Ask: {ask_str}\n\n"
+        f"=== 1. ICT STRATEGIST BRIEF ===\n{out_ict}\n\n"
+        f"=== 2. MACRO & EXPOSURE OFFICER BRIEF ===\n{out_macro}\n\n"
+        f"=== 3. ADVERSARIAL AUDITOR BRIEF ===\n{out_skeptic}\n\n"
+        f"Render the final executive consensus directive strictly formatted as follows:\n\n"
+        f"⚖️ **CIO Executive Consensus Directive**\n"
+        f"• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]\n"
+        f"• **Actionable Execution Plan (if applicable):** Entry: `X.XX` | SL: `X.XX` | TP: `X.XX` | Lot: `0.01` | R:R: `1:X.X` (Mandatory >= 1:3.0)\n"
+        f"• **Playbook Alignment:** (Confirm alignment with Active Institutional Rules e.g. entry anchor / stop buffer).\n"
+        f"• **Executive Summary & Critical Trigger:** (Clear 2-sentence institutional synthesis on why this decision was reached and what condition triggers immediate stand-down).\n\n"
+        f"📋 **Chief Watchlist Officer (CDO - Tactical Reconnaissance)**\n"
+        f"• **Developing Setup Context:** (What setup is currently incubating?)\n"
+        f"• **Actionable 'IF-THEN' Re-Activation Trigger:** (Exact conditional trigger)\n"
+        f"• **Setup Invalidation Anchor:** (Price level where watchlist idea is invalidated)"
+    )
+
+    _, dt_cio, out_cio = _execute_agent_prompt(
+        agy_bin, "CIO Arbitrator", cio_role, cio_task, "gemini-3.8-flash-low"
+    )
+    total_time = time.time() - t_start
+    print(f"[Council] Round 3 complete: CIO Arbitrator ({dt_cio:.1f}s) | Total Deliberation: {total_time:.1f}s")
+
+    # -------------------------------------------------------------
+    # ASSEMBLE COMPLETE MULTI-AGENT REPORT
+    # -------------------------------------------------------------
+    full_report = (
+        f"🏛️ **TRADINGGUARD MULTI-AGENT INVESTMENT COUNCIL: {sym}**\n"
+        f"Deliberation Protocol: 3-Round Adversarial (Completed in {total_time:.1f}s)\n\n"
+        f"👨‍💻 **1. Chief ICT & Technical Strategist (Advanced SMC & Order Flow)**\n"
+        f"{out_ict}\n\n"
+        f"🌐 **2. Chief Macro & Exposure Risk Officer**\n"
+        f"{out_macro}\n\n"
+        f"🛡️ **3. Adversarial Invalidation Auditor (Capital Defense & Trap Detection)**\n"
+        f"{out_skeptic}\n\n"
+        f"{out_cio}"
+    )
+
+    decision, parse_status = parse_council_decision_detailed(full_report)
+    print(f"[Council] Deliberation finished: Decision={decision} (Parse={parse_status})")
+    return full_report
 
 
 if __name__ == "__main__":
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     print("=" * 60)
-    print("Convening Antigravity AI Trading Council for Gold (XAUUSD)...")
+    print("Convening TradingGuard Multi-Agent Investment Council for Gold (XAUUSD)...")
     print("=" * 60)
     result = convene_investment_council("XAUUSD")
     if result:
+        print("\n" + "=" * 60)
+        print("FINAL DELIBERATION REPORT:")
+        print("=" * 60)
         print(result)
     else:
         print("Failed to convene council or missing assets.")

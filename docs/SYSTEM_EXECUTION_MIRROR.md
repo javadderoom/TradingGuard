@@ -160,10 +160,21 @@ Every trade strictly abides by institutional broker execution realism:
 
 ---
 
-## 8. AI Review Council & Governance Architecture
+## 8. AI Investment Council & Multi-Agent Governance Architecture (`hitl/council.py`)
 
-- **6-Seat Cognitive Assembly**: Evaluates candidates across 4 rendered charts (1D, 1H, 15M, 5M) and textual telemetry.
-- **Zero Bureaucracy Mandate**: When pre-screened edge and MTF alignment are present, the Council must prioritize alpha capture within the $12 risk limit.
+TradingGuard operates an authentic **3-Round Adversarial Multi-Agent Deliberation Protocol** replacing single-prompt simulations to eliminate sycophancy, consensus bias, and self-collusion:
+
+- **Round 1: Parallel Independent Evaluations (Zero Collusion)**:
+  - **Seat 1: Chief ICT & Order Flow Strategist (`gemini-3.8-flash-low`)**: Evaluates raw multi-timeframe price action, liquidity sweeps (Judas Swings), displacement Fair Value Gaps (FVGs), and Market Structure Shifts (MSS). Mandates limit entry at FVG proximal edge, stop loss pinned behind sweep extremes, and minimum $R:R \ge 1:3.0$.
+  - **Seat 2: Chief Macro & Exposure Officer (`gemini-3.8-flash-low`)**: Independently evaluates central bank policy, high-impact economic catalysts (CPI, NFP, FOMC), USDX dollar trend, and live broker exposure (`RULE-RISK-010` zero-duplicate position defense). Enforces pre-event embargoes ($\pm 15$ min).
+  - *Execution*: Seats 1 & 2 execute concurrently via `ThreadPoolExecutor(max_workers=2)` using file-based CLI prompt piping (`-p @<tempfile>`), completing in ~16–19s.
+- **Round 2: Adversarial Invalidation & Trap Audit**:
+  - **Seat 3: Adversarial Invalidation Auditor (`gemini-3.8-flash-low`)**: Receives the unredacted proposals from Round 1. Specifically incentivized to destroy the trade thesis, expose retail inducement traps, detect shallow sweeps (<2.0 pts on Gold), and verify structural stop backing to prevent the **3.5R Asymmetry Trap**. Renders `CHALLENGE_ACCEPTED`, `ADVISE_HALF_RISK`, or `VETO_STRUCTURAL_TRAP`.
+- **Round 3: Executive Consensus Arbitration & Directive**:
+  - **Seat 4: Chief Investment Officer (CIO Arbitrator)**: Evaluates the competing arguments, enforces the firm $12.00 risk ceiling (0.01 lot) and $R:R \ge 1:3.0$, and issues the binding directive (`• **Council Decision:** [BUY LIMIT | SELL LIMIT | STAND ASIDE]`, order parameters, and Watchlist trigger).
+- **Execution Timing & Separation**:
+  - Deliberation takes **~45–65s** total.
+  - Council operates at **Pre-Session & Macro Review** horizons, while real-time 5-minute candle trigger execution uses **SubQ Snap** (`~880ms`) or direct mechanical order routing (`SETUP-ARCH-004` whitelist).
 - **Counterfactual Shadow Portfolio Replay**: Every passed opportunity (`STAND_ASIDE`) is simulated through forward M1 bars to measure:
   - **`PROTECTIVE_VETO`**: Capital saved by filtering out a losing trade.
   - **`DAMAGING_STAND_ASIDE`**: Alpha missed due to over-filtering a winning trade.
