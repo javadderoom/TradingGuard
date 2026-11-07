@@ -67,7 +67,17 @@ def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
     Parses live public analyst ideas from TradingView for the specified symbol.
     Returns a list of structured idea dictionaries.
     """
-    sym = "EURUSD" if "EUR" in symbol.upper() else "XAUUSD"
+    _sym = symbol.upper()
+    if "EUR" in _sym:
+        sym = "EURUSD"
+    elif "GBP" in _sym:
+        sym = "GBPUSD"
+    elif "XAG" in _sym or "SILVER" in _sym:
+        sym = "XAGUSD"
+    elif "XAU" in _sym or "GOLD" in _sym:
+        sym = "XAUUSD"
+    else:
+        sym = "XAUUSD"
     url = f"https://www.tradingview.com/symbols/{sym}/ideas/"
     
     # Check cache
@@ -154,7 +164,17 @@ def format_sentiment_summary(symbol: str = "XAUUSD") -> str:
     """
     Returns an institutional summary of retail/community sentiment for the Council prompt.
     """
-    sym = "EURUSD" if "EUR" in symbol.upper() else "XAUUSD"
+    _sym = symbol.upper()
+    if "EUR" in _sym:
+        sym = "EURUSD"
+    elif "GBP" in _sym:
+        sym = "GBPUSD"
+    elif "XAG" in _sym or "SILVER" in _sym:
+        sym = "XAGUSD"
+    elif "XAU" in _sym or "GOLD" in _sym:
+        sym = "XAUUSD"
+    else:
+        sym = "XAUUSD"
     ideas = fetch_tradingview_ideas(sym)
     
     if not ideas:

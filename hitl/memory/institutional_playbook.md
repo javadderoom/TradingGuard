@@ -8,7 +8,7 @@ It is updated dynamically after every executed trade and every counterfactual au
 ## 📌 Active Rules of Engagement & Calibration Directives
 
 ### 🟢 [RULE-CORE-001] Capital Defense & Absolute Risk Cap (ALL)
-**Directive:** Strict .00 maximum dollar risk per trade (0.01 lot base). Stop loss distance must never exceed .00. Absolute price quotes within ±2.5% of entry are required.
+**Directive:** Strict $12.00 maximum dollar risk per trade (0.01 lot base). Stop loss distance must never exceed $12.00. Absolute price quotes within ±2.5% of entry are required.
 > **Empirical Rationale:** Foundational firm risk governance. Unbreakable safety ceiling.
 
 ### 🟢 [RULE-CORE-002] Macro Directional Alignment (ALL)
