@@ -1,0 +1,38 @@
+{
+  "orb_stats": {
+    "Signals": 93,
+    "Fills": 92,
+    "Wins": 29,
+    "Losses": 51,
+    "BE": 12,
+    "Exp": 0,
+    "WR%": 31.5,
+    "Net_R": 21.5,
+    "Net_PnL": 83.45,
+    "PF": 1.44
+  },
+  "htf_stats": {
+    "Signals": 20,
+    "Fills": 9,
+    "Wins": 2,
+    "Losses": 4,
+    "BE": 3,
+    "Exp": 8,
+    "WR%": 22.2,
+    "Net_R": 2.96,
+    "Net_PnL": 14.4,
+    "PF": 1.71
+  },
+  "combined_stats": {
+    "Signals": 113,
+    "Fills": 101,
+    "Wins": 31,
+    "Losses": 55,
+    "BE": 15,
+    "Exp": 8,
+    "WR%": 30.7,
+    "Net_R": 24.46,
+    "Net_PnL": 97.85,
+    "PF": 1.47
+  }
+}
