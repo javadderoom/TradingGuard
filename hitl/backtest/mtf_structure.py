@@ -32,6 +32,7 @@ def analyze_mtf_state(
     is_gold = "XAU" in symbol.upper()
     is_silver = "XAG" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
     is_fx = "EUR" in symbol.upper() or "GBP" in symbol.upper()
 
     # 1. Daily Macro Context
@@ -51,7 +52,7 @@ def analyze_mtf_state(
         is_inside_day = (cd['high'] <= pdh and cd['low'] >= pdl)
         if pdr > 0:
             in_mid_equilibrium = (pdl + 0.25 * pdr) <= current_price <= (pdl + 0.75 * pdr)
-            dol_internal = round(pdl + 0.50 * pdr, 2 if (is_gold or is_crypto) else (3 if is_silver else 5))
+            dol_internal = round(pdl + 0.50 * pdr, 1 if is_index else (2 if (is_gold or is_crypto) else (3 if is_silver else 5)))
 
         if len(bars_1d) >= 5:
             recent_highs = [b['high'] for b in bars_1d[-10:-1]]
@@ -64,11 +65,11 @@ def analyze_mtf_state(
     h1_state = "NEUTRAL"
     last_mss_level = None
     invalidation_level = None
-    min_mss_disp = 400.0 if is_crypto else (6.0 if is_gold else (0.40 if is_silver else 0.0025))
+    min_mss_disp = 400.0 if is_crypto else (50.0 if is_index else (6.0 if is_gold else (0.40 if is_silver else 0.0025)))
     # Breakout-confirmation buffer for the H1 swing break (was a flat +2.0 for
     # every asset: 2,000 pips on FX, so that branch was dead for FX, and
     # 2.0 pts on Silver is ~$100 of risk. Scaled to ~1/3 of min_mss_disp.)
-    breakout_buffer = 50.0 if is_crypto else (2.0 if is_gold else (0.20 if is_silver else 0.0010))
+    breakout_buffer = 50.0 if is_crypto else (6.0 if is_index else (2.0 if is_gold else (0.20 if is_silver else 0.0010)))
 
     if bars_1h and len(bars_1h) >= 10:
         n = len(bars_1h)
@@ -166,7 +167,8 @@ def classify_setup_phase(
     is_buy = "BUY" in dir_upper or "LONG" in dir_upper or "BULLISH" in dir_upper
     is_gold = "XAU" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    val_fmt = ".2f" if (is_gold or is_crypto) else (".3f" if "XAG" in symbol.upper() else ".5f")
+    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
+    val_fmt = ".1f" if is_index else (".2f" if (is_gold or is_crypto) else (".3f" if "XAG" in symbol.upper() else ".5f"))
 
     # Case 0: Dead Market Consolidation
     if mtf_state.get("is_dead_consolidation", False):
@@ -192,15 +194,15 @@ def classify_setup_phase(
         if not dol:
             # Fallback DOL distance, asset-scaled (was a flat 35.0 for every
             # asset: 350,000 pips on FX, $1,750 on Silver at $50/pt).
-            dol_dist = 1200.0 if is_crypto else (35.0 if is_gold else (0.35 if "XAG" in symbol.upper() else 0.0035))
+            dol_dist = 1200.0 if is_crypto else (150.0 if is_index else (35.0 if is_gold else (0.35 if "XAG" in symbol.upper() else 0.0035)))
             dol = (curr_p + dol_dist) if is_buy else (curr_p - dol_dist)
 
-        target_rr = 3.5 if (is_gold or is_crypto) else 4.5
+        target_rr = 3.0 if is_index else (3.5 if (is_gold or is_crypto) else 4.5)
         mss_str = f"at {mss_lvl:{val_fmt}}" if mss_lvl else ""
         return {
             "phase": "PRO_EXPANSION",
-            "recommended_target_rr": target_rr, # Calibrated: 3.5R on Gold/Crypto, 4.5R on Forex
-            "recommended_be_rr": 1.8 if (is_gold or is_crypto) else 2.0, # Calibrated: 1.8R BE on Gold/Crypto, 2.0R on Forex
+            "recommended_target_rr": target_rr, # Calibrated: 3.0R on Index, 3.5R on Gold/Crypto, 4.5R on Forex
+            "recommended_be_rr": 1.5 if is_index else (1.8 if (is_gold or is_crypto) else 2.0), # Calibrated: 1.5R BE on Index, 1.8R on Gold/Crypto, 2.0R on Forex
             "poi_ratio": 0.20,                  # Proximal edge fill (momentum won't retrace deep)
             "entry_anchor": "PROXIMAL_EDGE",
             "dol_target": dol,

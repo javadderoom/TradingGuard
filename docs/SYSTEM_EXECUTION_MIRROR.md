@@ -709,3 +709,73 @@ Bitcoin (`BTCUSD`) presents distinct microstructure dynamics compared to Gold an
 4. **Cache Parquets**:
    - `backtest_results/cache/BTCUSD_M5_2026.parquet`, `BTCUSD_M1_2026.parquet`.
    - `backtest_results/cache/BTCUSD_M5_SUMMER_2026.parquet`, `BTCUSD_M1_SUMMER_2026.parquet`.
+
+
+## 17. Multi-Asset Index Microstructure & Nasdaq 100 (`NQ`) Execution Policy
+
+### 17.1 Scope, Microstructure & Algorithmic Scaling
+Following the empirical post-mortem on Bitcoin (`BTCUSD`), the standalone algorithmic screener was calibrated and stress-tested on the premier US equity index: **Nasdaq 100 (`NQ`)**.
+1. **Verified Dataset**: Spans 2 continuous calendar months from **September 1, 2026 to November 6, 2026** (14,856 M5 bars, 67,380 M1 bars, 2,085 H1 bars, 191 D1 bars) from MT5 broker history.
+2. **Index Contract Physics**:
+   - Point value: 0.1 | Digits: 1 | Contract size: 1.0.
+   - 1.0 lot move of 1.0 index point = $1.00 USD; minimum broker volume = 0.10 lot ($0.10 per point).
+   - Broker spread: 1.0 index point ($0.10 at 0.10 lot); round-trip commission: $0.10 per trade.
+3. **Algorithmic Scaling Parameters (`hitl/backtest/fast_screener.py`)**:
+   - 5M FVG minimum gap: `5.0 pts`; displacement body: `10.0 pts`.
+   - 5M Breaker Block minimum swing separation: `25.0 pts`.
+   - POI depth scaling (`RULE-EXEC-036`): 50% Mean Threshold triggered if zone width $\ge 8.0\text{ pts}$.
+   - Stop loss & invalidation buffer: `4.0 pts`.
+   - Risk floor & ceiling: `[15.0 pts, 120.0 pts]` ($1.50 to $12.00 on 0.10 lot).
+   - Order TTL: `60 minutes` (12 M5 bars); Breakeven ratchet: `1.5R`; Target cap: `3.0R`.
+
+### 17.2 Raw Screener Baseline vs. Curated Institutional Portfolio
+
+| Metric | Raw Baseline Screener (24h, 6 Setups) | Curated Production Portfolio | Performance Delta |
+| :--- | :---: | :---: | :---: |
+| **Signals Evaluated** | 939 | 127 | -812 noisy signals filtered |
+| **Fills Executed** | 607 | 96 | -511 low-expectancy fills eliminated |
+| **Wins / Losses / BE** | 82W / 462L / 63BE | 23W / 66L / 7BE | Win rate increased +10.5% |
+| **Expired Orders (60m TTL)**| 211 | 17 | Order fill efficiency normalized |
+| **Win Rate %** | **13.5%** | **24.0%** | **+10.5% Absolute WR Delta** |
+| **Net Realized Alpha** | **-187.24R (-253.52R Gross R)** | **+10.91R Net Alpha** | **+264.43R Net Alpha Recovered** |
+| **Net Realized PnL (0.10 lot)**| **-$922.98** | **+$37.65** | **+$960.63 Turnaround** |
+| **Profit Factor (PF)** | **0.62** | **1.12** | **+0.50 PF Improvement** |
+| **Gross Profit / Loss** | $1,489.20 / -$2,412.18 | $362.53 / -$324.88 | Risk-controlled execution |
+
+### 17.3 Archetype Decommissioning Ledger for Nasdaq 100 (`NQ`)
+1. **`SETUP-ARCH-002` (Judas Swing + FVG Mitigation)**:
+   - *Audit Outcome*: 151 fills, 15W / 121L / 15BE (9.9% WR), **-72.75R Net Loss, -$377.71 PnL, PF 0.46**.
+   - *Failure Mechanics*: Session sweep wicks on NQ followed by shallow 5M FVG retests represent continuation traps; price blows through the gap into stop losses.
+   - *Mandate*: **Permanently Decommissioned on NQ**.
+2. **`SETUP-ARCH-009` (Pro-Trend Breakdown/Breakout Retest - OTE 62-79%)**:
+   - *Audit Outcome*: 148 fills, 15W / 121L / 12BE (10.1% WR), **-49.13R Net Loss, -$201.70 PnL, PF 0.69**.
+   - *Failure Mechanics*: Retracements exceeding 61.8% of session ranges on NQ reflect trend exhaustion or failure, leading to immediate stops.
+   - *Mandate*: **Permanently Decommissioned on NQ**.
+
+### 17.4 Institutional Session Rules & NYSE Cash Open Whipsaw Gate
+1. **NYSE Cash Open Whipsaw Gate (09:30 - 10:00 NY Local | 17:00 / 18:00 Tehran)**:
+   - *Audit Outcome*: 11 fills, 1W / 10L (9.1% WR), **-7.06R, PF 0.09**.
+   - *Failure Mechanics*: Opening 30 minutes of NYSE cash trading is dominated by Market-On-Open (MOO) crosses and high-frequency opening auction volatility. Limit orders inside opening range wicks suffer two-sided liquidity sweeps.
+   - *Mandate*: **Strictly Banned / Mandated Stand Aside during 09:30 - 10:00 NY**.
+2. **Off-Hours & Globex Overnight Filter (20:00 - 08:00 UTC & 11:00 - 16:00 NY)**:
+   - *Audit Outcome*: 399 fills, **-103.87R cumulative loss** across Pacific Off-Hours (-32.06R), Asian Overnight (-24.27R), and NY PM (-47.54R).
+   - *Mandate*: **Strictly Filtered in Production**.
+3. **Authorized Institutional Killzones**:
+   - **`London_Open` (08:00 - 10:30 London local | 10:30 / 11:30 Tehran)**:
+     * Active for `SETUP-ARCH-004` (Range Expansion / FVG: 41.7% WR, **+7.74R, PF 1.65**) and `SETUP-ARCH-010` (Prominent Sweep + MSS: **+2.99R, PF 1.09**).
+     * Total London Open Net: **+3.57R**.
+   - **`NY_Pre_Market` (08:00 - 09:30 NY local | 15:30 / 16:30 Tehran)**:
+     * Active for `SETUP-ARCH-001` (Judas Breaker Sweep: 33.3% WR, **+0.18R, PF 1.07**) and `SETUP-ARCH-010`.
+     * Total NY Pre-Market Net: **+7.34R, +$53.15 PnL, PF 1.54**!
+
+### 17.5 Production Codebase Integration & Artifacts
+1. **Algorithmic Screener**: `hitl/backtest/fast_screener.py` (`is_index` scaling across FVG, Breaker, POI depth, prominent sweep, and session ranges).
+2. **Canonical Evaluator**: `hitl/backtest/evaluator.py` (spread 1.0 pt, `pip_val = 0.10` per 0.10 lot, fallback ATR 10.0 pts).
+3. **MTF Structure**: `hitl/backtest/mtf_structure.py` (`is_index` scaling: `min_mss_disp = 50.0`, `breakout_buffer = 6.0`, `dol_dist = 150.0`, `target_rr = 3.0`, `recommended_be_rr = 1.5`).
+4. **Audit Runners**:
+   - Baseline: `hitl/backtest/nq_2month_audit.py` -> `backtest_results/nq_2month_audit/`.
+   - Curated: `hitl/backtest/nq_curated_production_audit.py` -> `backtest_results/nq_curated_production_audit/`.
+5. **Parquets**:
+   - Cache: `backtest_results/cache/NQ_M5_2026.parquet`, `NQ_M1_2026.parquet`, `NQ_H1_2026.parquet`, `NQ_D1_2026.parquet`.
+   - Trade Ledgers: `backtest_results/nq_2month_audit/nq_2month_trades.parquet`, `backtest_results/nq_curated_production_audit/nq_curated_trades.parquet`.
+6. **Artifact Report**: `NQ_2MONTH_SCREENER_AUDIT_REPORT.md`.
