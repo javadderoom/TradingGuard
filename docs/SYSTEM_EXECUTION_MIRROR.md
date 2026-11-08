@@ -638,3 +638,52 @@ The entire master calibrated portfolio was exported into `orders_schedule.csv` a
 3. **GBPUSD Report**: `backtest_results/mt5_native_reports/TradingGuard_GBPUSD_o_Report.htm`
 4. **GBPUSD Graphs**: `TradingGuard_GBPUSD_o_Report.png`, `TradingGuard_GBPUSD_o_Report-hst.png`.
 5. **Orders Schedule Source**: `orders_schedule.csv` in `Common\Files\orders_schedule.csv` and `MQL5\Files\orders_schedule.csv`.
+
+
+## 16. Bitcoin (BTCUSD) Standalone Production Pipeline & Multi-Month Empirical Benchmark
+
+### 16.1 Scope, Microstructure & Council-Free Architecture
+Bitcoin (`BTCUSD`) presents distinct microstructure dynamics compared to Gold and Forex pairs:
+1. **Continuous 24/7 Tick Flow**: Crypto markets trade continuously without daily exchange closures, creating distinct overnight accumulation, Asian liquidity runs, and weekend liquidity vacuums.
+2. **Autonomous Execution (Zero-Council Mandate)**: High-speed crypto sweeps require instant limit order placement upon M5 bar close. The multi-agent LLM council introduced excessive token latency (~45 seconds) and conservative false-vetoes during institutional momentum phases. Bitcoin is executed purely through the calibrated autonomous screener (`fast_screener.py` / `btcusd_long_term_audit.py`).
+3. **Verified Audit Scope**: Spans September 1, 2026 to November 8, 2026 (**69 full continuous calendar trading days**, 19,829 M5 bars, 99,149 M1 bars) evaluated under authentic broker conditions ($1.50 spread, $0.10/lot commission, 75-minute TTL, 1.8R Breakeven ratchet, 3.5R cap).
+
+### 16.2 Empirical Strategy Optimization Matrix (69 Continuous Days)
+
+| Configuration ID | Strategy Description | Fills | Wins | Losses | BE | Win Rate % | Net Realized Alpha | Net Realized PnL | Profit Factor | Turnaround Delta |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Config 0** | **Raw Unfiltered Baseline (All 24/7)** | **496** | **67** | **383** | **46** | **13.5%** | **-209.71R** | **-$658.69** | **0.39** | Baseline |
+| **Config 1** | Decommission ARCH-009 & ARCH-010 | 220 | 36 | 168 | 16 | 16.4% | -78.45R | -$237.81 | 0.48 | +131.26R |
+| **Config 2** | Config 1 + Ban 3 Toxic Sessions | 113 | 25 | 79 | 9 | 22.1% | -16.55R | -$61.97 | 0.72 | +193.16R |
+| **Config 3** | Curated Archetype-Session Match | 41 | 16 | 19 | 6 | 39.0% | +23.00R | +$55.35 | 2.13 | +232.71R |
+| **Config 4** | **Curated Match (Weekday Mon-Fri Only)** | **36** | **16** | **15** | **5** | **44.4%** | **+27.06R** | **+$63.13** | **2.52** | **+236.77R** |
+
+### 16.3 Bitcoin Archetype Decommissioning Ledger
+- **`SETUP-ARCH-009` (Pro-Trend Session Breakdown/Breakout Retest - OTE 62-79%)**:
+  * *Audit Performance*: 116 fills, 13 wins, 93 losses, 10 BE (11.2% WR), **-45.98R Net Loss, -$181.30 PnL, PF 0.31**.
+  * *Mechanics of Failure*: Deep 62-79% Fibonacci retracements in Bitcoin 5M trends represent order flow exhaustion rather than institutional discount. Price regularly sweeps the stop-loss or consolidates past the 75m TTL.
+  * *Mandate*: **Permanently Decommissioned on Bitcoin (`BTCUSD`)**.
+- **`SETUP-ARCH-010` (Prominent Sweep + M1/M5 Micro MSS)**:
+  * *Audit Performance*: 160 fills, 18 wins, 122 losses, 20 BE (11.2% WR), **-45.51R Net Loss, -$131.53 PnL, PF 0.34**.
+  * *Mechanics of Failure*: Unvetted micro market structure shifts produce continuous secondary induction traps during liquidity absorption phases.
+  * *Mandate*: **Permanently Decommissioned on Bitcoin (`BTCUSD`)**.
+
+### 16.4 Institutional Session Rules & Tehran Clock Alignment (UTC+3:30)
+- **Prime Alpha Session**: `Asian_Late` (04:00 - 08:00 UTC / 07:30 - 11:30 Tehran): Generated +9.37R net alpha in curated mode (PF 2.76).
+- **Judas Sweep Session**: `London_Open` (08:00 - 10:30 UTC / 11:30 - 14:00 Tehran): Generated +6.55R net alpha via ARCH-002 (PF 1.79).
+- **Expansion Windows**: `NY_Open` (13:00 - 15:00 UTC / 16:30 - 18:30 Tehran) and `NY_Silver_Bullet` (15:00 - 16:30 UTC / 18:30 - 20:00 Tehran).
+- **Strictly Banned Toxic Windows**:
+  * `NY_Late_PM` (16:30 - 20:00 UTC / 20:00 - 23:30 Tehran): **-34.22R Loss**, 7.4% WR (PF 0.18).
+  * `Asian_Early` (00:00 - 04:00 UTC / 03:30 - 07:30 Tehran): **-30.78R Loss**, 9.6% WR (PF 0.27).
+  * `London_Continuation` (10:30 - 13:00 UTC / 14:00 - 16:30 Tehran): **-24.61R Loss**, 13.5% WR (PF 0.23).
+
+### 16.5 Day-of-Week Invariant (Weekday Mon-Fri Only)
+- **Mon-Fri**: 100% of curated alpha generated (+27.06R, 44.4% WR, PF 2.52).
+- **Sat-Sun**: Thin liquidity spreads, zero institutional volume, and whipsaws create a net drag (-4.06R). Bitcoin execution is strictly gated to **Monday 00:00 UTC through Friday 23:59 UTC**.
+
+### 16.6 Production Codebase Integration
+1. **Engine**: `hitl/backtest/btcusd_long_term_audit.py` (Full 69-day bar-by-bar chronological execution engine).
+2. **Optimizer**: `hitl/backtest/optimize_btcusd_portfolio.py` (Curated portfolio filter).
+3. **Trade Ledger**: `backtest_results/btcusd_long_term_audit/btcusd_long_term_trades.parquet` (Complete 496-fill dataset).
+4. **Summary**: `backtest_results/btcusd_long_term_audit/btcusd_long_term_summary.json`.
+
