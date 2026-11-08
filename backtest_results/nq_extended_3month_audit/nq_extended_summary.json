@@ -1,0 +1,80 @@
+{
+  "raw_stats": {
+    "Signals": 1308,
+    "Fills": 831,
+    "Wins": 115,
+    "Losses": 629,
+    "BE": 87,
+    "Exp": 289,
+    "WR%": 13.8,
+    "Net_R": -253.49,
+    "Net_PnL": -1291.81,
+    "PF": 0.62
+  },
+  "curated_stats": {
+    "Signals": 165,
+    "Fills": 131,
+    "Wins": 32,
+    "Losses": 85,
+    "BE": 14,
+    "Exp": 20,
+    "WR%": 24.4,
+    "Net_R": 14.64,
+    "Net_PnL": 49.82,
+    "PF": 1.12
+  },
+  "monthly": [
+    {
+      "Signals": 40,
+      "Fills": 35,
+      "Wins": 9,
+      "Losses": 19,
+      "BE": 7,
+      "Exp": 5,
+      "WR%": 25.7,
+      "Net_R": 3.73,
+      "Net_PnL": 5.36,
+      "PF": 1.06,
+      "Month": "August"
+    },
+    {
+      "Signals": 58,
+      "Fills": 42,
+      "Wins": 12,
+      "Losses": 26,
+      "BE": 4,
+      "Exp": 4,
+      "WR%": 28.6,
+      "Net_R": 22.57,
+      "Net_PnL": 93.4,
+      "PF": 1.67,
+      "Month": "September"
+    },
+    {
+      "Signals": 48,
+      "Fills": 38,
+      "Wins": 9,
+      "Losses": 26,
+      "BE": 3,
+      "Exp": 8,
+      "WR%": 23.7,
+      "Net_R": -2.83,
+      "Net_PnL": -22.27,
+      "PF": 0.81,
+      "Month": "October"
+    },
+    {
+      "Signals": 6,
+      "Fills": 6,
+      "Wins": 2,
+      "Losses": 4,
+      "BE": 0,
+      "Exp": 0,
+      "WR%": 33.3,
+      "Net_R": 1.17,
+      "Net_PnL": 16.0,
+      "PF": 1.96,
+      "Month": "November"
+    }
+  ]
+}

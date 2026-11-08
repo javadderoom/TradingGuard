@@ -1,0 +1,26 @@
+{
+  "raw_stats": {
+    "Signals": 1091,
+    "Fills": 583,
+    "Wins": 66,
+    "Losses": 453,
+    "BE": 64,
+    "Exp": 234,
+    "WR%": 11.3,
+    "Net_R": -124.5,
+    "Net_PnL": -153.55,
+    "PF": 0.69
+  },
+  "curated_stats": {
+    "Signals": 147,
+    "Fills": 120,
+    "Wins": 23,
+    "Losses": 79,
+    "BE": 18,
+    "Exp": 20,
+    "WR%": 19.2,
+    "Net_R": -14.49,
+    "Net_PnL": -17.56,
+    "PF": 0.74
+  }
+}

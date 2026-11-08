@@ -84,7 +84,7 @@ def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14, symbol: str 
     # 1.0 for every asset: ~10,000 pips on FX, which effectively disabled
     # the watchdog on short histories. Scaled per asset (M1 ATR scale).
     sym = symbol.upper()
-    is_index = "NQ" in sym or "NAS" in sym or "US100" in sym
+    is_index = "NQ" in sym or "NAS" in sym or "US100" in sym or "SPX" in sym or "YM" in sym
     fallback_atr = 10.0 if is_index else (25.0 if "BTC" in sym else (1.0 if "XAU" in sym else (0.05 if "XAG" in sym else 0.0005)))
     if len(bars) < period:
         return fallback_atr
@@ -103,6 +103,10 @@ def get_default_broker_spread(symbol: str) -> float:
     sym = symbol.upper()
     if "NQ" in sym or "NAS" in sym or "US100" in sym:
         return 1.0           # 1.0 point spread on NQ ($0.10 on 0.10 lot)
+    elif "SPX" in sym or "US500" in sym:
+        return 0.50          # 0.50 point spread on SPX ($0.05 on 0.10 lot)
+    elif "YM" in sym or "US30" in sym or "DJ" in sym:
+        return 2.0           # 2.0 points spread on YM ($0.20 on 0.10 lot)
     elif "BTC" in sym:
         return 1.50          # $1.50 spread on BTCUSD ($0.015 at 0.01 lot)
     elif "XAU" in sym:
@@ -303,7 +307,7 @@ def evaluate_council_decision(
     elif "BTC" in symbol.upper():
         pip_val = 0.01      # 0.01 lot = 0.01 BTC -> $0.01/dollar ($1.00 per $100 price move)
         val_fmt = ".2f"
-    elif "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper():
+    elif any(k in symbol.upper() for k in ("NQ", "NAS", "US100", "SPX", "US500", "YM", "US30", "DJ")):
         pip_val = 0.10      # 0.10 lot = $0.10/point ($1.00 per 10 points)
         val_fmt = ".1f"
     else:

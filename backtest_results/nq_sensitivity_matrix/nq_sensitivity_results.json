@@ -1,0 +1,230 @@
+{
+  "target_rr_sweep": [
+    {
+      "Fills": 136,
+      "Wins": 38,
+      "Losses": 89,
+      "BE": 9,
+      "WR%": 27.9,
+      "Net_R": -13.64,
+      "Net_PnL": -80.91,
+      "PF": 0.81,
+      "Target_RR": "2.0R"
+    },
+    {
+      "Fills": 129,
+      "Wins": 29,
+      "Losses": 86,
+      "BE": 14,
+      "WR%": 22.5,
+      "Net_R": -4.24,
+      "Net_PnL": -28.14,
+      "PF": 0.93,
+      "Target_RR": "2.5R"
+    },
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 19.73,
+      "Net_PnL": 48.23,
+      "PF": 1.12,
+      "Target_RR": "3.0R"
+    },
+    {
+      "Fills": 129,
+      "Wins": 27,
+      "Losses": 85,
+      "BE": 17,
+      "WR%": 20.9,
+      "Net_R": 30.11,
+      "Net_PnL": 93.94,
+      "PF": 1.23,
+      "Target_RR": "3.5R"
+    },
+    {
+      "Fills": 125,
+      "Wins": 23,
+      "Losses": 84,
+      "BE": 18,
+      "WR%": 18.4,
+      "Net_R": 49.24,
+      "Net_PnL": 245.58,
+      "PF": 1.61,
+      "Target_RR": "4.0R"
+    }
+  ],
+  "breakeven_sweep": [
+    {
+      "Fills": 131,
+      "Wins": 23,
+      "Losses": 78,
+      "BE": 30,
+      "WR%": 17.6,
+      "Net_R": 1.66,
+      "Net_PnL": -2.13,
+      "PF": 0.99,
+      "BE_RR": "1.0R"
+    },
+    {
+      "Fills": 131,
+      "Wins": 24,
+      "Losses": 80,
+      "BE": 27,
+      "WR%": 18.3,
+      "Net_R": 2.64,
+      "Net_PnL": -5.37,
+      "PF": 0.99,
+      "BE_RR": "1.2R"
+    },
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 19.73,
+      "Net_PnL": 48.23,
+      "PF": 1.12,
+      "BE_RR": "1.5R"
+    },
+    {
+      "Fills": 127,
+      "Wins": 30,
+      "Losses": 86,
+      "BE": 11,
+      "WR%": 23.6,
+      "Net_R": 23.7,
+      "Net_PnL": 85.62,
+      "PF": 1.21,
+      "BE_RR": "1.8R"
+    },
+    {
+      "Fills": 124,
+      "Wins": 32,
+      "Losses": 92,
+      "BE": 0,
+      "WR%": 25.8,
+      "Net_R": 27.32,
+      "Net_PnL": 104.68,
+      "PF": 1.24,
+      "BE_RR": "None"
+    }
+  ],
+  "ttl_sweep": [
+    {
+      "Fills": 132,
+      "Wins": 25,
+      "Losses": 89,
+      "BE": 18,
+      "WR%": 18.9,
+      "Net_R": 5.81,
+      "Net_PnL": -21.03,
+      "PF": 0.95,
+      "TTL_Min": "30m"
+    },
+    {
+      "Fills": 128,
+      "Wins": 26,
+      "Losses": 85,
+      "BE": 17,
+      "WR%": 20.3,
+      "Net_R": 12.76,
+      "Net_PnL": 12.0,
+      "PF": 1.03,
+      "TTL_Min": "45m"
+    },
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 19.73,
+      "Net_PnL": 48.23,
+      "PF": 1.12,
+      "TTL_Min": "60m"
+    },
+    {
+      "Fills": 128,
+      "Wins": 28,
+      "Losses": 83,
+      "BE": 17,
+      "WR%": 21.9,
+      "Net_R": 20.73,
+      "Net_PnL": 50.59,
+      "PF": 1.12,
+      "TTL_Min": "75m"
+    },
+    {
+      "Fills": 128,
+      "Wins": 28,
+      "Losses": 83,
+      "BE": 17,
+      "WR%": 21.9,
+      "Net_R": 20.73,
+      "Net_PnL": 50.59,
+      "PF": 1.12,
+      "TTL_Min": "90m"
+    }
+  ],
+  "slippage_stress": [
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 19.73,
+      "Net_PnL": 48.23,
+      "PF": 1.12,
+      "Slippage_Pts": "0.0 pt"
+    },
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 17.8,
+      "Net_PnL": 42.63,
+      "PF": 1.1,
+      "Slippage_Pts": "0.5 pt"
+    },
+    {
+      "Fills": 129,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 17,
+      "WR%": 21.7,
+      "Net_R": 15.96,
+      "Net_PnL": 37.03,
+      "PF": 1.09,
+      "Slippage_Pts": "1.0 pt"
+    },
+    {
+      "Fills": 128,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 16,
+      "WR%": 21.9,
+      "Net_R": 14.17,
+      "Net_PnL": 34.8,
+      "PF": 1.08,
+      "Slippage_Pts": "1.5 pt"
+    },
+    {
+      "Fills": 128,
+      "Wins": 28,
+      "Losses": 84,
+      "BE": 16,
+      "WR%": 21.9,
+      "Net_R": 12.46,
+      "Net_PnL": 29.2,
+      "PF": 1.07,
+      "Slippage_Pts": "2.0 pt"
+    }
+  ]
+}

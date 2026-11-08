@@ -1,0 +1,97 @@
+{
+  "xau_stats": {
+    "Signals": 170,
+    "Fills": 109,
+    "Wins": 17,
+    "Losses": 75,
+    "BE": 17,
+    "Exp": 61,
+    "WR%": 15.6,
+    "Net_R": -15.65,
+    "Net_PnL": -82.26,
+    "PF": 0.8
+  },
+  "gbp_stats": {
+    "Signals": 96,
+    "Fills": 64,
+    "Wins": 7,
+    "Losses": 52,
+    "BE": 5,
+    "Exp": 12,
+    "WR%": 10.9,
+    "Net_R": -23.89,
+    "Net_PnL": -20.12,
+    "PF": 0.67
+  },
+  "nq_stats": {
+    "Signals": 172,
+    "Fills": 128,
+    "Wins": 26,
+    "Losses": 83,
+    "BE": 19,
+    "Exp": 28,
+    "WR%": 20.3,
+    "Net_R": 28.64,
+    "Net_PnL": 97.59,
+    "PF": 1.24
+  },
+  "portfolio_stats": {
+    "Signals": 438,
+    "Fills": 301,
+    "Wins": 50,
+    "Losses": 210,
+    "BE": 41,
+    "Exp": 101,
+    "WR%": 16.6,
+    "Net_R": -10.9,
+    "Net_PnL": -4.79,
+    "PF": 0.99
+  },
+  "correlation": {
+    "r_xau": {
+      "r_xau": 1.0,
+      "r_gbp": 0.16621924300918972,
+      "r_nq": -0.009987586078023336
+    },
+    "r_gbp": {
+      "r_xau": 0.16621924300918972,
+      "r_gbp": 1.0,
+      "r_nq": 0.2959767017251166
+    },
+    "r_nq": {
+      "r_xau": -0.009987586078023336,
+      "r_gbp": 0.2959767017251166,
+      "r_nq": 1.0
+    }
+  },
+  "risk_metrics": {
+    "xau": {
+      "mean_daily_r": -0.209,
+      "std_daily_r": 2.311,
+      "sharpe_annualized": -1.43,
+      "sortino_annualized": -4.48,
+      "max_drawdown_r": 29.08
+    },
+    "gbp": {
+      "mean_daily_r": -0.319,
+      "std_daily_r": 1.375,
+      "sharpe_annualized": -3.68,
+      "sortino_annualized": -6.43,
+      "max_drawdown_r": 27.62
+    },
+    "nq": {
+      "mean_daily_r": 0.382,
+      "std_daily_r": 3.206,
+      "sharpe_annualized": 1.89,
+      "sortino_annualized": 5.81,
+      "max_drawdown_r": 13.1
+    },
+    "portfolio": {
+      "mean_daily_r": -0.145,
+      "std_daily_r": 4.585,
+      "sharpe_annualized": -0.5,
+      "sortino_annualized": -1.42,
+      "max_drawdown_r": 36.91
+    }
+  }
+}

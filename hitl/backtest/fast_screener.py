@@ -26,8 +26,17 @@ def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = 
     is_gold = "XAU" in symbol.upper()
     is_silver = "XAG" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
-    if is_index:
+    is_spx = "SPX" in symbol.upper() or "US500" in symbol.upper()
+    is_ym = "YM" in symbol.upper() or "US30" in symbol.upper() or "DOW" in symbol.upper()
+    is_nq = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
+    is_index = is_nq or is_spx or is_ym
+    if is_spx:
+        min_gap = 1.5
+        min_body = 2.5
+    elif is_ym:
+        min_gap = 8.0
+        min_body = 15.0
+    elif is_nq:
         min_gap = 5.0
         min_body = 10.0
     elif is_crypto:
@@ -80,8 +89,15 @@ def detect_breaker_and_mss(bars: List[Dict[str, Any]], lookback: int = 24, symbo
     is_gold = "XAU" in symbol.upper()
     is_silver = "XAG" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
-    if is_index:
+    is_spx = "SPX" in symbol.upper() or "US500" in symbol.upper()
+    is_ym = "YM" in symbol.upper() or "US30" in symbol.upper() or "DOW" in symbol.upper()
+    is_nq = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
+    is_index = is_nq or is_spx or is_ym
+    if is_spx:
+        min_swing_height = 6.0
+    elif is_ym:
+        min_swing_height = 40.0
+    elif is_nq:
         min_swing_height = 25.0
     elif is_crypto:
         min_swing_height = 120.0 if "BTC" in symbol.upper() else 8.0
@@ -138,23 +154,21 @@ def calculate_ote_range(swing_low: float, swing_high: float) -> Dict[str, float]
     }
 
 
-def scale_poi_depth(proximal: float, distal: float, is_bullish: bool, is_fx: bool, ratio: float = 0.50, is_crypto: bool = False, is_index: bool = False) -> float:
+def scale_poi_depth(proximal: float, distal: float, is_bullish: bool, is_fx: bool, ratio: float = 0.50, is_crypto: bool = False, is_index: bool = False, symbol: str = "") -> float:
     """
     Implements RULE-EXEC-036: POI Depth Scaling (Mean Threshold & OTE).
-    If candidate POI/zone width exceeds 6.0 pips (FX), $2.00 (Gold), $25.00 (Crypto), or 8.0 pts (Index), outer proximal edge entry (0%)
-    is strictly avoided in favor of the 50% Mean Threshold (MT) or 75% Deep Retracement (OTE).
     """
     width = abs(proximal - distal)
-    min_width = 8.0 if is_index else (25.0 if is_crypto else (0.0006 if is_fx else 2.0))
+    is_spx = "SPX" in symbol.upper() or "US500" in symbol.upper()
+    is_ym = "YM" in symbol.upper() or "US30" in symbol.upper()
+    min_width = 2.5 if is_spx else (12.0 if is_ym else (8.0 if is_index else (25.0 if is_crypto else (0.0006 if is_fx else 2.0))))
     if width < min_width:
         return proximal
     
     dec = 1 if is_index else (5 if is_fx else 2)
     if is_bullish:
-        # Bullish: proximal is higher, distal is lower. Price retraces down into zone.
         return round(proximal - ratio * width, dec)
     else:
-        # Bearish: proximal is lower, distal is higher. Price retraces up into zone.
         return round(proximal + ratio * width, dec)
 
 
@@ -177,9 +191,12 @@ def detect_prominent_sweep_and_mss(
 
     is_fx = "EUR" in symbol.upper() or "GBP" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
-    pip_size = 1.0 if is_index else (5.0 if is_crypto else (0.0001 if is_fx else (0.01 if "XAG" in symbol.upper() else 0.1)))
-    sl_buffer = 4.0 if is_index else (20.0 if is_crypto else (1.0 * pip_size if "GBP" in symbol.upper() else (2.0 * pip_size if is_fx else 1.5)))
+    is_spx = "SPX" in symbol.upper() or "US500" in symbol.upper()
+    is_ym = "YM" in symbol.upper() or "US30" in symbol.upper()
+    is_nq = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
+    is_index = is_nq or is_spx or is_ym
+    pip_size = 0.5 if is_spx else (2.0 if is_ym else (1.0 if is_nq else (5.0 if is_crypto else (0.0001 if is_fx else (0.01 if "XAG" in symbol.upper() else 0.1)))))
+    sl_buffer = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (20.0 if is_crypto else (1.0 * pip_size if "GBP" in symbol.upper() else (2.0 * pip_size if is_fx else 1.5)))))
 
     recent = bars_5m[-lookback_5m:]
     curr_bar = recent[-1]
@@ -229,7 +246,19 @@ def detect_prominent_sweep_and_mss(
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 150.0:
                                 sl = round(entry + 150.0, 2)
-                        elif is_index:
+                        elif is_spx:
+                            dist = abs(entry - sl)
+                            if dist > 25.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 3.0:
+                                sl = round(entry + 3.0, 1)
+                        elif is_ym:
+                            dist = abs(entry - sl)
+                            if dist > 180.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 25.0:
+                                sl = round(entry + 25.0, 1)
+                        elif is_nq:
                             dist = abs(entry - sl)
                             if dist > 120.0:
                                 return False, "NONE", 0.0, 0.0, ""
@@ -252,7 +281,19 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 150.0:
                             sl = round(entry + 150.0, 2)
-                    elif is_index:
+                    elif is_spx:
+                        dist = abs(entry - sl)
+                        if dist > 25.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 3.0:
+                            sl = round(entry + 3.0, 1)
+                    elif is_ym:
+                        dist = abs(entry - sl)
+                        if dist > 180.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 25.0:
+                            sl = round(entry + 25.0, 1)
+                    elif is_nq:
                         dist = abs(entry - sl)
                         if dist > 120.0:
                             return False, "NONE", 0.0, 0.0, ""
@@ -293,7 +334,19 @@ def detect_prominent_sweep_and_mss(
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 150.0:
                                 sl = round(entry - 150.0, 2)
-                        elif is_index:
+                        elif is_spx:
+                            dist = abs(entry - sl)
+                            if dist > 25.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 3.0:
+                                sl = round(entry - 3.0, 1)
+                        elif is_ym:
+                            dist = abs(entry - sl)
+                            if dist > 180.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 25.0:
+                                sl = round(entry - 25.0, 1)
+                        elif is_nq:
                             dist = abs(entry - sl)
                             if dist > 120.0:
                                 return False, "NONE", 0.0, 0.0, ""
@@ -316,7 +369,19 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 150.0:
                             sl = round(entry - 150.0, 2)
-                    elif is_index:
+                    elif is_spx:
+                        dist = abs(entry - sl)
+                        if dist > 25.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 3.0:
+                            sl = round(entry - 3.0, 1)
+                    elif is_ym:
+                        dist = abs(entry - sl)
+                        if dist > 180.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 25.0:
+                            sl = round(entry - 25.0, 1)
+                    elif is_nq:
                         dist = abs(entry - sl)
                         if dist > 120.0:
                             return False, "NONE", 0.0, 0.0, ""
@@ -718,12 +783,26 @@ def screen_ict_session(
         }
 
     current_price = bars_5m[-1]['close']
-    is_gbp = "GBP" in symbol.upper()
-    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    is_index = "NQ" in symbol.upper() or "NAS" in symbol.upper() or "US100" in symbol.upper()
-    is_fx = "EUR" in symbol.upper() or is_gbp
-    is_silver = "XAG" in symbol.upper()
-    if is_index:
+    sym = symbol.upper()
+    is_gbp = "GBP" in sym
+    is_crypto = "BTC" in sym or "ETH" in sym
+    is_spx = "SPX" in sym or "US500" in sym
+    is_ym = "YM" in sym or "US30" in sym
+    is_nq = "NQ" in sym or "NAS" in sym or "US100" in sym
+    is_index = is_nq or is_spx or is_ym
+    is_fx = "EUR" in sym or is_gbp
+    is_silver = "XAG" in sym
+    if is_spx:
+        fmt = ".1f"
+        unit = "pts"
+        min_range = 8.0
+        breaker_tol = 2.0
+    elif is_ym:
+        fmt = ".1f"
+        unit = "pts"
+        min_range = 60.0
+        breaker_tol = 12.0
+    elif is_nq:
         fmt = ".1f"
         unit = "pts"
         min_range = 35.0
@@ -813,8 +892,8 @@ def screen_ict_session(
     pierced_high = recent_high >= range_high
     pierced_low = recent_low <= range_low
 
-    breakout_buf = 6.0 if is_index else (30.0 if is_crypto else (1.0 if "XAU" in symbol.upper() else (0.10 if is_silver else 0.0008)))
-    rejection_buf = 3.0 if is_index else (15.0 if is_crypto else (0.5 if "XAU" in symbol.upper() else (0.05 if is_silver else 0.0004)))
+    breakout_buf = 1.5 if is_spx else (8.0 if is_ym else (6.0 if is_nq else (30.0 if is_crypto else (1.0 if "XAU" in symbol.upper() else (0.10 if is_silver else 0.0008)))))
+    rejection_buf = 0.8 if is_spx else (4.0 if is_ym else (3.0 if is_nq else (15.0 if is_crypto else (0.5 if "XAU" in symbol.upper() else (0.05 if is_silver else 0.0004)))))
 
     is_bullish_breakout = pierced_high and current_price > (range_high + breakout_buf) and recent_bars[-1]['close'] > recent_bars[-1]['open']
     is_bearish_breakdown = pierced_low and current_price < (range_low - breakout_buf) and recent_bars[-1]['close'] < recent_bars[-1]['open']
@@ -879,17 +958,17 @@ def screen_ict_session(
 
         smt_type = smt_info.get("smt_type")
         if smt_type == "BEARISH_SMT" and not is_bullish_breakout and (swept_high or fvg_dir == "BEARISH" or breaker_type == "BEARISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index)
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index, symbol=symbol)
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BEARISH") else (breaker_price if has_breaker else range_high)
-            sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))
-            sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+            sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
             sl_p = max(range_high + sl_buf, entry_p + sl_dist)
             return _package_setup(arch_id, "BEARISH_SMT_MITIGATION", entry_p, sl_p, f"BEARISH SMT: {smt_info.get('summary', '')}", "SHORT")
         elif smt_type == "BULLISH_SMT" and not is_bearish_breakdown and (swept_low or fvg_dir == "BULLISH" or breaker_type == "BULLISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index)
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index, symbol=symbol)
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BULLISH") else (breaker_price if has_breaker else range_low)
-            sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))
-            sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+            sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
             sl_p = min(range_low - sl_buf, entry_p - sl_dist)
             return _package_setup(arch_id, "BULLISH_SMT_MITIGATION", entry_p, sl_p, f"BULLISH SMT: {smt_info.get('summary', '')}", "LONG")
 
@@ -898,8 +977,8 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))
-        sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+        sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
+        sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
         sl_p = max(range_high + sl_buf, breaker_price + sl_dist)
         return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
 
@@ -907,8 +986,8 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))
-        sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+        sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
+        sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
         sl_p = min(range_low - sl_buf, breaker_price - sl_dist)
         return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
 
@@ -919,9 +998,9 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index)
-            sl_dist = 45.0 if is_index else (300.0 if is_crypto else (0.25 if is_silver else 0.0015))
-            sl_buf = 4.0 if is_index else (25.0 if is_crypto else 0.0010)
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index, symbol=symbol)
+            sl_dist = 10.0 if is_spx else (50.0 if is_ym else (45.0 if is_nq else (300.0 if is_crypto else (0.25 if is_silver else 0.0015))))
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else 0.0010)))
             sl_p = max(range_high + sl_buf, scaled_entry + sl_dist)
             return _package_setup(arch_id, "BEARISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG", "SHORT")
 
@@ -929,9 +1008,9 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index)
-            sl_dist = 45.0 if is_index else (300.0 if is_crypto else (0.25 if is_silver else 0.0015))
-            sl_buf = 4.0 if is_index else (25.0 if is_crypto else 0.0010)
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index, symbol=symbol)
+            sl_dist = 10.0 if is_spx else (50.0 if is_ym else (45.0 if is_nq else (300.0 if is_crypto else (0.25 if is_silver else 0.0015))))
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else 0.0010)))
             sl_p = min(range_low - sl_buf, scaled_entry - sl_dist)
             return _package_setup(arch_id, "BULLISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG", "LONG")
 
@@ -942,7 +1021,7 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015))
+            sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015))))
             sl_p = breaker_price + sl_dist
             return _package_setup(arch_id, "BEARISH_BREAKER_RETEST", breaker_price, sl_p, f"Bearish Breaker Block retest at {breaker_price:{fmt}}", "SHORT")
 
@@ -950,7 +1029,7 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            sl_dist = 50.0 if is_index else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015))
+            sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015))))
             sl_p = breaker_price - sl_dist
             return _package_setup(arch_id, "BULLISH_BREAKER_RETEST", breaker_price, sl_p, f"Bullish Breaker Block retest at {breaker_price:{fmt}}", "LONG")
 
@@ -963,7 +1042,7 @@ def screen_ict_session(
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
                     return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+                sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
                 sl_p = fvg_distal - sl_buf
                 return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
@@ -972,7 +1051,7 @@ def screen_ict_session(
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
                     return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_buf = 4.0 if is_index else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))
+                sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
                 sl_p = fvg_distal + sl_buf
                 return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
