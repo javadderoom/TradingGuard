@@ -645,11 +645,11 @@ The entire master calibrated portfolio was exported into `orders_schedule.csv` a
 ### 16.1 Scope, Microstructure & Council-Free Architecture
 Bitcoin (`BTCUSD`) presents distinct microstructure dynamics compared to Gold and Forex pairs:
 1. **Continuous 24/7 Tick Flow**: Crypto markets trade continuously without daily exchange closures, creating distinct overnight accumulation, Asian liquidity runs, and weekend liquidity vacuums.
-2. **Autonomous Execution (Zero-Council Mandate)**: High-speed crypto sweeps require instant limit order placement upon M5 bar close. The multi-agent LLM council introduced excessive token latency (~45 seconds) and conservative false-vetoes during institutional momentum phases. Bitcoin is executed purely through the calibrated autonomous screener (`fast_screener.py` / `btcusd_long_term_audit.py`).
+2. **Autonomous Execution (Zero-Council Mandate)**: High-speed crypto sweeps require instant limit order placement upon M5 bar close. The multi-agent LLM council introduced excessive token latency (~45 seconds) and conservative false-vetoes during institutional momentum phases. Bitcoin is executed purely through the calibrated autonomous screener (`fast_screener.py` / `btcusd_optimized_engine.py`).
 3. **Verified Audit Scope**: Spans two full independent continuous datasets totaling **131 full continuous calendar trading days** (July 1 to November 8, 2026):
    - **Summer 2026 Out-of-Sample Stress Test**: July 1 – August 31, 2026 (62 days, 17,857 M5 bars, 89,235 M1 bars, 1.76M real broker ticks).
    - **Autumn 2026 In-Sample Discovery**: September 1 – November 8, 2026 (69 days, 19,829 M5 bars, 99,149 M1 bars).
-   - Evaluated under authentic broker conditions ($1.50 spread, $0.10/lot commission, 75-minute TTL, 1.8R Breakeven ratchet, 3.5R cap).
+   - Evaluated under authentic broker conditions ($1.50 spread, $0.10/lot commission, 60-75m TTL, 1.5-1.8R Breakeven ratchet, 3.0-3.5R cap).
 
 ### 16.2 Empirical Strategy Optimization Matrix (131 Continuous Days)
 
@@ -661,8 +661,9 @@ Bitcoin (`BTCUSD`) presents distinct microstructure dynamics compared to Gold an
 | | | | | | | | | | | | |
 | **Config 1** | Decommission ARCH-009 & ARCH-010 | 131 Days | 428 | 62 | 327 | 39 | 14.5% | **-172.39R** | -$487.10 | 0.43 | +215.02R |
 | **Config 2** | Config 1 + Ban 4 Toxic Sessions | 131 Days | 214 | 36 | 161 | 17 | 16.8% | **-71.54R** | -$215.08 | 0.50 | +315.87R |
-| **Config 3** | Curated Archetype-Session Match | 131 Days | 80 | 25 | 48 | 7 | 31.2% | **+15.72R** | +$21.34 | 1.17 | +403.13R |
-| **Config 4** | **Curated Match (Weekday Mon-Fri)**| **131 Days**| **69** | **21** | **42** | **6** | **30.4%** | **+13.23R** | **+$13.51** | **1.12** | **+400.64R** |
+| **Config 3 (Post-Hoc)**| Curated Match (All Days) | 131 Days | 80 | 25 | 48 | 7 | 31.2% | **+15.72R** | +$21.34 | 1.17 | +403.13R |
+| **Config 4 (Post-Hoc)**| Curated Match (Weekday Mon-Fri)| 131 Days | 69 | 21 | 42 | 6 | 30.4% | **+13.23R** | +$13.51 | 1.12 | +400.64R |
+| **Dedicated Engine** | **In-Engine Gated (002, 009, 010 Banned)**| **131 Days**| **96** | **20** | **66** | **10**| **20.8%** | **-11.95R** | **-$36.23** | **0.76** | **+375.46R** |
 
 ### 16.3 Bitcoin Archetype Decommissioning Ledger (131 Days Verified)
 - **`SETUP-ARCH-010` (Prominent Sweep + M1/M5 Micro MSS)**:
@@ -673,35 +674,38 @@ Bitcoin (`BTCUSD`) presents distinct microstructure dynamics compared to Gold an
   * *Audit Performance*: 192 fills, 27 wins, 148 losses, 17 BE (14.1% WR), **-74.88R Net Loss, -$213.02 PnL, PF 0.50**.
   * *Mechanics of Failure*: Deep 62-79% Fibonacci retracements in Bitcoin 5M trends represent order flow exhaustion rather than institutional discount. Price regularly sweeps the stop-loss or consolidates past the 75m TTL.
   * *Mandate*: **Permanently Decommissioned on Bitcoin (`BTCUSD`)**.
+- **`SETUP-ARCH-002` (Judas Swing + FVG Mitigation)**:
+  * *Audit Performance*: 206 fills, 26 wins, 166 losses, 14 BE (12.6% WR), **-102.19R Baseline Loss / -26.86R In-Engine Loss, PF 0.36-0.43**.
+  * *Mechanics of Failure*: Just as on Gold where it was decommissioned, entering at the first minor 5M FVG during a Judas swing is premature; price regularly over-penetrates before completing true institutional reversals.
+  * *Mandate*: **Permanently Decommissioned on Bitcoin (`BTCUSD`)**.
 
 ### 16.4 Institutional Session Rules & Dynamic Seasonal Session Clock (DST vs. No-DST)
 - **Seasonal Clock Mechanics**: Dynamic resolution via `session_clock.py` factoring in UK BST/GMT and US EDT/EST against Tehran's permanent UTC+3:30 (No-DST).
-- **Curated Session Outperformance (131 Days)**:
-  * `Asian_Late`: +4.74R Net (PF 1.17)
-  * `NY_Open`: +4.15R Net (PF 1.10)
-  * `London_Continuation`: +2.13R Net (PF 99.00)
-  * `London_Open`: +1.72R Net (PF 1.03)
-  * `NY_Silver_Bullet`: +0.34R Net (PF 1.14)
-  * `Asian_Early`: +0.15R Net (PF 1.06)
+- **Authorized Execution Windows**:
+  * `NY_Silver_Bullet`: +0.15R Net (PF 1.06)
+  * `NY_Open`: Focus for `SETUP-ARCH-004`
+  * `Asian_Late`: Focus for `SETUP-ARCH-001` and `SETUP-ARCH-004`
+  * `London_Continuation`: Focus for `SETUP-ARCH-011`
 - **Strictly Banned Toxic Windows across 131 Days**:
   * `NY_Late_PM`: **-92.52R Loss**, 11.1% WR (PF 0.34).
   * `Pacific_Off_Hours`: **-82.19R Loss**, 11.3% WR (PF 0.33).
   * `Asian_Early`: **-77.50R Loss**, 10.1% WR (PF 0.34).
-  * `London_Continuation`: **-35.71R Loss**, 15.1% WR (PF 0.29).
+  * `London_Continuation` (General setups): **-35.71R Loss**, 15.1% WR (PF 0.29).
   * *Total Bottom 4 Session Drag*: **-287.92R destroyed**.
 
 ### 16.5 Day-of-Week Invariant (Weekday Mon-Fri Only)
-- **Mon-Fri**: Captures 100% of curated alpha (+13.23R net alpha across 131 days).
+- **Mon-Fri**: All optimized trades executed exclusively on weekdays (Monday 00:00 UTC through Friday 23:59 UTC).
 - **Sat-Sun**: Thin liquidity spreads, zero institutional volume, and whipsaws create a net drag. Weekend execution is strictly prohibited.
 
-### 16.6 Production Codebase Integration
-1. **Engines**: 
-   - `hitl/backtest/btcusd_long_term_audit.py` (Autumn baseline engine).
-   - `hitl/backtest/btcusd_summer_audit.py` (Summer out-of-sample engine).
-   - `hitl/backtest/btcusd_unified_131d_analysis.py` (131-day master synthesis).
-2. **Trade Ledgers**: 
-   - `backtest_results/btcusd_long_term_audit/btcusd_long_term_trades.parquet` (Autumn).
-   - `backtest_results/btcusd_summer_audit/btcusd_summer_trades.parquet` (Summer).
-3. **Cache Parquets**:
+### 16.6 Calibrated Trade Management Policy
+- **Target R:R**: **3.0R** (optimal efficiency over 3.5R cap).
+- **Breakeven Ratchet**: **1.5R** (locks nominal profit before sharp crypto micro-reversals).
+- **Inactivity TTL**: **60 minutes** (12 M5 bars).
+
+### 16.7 Production Codebase Integration
+1. **Dedicated Engine**: `hitl/backtest/btcusd_optimized_engine.py` (Autonomous in-engine execution pipeline).
+2. **Trade Ledger**: `backtest_results/btcusd_optimized_run/btcusd_optimized_trades.parquet`.
+3. **Summary**: `backtest_results/btcusd_optimized_run/btcusd_optimized_summary.json`.
+4. **Cache Parquets**:
    - `backtest_results/cache/BTCUSD_M5_2026.parquet`, `BTCUSD_M1_2026.parquet`.
    - `backtest_results/cache/BTCUSD_M5_SUMMER_2026.parquet`, `BTCUSD_M1_SUMMER_2026.parquet`.

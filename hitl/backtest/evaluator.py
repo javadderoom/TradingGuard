@@ -494,7 +494,7 @@ def evaluate_council_decision(
                 mfe_price = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
                 curr_fav_dist = max(0.0, mfe_price - entry)
                 curr_rr = curr_fav_dist * pip_val / max(0.1, price_risk_usd)
-                if curr_rr >= breakeven_rr and not is_be_active:
+                if breakeven_rr is not None and curr_rr >= breakeven_rr and not is_be_active:
                     is_be_active = True
                     active_sl = entry + spread  # cover broker spread for risk-free scratch
 
@@ -595,7 +595,7 @@ def evaluate_council_decision(
                 mfe_price = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
                 curr_fav_dist = max(0.0, entry - (mfe_price + spread))
                 curr_rr = curr_fav_dist * pip_val / max(0.1, price_risk_usd)
-                if curr_rr >= breakeven_rr and not is_be_active:
+                if breakeven_rr is not None and curr_rr >= breakeven_rr and not is_be_active:
                     is_be_active = True
                     active_sl = entry - spread  # cover broker spread for risk-free scratch
 
