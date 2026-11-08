@@ -35,7 +35,7 @@ class LiveMarketRadar:
     ):
         self.engine = engine
         self.client = client
-        self.target_symbols = target_symbols or ["GBPUSD", "EURUSD", "XAUUSD"]
+        self.target_symbols = target_symbols or ["GBPUSD", "XAUUSD", "NQ"]
         self.last_trigger_times: Dict[Tuple[str, str], float] = {}  # (symbol, "BUY"/"SELL") -> timestamp
         self.last_sweep_extremes: Dict[Tuple[str, str], float] = {} # (symbol, "BUY"/"SELL") -> extreme price
         self.cooldown_seconds: float = 1800.0 # 30 minutes between duplicate alerts per direction
@@ -90,8 +90,9 @@ class LiveMarketRadar:
         current_bid = list_5m[-1]['close']
 
         is_fx = "GBP" in symbol.upper() or "EUR" in symbol.upper()
-        pip_size = 0.00010 if is_fx else 0.10
-        min_sweep_pips = 1.0 if is_fx else 2.0
+        is_index = any(k in symbol.upper() for k in ("NQ", "NAS", "US100", "SPX", "YM", "US30"))
+        pip_size = 0.00010 if is_fx else (1.0 if is_index else 0.10)
+        min_sweep_pips = 1.0 if is_fx else (5.0 if is_index else 2.0)
 
         # Filter bars of current trading day in true UTC
         today_bars = [b for b in list_5m if b['_utc_dt'].date() == cur_dt.date()]
