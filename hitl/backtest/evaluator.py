@@ -84,7 +84,7 @@ def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14, symbol: str 
     # 1.0 for every asset: ~10,000 pips on FX, which effectively disabled
     # the watchdog on short histories. Scaled per asset (M1 ATR scale).
     sym = symbol.upper()
-    fallback_atr = 1.0 if "XAU" in sym else (0.05 if "XAG" in sym else 0.0005)
+    fallback_atr = 25.0 if "BTC" in sym else (1.0 if "XAU" in sym else (0.05 if "XAG" in sym else 0.0005))
     if len(bars) < period:
         return fallback_atr
     tr_list = []
@@ -100,7 +100,9 @@ def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14, symbol: str 
 def get_default_broker_spread(symbol: str) -> float:
     """Returns conservative institutional broker spread in price points."""
     sym = symbol.upper()
-    if "XAU" in sym:
+    if "BTC" in sym:
+        return 1.50          # $1.50 spread on BTCUSD ($0.015 at 0.01 lot)
+    elif "XAU" in sym:
         return 0.15          # $0.15 spread on Gold
     elif "XAG" in sym:
         return 0.030         # 3.0 cents spread on Silver ($1.50 on 0.01 lot)
@@ -295,6 +297,9 @@ def evaluate_council_decision(
     elif "EUR" in symbol.upper() or "GBP" in symbol.upper():
         pip_val = 1000.0    # 0.01 lot = $0.10/pip (1000x)
         val_fmt = ".5f"
+    elif "BTC" in symbol.upper():
+        pip_val = 0.01      # 0.01 lot = 0.01 BTC -> $0.01/dollar ($1.00 per $100 price move)
+        val_fmt = ".2f"
     else:
         pip_val = 1.0
         val_fmt = ".2f"

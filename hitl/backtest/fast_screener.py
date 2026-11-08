@@ -25,8 +25,19 @@ def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = 
 
     is_gold = "XAU" in symbol.upper()
     is_silver = "XAG" in symbol.upper()
-    min_gap = 1.0 if is_gold else (0.05 if is_silver else 0.0003)
-    min_body = 1.5 if is_gold else (0.08 if is_silver else 0.0004)
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    if is_crypto:
+        min_gap = 25.0 if "BTC" in symbol.upper() else 2.0
+        min_body = 45.0 if "BTC" in symbol.upper() else 3.0
+    elif is_gold:
+        min_gap = 1.0
+        min_body = 1.5
+    elif is_silver:
+        min_gap = 0.05
+        min_body = 0.08
+    else:
+        min_gap = 0.0003
+        min_body = 0.0004
 
     recent = bars[-lookback:]
     for i in range(len(recent) - 1, 2, -1):
@@ -64,7 +75,15 @@ def detect_breaker_and_mss(bars: List[Dict[str, Any]], lookback: int = 24, symbo
 
     is_gold = "XAU" in symbol.upper()
     is_silver = "XAG" in symbol.upper()
-    min_swing_height = 4.0 if is_gold else (0.25 if is_silver else 0.0015)
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    if is_crypto:
+        min_swing_height = 120.0 if "BTC" in symbol.upper() else 8.0
+    elif is_gold:
+        min_swing_height = 4.0
+    elif is_silver:
+        min_swing_height = 0.25
+    else:
+        min_swing_height = 0.0015
 
     recent = bars[-lookback:]
     current_close = recent[-1]['close']
@@ -112,14 +131,14 @@ def calculate_ote_range(swing_low: float, swing_high: float) -> Dict[str, float]
     }
 
 
-def scale_poi_depth(proximal: float, distal: float, is_bullish: bool, is_fx: bool, ratio: float = 0.50) -> float:
+def scale_poi_depth(proximal: float, distal: float, is_bullish: bool, is_fx: bool, ratio: float = 0.50, is_crypto: bool = False) -> float:
     """
     Implements RULE-EXEC-036: POI Depth Scaling (Mean Threshold & OTE).
-    If candidate POI/zone width exceeds 6.0 pips (FX) or $2.00 (Gold), outer proximal edge entry (0%)
+    If candidate POI/zone width exceeds 6.0 pips (FX), $2.00 (Gold), or $25.00 (Crypto), outer proximal edge entry (0%)
     is strictly avoided in favor of the 50% Mean Threshold (MT) or 75% Deep Retracement (OTE).
     """
     width = abs(proximal - distal)
-    min_width = 0.0006 if is_fx else 2.0
+    min_width = 25.0 if is_crypto else (0.0006 if is_fx else 2.0)
     if width < min_width:
         return proximal
     
@@ -149,8 +168,9 @@ def detect_prominent_sweep_and_mss(
         return False, "NONE", 0.0, 0.0, ""
 
     is_fx = "EUR" in symbol.upper() or "GBP" in symbol.upper()
-    pip_size = 0.0001 if is_fx else (0.01 if "XAG" in symbol.upper() else 0.1)
-    sl_buffer = 1.0 * pip_size if "GBP" in symbol.upper() else (2.0 * pip_size if is_fx else 1.5)
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    pip_size = 5.0 if is_crypto else (0.0001 if is_fx else (0.01 if "XAG" in symbol.upper() else 0.1))
+    sl_buffer = 20.0 if is_crypto else (1.0 * pip_size if "GBP" in symbol.upper() else (2.0 * pip_size if is_fx else 1.5))
 
     recent = bars_5m[-lookback_5m:]
     curr_bar = recent[-1]
@@ -194,6 +214,12 @@ def detect_prominent_sweep_and_mss(
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 4.50:
                                 sl = round(entry + 4.50, 2)
+                        elif is_crypto:
+                            dist = abs(entry - sl)
+                            if dist > 800.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 150.0:
+                                sl = round(entry + 150.0, 2)
                         return True, "BEARISH", entry, sl, f"Prominent High swept at {sweep_wick:.5f} + M1 MSS displacement at {entry:.5f}"
                 
                 if curr_close < micro_swing_low and curr_bar['close'] < curr_bar['open']:
@@ -205,6 +231,12 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 4.50:
                             sl = round(entry + 4.50, 2)
+                    elif is_crypto:
+                        dist = abs(entry - sl)
+                        if dist > 800.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 150.0:
+                            sl = round(entry + 150.0, 2)
                     return True, "BEARISH", entry, sl, f"Prominent High swept at {sweep_wick:.5f} + MSS displacement close below {micro_swing_low:.5f}"
 
     # 2. Bullish Prominent Sweep (EQL / Prominent Low swept then MSS up)
@@ -234,6 +266,12 @@ def detect_prominent_sweep_and_mss(
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 4.50:
                                 sl = round(entry - 4.50, 2)
+                        elif is_crypto:
+                            dist = abs(entry - sl)
+                            if dist > 800.0:
+                                return False, "NONE", 0.0, 0.0, ""
+                            if dist < 150.0:
+                                sl = round(entry - 150.0, 2)
                         return True, "BULLISH", entry, sl, f"Prominent Low swept at {sweep_wick:.5f} + M1 MSS displacement at {entry:.5f}"
 
                 if curr_close > micro_swing_high and curr_bar['close'] > curr_bar['open']:
@@ -245,6 +283,12 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 4.50:
                             sl = round(entry - 4.50, 2)
+                    elif is_crypto:
+                        dist = abs(entry - sl)
+                        if dist > 800.0:
+                            return False, "NONE", 0.0, 0.0, ""
+                        if dist < 150.0:
+                            sl = round(entry - 150.0, 2)
                     return True, "BULLISH", entry, sl, f"Prominent Low swept at {sweep_wick:.5f} + MSS displacement close above {micro_swing_high:.5f}"
 
     return False, "NONE", 0.0, 0.0, ""
@@ -281,6 +325,12 @@ def detect_nested_double_mss(
     if len(highs) < 3 or len(lows) < 3:
         return False, "NONE", 0.0, 0.0, ""
 
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    step_buf = 25.0 if is_crypto else 1.0
+    sl_buf = 20.0 if is_crypto else 1.50
+    min_dist = 150.0 if is_crypto else 3.50
+    max_dist = 800.0 if is_crypto else 8.00
+
     # 1. Bullish Nested Double MSS
     h3_idx, h3_price = highs[-1]
     if c > h3_price and curr_bar['close'] > curr_bar['open']:
@@ -297,14 +347,14 @@ def detect_nested_double_mss(
 
                 has_sweep = (len(prior_l) >= 3 and l2_price < prior_l[-3][1]) or (l2_price < prior_l[0][1])
 
-                if has_sweep and (h2_price > h1_price + 1.0) and (h3_price < h2_price - 1.0) and (l3_price > l2_price) and (l4_price > l2_price):
+                if has_sweep and (h2_price > h1_price + step_buf) and (h3_price < h2_price - step_buf) and (l3_price > l2_price) and (l4_price > l2_price):
                     entry = h3_price
-                    sl = l4_price - 1.50
+                    sl = l4_price - sl_buf
                     dist = abs(entry - sl)
-                    if dist < 3.50:
-                        sl = entry - 3.50
-                    elif dist > 8.00:
-                        sl = entry - 8.00
+                    if dist < min_dist:
+                        sl = entry - min_dist
+                    elif dist > max_dist:
+                        sl = entry - max_dist
                     return True, "BULLISH", entry, sl, f"Nested Double MSS (Swept {l2_price:.2f} -> 1st MSS {h2_price:.2f} -> Pullback -> 2nd MSS above {h3_price:.2f})"
 
     # 2. Bearish Nested Double MSS
@@ -323,14 +373,14 @@ def detect_nested_double_mss(
 
                 has_sweep = (len(prior_h) >= 3 and h2_price > prior_h[-3][1]) or (h2_price > prior_h[0][1])
 
-                if has_sweep and (l2_price < l1_price - 1.0) and (l3_price > l2_price + 1.0) and (h3_price < h2_price) and (h4_price < h2_price):
+                if has_sweep and (l2_price < l1_price - step_buf) and (l3_price > l2_price + step_buf) and (h3_price < h2_price) and (h4_price < h2_price):
                     entry = l3_price
-                    sl = h4_price + 1.50
+                    sl = h4_price + sl_buf
                     dist = abs(entry - sl)
-                    if dist < 3.50:
-                        sl = entry + 3.50
-                    elif dist > 8.00:
-                        sl = entry + 8.00
+                    if dist < min_dist:
+                        sl = entry + min_dist
+                    elif dist > max_dist:
+                        sl = entry + max_dist
                     return True, "BEARISH", entry, sl, f"Nested Double MSS (Swept {h2_price:.2f} -> 1st MSS {l2_price:.2f} -> Pullback -> 2nd MSS below {l3_price:.2f})"
 
     return False, "NONE", 0.0, 0.0, ""
@@ -635,9 +685,15 @@ def screen_ict_session(
 
     current_price = bars_5m[-1]['close']
     is_gbp = "GBP" in symbol.upper()
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
     is_fx = "EUR" in symbol.upper() or is_gbp
     is_silver = "XAG" in symbol.upper()
-    if is_fx:
+    if is_crypto:
+        fmt = ".2f"
+        unit = "pts"
+        min_range = 150.0
+        breaker_tol = 35.0
+    elif is_fx:
         fmt = ".5f"
         unit = "pips"
         min_range = 0.0015
@@ -713,8 +769,8 @@ def screen_ict_session(
     pierced_high = recent_high >= range_high
     pierced_low = recent_low <= range_low
 
-    breakout_buf = 1.0 if "XAU" in symbol.upper() else (0.10 if is_silver else 0.0008)
-    rejection_buf = 0.5 if "XAU" in symbol.upper() else (0.05 if is_silver else 0.0004)
+    breakout_buf = 30.0 if is_crypto else (1.0 if "XAU" in symbol.upper() else (0.10 if is_silver else 0.0008))
+    rejection_buf = 15.0 if is_crypto else (0.5 if "XAU" in symbol.upper() else (0.05 if is_silver else 0.0004))
 
     is_bullish_breakout = pierced_high and current_price > (range_high + breakout_buf) and recent_bars[-1]['close'] > recent_bars[-1]['open']
     is_bearish_breakdown = pierced_low and current_price < (range_low - breakout_buf) and recent_bars[-1]['close'] < recent_bars[-1]['open']
@@ -779,16 +835,18 @@ def screen_ict_session(
 
         smt_type = smt_info.get("smt_type")
         if smt_type == "BEARISH_SMT" and not is_bullish_breakout and (swept_high or fvg_dir == "BEARISH" or breaker_type == "BEARISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto)
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BEARISH") else (breaker_price if has_breaker else range_high)
-            sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-            sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), entry_p + sl_dist)
+            sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015))
+            sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+            sl_p = max(range_high + sl_buf, entry_p + sl_dist)
             return _package_setup(arch_id, "BEARISH_SMT_MITIGATION", entry_p, sl_p, f"BEARISH SMT: {smt_info.get('summary', '')}", "SHORT")
         elif smt_type == "BULLISH_SMT" and not is_bearish_breakdown and (swept_low or fvg_dir == "BULLISH" or breaker_type == "BULLISH_BREAKER"):
-            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
+            scaled_fvg = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto)
             entry_p = scaled_fvg if (has_fvg and fvg_dir == "BULLISH") else (breaker_price if has_breaker else range_low)
-            sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-            sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), entry_p - sl_dist)
+            sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015))
+            sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+            sl_p = min(range_low - sl_buf, entry_p - sl_dist)
             return _package_setup(arch_id, "BULLISH_SMT_MITIGATION", entry_p, sl_p, f"BULLISH SMT: {smt_info.get('summary', '')}", "LONG")
 
     # Setup A: Judas Swing + Breaker Block (SETUP-ARCH-001)
@@ -796,16 +854,18 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-        sl_p = max(range_high + (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price + sl_dist)
+        sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015))
+        sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+        sl_p = max(range_high + sl_buf, breaker_price + sl_dist)
         return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
 
     if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER":
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)
-        sl_p = min(range_low - (1.50 if "XAU" in symbol.upper() else 0.0010), breaker_price - sl_dist)
+        sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015))
+        sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+        sl_p = min(range_low - sl_buf, breaker_price - sl_dist)
         return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
 
     # Setup B: Judas Swing + Fair Value Gap (SETUP-ARCH-002)
@@ -815,18 +875,20 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"])
-            sl_dist = 0.25 if is_silver else 0.0015
-            sl_p = max(range_high + 0.0010, scaled_entry + sl_dist)
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto)
+            sl_dist = 300.0 if is_crypto else (0.25 if is_silver else 0.0015)
+            sl_buf = 25.0 if is_crypto else 0.0010
+            sl_p = max(range_high + sl_buf, scaled_entry + sl_dist)
             return _package_setup(arch_id, "BEARISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish FVG", "SHORT")
 
         if swept_low and not is_bearish_breakdown and fvg_dir == "BULLISH":
             arch_id = "SETUP-ARCH-002"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"])
-            sl_dist = 0.25 if is_silver else 0.0015
-            sl_p = min(range_low - 0.0010, scaled_entry - sl_dist)
+            scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto)
+            sl_dist = 300.0 if is_crypto else (0.25 if is_silver else 0.0015)
+            sl_buf = 25.0 if is_crypto else 0.0010
+            sl_p = min(range_low - sl_buf, scaled_entry - sl_dist)
             return _package_setup(arch_id, "BULLISH_SWEEP_FVG", scaled_entry, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish FVG", "LONG")
 
     # Setup C: Clean Market Structure Shift (MSS) with Breaker Block retest (SETUP-ARCH-003)
@@ -836,14 +898,16 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            sl_p = breaker_price + (6.0 if "XAU" in symbol.upper() else 0.0015)
+            sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015)
+            sl_p = breaker_price + sl_dist
             return _package_setup(arch_id, "BEARISH_BREAKER_RETEST", breaker_price, sl_p, f"Bearish Breaker Block retest at {breaker_price:{fmt}}", "SHORT")
 
         if breaker_type == "BULLISH_BREAKER" and abs(current_price - breaker_price) <= breaker_tol:
             arch_id = "SETUP-ARCH-003"
             if not setup_registry.is_archetype_ratified(arch_id):
                 return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-            sl_p = breaker_price - (6.0 if "XAU" in symbol.upper() else 0.0015)
+            sl_dist = 350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else 0.0015)
+            sl_p = breaker_price - sl_dist
             return _package_setup(arch_id, "BULLISH_BREAKER_RETEST", breaker_price, sl_p, f"Bullish Breaker Block retest at {breaker_price:{fmt}}", "LONG")
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
@@ -855,7 +919,8 @@ def screen_ict_session(
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
                     return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_p = fvg_distal - (1.50 if "XAU" in symbol.upper() else 0.0010)
+                sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+                sl_p = fvg_distal - sl_buf
                 return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
         if is_bearish_breakdown and fvg_dir == "BEARISH":
@@ -863,35 +928,37 @@ def screen_ict_session(
                 arch_id = "SETUP-ARCH-004"
                 if not setup_registry.is_archetype_ratified(arch_id):
                     return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_p = fvg_distal + (1.50 if "XAU" in symbol.upper() else 0.0010)
+                sl_buf = 25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010)
+                sl_p = fvg_distal + sl_buf
                 return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
     # Decommissioned on Gold (-46.5R) and GBPUSD (-20.5R) per 4-season empirical audits
     if not ("XAU" in symbol.upper() or is_gbp):
-        min_expansion_pts = 0.80 if is_silver else 0.0035
+        min_expansion_pts = 400.0 if is_crypto else (0.80 if is_silver else 0.0035)
         if total_range >= min_expansion_pts and not (in_mid_equilibrium or is_inside_day) and setup_registry.is_archetype_ratified("SETUP-ARCH-009"):
             arch_id = "SETUP-ARCH-009"
-            if is_session_bearish and current_price >= (range_low + 0.45 * total_range):
+            sl_buf = 25.0 if is_crypto else 0.0010
+            if is_session_bearish and (range_low + 0.45 * total_range) <= current_price <= range_high:
                 if current_price >= (range_low + 0.618 * total_range):
                     ote_entry = range_low + 0.705 * total_range
-                    sl_p = range_high + 0.0010
+                    sl_p = range_high + sl_buf
                     return _package_setup(arch_id, "BEARISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bearish Trend Continuation: OTE Premium Retracement", "SHORT")
                 elif (has_fvg and fvg_dir == "BEARISH") or (has_breaker and breaker_type == "BEARISH_BREAKER"):
                     entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BEARISH") else breaker_price
-                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"]) if has_fvg else entry_poi
-                    sl_p = range_high + 0.0010
+                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto) if has_fvg else entry_poi
+                    sl_p = range_high + sl_buf
                     return _package_setup(arch_id, "BEARISH_TREND_RETEST", scaled_entry, sl_p, "Bearish Trend Continuation: Retracement to Breakdown POI", "SHORT")
 
-            elif is_session_bullish and current_price <= (range_high - 0.45 * total_range):
+            elif is_session_bullish and range_low <= current_price <= (range_high - 0.45 * total_range):
                 if current_price <= (range_high - 0.618 * total_range):
                     ote_entry = range_high - 0.705 * total_range
-                    sl_p = range_low - 0.0010
+                    sl_p = range_low - sl_buf
                     return _package_setup(arch_id, "BULLISH_TREND_RETEST", round(ote_entry, 5 if is_fx else 2), sl_p, "Bullish Trend Continuation: OTE Discount Retracement", "LONG")
                 elif (has_fvg and fvg_dir == "BULLISH") or (has_breaker and breaker_type == "BULLISH_BREAKER"):
                     entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BULLISH") else breaker_price
-                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"]) if has_fvg else entry_poi
-                    sl_p = range_low - 0.0010
+                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto) if has_fvg else entry_poi
+                    sl_p = range_low - sl_buf
                     return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)

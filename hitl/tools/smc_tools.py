@@ -38,7 +38,8 @@ def get_smc_landmarks(
     Guarantees that entry, SL, and TP coordinates come from verified MT5 data.
     """
     is_fx = "GBP" in symbol.upper() or "EUR" in symbol.upper()
-    pip_size = 0.00010 if "GBP" in symbol.upper() else (0.00010 if "EUR" in symbol.upper() else 0.01)
+    is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
+    pip_size = 0.00010 if is_fx else (1.0 if is_crypto else 0.01)
 
     atr_5m = calculate_atr(bars_5m, 14)
     atr_1d = calculate_atr(bars_1d, 14)
@@ -51,8 +52,9 @@ def get_smc_landmarks(
     # Protected Swing Anchors (Stop Loss defense per RULE-CORE-005)
     protected_high = sweep_high
     protected_low = sweep_low
-    sl_sell_pinned = round(protected_high + pip_size, 5) if is_fx else round(protected_high + pip_size, 2)
-    sl_buy_pinned = round(protected_low - pip_size, 5) if is_fx else round(protected_low - pip_size, 2)
+    buf = max(20.0, 0.8 * atr_5m) if is_crypto else pip_size
+    sl_sell_pinned = round(protected_high + buf, 5 if is_fx else 2)
+    sl_buy_pinned = round(protected_low - buf, 5 if is_fx else 2)
 
     # Targeted Swing Anchors (Opposing pools holding retail liquidity on 15M)
     swing_lows_15m = []
@@ -353,7 +355,10 @@ def build_validated_order_plan(
         entry = valid_candidates[0]
 
         sl = landmarks.get("sl_sell_pinned")
-        if not is_fx and sl and abs(sl - entry) > 12.0:
+        is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
+        if is_crypto and sl and abs(sl - entry) > 1200.0:
+            sl = round(entry + 400.0, 2)
+        elif not is_fx and not is_crypto and sl and abs(sl - entry) > 12.0:
             sl = round(entry + 7.50, 2)
         targeted_low = landmarks.get("targeted_swing_low")
         htf_tp = landmarks.get("htf_expansion_bearish")
@@ -393,7 +398,10 @@ def build_validated_order_plan(
         entry = valid_candidates[0]
 
         sl = landmarks.get("sl_buy_pinned")
-        if not is_fx and sl and abs(entry - sl) > 12.0:
+        is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
+        if is_crypto and sl and abs(entry - sl) > 1200.0:
+            sl = round(entry - 400.0, 2)
+        elif not is_fx and not is_crypto and sl and abs(entry - sl) > 12.0:
             sl = round(entry - 7.50, 2)
         targeted_high = landmarks.get("targeted_swing_high")
         htf_tp = landmarks.get("htf_expansion_bullish")

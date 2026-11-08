@@ -188,6 +188,8 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
         sym = "GBPUSD"
     elif "EUR" in symbol.upper():
         sym = "EURUSD"
+    elif "BTC" in symbol.upper():
+        sym = "BTCUSD"
     else:
         sym = "XAUUSD"
     mtf_dir = BASE_DIR / "analysis_assets" / "mtf"
@@ -386,6 +388,8 @@ def convene_investment_council(
         sym = "GBPUSD"
     elif "EUR" in symbol.upper():
         sym = "EURUSD"
+    elif "BTC" in symbol.upper():
+        sym = "BTCUSD"
     else:
         sym = "XAUUSD"
         
@@ -447,10 +451,11 @@ def convene_investment_council(
         "You are the Chief ICT & Order Flow Strategist for TradingGuard.\n"
         "Your exclusive mandate is technical order flow analysis based on institutional ICT/SMC principles.\n"
         "Core Rules & Archetype Awareness:\n"
-        "1. Reversal Archetypes (ARCH-001/002/003/010): Require validated liquidity sweep (Judas Swing) + M5 displacement MSS.\n"
-        "2. Continuation & Expansion Archetypes (ARCH-004/014): Do NOT demand an external liquidity sweep. "
+        "1. Reversal Breaker & Swing MSS Archetypes (ARCH-001/003/010): Require validated liquidity sweep (Judas Swing) + M5 displacement MSS.\n"
+        "2. Judas Swing + FVG Mitigation (ARCH-002): Requires validated liquidity sweep + energetic displacement candle creating a clean FVG (does NOT require an M5 swing pivot break; FVG displacement is the validation).\n"
+        "3. Continuation & Expansion Archetypes (ARCH-004/014): Do NOT demand an external liquidity sweep. "
         "Expansion setups legitimately break away from equilibrium via energetic FVG displacement. Anchor limit entry at proximal FVG edge.\n"
-        "3. Limit orders ONLY. Stop loss must be structurally pinned behind the recent swing wick. "
+        "4. Limit orders ONLY. Stop loss must be structurally pinned behind the recent swing wick. "
         "Minimum R:R must be 1:3.0 or higher. Max risk $12.00 (0.01 lot base)."
     )
     ict_task = (
@@ -512,7 +517,7 @@ def convene_investment_council(
         "Core Philosophy:\n"
         "1. Probabilistic Expectancy: Trading is a game of probabilities. With 1:3.5+ payout geometry, we only need a 22.2% win rate to break even. Imperfections and market noise are normal.\n"
         "2. Structural Invalidation: Verify that the stop loss is structurally pinned behind a swing wick or FVG distal edge, and strictly within the $12 cap.\n"
-        "3. Archetype Awareness: For continuation/expansion setups (SETUP-ARCH-004), do NOT demand an external liquidity sweep; evaluate displacement momentum and FVG retest.\n"
+        "3. Archetype Awareness: For continuation/expansion setups (SETUP-ARCH-004), do NOT demand an external liquidity sweep; evaluate displacement momentum and FVG retest. For Judas FVG setups (SETUP-ARCH-002), do NOT demand an M5 swing MSS if a clean liquidity sweep and energetic FVG displacement are present.\n"
         "4. Classify Risk:\n"
         "   - ACCEPTABLE_RISK: Clean structural geometry with positive expectancy.\n"
         "   - MODERATE_FRICTION: Minor counter-trend pull, shallow sweep, or nearby minor obstacle (recommend 0.5R half-risk or trailing stop).\n"
@@ -551,7 +556,7 @@ def convene_investment_council(
         "   - Dead mid-range chop with zero displacement or non-compliant R:R (< 1:3.0).\n"
         "   - The Risk Auditor classified the setup as a FATAL_STRUCTURAL_TRAP.\n"
         "3. If the Risk Auditor identified MODERATE_FRICTION, APPROVE the trade with 0.5R Risk or standard 1.0R rather than standing aside!\n"
-        "4. For SETUP-ARCH-004 (Expansion Momentum), do NOT demand an external sweep; expansion moves legitimately break away from equilibrium."
+        "4. For SETUP-ARCH-004 (Expansion Momentum), do NOT demand an external sweep; expansion moves legitimately break away from equilibrium. For SETUP-ARCH-002 (Judas FVG Mitigation), do NOT demand an M5 swing MSS if a clean liquidity sweep and energetic FVG displacement are present."
     )
     cio_task = (
         f"Asset: {sym} | Current Bid: {bid_str} | Ask: {ask_str}\n\n"

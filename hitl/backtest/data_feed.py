@@ -103,6 +103,8 @@ class HistoricalDataFeed:
             sym_clean = "EURUSD"
         elif "GBP" in sym_clean:
             sym_clean = "GBPUSD"
+        elif "BTC" in sym_clean:
+            sym_clean = "BTCUSD"
         p_1d = MTF_BACKTEST_DIR / f"{sym_clean}_1D.png"
         p_1h = MTF_BACKTEST_DIR / f"{sym_clean}_1H.png"
         p_15m = MTF_BACKTEST_DIR / f"{sym_clean}_15M.png"

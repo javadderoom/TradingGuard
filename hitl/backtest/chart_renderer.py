@@ -94,7 +94,7 @@ def extract_chart_landmarks(
     Uses strict UTC time conversion respecting broker server timezone offsets.
     """
     levels = []
-    is_fx = "XAU" not in symbol.upper()
+    is_fx = any(k in symbol.upper() for k in ["GBP", "EUR", "AUD", "CAD", "NZD", "CHF", "JPY"])
     fmt = ".5f" if is_fx else ".2f"
 
     # Prior Day High / Low
@@ -195,6 +195,8 @@ def render_candlestick_chart(
     img = Image.new("RGB", (width, height), BG_COLOR)
     draw = ImageDraw.Draw(img)
 
+    is_fx = any(k in symbol.upper() for k in ["GBP", "EUR", "AUD", "CAD", "NZD", "CHF", "JPY"])
+
     # Fonts
     font_tag = _get_font(18, bold=True)
     font_sym = _get_font(20, bold=True)
@@ -248,7 +250,7 @@ def render_candlestick_chart(
         y_pos = to_y(p_val)
         draw.line([(pad_left, y_pos), (pad_left + chart_w, y_pos)], fill=GRID_COLOR, width=1)
         # Price label on right axis
-        p_str = f"{p_val:.2f}" if "XAU" in symbol.upper() else f"{p_val:.5f}"
+        p_str = f"{p_val:.5f}" if is_fx else f"{p_val:.2f}"
         draw.text((pad_left + chart_w + 8, y_pos - 7), p_str, fill=TEXT_MUTED, font=font_axis)
 
     # Vertical Price Axis Border
@@ -282,7 +284,7 @@ def render_candlestick_chart(
                 draw.text((pad_left + 14, y_lvl - 15), lbl, fill=col, font=font_lvl)
 
             # Highlighted price marker on right axis
-            p_fmt = f"{p:.2f}" if "XAU" in symbol.upper() else f"{p:.5f}"
+            p_fmt = f"{p:.5f}" if is_fx else f"{p:.2f}"
             draw.rectangle([pad_left + chart_w + 2, y_lvl - 8, width - 4, y_lvl + 8], fill=(22, 28, 40), outline=col, width=1)
             draw.text((pad_left + chart_w + 6, y_lvl - 6), p_fmt, fill=col, font=font_axis)
 
@@ -328,7 +330,7 @@ def render_candlestick_chart(
     # Current Price Marker on Right Axis
     latest = rates[-1]
     curr_y = to_y(latest['close'])
-    curr_p_str = f"{latest['close']:.2f}" if "XAU" in symbol.upper() else f"{latest['close']:.5f}"
+    curr_p_str = f"{latest['close']:.5f}" if is_fx else f"{latest['close']:.2f}"
     is_latest_bull = latest['close'] >= latest['open']
     change_color = GREEN_CANDLE if is_latest_bull else RED_CANDLE
     draw.rectangle([pad_left + chart_w + 2, curr_y - 10, width - 4, curr_y + 10], fill=change_color)
@@ -358,7 +360,7 @@ def render_candlestick_chart(
     draw.text((x_sym, 18), f"•  {symbol}", fill=TEXT_LIGHT, font=font_sym)
 
     # Right side: OHLC info in crisp font
-    p_format = ".2f" if "XAU" in symbol.upper() else ".5f"
+    p_format = ".5f" if is_fx else ".2f"
     ohlc_text = (
         f"O: {latest['open']:{p_format}}  "
         f"H: {latest['high']:{p_format}}  "
