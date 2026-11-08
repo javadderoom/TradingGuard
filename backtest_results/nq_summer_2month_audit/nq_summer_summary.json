@@ -1,0 +1,62 @@
+{
+  "summer_raw_stats": {
+    "Signals": 756,
+    "Fills": 517,
+    "Wins": 75,
+    "Losses": 359,
+    "BE": 83,
+    "Exp": 170,
+    "WR%": 14.5,
+    "Net_R": -106.86,
+    "Net_PnL": -497.08,
+    "PF": 0.75
+  },
+  "summer_curated_30": {
+    "Signals": 77,
+    "Fills": 65,
+    "Wins": 9,
+    "Losses": 46,
+    "BE": 10,
+    "Exp": 9,
+    "WR%": 13.8,
+    "Net_R": -15.97,
+    "Net_PnL": -56.51,
+    "PF": 0.77
+  },
+  "summer_curated_35": {
+    "Signals": 77,
+    "Fills": 65,
+    "Wins": 7,
+    "Losses": 46,
+    "BE": 12,
+    "Exp": 9,
+    "WR%": 10.8,
+    "Net_R": -18.43,
+    "Net_PnL": -67.95,
+    "PF": 0.72
+  },
+  "summer_curated_40": {
+    "Signals": 79,
+    "Fills": 63,
+    "Wins": 5,
+    "Losses": 46,
+    "BE": 12,
+    "Exp": 10,
+    "WR%": 7.9,
+    "Net_R": -12.25,
+    "Net_PnL": -38.03,
+    "PF": 0.84
+  },
+  "unified_5month_stats": {
+    "Signals": 244,
+    "Fills": 190,
+    "Wins": 33,
+    "Losses": 126,
+    "BE": 31,
+    "Exp": 35,
+    "WR%": 17.4,
+    "Net_R": 13.21,
+    "Net_PnL": 43.34,
+    "PF": 1.07
+  }
+}
