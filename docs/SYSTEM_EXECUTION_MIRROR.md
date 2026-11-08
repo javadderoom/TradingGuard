@@ -890,3 +890,26 @@ Concatenating the independent Summer dataset with the Autumn extended dataset pr
 - **October 2026**: 38 Fills, **-1.73R**, -$23.88 PnL, PF **0.80** (Consolidation pullback).
 - **November 2026**: 6 Fills, **+2.97R**, +$28.56 PnL, PF **2.72** (Controlled start).
 - **Cumulative Verdict**: NQ is a genuine positive expectancy asset (+13.21R across 5.2 months), but is not immune to seasonal summer chop (-18.4R). Diversification across Gold, Cable, and Nasdaq remains mandatory.
+
+
+## 20. Decommissioning of `SETUP-ARCH-004` and `SETUP-ARCH-010` on Nasdaq 100 (`NQ`)
+
+### 20.1 Forensic Audit & Decommissioning Mandate
+Following forensic multi-cycle stress-testing across 32,974 M5 bars and 157,960 M1 bars (June 1 to November 6, 2026), two setups were identified as toxic friction sources on Nasdaq 100 and have been formally decommissioned in the codebase:
+
+1. **`SETUP-ARCH-010` (5-Minute Fair Value Gap / Silver Bullet)**:
+   - **Performance Outcome**: 159 fills, 14.5% Win Rate, -15.17R summer drag.
+   - **Mechanics of Failure**: Minor 5-minute FVGs generated over 83% of all trade volume on NQ. Without higher timeframe bias, 5M imbalances in low-liquidity pre-market or summer sessions are repeatedly invalidated by structural noise, dragging overall portfolio win rate down to 17.4%.
+   - **Operational Mandate**: **Permanently Decommissioned on Nasdaq 100 (`NQ`)**.
+
+2. **`SETUP-ARCH-004` (London Open Breakout & Retest)**:
+   - **Performance Outcome**: 16 fills, 18.8% Win Rate, -3.95R net loss (0% Win Rate in Summer).
+   - **Mechanics of Failure**: Retests of London breakout extremes on NQ frequently suffer deep stop runs back into the Asian range, leading to premature stop-outs before secondary expansion.
+   - **Operational Mandate**: **Permanently Decommissioned on Nasdaq 100 (`NQ`)**.
+
+### 20.2 Purified Nasdaq 100 Execution Policy
+With `ARCH-004` and `ARCH-010` decommissioned:
+- **Sole Authorized Archetype**: **`SETUP-ARCH-001` (Major Liquidity Sweep + MSS Displacement)**.
+- **Operational Window**: NY Pre-Market (08:00–09:30 NY) and London Open (08:00–10:30 UK).
+- **Execution Settings**: Target R:R = **3.5R**, Breakeven Ratchet = **1.5R**, Inactivity TTL = **60m**.
+- **Code Enforcement**: Hardcoded in `hitl/backtest/fast_screener.py` via `is_nq` exclusion guards on Setup D (`ARCH-004`) and Setup F (`ARCH-010`).

@@ -1035,8 +1035,8 @@ def screen_ict_session(
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
     # Gated: Must have broken outside of mid-range equilibrium and cannot be an inside day compression
-    # On Gold: Strictly requires PRO_EXPANSION alignment
-    if not (in_mid_equilibrium or is_inside_day):
+    # Decommissioned on NQ per empirical audit (0% Summer WR, negative expectancy)
+    if not (in_mid_equilibrium or is_inside_day) and not is_nq:
         if is_bullish_breakout and fvg_dir == "BULLISH":
             if "XAU" not in symbol.upper() or long_phase["phase"] == "PRO_EXPANSION":
                 arch_id = "SETUP-ARCH-004"
@@ -1085,13 +1085,15 @@ def screen_ict_session(
                     return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)
-    has_prom_sweep, sweep_dir, sweep_entry, sweep_sl, sweep_desc = detect_prominent_sweep_and_mss(
-        bars_5m, symbol, bars_1m=bars_1m
-    )
-    if has_prom_sweep and setup_registry.is_archetype_ratified("SETUP-ARCH-010"):
-        arch_id = "SETUP-ARCH-010"
-        direction = "LONG" if sweep_dir == "BULLISH" else "SHORT"
-        return _package_setup(arch_id, f"{sweep_dir}_PROMINENT_SWEEP_MSS", sweep_entry, sweep_sl, sweep_desc, direction)
+    # Decommissioned on NQ per empirical audit (14.5% WR, severe pre-market drag)
+    if not is_nq:
+        has_prom_sweep, sweep_dir, sweep_entry, sweep_sl, sweep_desc = detect_prominent_sweep_and_mss(
+            bars_5m, symbol, bars_1m=bars_1m
+        )
+        if has_prom_sweep and setup_registry.is_archetype_ratified("SETUP-ARCH-010"):
+            arch_id = "SETUP-ARCH-010"
+            direction = "LONG" if sweep_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{sweep_dir}_PROMINENT_SWEEP_MSS", sweep_entry, sweep_sl, sweep_desc, direction)
 
     # Setup G: Nested Double MSS with Prior Liquidity Sweep (SETUP-ARCH-011)
     has_nested, nested_dir, nested_entry, nested_sl, nested_desc = detect_nested_double_mss(
