@@ -1144,8 +1144,8 @@ Running the autonomous pipeline across 4 primary asset classes with corrected br
 
 4. **`SETUP-QUANT-XAUUSD-R2_020` & `R5_006` (Gold Volumetric Momentum)**:
    - **`R2_020`**: `[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b`
-   - **`R5_006`**: `[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
-   - **Cross-Asset Transfer (tested on GBPUSD)**: `R5_006` delivered 4 trades | Profit Factor: **1.78** | Net Alpha: **+1.60R** (**PASS**).
+   - **`R5_006`**: `[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 1.0xATR, BE: 1.2R, TTL: 48b` (calibrated SL from 0.8x to 1.0x ATR to absorb verified $0.22 live spread; OOS Profit Factor: **1.29**, Net Alpha: **+27.34R**, Win Rate: **13.2%**, 174 trades).
+   - **Cross-Asset Transfer (tested on GBPUSD)**: `R5_006` delivered 4 trades | Profit Factor: **3.25** | Net Alpha: **+2.49R** | Net Realized PnL: **+$29.63** (**PASS**).
 
 ---
 

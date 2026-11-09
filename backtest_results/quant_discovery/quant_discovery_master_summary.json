@@ -57,7 +57,7 @@
     "ratified_count": 2,
     "ratified_rules": [
       "[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
-      "[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b"
+      "[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 1.0xATR, BE: 1.2R, TTL: 48b"
     ],
     "cross_asset_audits": {
       "R2_020": {
@@ -73,9 +73,9 @@
         "GBPUSD": {
           "trades": 4,
           "win_rate": 0.0,
-          "profit_factor": 1.778512396694215,
-          "net_r": 1.5950000000000002,
-          "sharpe": 0.4481828472954273
+          "profit_factor": 2.634822804314329,
+          "net_r": 1.794,
+          "sharpe": 0.6284887982170232
         }
       }
     }
