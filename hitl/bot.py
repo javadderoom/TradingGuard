@@ -474,21 +474,26 @@ def _send_pending_rules_card(client: TelegramClient, chat_id: int | str):
     """Lists PENDING rule proposals (Pack 5) with Approve/Reject buttons.
 
     Proposed rules are NOT active and are NOT injected into council prompts
-    until a human approves them here. If there is nothing pending, sends
-    nothing.
+    until a human approves them here.
     """
     from hitl.council_memory import memory_engine
     pending = memory_engine.get_pending_rules()
     if not pending:
+        client.send_message(
+            chat_id,
+            "✅ *No Pending Rule Proposals*\n"
+            "All rules in the Institutional Playbook are currently active and ratified.\n"
+            "New proposals will appear here when a backtest or live post-mortem identifies an algorithmic edge."
+        )
         return
+
     lines = [
-        "⏳ *Pending Rule Proposals (LLM Review Council)*\n",
-        "These rules are NOT active yet. Approve to add them to the playbook, "
-        "or reject to keep them out.\n",
+        "⏳ *Pending Rule Proposals (Institutional Review Council)*\n",
+        "These rules were drafted by the post-mortem audit and require your sign-off as Seat #7.\n",
     ]
     keyboard = []
     for r in pending:
-        lines.append(f"• *[{r['id']}] {r['category']}*\n  _{r['rule']}_")
+        lines.append(f"📌 *[{r['id']}] {r['category']}*\n_{r['rule']}_\n")
         keyboard.append([
             {"text": f"✅ Approve {r['id']}", "callback_data": f"approve_rule_{r['id']}"},
             {"text": f"❌ Reject {r['id']}", "callback_data": f"reject_rule_{r['id']}"},
@@ -874,14 +879,10 @@ def run_bot():
                         else:
                             handle_chart_command(client, sender_id, "XAUUSD")
                     elif any(k in text.lower() for k in ["/review", "review", "/audit", "audit", "بازبینی", "شورای بازبینی", "review council", "/postmortem", "postmortem", "post-mortem", "جلسه بازبینی"]):
-                        # Pack 5: this is the DETERMINISTIC decision audit
-                        # (audit_past_decisions, formerly convene_review_council
-                        # in review_engine.py). The LLM supervisory review
-                        # council (hitl/review_council.py) runs off-hours via
-                        # the backtest runners and only PROPOSES rules — it is
-                        # not what the live Review button runs.
                         from hitl.review_engine import audit_past_decisions
+                        _send_pending_rules_card(client, sender_id)
                         audit_past_decisions(engine, client, sender_id)
+                    elif any(k in text.lower() for k in ["/rules", "/pending", "rules", "pending", "قوانین", "پیشنهاد"]):
                         _send_pending_rules_card(client, sender_id)
                     elif any(k in text.lower() for k in ["/briefing", "briefing", "morning", "صبحگاهی", "شروع روز", "morning briefing"]):
                         from hitl.review_engine import run_morning_briefing
