@@ -43,16 +43,39 @@ from hitl.watchdog import MarketWatchdog
 from hitl.macro_calendar import get_upcoming_events
 from hitl.council import convene_investment_council
 
-# Persistent Mobile Bottom Menu (Reply Keyboard)
+# Collapsible Mobile Bottom Menus (Reply Keyboard)
 MAIN_KEYBOARD = {
     "keyboard": [
-        [{"text": "💷 GBP Full Pack (Charts + Council)"}, {"text": "🥇 Gold Full Pack (Charts + Council)"}],
+        [{"text": "📊 Market Analysis"}, {"text": "🧪 Backtest Suite"}],
         [{"text": "🌅 Morning Briefing"}, {"text": "🔍 Review Council"}],
         [{"text": "📋 Pending Orders"}, {"text": "📊 Open Positions"}],
         [{"text": "🛡️ Account Status"}, {"text": "❓ Help & Syntax"}]
     ],
     "resize_keyboard": True,
-    "is_persistent": True
+    "is_persistent": False
+}
+
+ANALYSIS_KEYBOARD = {
+    "keyboard": [
+        [{"text": "🥇 Gold Full Pack"}, {"text": "💷 GBP Full Pack"}],
+        [{"text": "💶 EUR Full Pack"}, {"text": "💻 Nasdaq Full Pack"}],
+        [{"text": "🏛️ Gold Council Only"}, {"text": "🏛️ GBP Council Only"}],
+        [{"text": "🏛️ EUR Council Only"}, {"text": "🏛️ NQ Council Only"}],
+        [{"text": "🔙 Back to Main Menu"}]
+    ],
+    "resize_keyboard": True,
+    "is_persistent": False
+}
+
+BACKTEST_KEYBOARD = {
+    "keyboard": [
+        [{"text": "💻 Backtest Nasdaq (NQ)"}, {"text": "🥇 Backtest Gold"}],
+        [{"text": "💷 Backtest GBPUSD"}, {"text": "💶 Backtest EURUSD"}],
+        [{"text": "🪙 Backtest BTCUSD"}, {"text": "🌐 Multi-Asset Portfolio"}],
+        [{"text": "🔙 Back to Main Menu"}]
+    ],
+    "resize_keyboard": True,
+    "is_persistent": False
 }
 
 
@@ -121,6 +144,7 @@ def parse_order_command(text: str) -> dict | None:
 def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
     is_gbp = "GBP" in symbol.upper()
     is_euro = "EUR" in symbol.upper()
+    is_nq = any(k in symbol.upper() for k in ["NQ", "NAS", "US100"])
     if is_gbp:
         sym_name = "GBPUSD"
         sym_icon = "💷"
@@ -129,6 +153,10 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
         sym_name = "EURUSD"
         sym_icon = "💶"
         pack_key = "eur"
+    elif is_nq:
+        sym_name = "NQ"
+        sym_icon = "💻"
+        pack_key = "nq"
     else:
         sym_name = "XAUUSD"
         sym_icon = "🥇"
@@ -305,6 +333,7 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
 def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
     is_gbp = "GBP" in symbol.upper()
     is_euro = "EUR" in symbol.upper()
+    is_nq = any(k in symbol.upper() for k in ["NQ", "NAS", "US100"])
     if is_gbp:
         sym_name = "GBPUSD"
         sym_icon = "💷"
@@ -313,6 +342,10 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
         sym_name = "EURUSD"
         sym_icon = "💶"
         pack_key = "eur"
+    elif is_nq:
+        sym_name = "NQ"
+        sym_icon = "💻"
+        pack_key = "nq"
     else:
         sym_name = "XAUUSD"
         sym_icon = "🥇"
@@ -476,6 +509,65 @@ def handle_council_command(client: TelegramClient, chat_id: int | str, symbol: s
 def handle_chart_command(client: TelegramClient, chat_id: int | str, symbol: str = "XAUUSD"):
     """Spawns background worker to capture charts and invoke Antigravity AI without blocking bot polling."""
     t = threading.Thread(target=_chart_worker, args=(client, chat_id, symbol), daemon=True)
+    t.start()
+
+
+def _backtest_worker(client: TelegramClient, chat_id: int | str, test_key: str):
+    import subprocess
+    scripts = {
+        "nq": ("💻 Nasdaq 100 (Curated Production 2M)", BASE_DIR / "hitl" / "backtest" / "nq_curated_production_audit.py"),
+        "gold": ("🥇 Gold Metals Basket", BASE_DIR / "hitl" / "backtest" / "metals_basket_runner.py"),
+        "gbp": ("💷 GBPUSD 60-Day Runner", BASE_DIR / "hitl" / "backtest" / "gbpusd_60day_runner.py"),
+        "eur": ("💶 EURUSD 90-Day Runner", BASE_DIR / "hitl" / "backtest" / "eurusd_90day_runner.py"),
+        "btc": ("🪙 BTCUSD Dedicated 131-Day", BASE_DIR / "hitl" / "backtest" / "btcusd_optimized_engine.py"),
+        "portfolio": ("🌐 Multi-Asset Portfolio Audit", BASE_DIR / "hitl" / "backtest" / "unified_multi_asset_portfolio_audit.py")
+    }
+    target = scripts.get(test_key)
+    if not target:
+        client.send_message(chat_id, f"⚠️ Unknown backtest target: `{test_key}`")
+        return
+    label, script_path = target
+    client.send_message(
+        chat_id,
+        f"⏳ *Running Backtest: {label}*\nSimulating historical tick/bar data through the automated execution engine. Please wait..."
+    )
+    try:
+        res = subprocess.run(
+            [sys.executable, str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            encoding="utf-8",
+            errors="replace"
+        )
+        out = res.stdout
+        card_lines = [f"🏆 *Backtest Result: {label}*\n"]
+        summary_lines = []
+        capture = False
+        for line in out.splitlines():
+            if any(hdr in line for hdr in ["FINAL CURATED", "OVERALL RESULTS", "BENCHMARK RESULTS"]):
+                capture = True
+            if capture:
+                if line.strip() and not line.startswith("==="):
+                    summary_lines.append(line)
+                if len(summary_lines) >= 14:
+                    break
+        if summary_lines:
+            card_lines.append("```\n" + "\n".join(summary_lines) + "\n```")
+        else:
+            tail = "\n".join(out.strip().splitlines()[-15:])
+            card_lines.append(f"```\n{tail}\n```")
+        
+        client.send_message(chat_id, "\n".join(card_lines))
+    except subprocess.TimeoutExpired:
+        client.send_message(chat_id, f"⚠️ *Backtest timed out (>180s):* `{label}`")
+    except Exception as e:
+        client.send_message(chat_id, f"⚠️ *Backtest execution error:*\n`{e}`")
+
+
+def handle_backtest_command(client: TelegramClient, chat_id: int | str, test_key: str):
+    """Spawns background worker to execute a quantitative backtest."""
+    t = threading.Thread(target=_backtest_worker, args=(client, chat_id, test_key), daemon=True)
     t.start()
 
 
@@ -713,21 +805,74 @@ def run_bot():
                         continue
 
                     # B) Standard Command Dispatcher
-                    # 1. Council Only (Without recapturing charts)
-                    if any(k in text.lower() for k in ["/council", "council", "شورا", "مجلس"]) and not any(k in text.lower() for k in ["چارت", "پکیج", "کامل"]):
-                        if any(k in text.lower() for k in ["💷", "پوند", "gbp"]):
+                    # 1. Submenu Navigation
+                    if any(k in text.lower() for k in ["📊 market analysis", "market analysis", "/analysis", "تحلیل"]):
+                        client.send_message(
+                            sender_id,
+                            "📊 *TradingGuard Market Analysis Suite*\n\n"
+                            "Select an asset and analysis depth:\n"
+                            "• *Full Pack*: 4-Timeframe MT5 Charts (1D, 1H, 15M, 5M) + 6-Seat Council Deliberation\n"
+                            "• *Council Only*: Rapid multi-seat deliberation & directive without chart re-capture",
+                            reply_markup=ANALYSIS_KEYBOARD
+                        )
+                    elif any(k in text.lower() for k in ["🧪 backtest suite", "backtest suite", "/backtest", "بک تست", "بکتست"]):
+                        client.send_message(
+                            sender_id,
+                            "🧪 *TradingGuard Quantitative Backtest Suite*\n\n"
+                            "Select an institutional benchmark to run authentic tick-by-tick simulation:\n"
+                            "• *Nasdaq 100 (NQ)*: Curated 2-Month Out-of-Sample Audit\n"
+                            "• *Gold (XAUUSD)*: Metals Basket Execution Engine\n"
+                            "• *GBPUSD*: 60-Day Benchmark\n"
+                            "• *EURUSD*: 90-Day Runner\n"
+                            "• *BTCUSD*: Dedicated 131-Day Continuous Engine\n"
+                            "• *Multi-Asset*: Combined Portfolio Correlation & Alpha Audit",
+                            reply_markup=BACKTEST_KEYBOARD
+                        )
+                    elif any(k in text.lower() for k in ["🔙 back to main menu", "back to main menu", "main menu", "menu", "/menu", "منوی اصلی", "بازگشت"]):
+                        client.send_message(
+                            sender_id,
+                            "🔙 *Returned to Main Menu*",
+                            reply_markup=MAIN_KEYBOARD
+                        )
+
+                    # 2. Backtest Execution Commands
+                    elif "backtest" in text.lower() or "بک تست" in text.lower() or "بکتست" in text.lower():
+                        if any(k in text.lower() for k in ["💻", "nq", "nasdaq", "نزدک"]):
+                            handle_backtest_command(client, sender_id, "nq")
+                        elif any(k in text.lower() for k in ["🥇", "gold", "طلا", "xau"]):
+                            handle_backtest_command(client, sender_id, "gold")
+                        elif any(k in text.lower() for k in ["💷", "gbp", "cable", "پوند"]):
+                            handle_backtest_command(client, sender_id, "gbp")
+                        elif any(k in text.lower() for k in ["💶", "eur", "euro", "یورو"]):
+                            handle_backtest_command(client, sender_id, "eur")
+                        elif any(k in text.lower() for k in ["🪙", "btc", "bitcoin", "بیتکوین"]):
+                            handle_backtest_command(client, sender_id, "btc")
+                        elif any(k in text.lower() for k in ["🌐", "portfolio", "multi-asset", "پورتفولیو", "ترکیبی"]):
+                            handle_backtest_command(client, sender_id, "portfolio")
+                        else:
+                            handle_backtest_command(client, sender_id, "nq")
+
+                    # 3. Council Only (Without recapturing charts)
+                    elif any(k in text.lower() for k in ["council only", "🏛️"]) or (any(k in text.lower() for k in ["/council", "council", "شورا", "مجلس"]) and not any(k in text.lower() for k in ["چارت", "پکیج", "کامل", "pack"])):
+                        if any(k in text.lower() for k in ["💻", "nq", "nasdaq", "نزدک"]):
+                            handle_council_command(client, sender_id, "NQ")
+                        elif any(k in text.lower() for k in ["💷", "پوند", "gbp"]):
                             handle_council_command(client, sender_id, "GBPUSD")
                         elif any(k in text.lower() for k in ["💶", "یورو", "eur"]):
                             handle_council_command(client, sender_id, "EURUSD")
                         else:
                             handle_council_command(client, sender_id, "XAUUSD")
-                    # 2. Complete Analysis Package (4-Timeframe Charts + Council Deliberation)
-                    elif any(k in text.lower() for k in ["💷", "پوند", "gbp"]):
-                        handle_chart_command(client, sender_id, "GBPUSD")
-                    elif any(k in text.lower() for k in ["💶", "یورو", "eur"]):
-                        handle_chart_command(client, sender_id, "EURUSD")
-                    elif any(k in text.lower() for k in ["🥇", "طلا", "gold", "/gold", "/chart", "چارت", "پکیج"]):
-                        handle_chart_command(client, sender_id, "XAUUSD")
+
+                    # 4. Complete Analysis Package (4-Timeframe Charts + Council Deliberation)
+                    elif any(k in text.lower() for k in ["full pack", "پکیج", "کامل", "/chart", "چارت"]) or any(k in text.lower() for k in ["🥇", "💷", "💶", "💻"]):
+                        if any(k in text.lower() for k in ["💻", "nq", "nasdaq", "نزدک"]):
+                            handle_chart_command(client, sender_id, "NQ")
+                        elif any(k in text.lower() for k in ["💷", "پوند", "gbp"]):
+                            handle_chart_command(client, sender_id, "GBPUSD")
+                        elif any(k in text.lower() for k in ["💶", "یورو", "eur"]):
+                            handle_chart_command(client, sender_id, "EURUSD")
+                        else:
+                            handle_chart_command(client, sender_id, "XAUUSD")
                     elif any(k in text.lower() for k in ["/review", "review", "/audit", "audit", "بازبینی", "شورای بازبینی", "review council", "/postmortem", "postmortem", "post-mortem", "جلسه بازبینی"]):
                         # Pack 5: this is the DETERMINISTIC decision audit
                         # (audit_past_decisions, formerly convene_review_council
@@ -809,12 +954,16 @@ def run_bot():
                             handle_chart_command(client, sender_id, "EURUSD")
                         elif data == "pack_gbp":
                             handle_chart_command(client, sender_id, "GBPUSD")
+                        elif data == "pack_nq":
+                            handle_chart_command(client, sender_id, "NQ")
                         elif data in ["council_gold", "council_xauusd"]:
                             handle_council_command(client, sender_id, "XAUUSD")
                         elif data in ["council_eur", "council_eurusd"]:
                             handle_council_command(client, sender_id, "EURUSD")
                         elif data in ["council_gbp", "council_gbpusd"]:
                             handle_council_command(client, sender_id, "GBPUSD")
+                        elif data in ["council_nq", "council_nasdaq"]:
+                            handle_council_command(client, sender_id, "NQ")
                         elif data.startswith("cancel_"):
                             ticket_str = data.split("_")[1]
                             if ticket_str.isdigit():

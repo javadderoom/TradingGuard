@@ -190,6 +190,8 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
         sym = "EURUSD"
     elif "BTC" in symbol.upper():
         sym = "BTCUSD"
+    elif any(k in symbol.upper() for k in ["NQ", "NAS", "US100"]):
+        sym = "NQ"
     else:
         sym = "XAUUSD"
     mtf_dir = BASE_DIR / "analysis_assets" / "mtf"
@@ -390,6 +392,8 @@ def convene_investment_council(
         sym = "EURUSD"
     elif "BTC" in symbol.upper():
         sym = "BTCUSD"
+    elif any(k in symbol.upper() for k in ["NQ", "NAS", "US100"]):
+        sym = "NQ"
     else:
         sym = "XAUUSD"
         

@@ -958,3 +958,34 @@ Combining London Open 30m ORB with NY Pre-Market HTF-Gated Sweeps across 5.2 con
   * September 2026: **+13.24R** (PF 4.67)
   * October 2026: **-7.60R** (PF 0.51)
   * November 2026: **-0.52R** (PF 1.21)
+
+---
+
+## 22. Telegram Mobile HITL Keyboard Architecture & Sub-Menu Protocol
+
+To optimize operator experience on mobile and eliminate screen clutter, the Telegram interface implements a collapsible hierarchical keyboard state machine in `hitl/bot.py`:
+
+### 22.1 Collapsible Bottom Menu Configuration
+- **`is_persistent: False`**: Telegram clients are instructed to render the menu with a collapsible keyboard toggle button, allowing Seat #7 to hide the buttons when reviewing charts or reading council deliberation logs.
+- **`resize_keyboard: True`**: Menus vertically resize to minimize mobile screen footprint.
+
+### 22.2 Navigation State Machine
+1. **Main Menu (`MAIN_KEYBOARD`)**:
+   - `[ 📊 Market Analysis ]` | `[ 🧪 Backtest Suite ]`
+   - `[ 🌅 Morning Briefing ]` | `[ 🔍 Review Council ]`
+   - `[ 📋 Pending Orders ]` | `[ 📊 Open Positions ]`
+   - `[ 🛡️ Account Status ]` | `[ ❓ Help & Syntax ]`
+2. **Analysis Sub-Menu (`ANALYSIS_KEYBOARD`)**:
+   - `[ 🥇 Gold Full Pack ]` | `[ 💷 GBP Full Pack ]`
+   - `[ 💶 EUR Full Pack ]` | `[ 💻 Nasdaq Full Pack ]`
+   - `[ 🏛️ Gold Council Only ]` | `[ 🏛️ GBP Council Only ]`
+   - `[ 🏛️ EUR Council Only ]` | `[ 🏛️ NQ Council Only ]`
+   - `[ 🔙 Back to Main Menu ]`
+   - *Full Pack*: Delivers 4-timeframe MT5 chart album (1D, 1H, 15M, 5M) + 6-Seat Council deliberation.
+   - *Council Only*: Runs closed-bars screener gate and convenes the adversarial council without chart re-capture latency.
+3. **Backtest Suite Sub-Menu (`BACKTEST_KEYBOARD`)**:
+   - `[ 💻 Backtest Nasdaq (NQ) ]` | `[ 🥇 Backtest Gold ]`
+   - `[ 💷 Backtest GBPUSD ]` | `[ 💶 Backtest EURUSD ]`
+   - `[ 🪙 Backtest BTCUSD ]` | `[ 🌐 Multi-Asset Portfolio ]`
+   - `[ 🔙 Back to Main Menu ]`
+   - *Execution*: Dispatches non-blocking daemon background worker (`_backtest_worker`), runs authentic end-to-end Python engine, parses stdout, and delivers formatted markdown cards with Win Rate, Net Alpha, Profit Factor, and Net PnL.
