@@ -1,0 +1,31 @@
+session_id,symbol,timestamp,session,decision,entry,sl,tp,rr,status,realized_pnl_usd,is_realized,fill_minute,exit_minute,mfe_price,max_rr_potential,extension_beyond_tp,capture_efficiency_pct,notes,cdo_watchlist_trigger
+1,BASKET,2026-10-26 11:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+2,BASKET,2026-10-26 12:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+3,BASKET,2026-10-26 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+4,BASKET,2026-10-26 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+5,BASKET,2026-10-26 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup. Note: BEARISH_SMT active but no structural POI mitigation.,Filtered: No ratified setup
+6,BASKET,2026-10-26 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+7,BASKET,2026-10-27 11:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+8,BASKET,2026-10-27 12:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+9,BASKET,2026-10-27 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+10,BASKET,2026-10-27 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+11,BASKET,2026-10-27 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+12,BASKET,2026-10-27 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup. Note: BEARISH_SMT active but no structural POI mitigation.,Filtered: No ratified setup
+13,BASKET,2026-10-28 11:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+14,XAUUSD,2026-10-28 12:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Stand aside executed. 2h price range was 23.74 pts.,"IF an M5 candle closes decisively above 4033.00 with an energetic displacement body leaving an unmitigated Bullish FVG, THEN route a Buy Limit at the proximal edge targeting Asian Range High (4057.60)."
+15,BASKET,2026-10-28 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+16,BASKET,2026-10-28 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup. Note: BULLISH_SMT active but no structural POI mitigation.,Filtered: No ratified setup
+17,BASKET,2026-10-28 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+18,BASKET,2026-10-28 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+19,BASKET,2026-10-29 11:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+20,BASKET,2026-10-29 12:00,London Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+21,BASKET,2026-10-29 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+22,BASKET,2026-10-29 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+23,BASKET,2026-10-29 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+24,BASKET,2026-10-29 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+25,BASKET,2026-10-30 11:30,London Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+26,XAUUSD,2026-10-30 12:00,London Post-Open,BUY_LIMIT,3987.32,3986.72,4032.51,75.32,WIN,1.22,True,4,5,,,,,"Hit Take Profit at 3988.64! Realized: +$1.22 (R:R 1:2.03). Market extended to 3999.20 (Peak R:R 1:19.80, +10.6 pts beyond target, Efficiency: 11.1%).","IF price pulls back to tap 3992.26 before breaching 4004.00, THEN fill BUY LIMIT with automated trailing ratchet at 1:2.50 R:R per [RULE-MGMT-034]."
+27,BASKET,2026-10-30 15:30,NY Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+28,BASKET,2026-10-30 16:00,NY Post-Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+29,BASKET,2026-10-30 17:30,NY Silver Bullet Open,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup
+30,BASKET,2026-10-30 18:00,NY Silver Bullet Mid,STAND_ASIDE,,,,,STAND_ASIDE,0.0,True,,,,,,,Both metals: Mid-range chop / no ratified setup.,Filtered: No ratified setup

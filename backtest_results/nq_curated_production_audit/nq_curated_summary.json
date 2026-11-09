@@ -1,14 +1,14 @@
 {
-  "signals": 127,
-  "fills": 96,
-  "wins": 23,
-  "losses": 66,
-  "be": 7,
-  "expired": 17,
-  "win_rate": 24.0,
-  "net_r": 10.91,
-  "net_pnl": 37.65,
-  "profit_factor": 1.12,
-  "gross_profit": 362.53,
-  "gross_loss": 324.88
+  "signals": 8,
+  "fills": 4,
+  "wins": 2,
+  "losses": 2,
+  "be": 0,
+  "expired": 4,
+  "win_rate": 50.0,
+  "net_r": 2.36,
+  "net_pnl": 11.6,
+  "profit_factor": 2.14,
+  "gross_profit": 21.8,
+  "gross_loss": 10.2
 }

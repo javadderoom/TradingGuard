@@ -189,4 +189,6 @@ check("OPEN_AT_END flagged is_realized=False",
       f"status={ro['status']} is_realized={ro.get('is_realized')}")
 
 print(f"\n{PASS} passed, {FAIL} failed")
-sys.exit(1 if FAIL else 0)
+if __name__ == '__main__':
+    sys.exit(1 if FAIL else 0)
+

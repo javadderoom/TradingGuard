@@ -989,3 +989,168 @@ To optimize operator experience on mobile and eliminate screen clutter, the Tele
    - `[ 🪙 Backtest BTCUSD ]` | `[ 🌐 Multi-Asset Portfolio ]`
    - `[ 🔙 Back to Main Menu ]`
    - *Execution*: Dispatches non-blocking daemon background worker (`_backtest_worker`), runs authentic end-to-end Python engine, parses stdout, and delivers formatted markdown cards with Win Rate, Net Alpha, Profit Factor, and Net PnL.
+
+---
+
+## 23. Autonomous Machine-Discovered Quant Strategy Engine (`hitl/quant_engine/`)
+
+### 23.1 Design Philosophy & Zero-Narrative Mandate
+Operating completely detached from human trading narratives, discretionary biases, and subjective retail terminology (zero ICT, SMC, support/resistance, order blocks, fair value gaps, or liquidity pool labels), the engine autonomously synthesizes, mutates, and verifies quantitative trading strategies derived purely from mathematical state-space dynamics.
+
+```mermaid
+flowchart TD
+    Raw["Raw Broker OHLCV Bars (NQ, BTC, Gold, FX)"] --> SS["Pure Mathematical State Space\n(Volatility, Derivatives, Z-Scores, Autocorr, Volume Imbalance)"]
+    SS --> Split["Chronological Purged Split\n(In-Sample 60% vs. Out-of-Sample 40%)"]
+    Split --> IS["In-Sample Discovery Pool"]
+    IS --> Genetic["Autonomous Genetic Evolution\n(Symbolic Rule Trees, Recombination, Mutation)"]
+    Genetic --> Candidates["Top Pareto-Optimal Candidate Rules"]
+    Candidates --> WFGate["Strict Walk-Forward Cross-Validation Gates\n(5 Institutional Overfitting Tests)"]
+    WFGate -->|Pass All 5 Gates| Ratified["Ratified Quant Archetype\n(Registered in Setup Registry & Executable Schedules)"]
+    WFGate -->|Fail Any Gate| Rejected["Ruthlessly Rejected\n(Flagged with Specific Failure Reason)"]
+
+    classDef default fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+```
+
+---
+
+### 23.2 Pure Mathematical State Space (`state_space.py`)
+
+Every bar is mapped into an $N$-dimensional normalized mathematical feature vector using strictly causal, vectorized formulations with zero lookahead:
+
+#### 1. Normalized Volatility
+- **Parkinson Volatility ($\sigma_P$)**:
+  $$\sigma_P = \sqrt{\frac{1}{4 \ln 2} \left( \ln \frac{H_t}{L_t} \right)^2}$$
+- **Garman-Klass Volatility ($\sigma_{GK}$)**:
+  $$\sigma_{GK} = \sqrt{0.5 \left( \ln \frac{H_t}{L_t} \right)^2 - (2\ln 2 - 1) \left( \ln \frac{C_t}{O_t} \right)^2}$$
+- **Normalized ATR Ratio**:
+  $$\text{norm\_atr} = \frac{ATR_{14}(t)}{Close_t}$$
+- **Volatility Regime Z-Score ($Z_{vol}$)**:
+  $$Z_{vol} = \frac{\sigma_{GK}(t) - \mu_{50}(\sigma_{GK})}{\sigma_{50}(\sigma_{GK})}$$
+  ($Z_{vol} > +1.0$: Volatility shock expansion; $Z_{vol} < -0.8$: Microstructure compression).
+
+#### 2. Momentum Derivatives
+- **Velocity ($v_k$) (1st Derivative of Price)**:
+  $$v_k(t) = \frac{C_t - C_{t-k}}{C_{t-k}}, \quad k \in \{3, 8, 21, 55\}$$
+- **Acceleration ($a_k$) (2nd Derivative / Rate of Momentum Change)**:
+  $$a_k(t) = v_k(t) - v_k(t-1)$$
+- **Curvature ($c_k$) (3rd Derivative / Jerk Proxy)**:
+  $$c_k(t) = a_k(t) - a_k(t-1)$$
+- **Normalized Moving Average Divergence**:
+  $$\text{ma\_divergence} = \frac{EMA_8(C) - EMA_{21}(C)}{\sigma_{21}(C)}$$
+
+#### 3. Distribution Z-Scores & Higher Moments
+- **Multi-Scale Rolling Price Z-Scores**:
+  $$Z_N(t) = \frac{C_t - \mu_N(C)}{\sigma_N(C)}, \quad N \in \{20, 50, 100\}$$
+- **Rolling Fisher-Pearson Skewness ($\tilde{\mu}_3$)**:
+  $$\tilde{\mu}_3(t) = \frac{\frac{1}{30}\sum_{i=0}^{29} (r_{t-i} - \bar{r})^3}{\left(\frac{1}{30}\sum_{i=0}^{29} (r_{t-i} - \bar{r})^2\right)^{3/2}}, \quad r_t = \ln \frac{C_t}{C_{t-1}}$$
+- **Rolling Excess Kurtosis ($\tilde{\mu}_4 - 3$)**:
+  $$\text{kurtosis\_30}(t) = \frac{\frac{1}{30}\sum_{i=0}^{29} (r_{t-i} - \bar{r})^4}{\left(\frac{1}{30}\sum_{i=0}^{29} (r_{t-i} - \bar{r})^2\right)^2} - 3.0$$
+
+#### 4. Volume Imbalance & Microstructure Flow
+- **Normalized Volume Ratio**:
+  $$VR_{20}(t) = \frac{V_t}{\text{SMA}_{20}(V) + \epsilon}$$
+- **Directional Volume Imbalance ($DVI$)**:
+  $$DVI(t) = \frac{C_t - O_t}{H_t - L_t + \epsilon} \times VR_{20}(t)$$
+- **Rolling VWAP Disparity Z-Score**:
+  $$Z_{vwap}(t) = \frac{C_t - VWAP_{50}(t)}{\sigma_{50}(C)}$$
+
+#### 5. Multi-Scale Autocorrelation
+- **Lag-$k$ Return Autocorrelation ($\rho_k$)**:
+  $$\rho_k(t) = \frac{\sum_{i=0}^{29} (r_{t-i} - \bar{r})(r_{t-i-k} - \bar{r})}{\sum_{i=0}^{29} (r_{t-i} - \bar{r})^2}, \quad k \in \{1, 2, 3, 5\}$$
+  *Regime Dynamics*: $\rho_1 < -0.10$ indicates strong mean-reverting microstructure; $\rho_1 > +0.10$ denotes momentum trending persistence.
+
+---
+
+### 23.3 Symbolic Quantitative Rule Engine (`rule_engine.py`)
+
+A quantitative strategy is expressed as an explicit, serializable symbolic expression:
+- **`FeaturePredicate`**: A condition $(f_i \text{ op } \theta)$ or $(a \le f_i \le b)$ over feature $f_i$ with operator $\text{op} \in \{<, \le, >, \ge, \text{between}\}$ and threshold $\theta$.
+- **`QuantRule`**:
+  - `direction`: `BUY` or `SELL`.
+  - Conjunction of predicates: $\bigwedge_{j=1}^M \text{Predicate}_j$.
+  - Dynamic Exit Multipliers: $TP = Entry \pm (k_{TP} \times ATR)$, $SL = Entry \mp (k_{SL} \times ATR)$.
+  - Time-To-Live ($TTL$): Expiration after $T_{bars}$ if neither target nor stop is touched.
+  - Breakeven Ratchet: When MFE reaches $R_{BE}$ multiples of initial price risk, effective SL ratchets to covered entry.
+  - Refractory Cooldown: Enforces a minimum gap ($\ge 6\text{ bars}$) between successive entries to eliminate redundant clustered entries.
+
+---
+
+### 23.4 Vectorized Historical Backtester (`vectorized_backtester.py`)
+
+The backtester executes simulated orders against historical broker tick/bar arrays with institutional fidelity:
+1. **Spread & Microstructure Costs**: Synchronized with `get_default_broker_spread` in `hitl/backtest/evaluator.py`:
+   - NQ / US100: 1.0 point ($0.10 per 0.01 lot)
+   - BTCUSD: $1.50 ($0.015 per 0.01 lot)
+   - XAUUSD (Gold): $0.15 ($0.15 per 0.01 lot)
+   - GBPUSD: 0.00025 (2.5 pips)
+   - SPX: 0.50 points, YM: 2.0 points
+2. **Commission Buffer**: Fixed $0.10 per round-trip trade per 0.01 lot.
+3. **Authentic Bid/Ask Mechanics**: MT5 market bars are Bid.
+   - **BUY**: Enters at Ask ($Open + Spread$). Exits at Bid ($Low \le SL$, $High \ge TP$).
+   - **SELL**: Enters at Bid ($Open$). Exits at Ask ($High + Spread \ge SL$, $Low + Spread \le TP$).
+4. **Pessimistic Intra-Bar Execution (SL-First Mandate)**:
+   - Exits are strictly evaluated against the SL/TP levels in force at the **START** of the bar.
+   - If both SL and TP (or SL and BE) are breached in the same bar, the simulator registers a **`LOSS`**.
+5. **Breakeven Ratchet Timing**:
+   - The ratchet arms only at the **END** of the bar for subsequent bars, preventing premature intra-bar stop modifications that could mask losses as scratch trades.
+   - Realized PnL on covered breakeven accurately recovers broker spread points:
+     $$\text{PnL}_{BE} = (\text{Spread} \times \text{USD\_per\_pt}) - \text{Commission}$$
+
+---
+
+### 23.5 Strict Walk-Forward Cross-Validation & Overfitting Penalizer (`walk_forward_validator.py`)
+
+To ruthlessly penalize curve-fitting and selection bias, data is partitioned chronologically into:
+- **In-Sample (IS)**: First 60% of chronological bars (discovery space).
+- **Purged Buffer**: 50 bars between IS and OOS to eliminate trade boundary leakage.
+- **Out-of-Sample (OOS)**: Last 40% of chronological bars (blind evaluation space).
+
+#### 5 Institutional Rejection Gates:
+1. **`FAILED_OOS_PF`**: Out-of-Sample Profit Factor must exceed $1.15$ ($PF_{oos} \ge 1.15$).
+2. **`NEGATIVE_OOS_ALPHA`**: Out-of-Sample Sharpe Ratio must be positive ($Sharpe_{oos} > 0.0$) and Net $R > 0.0$.
+3. **`EXCESSIVE_DEGRADATION`**: Profit Factor Degradation Ratio $\frac{PF_{oos}}{\min(PF_{is}, 10.0)} \ge 0.40$ (unless $PF_{oos} \ge 1.75$).
+4. **`INSUFFICIENT_OOS_SAMPLE`**: Must generate $\ge 6$ Out-of-Sample fills to establish statistical significance.
+5. **`DRAWDOWN_EXPLOSION`**: Out-of-Sample Max Drawdown must not exceed $2.5\times$ In-Sample Max Drawdown.
+
+---
+
+### 23.6 Empirical Alpha Discovery Across Full Broker Datasets (74,082 Bars)
+
+Running the autonomous pipeline across 4 primary asset classes with corrected broker mechanics yielded unvarnished, transparent findings:
+
+| Symbol | Total Bars | IS Bars | OOS Bars | Candidates Evaluated | Ratified | Rejection Rate | Primary Rejection Causes |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Nasdaq (NQ)** | 14,856 | 8,913 | 5,893 | 10 | **0** | **100.0%** | `FAILED_OOS_PF`, `NEGATIVE_OOS_ALPHA` (Summer chop to autumn volatility expansion). |
+| **Bitcoin (BTCUSD)** | 19,829 | 11,897 | 7,882 | 10 | **3** | **70.0%** | Multi-horizon volatility and autocorrelation gating passed walk-forward validation. |
+| **Gold (XAUUSD)** | 19,264 | 11,558 | 7,656 | 10 | **2** | **80.0%** | Acceleration and VWAP deviation momentum models passed all 5 gates. |
+| **Cable (GBPUSD)** | 20,133 | 12,079 | 8,004 | 10 | **0** | **100.0%** | `FAILED_OOS_PF`, `NEGATIVE_OOS_ALPHA` (Forex regime instability under true spread). |
+
+#### Empirical Metrics of Ratified Quant Archetypes:
+
+1. **`SETUP-QUANT-BTCUSD-R2_006` (BTC Volatility-Acceleration Expansion)**:
+   - **Formula**: `[BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+   - **Cross-Asset Transfer (tested on Nasdaq NQ without re-fitting)**: 37 trades | Win Rate: **21.6%** | Net Alpha: **+3.31R** | Profit Factor: **1.16** | Sharpe: **0.37** (**PASS**).
+
+2. **`SETUP-QUANT-BTCUSD-R5_005` (BTC Autocorrelation Persistence)**:
+   - **Formula**: `[BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b`
+   - **Cross-Asset Transfer (tested on Nasdaq NQ without re-fitting)**: 101 trades | Win Rate: **44.6%** | Net Alpha: **+4.85R** | Profit Factor: **1.08** | Sharpe: **0.45** (**PASS**).
+
+3. **`SETUP-QUANT-BTCUSD-R5_014` (BTC Volatility-Gated Mean Drift)**:
+   - **Formula**: `[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+   - **Cross-Asset Transfer (tested on Nasdaq NQ without re-fitting)**: 14 trades | Win Rate: **21.4%** | Net Alpha: **+3.48R** | Profit Factor: **1.68** | Sharpe: **0.67** (**PASS**).
+
+4. **`SETUP-QUANT-XAUUSD-R2_020` & `R5_006` (Gold Volumetric Momentum)**:
+   - **`R2_020`**: `[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b`
+   - **`R5_006`**: `[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+   - **Cross-Asset Transfer (tested on GBPUSD)**: `R5_006` delivered 4 trades | Profit Factor: **1.78** | Net Alpha: **+1.60R** (**PASS**).
+
+---
+
+### 23.7 MetaTrader 5 `orders_schedule.csv` Forward Execution Pipeline
+
+Every ratified setup archetype's Out-of-Sample trades are exported directly into `backtest_results/quant_discovery/orders_schedule.csv` and mirrored to MT5 terminal common folders (`Common\Files` and `MQL5\Files`).
+
+Columns: `ID,Symbol,Type,TriggerTime,Entry,SL,TP,Lot,TTL`
+- Executable end-to-end via `TradingGuard_Executor.mq5` (`TradingGuard_Executor.ex5`) inside MT5 Strategy Tester.
+- Strictly zero manual CSV editing or fabricated trade timestamps.
+

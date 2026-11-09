@@ -1,6 +1,6 @@
 {
   "version": "2.0.0-LEAN",
-  "last_updated": "2026-11-07T23:20:19.967902",
+  "last_updated": "2026-11-09T10:43:04.557610",
   "active_rules": [
     {
       "id": "RULE-CORE-001",
@@ -433,6 +433,14 @@
       "symbol": "XAUUSD & XAGUSD",
       "rule": "Same-Day Counter-Trend SMT Cap Under Sustained H1 Directional Expansion. When the active daily profile exhibits directional trend expansion (H1 printing consecutive structural swing breaks without completing an opposing M15 MSS), all counter-trend [SETUP-ARCH-005] and [SETUP-ARCH-007] SMT signals are restricted to a maximum of one executed attempt per trading session. If that single counter-trend setup incurs a stop-out or invalidation, all subsequent counter-trend SMT orders for that asset are locked under hard Council Stand-Aside for the remainder of that calendar day.",
       "rationale": "Empirical replay on 2026-07-29 and 2026-07-30 showed consecutive failing counter-trend SMT attempts during ongoing directional runs. The Stand-Aside protocol successfully averted consecutive -$5.50 and -$9.68 losses; formalizing this cap prevents knife-catching in persistent expansion regimes.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "RULE-EXEC-053",
+      "category": "Setup Selection",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Stand-aside discretionary vetoes are strictly blocked from suppressing any [SETUP-ARCH-007] intermarket SMT divergence setup during the London / NY overlap transition (11:30–13:30 UTC) whenever the sweeping asset demonstrates a verified liquidity sweep >= 1.00 pts on XAUUSD (or >= 0.100 pts on XAGUSD) coupled with a structural invalidation stop distance >= 3.50 pts. All qualifying setups must execute via non-discretionary limit placement at the proximate M5 FVG or equilibrium sweep boundary.",
+      "rationale": "Empirically validated by Stand-Aside [2026-10-28 12:00 UTC], where an over-conservative Council veto suppressed a 1.00 pt Judas purge SMT buy limit at 4032.16 (5.50 pt SL), leaking $12.00 in direct target profit and missing an unencumbered +27.9 pt peak excursion (4060.09).",
       "status": "ACTIVE"
     }
   ],
@@ -7773,6 +7781,54 @@
       "verdict": "PROTECTIVE_VETO",
       "lesson": "PROTECTIVE VETO: If entered at 4061.95, trade would have filled at min 0 and hit SL at min 21 for -$9.68 loss. Council stand-aside successfully defended capital!",
       "logged_at": "2026-11-03T23:49:35.192781"
+    },
+    {
+      "timestamp": "2026-10-28 12:00",
+      "symbol": "XAUUSD",
+      "discussed_setup": "[SETUP-ARCH-007] BULLISH SMT: BULLISH SMT DIVERGENCE: Gold swept NY AM Range Low by 1.00 pts (Judas Purge), while Silver REFUSED to sweep its Low (Higher Low accumulation). Institutional Smart Money Buy Signal! | Scaled Entry: 4032.16 | Phase: HTF_RETRACEMENT",
+      "cio_decision": "STAND_ASIDE",
+      "forward_4h_mfe": 25.61,
+      "forward_4h_mae": 4.57,
+      "forward_4h_close_delta": 13.58,
+      "verdict": "DAMAGING_STAND_ASIDE",
+      "lesson": "MISSED WINNER: If entered at 4032.16, trade would have filled at min 1 and hit TP at min 88 for +$12.00 profit. Council veto caused alpha leakage. [Peak Excursion: 4060.09 (Max R:R 1:5.08, +15.8 units beyond TP, Efficiency: 43.3%)].",
+      "logged_at": "2026-11-09T09:53:23.552766"
+    },
+    {
+      "timestamp": "2026-11-09 10:32",
+      "symbol": "MULTI",
+      "discussed_setup": "Review Council Audit: 1 decisions evaluated",
+      "cio_decision": "REVIEW_COUNCIL_AUDIT",
+      "forward_4h_mfe": 0.0,
+      "forward_4h_mae": 0.0,
+      "forward_4h_close_delta": 0.0,
+      "verdict": "AUDIT_SYNTHESIS",
+      "lesson": "Market exhibited equilibrium chop. Council discipline successfully avoided overtrading in dead zones.",
+      "logged_at": "2026-11-09T10:32:06.302145"
+    }
+  ],
+  "pending_rules": [
+    {
+      "id": "RULE-EXEC-053",
+      "category": "Setup Selection",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Stand-aside discretionary vetoes are strictly blocked from suppressing any [SETUP-ARCH-007] intermarket SMT divergence setup during the London / NY overlap transition (11:30–13:30 UTC) whenever the sweeping asset demonstrates a verified liquidity sweep >= 1.00 pts on XAUUSD (or >= 0.100 pts on XAGUSD) coupled with a structural invalidation stop distance >= 3.50 pts. All qualifying setups must execute via non-discretionary limit placement at the proximate M5 FVG or equilibrium sweep boundary.",
+      "rationale": "Empirically validated by Stand-Aside [2026-10-28 12:00 UTC], where an over-conservative Council veto suppressed a 1.00 pt Judas purge SMT buy limit at 4032.16 (5.50 pt SL), leaking $12.00 in direct target profit and missing an unencumbered +27.9 pt peak excursion (4060.09).",
+      "source": "review_council:convene_review_council",
+      "status": "APPROVED",
+      "proposed_at": "2026-11-09T09:53:53.245495",
+      "reviewed_at": "2026-11-09T10:38:00.227346"
+    },
+    {
+      "id": "RULE-RISK-054",
+      "category": "Risk Calibration",
+      "symbol": "XAUUSD & XAGUSD",
+      "rule": "Hard Enforcement of Pre-Dispatch OMS Gateway Stop Floor Assertion: The order dispatch gateway must programmatically intercept and reject any limit order on XAUUSD whose raw protective stop loss is < 3.50 pts (e.g., the 0.60 pt stop executed on 2026-10-30 12:00 UTC). When intercepted, the gateway must automatically synthesize a widened stop at max(3.50 pts, 1.25x M5 ATR) and down-scale position size to preserve the exact fixed cash risk profile before transmission to the broker OMS.",
+      "rationale": "Prevent recurrence of critical execution breaches such as Trade [2026-10-30 12:00 UTC], where an order was routed with an unacceptable 0.60 pt micro-stop, bypassing RULE-RISK-047 and RULE-RISK-051 and exposing capital to random intra-spread volatility.",
+      "source": "review_council:convene_review_council",
+      "status": "REJECTED",
+      "proposed_at": "2026-11-09T09:53:53.257605",
+      "reviewed_at": "2026-11-09T10:43:04.557579"
     }
   ]
 }

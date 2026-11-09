@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-04T22:42:14.975658` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-09T11:12:04.867095` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -118,3 +118,83 @@
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `Origin base extreme wick + .00 spread buffer (Gold), bounded to [.00, .00].`
 > **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following full-year 2026 empirical audit across 298,638 M1 bars and 67.5M ticks on Gold (XAUUSD_o). Achieved +14.0R Net Realized Profit (PF 1.40, 23.3% WR) across 60 completed fills on retests of 2 to 7 day-old H1 MSS origins. MFE analysis confirms multiple deep expansions: +10.30R (Mar 3), +8.25R (Nov 3), +6.81R (Oct 27), and +6.37R (Jan 27). Strictly restricted to Reversal Origins (MSS); Continuation Origins (BOS) failed (-16.5R) due to deep pullback invalidations. Banned on GBPUSD (-26.5R) where Cable trends in open air without respecting multi-day H1 bases.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R3_007] Autonomous Machine Quant Rule (BTCUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b
+- **Entry Trigger:** `[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b`
+- **Invalidation Anchor:** `2.0x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:0.9`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R5_014] Autonomous Machine Quant Rule (BTCUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (-0.0008 <= velocity_55 <= 0.0004) AND (parkinson_vol >= 0.0007) AND (price_zscore_100 <= -1.1366) | TP: 3.0xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b
+- **Entry Trigger:** `[SELL] (-0.0008 <= velocity_55 <= 0.0004) AND (parkinson_vol >= 0.0007) AND (price_zscore_100 <= -1.1366) | TP: 3.0xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b`
+- **Invalidation Anchor:** `2.0x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:2.8`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R2_029] Autonomous Machine Quant Rule (BTCUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+- **Invalidation Anchor:** `0.8x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:2.8`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R5_029] Autonomous Machine Quant Rule (BTCUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+- **Invalidation Anchor:** `0.8x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:2.8`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-XAUUSD-R3_013] Autonomous Machine Quant Rule (XAUUSD BUY) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b
+- **Entry Trigger:** `[BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b`
+- **Invalidation Anchor:** `1.5x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:2.0`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7656 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-GBPUSD-R4_029] Autonomous Machine Quant Rule (GBPUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b
+- **Entry Trigger:** `[SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b`
+- **Invalidation Anchor:** `2.0x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:1.1`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 8004 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R2_006] Autonomous Machine Quant Rule (BTCUSD BUY) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `[BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+- **Invalidation Anchor:** `0.8x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:2.8`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-BTCUSD-R5_005] Autonomous Machine Quant Rule (BTCUSD BUY) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b
+- **Entry Trigger:** `[BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b`
+- **Invalidation Anchor:** `1.5x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:1.2`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7882 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-XAUUSD-R2_020] Autonomous Machine Quant Rule (XAUUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b`
+- **Invalidation Anchor:** `1.8x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:1.0`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7656 OOS bars with zero narrative bias.*
+
+### 🟢 [SETUP-QUANT-XAUUSD-R5_006] Autonomous Machine Quant Rule (XAUUSD SELL) (Machine-Discovered Quant)
+- **Description:** Autonomous pure mathematical state-space model: [SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b`
+- **Invalidation Anchor:** `0.8x ATR dynamic trailing/stop`
+- **Mandated Minimum R:R:** `1:5.6`
+- **Stop Buffer Requirement:** `Per Active Playbook`
+> **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7656 OOS bars with zero narrative bias.*

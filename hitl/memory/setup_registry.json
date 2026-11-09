@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-04T22:42:14.975658",
+  "last_updated": "2026-11-09T11:12:04.867095",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -342,6 +342,291 @@
         "max_lookback_days": 7
       },
       "auditor_notes": "Formally ratified following full-year 2026 empirical audit across 298,638 M1 bars and 67.5M ticks on Gold (XAUUSD_o). Achieved +14.0R Net Realized Profit (PF 1.40, 23.3% WR) across 60 completed fills on retests of 2 to 7 day-old H1 MSS origins. MFE analysis confirms multiple deep expansions: +10.30R (Mar 3), +8.25R (Nov 3), +6.81R (Oct 27), and +6.37R (Jan 27). Strictly restricted to Reversal Origins (MSS); Continuation Origins (BOS) failed (-16.5R) due to deep pullback invalidations. Banned on GBPUSD (-26.5R) where Cable trends in open air without respecting multi-day H1 bases."
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R3_007",
+      "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+      "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+      "invalidation_anchor": "2.0x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+        "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+        "invalidation_anchor": "2.0x ATR dynamic trailing/stop",
+        "min_rr": "1:0.9",
+        "is_profit_factor": 3.3151093439363817,
+        "oos_profit_factor": 2.197520661157025,
+        "oos_sharpe": 1.33776526657265,
+        "degradation_ratio": 0.6628802953894954
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T10:57:22.031435"
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R5_014",
+      "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (-0.0008 <= velocity_55 <= 0.0004) AND (parkinson_vol >= 0.0007) AND (price_zscore_100 <= -1.1366) | TP: 3.0xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+      "entry_trigger": "[SELL] (-0.0008 <= velocity_55 <= 0.0004) AND (parkinson_vol >= 0.0007) AND (price_zscore_100 <= -1.1366) | TP: 3.0xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b",
+      "invalidation_anchor": "2.0x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+        "min_rr": "1:2.8",
+        "is_profit_factor": 1.5558702064896754,
+        "oos_profit_factor": 2.7320247933884296,
+        "oos_sharpe": 1.27848678950425,
+        "degradation_ratio": 1.7559464677663388,
+        "cross_asset_stress": {
+          "NQ": {
+            "trades": 14,
+            "win_rate": 21.428571428571427,
+            "profit_factor": 1.6760330578512395,
+            "net_r": 3.476,
+            "sharpe": 0.6709904983596593
+          }
+        }
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T11:12:03.962491"
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R2_029",
+      "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0107) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+        "min_rr": "1:2.8",
+        "is_profit_factor": 1.7140495867768595,
+        "oos_profit_factor": 1.5572609208972845,
+        "oos_sharpe": 0.6638254563761541,
+        "degradation_ratio": 0.9085273453643753
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T10:57:22.033345"
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R5_029",
+      "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+        "min_rr": "1:2.8",
+        "is_profit_factor": 1.8154269972451789,
+        "oos_profit_factor": 1.3667355371900825,
+        "oos_sharpe": 0.344559807852301,
+        "degradation_ratio": 0.752845220030349
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T10:57:22.034102"
+    },
+    {
+      "id": "SETUP-QUANT-XAUUSD-R3_013",
+      "name": "Autonomous Machine Quant Rule (XAUUSD BUY)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b",
+      "entry_trigger": "[BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b",
+      "invalidation_anchor": "1.5x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (XAUUSD BUY)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b",
+        "entry_trigger": "[BUY] (0.0008 <= norm_atr <= 0.0012) AND (volume_ratio >= 1.6177) AND (accel_3 > 0.0018) | TP: 3.0xATR, SL: 1.5xATR, TTL: 72b",
+        "invalidation_anchor": "1.5x ATR dynamic trailing/stop",
+        "min_rr": "1:2.0",
+        "is_profit_factor": 1.5104521147301897,
+        "oos_profit_factor": 1.5362718089990817,
+        "oos_sharpe": 0.8399210511316161,
+        "degradation_ratio": 1.017094017094017
+      },
+      "auditor_notes": "Walk-forward verified on 7656 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T10:57:22.893687"
+    },
+    {
+      "id": "SETUP-QUANT-GBPUSD-R4_029",
+      "name": "Autonomous Machine Quant Rule (GBPUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b",
+      "entry_trigger": "[SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b",
+      "invalidation_anchor": "2.0x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (GBPUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b",
+        "entry_trigger": "[SELL] (autocorr_lag3 <= -0.3221) AND (velocity_21 >= -0.0001) AND (-2.9992 <= kurtosis_30 <= -2.9837) | TP: 2.2xATR, SL: 2.0xATR, TTL: 48b",
+        "invalidation_anchor": "2.0x ATR dynamic trailing/stop",
+        "min_rr": "1:1.1",
+        "is_profit_factor": 1.6195560550716495,
+        "oos_profit_factor": 1.1978717790871516,
+        "oos_sharpe": 0.4469242901197885,
+        "degradation_ratio": 0.7396297123128335
+      },
+      "auditor_notes": "Walk-forward verified on 8004 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T10:57:23.566198"
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R2_006",
+      "name": "Autonomous Machine Quant Rule (BTCUSD BUY)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "entry_trigger": "[BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD BUY)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[BUY] (0.0008 <= norm_atr <= 0.0014) AND (accel_3 > 0.0023) AND (velocity_8 <= 0.0000) | TP: 2.2xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+        "min_rr": "1:2.8",
+        "is_profit_factor": 1.55870720188902,
+        "oos_profit_factor": 1.4347977381470205,
+        "oos_sharpe": 0.8909725957366552,
+        "degradation_ratio": 0.9205049777201056,
+        "cross_asset_stress": {
+          "NQ": {
+            "trades": 37,
+            "win_rate": 21.62162162162162,
+            "profit_factor": 1.1612440191387559,
+            "net_r": 3.311,
+            "sharpe": 0.37201425010739514
+          }
+        }
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T11:12:03.959897"
+    },
+    {
+      "id": "SETUP-QUANT-BTCUSD-R5_005",
+      "name": "Autonomous Machine Quant Rule (BTCUSD BUY)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b",
+      "entry_trigger": "[BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b",
+      "invalidation_anchor": "1.5x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (BTCUSD BUY)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b",
+        "entry_trigger": "[BUY] (velocity_8 <= 0.0000) AND (0.1337 <= autocorr_lag5 <= 0.2202) AND (0.0008 <= norm_atr <= 0.0014) | TP: 1.8xATR, SL: 1.5xATR, BE: 2.0R, TTL: 24b",
+        "invalidation_anchor": "1.5x ATR dynamic trailing/stop",
+        "min_rr": "1:1.2",
+        "is_profit_factor": 1.266078136739294,
+        "oos_profit_factor": 1.1748699112335477,
+        "oos_sharpe": 0.6494416148931955,
+        "degradation_ratio": 0.9279600343303871,
+        "cross_asset_stress": {
+          "NQ": {
+            "trades": 101,
+            "win_rate": 44.554455445544555,
+            "profit_factor": 1.0779346981083184,
+            "net_r": 4.849999999999998,
+            "sharpe": 0.4501808788916722
+          }
+        }
+      },
+      "auditor_notes": "Walk-forward verified on 7882 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T11:12:03.961254"
+    },
+    {
+      "id": "SETUP-QUANT-XAUUSD-R2_020",
+      "name": "Autonomous Machine Quant Rule (XAUUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
+      "entry_trigger": "[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
+      "invalidation_anchor": "1.8x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (XAUUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "1.8x ATR dynamic trailing/stop",
+        "min_rr": "1:1.0",
+        "is_profit_factor": 1.4475566986205284,
+        "oos_profit_factor": 1.4574104683195592,
+        "oos_sharpe": 1.2112673047753622,
+        "degradation_ratio": 1.0068071735693815,
+        "cross_asset_stress": {
+          "GBPUSD": {
+            "trades": 0,
+            "win_rate": 0.0,
+            "profit_factor": 0.0,
+            "net_r": 0.0,
+            "sharpe": 0.0
+          }
+        }
+      },
+      "auditor_notes": "Walk-forward verified on 7656 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T11:12:04.865842"
+    },
+    {
+      "id": "SETUP-QUANT-XAUUSD-R5_006",
+      "name": "Autonomous Machine Quant Rule (XAUUSD SELL)",
+      "category": "Machine-Discovered Quant",
+      "description": "Autonomous pure mathematical state-space model: [SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "entry_trigger": "[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+      "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+      "status": "RATIFIED",
+      "vetting_verdict": "PASSED_WALK_FORWARD_CROSS_VALIDATION",
+      "ratified_criteria": {
+        "name": "Autonomous Machine Quant Rule (XAUUSD SELL)",
+        "category": "Machine-Discovered Quant",
+        "description": "Autonomous pure mathematical state-space model: [SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "entry_trigger": "[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b",
+        "invalidation_anchor": "0.8x ATR dynamic trailing/stop",
+        "min_rr": "1:5.6",
+        "is_profit_factor": 1.2916065542444946,
+        "oos_profit_factor": 1.1593933713896227,
+        "oos_sharpe": 0.6295205976275017,
+        "degradation_ratio": 0.8976366429696481,
+        "cross_asset_stress": {
+          "GBPUSD": {
+            "trades": 4,
+            "win_rate": 0.0,
+            "profit_factor": 1.778512396694215,
+            "net_r": 1.5950000000000002,
+            "sharpe": 0.4481828472954273
+          }
+        }
+      },
+      "auditor_notes": "Walk-forward verified on 7656 OOS bars with zero narrative bias.",
+      "ratified_at": "2026-11-09T11:12:04.867091"
     }
   ]
 }

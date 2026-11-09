@@ -1,0 +1,142 @@
+[
+  {
+    "rule": {
+      "rule_id": "R2_020",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "accel_3",
+          "op": ">",
+          "threshold": 0.0017779256749226582
+        },
+        {
+          "feature": "vol_regime_z",
+          "op": "between",
+          "threshold": [
+            -1.3137467963996343,
+            0.02452920168942285
+          ]
+        },
+        {
+          "feature": "velocity_8",
+          "op": "<=",
+          "threshold": 0.00045618426240049526
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.8,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (accel_3 > 0.0018) AND (-1.3137 <= vol_regime_z <= 0.0245) AND (velocity_8 <= 0.0005) | TP: 1.8xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R2_020",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 11558,
+        "trades": 92,
+        "win_rate": 56.52,
+        "net_r": 16.72,
+        "profit_factor": 1.45,
+        "max_drawdown_r": 5.29,
+        "sharpe_ratio": 1.83
+      },
+      "out_of_sample": {
+        "bars": 7656,
+        "trades": 38,
+        "win_rate": 57.89,
+        "net_r": 7.24,
+        "profit_factor": 1.46,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.21
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.007,
+        "walk_forward_efficiency": 0.653,
+        "drawdown_expansion_ratio": 0.757
+      }
+    },
+    "cross_asset_stress": {
+      "GBPUSD": {
+        "trades": 0,
+        "win_rate": 0.0,
+        "profit_factor": 0.0,
+        "net_r": 0.0,
+        "sharpe": 0.0
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R5_006",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "vwap_deviation_z",
+          "op": ">",
+          "threshold": 0.4269115653132961
+        },
+        {
+          "feature": "norm_atr",
+          "op": "between",
+          "threshold": [
+            0.0009090713243169736,
+            0.0013872873673160537
+          ]
+        },
+        {
+          "feature": "skewness_30",
+          "op": ">",
+          "threshold": -1.2329999888711356
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 0.8,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (vwap_deviation_z > 0.4269) AND (0.0009 <= norm_atr <= 0.0014) AND (skewness_30 > -1.2330) | TP: 4.5xATR, SL: 0.8xATR, BE: 1.2R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R5_006",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 11558,
+        "trades": 328,
+        "win_rate": 10.67,
+        "net_r": 52.66,
+        "profit_factor": 1.29,
+        "max_drawdown_r": 43.43,
+        "sharpe_ratio": 1.25
+      },
+      "out_of_sample": {
+        "bars": 7656,
+        "trades": 182,
+        "win_rate": 9.34,
+        "net_r": 16.58,
+        "profit_factor": 1.16,
+        "max_drawdown_r": 17.41,
+        "sharpe_ratio": 0.63
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.898,
+        "walk_forward_efficiency": 0.475,
+        "drawdown_expansion_ratio": 0.401
+      }
+    },
+    "cross_asset_stress": {
+      "GBPUSD": {
+        "trades": 4,
+        "win_rate": 0.0,
+        "profit_factor": 1.778512396694215,
+        "net_r": 1.5950000000000002,
+        "sharpe": 0.4481828472954273
+      }
+    }
+  }
+]

@@ -687,5 +687,30 @@
     "reviewed": false,
     "review_verdict": null,
     "review_notes": null
+  },
+  {
+    "id": "DEC-XAUUSD-1794207504301-bd84d47f",
+    "timestamp": "2026-11-09T10:28:24.300683",
+    "time_str": "10:28:24",
+    "date_str": "2026-11-09",
+    "symbol": "XAUUSD",
+    "decision": "STAND_ASIDE",
+    "reason": "Screener veto (closed bars): Mid-range chop within Asian Range (4054.16 - 4134.11)",
+    "full_report": "",
+    "screener": {
+      "has_setup": false,
+      "reason": "Mid-range chop within Asian Range (4054.16 - 4134.11)",
+      "setup_type": "NONE",
+      "closed_bars_only": true,
+      "signal_bar_time": 1794214200
+    },
+    "parse_status": "SCREENER_VETO",
+    "price_at_decision": 4107.9,
+    "sweep_target": null,
+    "sweep_extreme": null,
+    "plan": null,
+    "reviewed": true,
+    "review_verdict": "⚖️ SESSION AUDITED",
+    "review_notes": "Range reached 4134.11 high and 4054.16 low."
   }
 ]

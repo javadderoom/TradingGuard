@@ -24,74 +24,74 @@
     "PF": 0.67
   },
   "nq_stats": {
-    "Signals": 172,
-    "Fills": 128,
-    "Wins": 26,
-    "Losses": 83,
-    "BE": 19,
-    "Exp": 28,
-    "WR%": 20.3,
-    "Net_R": 28.64,
-    "Net_PnL": 97.59,
-    "PF": 1.24
+    "Signals": 39,
+    "Fills": 16,
+    "Wins": 4,
+    "Losses": 10,
+    "BE": 2,
+    "Exp": 18,
+    "WR%": 25.0,
+    "Net_R": 3.92,
+    "Net_PnL": 17.39,
+    "PF": 1.33
   },
   "portfolio_stats": {
-    "Signals": 438,
-    "Fills": 301,
-    "Wins": 50,
-    "Losses": 210,
-    "BE": 41,
-    "Exp": 101,
-    "WR%": 16.6,
-    "Net_R": -10.9,
-    "Net_PnL": -4.79,
-    "PF": 0.99
+    "Signals": 305,
+    "Fills": 189,
+    "Wins": 28,
+    "Losses": 137,
+    "BE": 24,
+    "Exp": 91,
+    "WR%": 14.8,
+    "Net_R": -35.62,
+    "Net_PnL": -84.99,
+    "PF": 0.84
   },
   "correlation": {
     "r_xau": {
       "r_xau": 1.0,
-      "r_gbp": 0.16621924300918972,
-      "r_nq": -0.009987586078023336
+      "r_gbp": 0.16555216030729594,
+      "r_nq": -0.027868484805086382
     },
     "r_gbp": {
-      "r_xau": 0.16621924300918972,
+      "r_xau": 0.16555216030729594,
       "r_gbp": 1.0,
-      "r_nq": 0.2959767017251166
+      "r_nq": 0.2442389415197391
     },
     "r_nq": {
-      "r_xau": -0.009987586078023336,
-      "r_gbp": 0.2959767017251166,
+      "r_xau": -0.027868484805086382,
+      "r_gbp": 0.2442389415197391,
       "r_nq": 1.0
     }
   },
   "risk_metrics": {
     "xau": {
-      "mean_daily_r": -0.209,
-      "std_daily_r": 2.311,
-      "sharpe_annualized": -1.43,
-      "sortino_annualized": -4.48,
+      "mean_daily_r": -0.217,
+      "std_daily_r": 2.359,
+      "sharpe_annualized": -1.46,
+      "sortino_annualized": -4.67,
       "max_drawdown_r": 29.08
     },
     "gbp": {
-      "mean_daily_r": -0.319,
-      "std_daily_r": 1.375,
-      "sharpe_annualized": -3.68,
-      "sortino_annualized": -6.43,
+      "mean_daily_r": -0.332,
+      "std_daily_r": 1.402,
+      "sharpe_annualized": -3.76,
+      "sortino_annualized": -6.7,
       "max_drawdown_r": 27.62
     },
     "nq": {
-      "mean_daily_r": 0.382,
-      "std_daily_r": 3.206,
-      "sharpe_annualized": 1.89,
-      "sortino_annualized": 5.81,
-      "max_drawdown_r": 13.1
+      "mean_daily_r": 0.054,
+      "std_daily_r": 0.866,
+      "sharpe_annualized": 1.0,
+      "sortino_annualized": 2.44,
+      "max_drawdown_r": 4.0
     },
     "portfolio": {
-      "mean_daily_r": -0.145,
-      "std_daily_r": 4.585,
-      "sharpe_annualized": -0.5,
-      "sortino_annualized": -1.42,
-      "max_drawdown_r": 36.91
+      "mean_daily_r": -0.495,
+      "std_daily_r": 3.139,
+      "sharpe_annualized": -2.5,
+      "sortino_annualized": -5.69,
+      "max_drawdown_r": 48.74
     }
   }
 }
