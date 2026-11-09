@@ -1,0 +1,185 @@
+[
+  {
+    "rule": {
+      "rule_id": "R12_019",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0020363585447393108,
+            0.0028854671564196637
+          ]
+        },
+        {
+          "feature": "norm_atr",
+          "op": ">",
+          "threshold": 0.0003381167108047275
+        },
+        {
+          "feature": "parkinson_vol",
+          "op": "<",
+          "threshold": 0.00011722507781770497
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0020 <= velocity_55 <= 0.0029) AND (norm_atr > 0.0003) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R12_019",
+      "symbol": "GBPUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 50,
+        "win_rate": 56.0,
+        "net_r": 14.29,
+        "profit_factor": 1.68,
+        "max_drawdown_r": 3.93,
+        "sharpe_ratio": 1.89
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 19,
+        "win_rate": 42.11,
+        "net_r": 2.87,
+        "profit_factor": 1.34,
+        "max_drawdown_r": 3.64,
+        "sharpe_ratio": 0.65
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.798,
+        "walk_forward_efficiency": 0.302,
+        "drawdown_expansion_ratio": 0.927
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R13_021",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "norm_atr",
+          "op": ">",
+          "threshold": 0.0003381167108047275
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0020363585447393108,
+            0.0028854671564196637
+          ]
+        },
+        {
+          "feature": "parkinson_vol",
+          "op": "<",
+          "threshold": 0.00011722507781770497
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (norm_atr > 0.0003) AND (0.0020 <= velocity_55 <= 0.0029) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R13_021",
+      "symbol": "GBPUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 50,
+        "win_rate": 56.0,
+        "net_r": 14.29,
+        "profit_factor": 1.68,
+        "max_drawdown_r": 3.93,
+        "sharpe_ratio": 1.89
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 19,
+        "win_rate": 42.11,
+        "net_r": 2.87,
+        "profit_factor": 1.34,
+        "max_drawdown_r": 3.64,
+        "sharpe_ratio": 0.65
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.798,
+        "walk_forward_efficiency": 0.302,
+        "drawdown_expansion_ratio": 0.927
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_027",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0020363585447393108,
+            0.0028854671564196637
+          ]
+        },
+        {
+          "feature": "skewness_30",
+          "op": ">",
+          "threshold": -0.8835165571039938
+        },
+        {
+          "feature": "parkinson_vol",
+          "op": "<",
+          "threshold": 0.00011722507781770497
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.8,
+      "be_ratchet_r": 1.5,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0020 <= velocity_55 <= 0.0029) AND (skewness_30 > -0.8835) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 1.8xATR, BE: 1.5R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_027",
+      "symbol": "GBPUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 177,
+        "win_rate": 40.68,
+        "net_r": 33.87,
+        "profit_factor": 1.36,
+        "max_drawdown_r": 9.0,
+        "sharpe_ratio": 2.01
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 98,
+        "win_rate": 38.78,
+        "net_r": 11.09,
+        "profit_factor": 1.19,
+        "max_drawdown_r": 11.16,
+        "sharpe_ratio": 0.88
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.876,
+        "walk_forward_efficiency": 0.492,
+        "drawdown_expansion_ratio": 1.24
+      }
+    }
+  }
+]

@@ -1,0 +1,310 @@
+[
+  {
+    "rule": {
+      "rule_id": "R14_049",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "accel_3",
+          "op": "<=",
+          "threshold": -0.000655522856432621
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0035314209281768105,
+            -0.00010935776861945927
+          ]
+        },
+        {
+          "feature": "autocorr_lag5",
+          "op": "between",
+          "threshold": [
+            0.22306855430838654,
+            0.2831312734056173
+          ]
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (accel_3 <= -0.0007) AND (-0.0035 <= velocity_55 <= -0.0001) AND (0.2231 <= autocorr_lag5 <= 0.2831) | TP: 3.0xATR, SL: 1.0xATR, BE: 1.2R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_049",
+      "symbol": "BTCUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 114,
+        "win_rate": 29.82,
+        "net_r": 51.82,
+        "profit_factor": 2.01,
+        "max_drawdown_r": 7.0,
+        "sharpe_ratio": 2.84
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 72,
+        "win_rate": 23.61,
+        "net_r": 15.88,
+        "profit_factor": 1.44,
+        "max_drawdown_r": 9.05,
+        "sharpe_ratio": 1.17
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.714,
+        "walk_forward_efficiency": 0.461,
+        "drawdown_expansion_ratio": 1.292
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_037",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.40483858431207004
+        },
+        {
+          "feature": "autocorr_lag5",
+          "op": "between",
+          "threshold": [
+            0.22306855430838654,
+            0.2831312734056173
+          ]
+        },
+        {
+          "feature": "accel_3",
+          "op": "<=",
+          "threshold": 0.0011460874881510708
+        }
+      ],
+      "tp_atr_mult": 2.5,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 1.5,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (ma_divergence > 0.4048) AND (0.2231 <= autocorr_lag5 <= 0.2831) AND (accel_3 <= 0.0011) | TP: 2.5xATR, SL: 1.2xATR, BE: 1.5R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_037",
+      "symbol": "BTCUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 285,
+        "win_rate": 40.7,
+        "net_r": 103.43,
+        "profit_factor": 1.73,
+        "max_drawdown_r": 8.0,
+        "sharpe_ratio": 3.96
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 203,
+        "win_rate": 31.03,
+        "net_r": 18.8,
+        "profit_factor": 1.15,
+        "max_drawdown_r": 13.37,
+        "sharpe_ratio": 0.96
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.667,
+        "walk_forward_efficiency": 0.273,
+        "drawdown_expansion_ratio": 1.671
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_010",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "autocorr_lag5",
+          "op": "between",
+          "threshold": [
+            0.22306855430838654,
+            0.2831312734056173
+          ]
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 1.2042206414894043
+        },
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.40483858431207004
+        }
+      ],
+      "tp_atr_mult": 2.5,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (price_zscore_50 >= 1.2042) AND (ma_divergence > 0.4048) | TP: 2.5xATR, SL: 1.0xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_010",
+      "symbol": "BTCUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 213,
+        "win_rate": 36.15,
+        "net_r": 76.38,
+        "profit_factor": 1.64,
+        "max_drawdown_r": 7.0,
+        "sharpe_ratio": 3.2
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 142,
+        "win_rate": 31.69,
+        "net_r": 34.29,
+        "profit_factor": 1.42,
+        "max_drawdown_r": 6.52,
+        "sharpe_ratio": 1.82
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.864,
+        "walk_forward_efficiency": 0.675,
+        "drawdown_expansion_ratio": 0.932
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_015",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "autocorr_lag5",
+          "op": "between",
+          "threshold": [
+            0.22306855430838654,
+            0.2831312734056173
+          ]
+        },
+        {
+          "feature": "velocity_55",
+          "op": "<=",
+          "threshold": 0.010536076693331278
+        },
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.40483858431207004
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 36,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (velocity_55 <= 0.0105) AND (ma_divergence > 0.4048) | TP: 3.5xATR, SL: 1.0xATR, BE: 2.0R, TTL: 36b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_015",
+      "symbol": "BTCUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 258,
+        "win_rate": 27.52,
+        "net_r": 115.79,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 9.53,
+        "sharpe_ratio": 3.68
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 188,
+        "win_rate": 24.47,
+        "net_r": 57.49,
+        "profit_factor": 1.51,
+        "max_drawdown_r": 13.53,
+        "sharpe_ratio": 2.23
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.831,
+        "walk_forward_efficiency": 0.747,
+        "drawdown_expansion_ratio": 1.42
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_024",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "autocorr_lag5",
+          "op": "between",
+          "threshold": [
+            0.22306855430838654,
+            0.2831312734056173
+          ]
+        },
+        {
+          "feature": "skewness_30",
+          "op": ">",
+          "threshold": -1.13598028875902
+        },
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.40483858431207004
+        }
+      ],
+      "tp_atr_mult": 2.5,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (skewness_30 > -1.1360) AND (ma_divergence > 0.4048) | TP: 2.5xATR, SL: 1.0xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_024",
+      "symbol": "BTCUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 311,
+        "win_rate": 36.66,
+        "net_r": 119.81,
+        "profit_factor": 1.71,
+        "max_drawdown_r": 9.0,
+        "sharpe_ratio": 3.74
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 212,
+        "win_rate": 31.6,
+        "net_r": 47.26,
+        "profit_factor": 1.37,
+        "max_drawdown_r": 9.52,
+        "sharpe_ratio": 2.05
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.805,
+        "walk_forward_efficiency": 0.593,
+        "drawdown_expansion_ratio": 1.057
+      }
+    }
+  }
+]

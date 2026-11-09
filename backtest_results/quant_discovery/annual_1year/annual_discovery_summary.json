@@ -1,0 +1,58 @@
+{
+  "BTCUSD": {
+    "symbol": "BTCUSD",
+    "total_bars": 100000,
+    "is_bars": 60000,
+    "oos_bars": 39900,
+    "candidates_tested": 15,
+    "ratified_count": 5,
+    "ratified_rules": [
+      "[SELL] (accel_3 <= -0.0007) AND (-0.0035 <= velocity_55 <= -0.0001) AND (0.2231 <= autocorr_lag5 <= 0.2831) | TP: 3.0xATR, SL: 1.0xATR, BE: 1.2R, TTL: 48b",
+      "[SELL] (ma_divergence > 0.4048) AND (0.2231 <= autocorr_lag5 <= 0.2831) AND (accel_3 <= 0.0011) | TP: 2.5xATR, SL: 1.2xATR, BE: 1.5R, TTL: 48b",
+      "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (price_zscore_50 >= 1.2042) AND (ma_divergence > 0.4048) | TP: 2.5xATR, SL: 1.0xATR, BE: 1.8R, TTL: 48b",
+      "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (velocity_55 <= 0.0105) AND (ma_divergence > 0.4048) | TP: 3.5xATR, SL: 1.0xATR, BE: 2.0R, TTL: 36b",
+      "[SELL] (0.2231 <= autocorr_lag5 <= 0.2831) AND (skewness_30 > -1.1360) AND (ma_divergence > 0.4048) | TP: 2.5xATR, SL: 1.0xATR, BE: 1.8R, TTL: 48b"
+    ]
+  },
+  "XAUUSD": {
+    "symbol": "XAUUSD",
+    "total_bars": 100000,
+    "is_bars": 60000,
+    "oos_bars": 39900,
+    "candidates_tested": 15,
+    "ratified_count": 0,
+    "ratified_rules": []
+  },
+  "NQ": {
+    "symbol": "NQ",
+    "total_bars": 100000,
+    "is_bars": 60000,
+    "oos_bars": 39900,
+    "candidates_tested": 15,
+    "ratified_count": 9,
+    "ratified_rules": [
+      "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) | TP: 4.5xATR, SL: 2.0xATR, BE: 2.0R, TTL: 24b",
+      "[BUY] (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b",
+      "[BUY] (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b",
+      "[BUY] (price_zscore_100 < 0.7284) AND (accel_8 <= 0.0001) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b",
+      "[BUY] (price_zscore_50 >= 2.1962) AND (price_zscore_100 < 0.7284) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b",
+      "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b",
+      "[BUY] (norm_atr < 0.0006) AND (price_zscore_50 >= 2.1962) AND (price_zscore_100 < 1.0788) | TP: 2.5xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b",
+      "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) AND (norm_atr < 0.0011) | TP: 2.5xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b",
+      "[BUY] (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) | TP: 3.0xATR, SL: 1.5xATR, BE: 2.0R, TTL: 48b"
+    ]
+  },
+  "GBPUSD": {
+    "symbol": "GBPUSD",
+    "total_bars": 100000,
+    "is_bars": 60000,
+    "oos_bars": 39900,
+    "candidates_tested": 15,
+    "ratified_count": 3,
+    "ratified_rules": [
+      "[SELL] (0.0020 <= velocity_55 <= 0.0029) AND (norm_atr > 0.0003) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 72b",
+      "[SELL] (norm_atr > 0.0003) AND (0.0020 <= velocity_55 <= 0.0029) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 72b",
+      "[SELL] (0.0020 <= velocity_55 <= 0.0029) AND (skewness_30 > -0.8835) AND (parkinson_vol < 0.0001) | TP: 3.0xATR, SL: 1.8xATR, BE: 1.5R, TTL: 48b"
+    ]
+  }
+}

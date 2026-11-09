@@ -1,0 +1,514 @@
+[
+  {
+    "rule": {
+      "rule_id": "R14_030",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "accel_8",
+          "op": "<=",
+          "threshold": 0.00011650645734956328
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) | TP: 4.5xATR, SL: 2.0xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_030",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 17.82,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 7.84,
+        "sharpe_ratio": 1.9
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 32,
+        "win_rate": 21.88,
+        "net_r": 18.04,
+        "profit_factor": 2.75,
+        "max_drawdown_r": 3.42,
+        "sharpe_ratio": 2.55
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.506,
+        "walk_forward_efficiency": 1.522,
+        "drawdown_expansion_ratio": 0.436
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_011",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": "<=",
+          "threshold": 0.00011650645734956328
+        },
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_011",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 17.65,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 7.84,
+        "sharpe_ratio": 1.89
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 32,
+        "win_rate": 21.88,
+        "net_r": 18.04,
+        "profit_factor": 2.75,
+        "max_drawdown_r": 3.42,
+        "sharpe_ratio": 2.55
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.512,
+        "walk_forward_efficiency": 1.537,
+        "drawdown_expansion_ratio": 0.436
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_020",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "accel_8",
+          "op": "<=",
+          "threshold": 0.00011650645734956328
+        },
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_020",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 17.65,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 7.84,
+        "sharpe_ratio": 1.89
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 32,
+        "win_rate": 21.88,
+        "net_r": 18.04,
+        "profit_factor": 2.75,
+        "max_drawdown_r": 3.42,
+        "sharpe_ratio": 2.55
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.512,
+        "walk_forward_efficiency": 1.537,
+        "drawdown_expansion_ratio": 0.436
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_048",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        },
+        {
+          "feature": "accel_8",
+          "op": "<=",
+          "threshold": 0.00011650645734956328
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_100 < 0.7284) AND (accel_8 <= 0.0001) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_048",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 17.65,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 7.84,
+        "sharpe_ratio": 1.89
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 32,
+        "win_rate": 21.88,
+        "net_r": 18.04,
+        "profit_factor": 2.75,
+        "max_drawdown_r": 3.42,
+        "sharpe_ratio": 2.55
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.512,
+        "walk_forward_efficiency": 1.537,
+        "drawdown_expansion_ratio": 0.436
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_009",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_50 >= 2.1962) AND (price_zscore_100 < 0.7284) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_009",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 79,
+        "win_rate": 17.72,
+        "net_r": 23.7,
+        "profit_factor": 1.67,
+        "max_drawdown_r": 7.22,
+        "sharpe_ratio": 2.06
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 57,
+        "win_rate": 15.79,
+        "net_r": 9.52,
+        "profit_factor": 1.31,
+        "max_drawdown_r": 7.06,
+        "sharpe_ratio": 0.99
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.789,
+        "walk_forward_efficiency": 0.604,
+        "drawdown_expansion_ratio": 0.978
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_010",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_010",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 79,
+        "win_rate": 17.72,
+        "net_r": 23.7,
+        "profit_factor": 1.67,
+        "max_drawdown_r": 7.22,
+        "sharpe_ratio": 2.06
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 57,
+        "win_rate": 15.79,
+        "net_r": 9.52,
+        "profit_factor": 1.31,
+        "max_drawdown_r": 7.06,
+        "sharpe_ratio": 0.99
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.789,
+        "walk_forward_efficiency": 0.604,
+        "drawdown_expansion_ratio": 0.978
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_025",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "norm_atr",
+          "op": "<",
+          "threshold": 0.000613230391858207
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 1.078798612178518
+        }
+      ],
+      "tp_atr_mult": 2.5,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (norm_atr < 0.0006) AND (price_zscore_50 >= 2.1962) AND (price_zscore_100 < 1.0788) | TP: 2.5xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_025",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 59,
+        "win_rate": 40.68,
+        "net_r": 19.65,
+        "profit_factor": 1.59,
+        "max_drawdown_r": 8.52,
+        "sharpe_ratio": 1.72
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 25,
+        "win_rate": 48.0,
+        "net_r": 14.9,
+        "profit_factor": 2.21,
+        "max_drawdown_r": 6.0,
+        "sharpe_ratio": 1.94
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.389,
+        "walk_forward_efficiency": 1.141,
+        "drawdown_expansion_ratio": 0.705
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_041",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        },
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "norm_atr",
+          "op": "<",
+          "threshold": 0.0011265172475641797
+        }
+      ],
+      "tp_atr_mult": 2.5,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_100 < 0.7284) AND (price_zscore_50 >= 2.1962) AND (norm_atr < 0.0011) | TP: 2.5xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_041",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 72,
+        "win_rate": 33.33,
+        "net_r": 11.45,
+        "profit_factor": 1.26,
+        "max_drawdown_r": 9.04,
+        "sharpe_ratio": 0.94
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 33,
+        "win_rate": 42.42,
+        "net_r": 15.32,
+        "profit_factor": 1.88,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.76
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.495,
+        "walk_forward_efficiency": 2.013,
+        "drawdown_expansion_ratio": 0.443
+      }
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_031",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "price_zscore_50",
+          "op": ">=",
+          "threshold": 2.19624906834143
+        },
+        {
+          "feature": "accel_8",
+          "op": "<=",
+          "threshold": 0.00011650645734956328
+        },
+        {
+          "feature": "price_zscore_100",
+          "op": "<",
+          "threshold": 0.7284288597017069
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (price_zscore_50 >= 2.1962) AND (accel_8 <= 0.0001) AND (price_zscore_100 < 0.7284) | TP: 3.0xATR, SL: 1.5xATR, BE: 2.0R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_031",
+      "symbol": "NQ",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 49,
+        "win_rate": 36.73,
+        "net_r": 7.16,
+        "profit_factor": 1.22,
+        "max_drawdown_r": 9.0,
+        "sharpe_ratio": 0.71
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 32,
+        "win_rate": 43.75,
+        "net_r": 11.99,
+        "profit_factor": 1.68,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 1.44
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.377,
+        "walk_forward_efficiency": 2.52,
+        "drawdown_expansion_ratio": 0.556
+      }
+    }
+  }
+]
