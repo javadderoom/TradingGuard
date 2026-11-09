@@ -1196,5 +1196,52 @@ To eliminate misleading performance claims, curve-fitting artifacts, and artific
 - **Monthly Record**: 11 out of 11 months profitable in calendar year 2026.
 - **Execution Schedule**: `backtest_results/quant_discovery/annual_1year/consolidated_annual_orders_schedule.csv` (2,135 continuous trades across 514 days).
 
+---
+
+## 25. Account Profile & Prop Firm Risk Governor (`hitl/account_risk_manager.py`)
+
+### 25.1 Architecture & Operational Modes
+TradingGuard enforces account-level exposure constraints, drawdowns, and concurrent risk limits across all live orders, radar triggers, and manual operations through `AccountRiskManager`:
+1. **`PROP_FIRM` Mode**: Designed specifically for Prop Firm evaluations (FTMO, MFF, FundedNext, Alpha Capital, Topstep) where strict drawdown violations lead to immediate account termination. Incorporates pre-emptive safe buffers to absorb slippage, spreads, and commissions.
+2. **`PERSONAL` Mode**: Tailored for personal self-funded accounts where discretionary or looser drawdown parameters apply without challenge failure penalties.
+
+### 25.2 Quantitative Risk Thresholds & Safety Buffers
+| Metric | Prop Firm Safe Buffer (Operational) | Prop Firm Hard Limit (Contractual) | Personal Account Default | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| **Max Concurrent Open Trades** | **2 trades** | **2 trades** | **3 trades** | Total simultaneous open positions + active pending limit orders. |
+| **Max Concurrent Risk %** | **1.5%** | **2.0%** | **3.0%** | Sum of potential dollar losses from entry to SL across all open and pending trades divided by account capital. |
+| **Max Daily Drawdown %** | **4.0%** | **5.0%** | **6.0%** | Total realized loss today + current floating unrealized drawdown relative to daily starting equity (`00:00` baseline). |
+| **Max Overall Drawdown %** | **10.0%** | **12.0%** | **15.0%** | Total drawdown relative to initial balance or High Water Mark (HWM). |
+
+### 25.3 Central Configuration & Persistence
+- Configuration file: `hitl/memory/account_risk_profile.json`
+- Supports automatic live equity synchronization (`use_auto_account_size: true`) or custom reference capital overrides (e.g. `$10,000.00`, `$50,000.00`, `$100,000.00`).
+- High Water Mark and daily reference equity are tracked persistently and dynamically refreshed on daily boundary rollover.
+
+### 25.4 Universal Pre-Execution Order Gating
+Every proposed order—whether dispatched autonomously by the Investment Council, submitted via `/buylimit`/`/selllimit`, or queued from the Live Market Radar—must pass `AccountRiskManager.evaluate_order_feasibility()` inside `hitl/mt5_engine.py:validate_limit_order`:
+1. **Circuit Breaker Check**: Halts immediately if daily or overall drawdown safe buffer has been breached.
+2. **Open Trade Ceiling Check**: Rejects if `(current_positions + current_pending + 1) > max_open_trades`.
+3. **Concurrent Risk Check**: Computes projected dollar exposure with the new trade. Rejects if projected concurrent risk % exceeds `max_concurrent_risk_pct`.
+4. **Projected Daily Drawdown Check**: Rejects if the trade's full stop-loss loss would push today's total drawdown beyond `max_daily_drawdown_pct`.
+5. **Projected Overall Drawdown Check**: Rejects if the trade's stop-loss loss would push total account drawdown from HWM beyond `max_overall_drawdown_pct`.
+
+### 25.5 Watchdog Monitoring & Circuit Breaker Triggers
+- `hitl/watchdog.py:MarketWatchdog` monitors live drawdowns during its continuous polling loop.
+- If live equity dips into the safe daily drawdown ceiling (`4.0%`) or safe overall drawdown ceiling (`10.0%`), the circuit breaker trips automatically, locking new order placement and notifying Telegram immediately.
+- Periodic Telegram Heartbeats and `/status` reports include active Risk Governor metrics (Mode, Open Trades, Concurrent Risk %, Daily DD %, Overall DD %).
+
+### 25.6 Interactive Telegram Control Suite
+- **Commands**: `/prop`, `/account`, `/risk`
+- **Main Keyboard Button**: `🏢 Prop & Risk Settings`
+- **Interactive Inline Buttons**:
+  - `🔄 Switch Mode (PROP_FIRM <-> PERSONAL)`
+  - `🔢 Set Max Open Trades (1, 2, 3, 4)`
+  - `⚡ Set Concurrent Risk % (1.0%, 1.5%, 2.0%, 3.0%)`
+  - `📉 Set Daily DD % (3.0%, 3.5%, 4.0%, 5.0%)`
+  - `🔄 Reset Breaker (Manual override)`
+  - `💵 Sync MT5 Capital (Toggle auto-equity vs manual override)`
+
+
 
 

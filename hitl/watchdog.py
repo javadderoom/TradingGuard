@@ -50,6 +50,7 @@ class MarketWatchdog:
         # Closed-Loop Review State
         self.last_post_mortem_date: Optional[datetime.date] = None
         self.last_morning_briefing_date: Optional[datetime.date] = None
+        self.last_circuit_alerted: bool = False
 
     def send_heartbeat(self, chat_id: int | str, is_manual: bool = False):
         """Sends an operational system health check card."""
@@ -71,6 +72,11 @@ class MarketWatchdog:
         perf = self.engine.get_daily_performance()
         circuit_badge = "⛔ TRIPPED" if perf["circuit_tripped"] else f"🟢 Safe (${perf['realized_pnl']:+.2f})"
 
+        from hitl.account_risk_manager import risk_governor
+        gov_sync = risk_governor.sync_state(self.engine)
+        gov_mode = risk_governor.mode
+        gov_status = f"`{gov_mode}` (Daily DD: {gov_sync['daily_dd_pct']:.1f}% | Overall: {gov_sync['overall_dd_pct']:.1f}%)"
+
         title = "💓 *Pong! System Healthy & Active*" if is_manual else "💓 *TradingGuard Periodic Heartbeat*"
 
         card = (
@@ -81,6 +87,7 @@ class MarketWatchdog:
             f"📈 *MT5 Broker:* {mt5_status}\n"
             f"📋 *Pending Orders:* {pending_count} | 🎯 *Active Positions:* {pos_count}\n"
             f"🛡️ *Discipline Radar:* Cooldown {cd_badge} | Circuit {circuit_badge}\n"
+            f"🏢 *Risk Governor:* {gov_status}\n"
             f"🎯 *SMC Live Radar:* 🟢 Active (Autonomous Killzone Scout on Cable/Euro/Gold)"
         )
         self.client.send_message(chat_id, card)
@@ -135,6 +142,24 @@ class MarketWatchdog:
         chat_id = TELEGRAM_CHAT_ID
         if not chat_id:
             return
+
+        # 0. Account Risk Governor Sync & Circuit Check
+        from hitl.account_risk_manager import risk_governor
+        gov_sync = risk_governor.sync_state(self.engine)
+        if gov_sync.get("circuit_breaker_active") and not self.last_circuit_alerted:
+            self.last_circuit_alerted = True
+            self.client.send_message(
+                chat_id,
+                f"🚨 *[ACCOUNT RISK GOVERNOR CIRCUIT BREAKER ENGAGED]*\n\n"
+                f"📌 *Mode:* `{gov_sync['account_mode']}`\n"
+                f"⚠️ *Reason:* {gov_sync['circuit_breaker_reason']}\n"
+                f"💵 *Live Equity:* `${gov_sync['current_equity']:,.2f}` | Balance: `${gov_sync['current_balance']:,.2f}`\n"
+                f"📉 *Daily Loss:* `${gov_sync['daily_loss_usd']:,.2f}` ({gov_sync['daily_dd_pct']:.2f}%)\n"
+                f"📉 *Overall Drawdown:* `${gov_sync['overall_loss_usd']:,.2f}` ({gov_sync['overall_dd_pct']:.2f}%)\n\n"
+                f"🛑 All new order execution is strictly locked to prevent account termination."
+            )
+        elif not gov_sync.get("circuit_breaker_active"):
+            self.last_circuit_alerted = False
 
         # 1. Inspect Pending Orders
         orders = mt5.orders_get()

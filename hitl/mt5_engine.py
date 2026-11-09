@@ -306,6 +306,21 @@ class MT5Engine:
                 f"💡 لطفاً حد ضرر را کمی بسته‌تر انتخاب کنید تا مجموع ریسک زیر ۱۲ دلار بماند."
             ), {}
 
+        # 6. Account Profile & Prop Firm Risk Governor Validation
+        from hitl.account_risk_manager import risk_governor
+        gov_ok, gov_msg, gov_metrics = risk_governor.evaluate_order_feasibility(
+            symbol=resolved_sym,
+            order_type_str=order_type_str,
+            price=price,
+            sl=sl,
+            tp=tp,
+            lot=lot,
+            risk_usd=total_risk_usd,
+            engine=self
+        )
+        if not gov_ok:
+            return False, gov_msg, {}
+
         rr_ratio = (reward_usd / total_risk_usd) if total_risk_usd > 0 else 0.0
         details = {
             "symbol": resolved_sym,
@@ -318,7 +333,8 @@ class MT5Engine:
             "friction_usd": friction_total,
             "risk_usd": total_risk_usd,
             "reward_usd": round(reward_usd, 2),
-            "rr": round(rr_ratio, 2)
+            "rr": round(rr_ratio, 2),
+            "account_governor": gov_metrics
         }
         return True, "", details
 

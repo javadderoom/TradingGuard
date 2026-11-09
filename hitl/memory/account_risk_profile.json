@@ -1,0 +1,33 @@
+{
+  "account_mode": "PROP_FIRM",
+  "account_size_usd": 10000.0,
+  "use_auto_account_size": false,
+  "profiles": {
+    "PROP_FIRM": {
+      "name": "Prop Firm Challenge / Funded",
+      "max_open_trades": 2,
+      "max_concurrent_risk_pct": 1.5,
+      "hard_concurrent_risk_pct": 2.0,
+      "max_daily_drawdown_pct": 4.0,
+      "hard_daily_drawdown_pct": 5.0,
+      "max_overall_drawdown_pct": 10.0,
+      "hard_overall_drawdown_pct": 12.0
+    },
+    "PERSONAL": {
+      "name": "Personal Trading Account",
+      "max_open_trades": 3,
+      "max_concurrent_risk_pct": 3.0,
+      "hard_concurrent_risk_pct": 5.0,
+      "max_daily_drawdown_pct": 6.0,
+      "hard_daily_drawdown_pct": 8.0,
+      "max_overall_drawdown_pct": 15.0,
+      "hard_overall_drawdown_pct": 20.0
+    }
+  },
+  "daily_reference_equity": 1142.31,
+  "daily_reference_date": "2026-11-09",
+  "high_water_mark_equity": 1142.31,
+  "circuit_breaker_active": false,
+  "circuit_breaker_reason": "",
+  "last_updated": "2026-11-09T14:12:59.040765"
+}

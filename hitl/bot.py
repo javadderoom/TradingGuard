@@ -48,8 +48,9 @@ MAIN_KEYBOARD = {
     "keyboard": [
         [{"text": "📊 Market Analysis"}, {"text": "🧪 Backtest Suite"}],
         [{"text": "🌅 Morning Briefing"}, {"text": "🔍 Review Council"}],
+        [{"text": "🏢 Prop & Risk Settings"}, {"text": "🛡️ Account Status"}],
         [{"text": "📋 Pending Orders"}, {"text": "📊 Open Positions"}],
-        [{"text": "🛡️ Account Status"}, {"text": "❓ Help & Syntax"}]
+        [{"text": "❓ Help & Syntax"}]
     ],
     "resize_keyboard": True,
     "is_persistent": False
@@ -663,6 +664,21 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
     in_cd, rem_min, cd_reason = engine.get_cooldown_status()
     cd_badge = f"⏳ *Active* ({rem_min}m remaining)" if in_cd else "🟢 *Idle* (No Restrictions)"
 
+    from hitl.account_risk_manager import risk_governor
+    gov_sync = risk_governor.sync_state(engine)
+    gov_exp = risk_governor.get_open_exposure(engine)
+    gov_prof = risk_governor.active_profile
+    ref_cap = risk_governor.get_reference_capital(engine)
+    risk_pct = (gov_exp["concurrent_risk_usd"] / ref_cap * 100.0) if ref_cap > 0 else 0.0
+
+    gov_line = (
+        f"🏢 *Risk Governor Mode:* `{risk_governor.mode}`\n"
+        f"   • Open Trades: `{gov_exp['open_trades_count']} / {gov_prof['max_open_trades']}` max\n"
+        f"   • Concurrent Risk: `${gov_exp['concurrent_risk_usd']:.2f}` (`{risk_pct:.1f}%` / {gov_prof['max_concurrent_risk_pct']:.1f}% safe)\n"
+        f"   • Daily DD: `{gov_sync['daily_dd_pct']:.1f}%` / {gov_prof['max_daily_drawdown_pct']:.1f}%\n"
+        f"   • Overall DD: `{gov_sync['overall_dd_pct']:.1f}%` / {gov_prof['max_overall_drawdown_pct']:.1f}%"
+    )
+
     text = (
         f"🛡️ *TradingGuard HITL System Status*\n\n"
         f"👤 *Account:* `{acc['login']}` ({acc['server']})\n"
@@ -671,13 +687,22 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
         f"💰 *Floating PnL:* `${acc['profit']:.2f}`\n\n"
         f"📋 *Pending Limit Orders:* {pending_count}\n"
         f"🎯 *Active Positions:* {pos_count}\n"
-        f"⚖️ *Per-Trade Risk Cap:* `${MAX_RISK_USD:.2f}` (Lot: {BASE_LOT})\n"
+        f"⚖️ *Per-Trade Risk Cap:* `${MAX_RISK_USD:.2f}` (Lot: {BASE_LOT})\n\n"
+        f"{gov_line}\n\n"
         f"🛡️ *Daily Circuit Breaker:* {breaker_badge}\n"
         f"⏰ *Trading Session:* {session_badge}\n"
         f"⏱ *Cooldown Status:* {cd_badge}\n"
         f"📡 *Telegram Proxy:* Connected"
     )
     client.send_message(chat_id, text)
+
+
+def handle_prop_command(client: TelegramClient, engine: MT5Engine, chat_id: int | str):
+    """Displays Account Profile & Prop Firm Risk Governor control card."""
+    from hitl.account_risk_manager import risk_governor
+    card = risk_governor.format_status_card(engine)
+    kb = risk_governor.get_telegram_inline_keyboard()
+    client.send_message(chat_id, card, reply_markup=kb)
 
 
 def run_bot():
@@ -893,6 +918,8 @@ def run_bot():
                         handle_positions_command(client, engine, sender_id)
                     elif any(k in text for k in ["🛡️", "وضعیت", "/status", "status"]):
                         handle_status_command(client, engine, sender_id)
+                    elif any(k in text.lower() for k in ["🏢", "prop", "پراپ", "/prop", "/account", "account", "/risk", "ریسک", "risk settings"]):
+                        handle_prop_command(client, engine, sender_id)
                     elif text.startswith("/cancel"):
                         parts = text.split()
                         if len(parts) >= 2 and parts[1].isdigit():
@@ -1072,6 +1099,132 @@ def run_bot():
                                     sender_id,
                                     "⚠️ Deliberation text is no longer available or has expired."
                                 )
+                        elif data.startswith("prop_set_mode_"):
+                            from hitl.account_risk_manager import risk_governor
+                            new_mode = data.replace("prop_set_mode_", "")
+                            risk_governor.set_account_mode(new_mode)
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"✅ Account Mode switched to *{new_mode}*.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_menu_trades":
+                            kb = {
+                                "inline_keyboard": [
+                                    [
+                                        {"text": "1 Trade", "callback_data": "prop_set_trades_1"},
+                                        {"text": "2 Trades", "callback_data": "prop_set_trades_2"},
+                                        {"text": "3 Trades", "callback_data": "prop_set_trades_3"},
+                                        {"text": "4 Trades", "callback_data": "prop_set_trades_4"}
+                                    ],
+                                    [{"text": "🔙 Back", "callback_data": "prop_back_main"}]
+                                ]
+                            }
+                            client.send_message(
+                                sender_id,
+                                "🔢 *Select Maximum Concurrent Open Trades:*\n"
+                                "Controls total active positions + pending limit orders.",
+                                reply_markup=kb
+                            )
+                        elif data.startswith("prop_set_trades_"):
+                            from hitl.account_risk_manager import risk_governor
+                            cnt = int(data.replace("prop_set_trades_", ""))
+                            risk_governor.update_limit("max_open_trades", cnt)
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"✅ Max Open Trades set to *{cnt}*.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_menu_risk":
+                            kb = {
+                                "inline_keyboard": [
+                                    [
+                                        {"text": "1.0%", "callback_data": "prop_set_risk_1.0"},
+                                        {"text": "1.5%", "callback_data": "prop_set_risk_1.5"},
+                                        {"text": "2.0%", "callback_data": "prop_set_risk_2.0"},
+                                        {"text": "3.0%", "callback_data": "prop_set_risk_3.0"}
+                                    ],
+                                    [{"text": "🔙 Back", "callback_data": "prop_back_main"}]
+                                ]
+                            }
+                            client.send_message(
+                                sender_id,
+                                "⚡ *Select Safe Concurrent Risk Ceiling (% of account capital):*\n"
+                                "Hard prop firm rule is 2.0%. 1.5% is recommended safe buffer.",
+                                reply_markup=kb
+                            )
+                        elif data.startswith("prop_set_risk_"):
+                            from hitl.account_risk_manager import risk_governor
+                            r_val = float(data.replace("prop_set_risk_", ""))
+                            risk_governor.update_limit("max_concurrent_risk_pct", r_val)
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"✅ Safe Concurrent Risk ceiling set to *{r_val:.1f}%*.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_menu_daily":
+                            kb = {
+                                "inline_keyboard": [
+                                    [
+                                        {"text": "3.0%", "callback_data": "prop_set_daily_3.0"},
+                                        {"text": "3.5%", "callback_data": "prop_set_daily_3.5"},
+                                        {"text": "4.0%", "callback_data": "prop_set_daily_4.0"},
+                                        {"text": "5.0%", "callback_data": "prop_set_daily_5.0"}
+                                    ],
+                                    [{"text": "🔙 Back", "callback_data": "prop_back_main"}]
+                                ]
+                            }
+                            client.send_message(
+                                sender_id,
+                                "📉 *Select Safe Daily Drawdown Limit (%):*\n"
+                                "Hard prop firm breach is 5.0%. 4.0% safe buffer protects against slippage.",
+                                reply_markup=kb
+                            )
+                        elif data.startswith("prop_set_daily_"):
+                            from hitl.account_risk_manager import risk_governor
+                            d_val = float(data.replace("prop_set_daily_", ""))
+                            risk_governor.update_limit("max_daily_drawdown_pct", d_val)
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"✅ Safe Daily Drawdown limit set to *{d_val:.1f}%*.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_reset_breaker":
+                            from hitl.account_risk_manager import risk_governor
+                            risk_governor.reset_circuit_breaker()
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"🔄 *Circuit Breaker Manually Reset!*\nTrading gating returned to normal.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_sync_capital":
+                            from hitl.account_risk_manager import risk_governor
+                            curr_auto = risk_governor.state.get("use_auto_account_size", False)
+                            new_auto = not curr_auto
+                            risk_governor.set_account_size(risk_governor.state.get("account_size_usd", 10000.0), use_auto=new_auto)
+                            status_str = "Auto-synced with Live MT5 Equity" if new_auto else "Manual Override ($10,000.00 standard prop tier)"
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(
+                                sender_id,
+                                f"💵 Capital Reference updated to: *{status_str}*.\n\n{card}",
+                                reply_markup=kb
+                            )
+                        elif data == "prop_back_main":
+                            from hitl.account_risk_manager import risk_governor
+                            card = risk_governor.format_status_card(engine)
+                            kb = risk_governor.get_telegram_inline_keyboard()
+                            client.send_message(sender_id, card, reply_markup=kb)
 
         except KeyboardInterrupt:
             print("\n[Bot] Shutting down gracefully...")
