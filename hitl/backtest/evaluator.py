@@ -99,25 +99,33 @@ def _calculate_atr_m1(bars: List[Dict[str, Any]], period: int = 14, symbol: str 
 
 
 def get_default_broker_spread(symbol: str) -> float:
-    """Returns conservative institutional broker spread in price points."""
+    """Returns conservative institutional broker spread in price points.
+    
+    Calibrated against verified live LiteFinance MT5 feeds (London Active Session):
+    - Forex Raw ECN (_o): 0.00 - 0.20 raw pips -> 0.5 - 0.6 pips total friction (incl. commission).
+    - Gold (XAUUSD_o): 22 pts ($0.22).
+    - Silver (XAGUSD_o): 2.7 cents ($0.027).
+    - Bitcoin (BTCUSD): $0.08 live spread -> $0.20 conservative execution buffer.
+    - US Indices (NQ/SPX/YM): 0.90 live NQ pts -> 1.0 pt conservative model.
+    """
     sym = symbol.upper()
     if "NQ" in sym or "NAS" in sym or "US100" in sym:
-        return 1.0           # 1.0 point spread on NQ ($0.10 on 0.10 lot)
+        return 1.0           # 1.0 point spread on NQ ($0.10 on 0.10 lot, live MT5 is 0.90 pts)
     elif "SPX" in sym or "US500" in sym:
         return 0.50          # 0.50 point spread on SPX ($0.05 on 0.10 lot)
     elif "YM" in sym or "US30" in sym or "DJ" in sym:
         return 2.0           # 2.0 points spread on YM ($0.20 on 0.10 lot)
     elif "BTC" in sym:
-        return 1.50          # $1.50 spread on BTCUSD ($0.015 at 0.01 lot)
+        return 0.20          # $0.20 spread on BTCUSD ($0.002 at 0.01 lot, calibrated from legacy $1.50)
     elif "XAU" in sym:
-        return 0.15          # $0.15 spread on Gold
+        return 0.22          # $0.22 spread on Gold (22 pts, verified live MT5 XAUUSD_o)
     elif "XAG" in sym:
-        return 0.030         # 3.0 cents spread on Silver ($1.50 on 0.01 lot)
+        return 0.027         # 2.7 cents spread on Silver ($1.35 on 0.01 lot, verified live MT5 XAGUSD_o)
     elif "EUR" in sym:
-        return 0.00018       # 1.8 pips on EURUSD
+        return 0.00005       # 0.5 pips on EURUSD (Raw ECN 0.0 pips + commission buffer)
     elif "GBP" in sym:
-        return 0.00025       # 2.5 pips on GBPUSD
-    return 0.00020
+        return 0.00006       # 0.6 pips on GBPUSD (Raw ECN 0.0 pips + commission buffer)
+    return 0.00006
 
 
 def is_trade_realized(result: Dict[str, Any]) -> bool:

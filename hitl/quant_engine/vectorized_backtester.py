@@ -74,16 +74,16 @@ class VectorizedBacktester:
 
     # Realistic institutional broker spread standards synchronized with evaluator.py
     DEFAULT_SPREADS = {
-        "XAUUSD": 0.15,
-        "GOLD": 0.15,
+        "XAUUSD": 0.22,
+        "GOLD": 0.22,
         "NQ": 1.0,
         "US100": 1.0,
-        "BTCUSD": 1.50,
-        "GBPUSD": 0.00025,
-        "EURUSD": 0.00018,
+        "BTCUSD": 0.20,
+        "GBPUSD": 0.00006,
+        "EURUSD": 0.00005,
         "SPX": 0.50,
         "YM": 2.00,
-        "XAGUSD": 0.030,
+        "XAGUSD": 0.027,
     }
 
     def __init__(

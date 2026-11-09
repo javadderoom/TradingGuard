@@ -156,12 +156,13 @@ Every trade strictly abides by institutional broker execution realism:
    - Computes rolling 15-period M1 ATR.
    - Detects adverse momentum spikes: $\ge 3.5\times\text{ATR}$ for Precious Metals and Crypto ($\ge 2.0\times\text{ATR}$ for Forex).
    - If adverse spike occurs within $3.0\times\text{ATR}$ of the pending limit price, order is instantly cancelled (`CANCELLED_WATCHDOG`).
-9. **Realistic Broker Spread Penalties**:
-   - Gold (`XAUUSD`): **$0.15** spread.
-   - Silver (`XAGUSD`): **$0.030** spread.
-   - Bitcoin (`BTCUSD`): **$1.50** spread ($0.015 dollar penalty on 0.01 lot).
-   - EURUSD: **0.00015** (1.5 pips).
-   - GBPUSD: **0.00020** (2.0 pips).
+9. **Calibrated Broker Spread Penalties (Verified Live MT5 Feeds)**:
+   - Gold (`XAUUSD`): **$0.22** spread (22 pts, verified live `XAUUSD_o`).
+   - Silver (`XAGUSD`): **$0.027** spread (2.7 cents, verified live `XAGUSD_o`).
+   - Bitcoin (`BTCUSD`): **$0.20** spread ($0.002 on 0.01 lot; live MT5 is $0.08, calibrated from legacy $1.50).
+   - Nasdaq 100 (`NQ`): **1.0 pt** ($0.10 on 0.10 lot; verified live MT5 is 0.90 pts).
+   - EURUSD: **0.00005** (0.5 pips; verified live Raw ECN 0.0 spread + commission buffer).
+   - GBPUSD: **0.00006** (0.6 pips; verified live Raw ECN 0.0 spread + commission buffer).
    - **Buy Execution**: Enters at $\text{Ask} = \text{Bid} + \text{Spread}$. Closed at $\text{Bid}$.
    - **Sell Execution**: Enters at $\text{Bid}$. Closed at $\text{Ask} = \text{Bid} + \text{Spread}$.
 
@@ -1080,9 +1081,11 @@ A quantitative strategy is expressed as an explicit, serializable symbolic expre
 The backtester executes simulated orders against historical broker tick/bar arrays with institutional fidelity:
 1. **Spread & Microstructure Costs**: Synchronized with `get_default_broker_spread` in `hitl/backtest/evaluator.py`:
    - NQ / US100: 1.0 point ($0.10 per 0.01 lot)
-   - BTCUSD: $1.50 ($0.015 per 0.01 lot)
-   - XAUUSD (Gold): $0.15 ($0.15 per 0.01 lot)
-   - GBPUSD: 0.00025 (2.5 pips)
+   - BTCUSD: $0.20 ($0.002 per 0.01 lot; calibrated from legacy $1.50)
+   - XAUUSD (Gold): $0.22 ($0.22 per 0.01 lot, verified live XAUUSD_o 22 pts)
+   - XAGUSD (Silver): $0.027 (2.7 cents, verified live XAGUSD_o)
+   - EURUSD: 0.00005 (0.5 pips, Raw ECN 0.0 spread + commission)
+   - GBPUSD: 0.00006 (0.6 pips, Raw ECN 0.0 spread + commission)
    - SPX: 0.50 points, YM: 2.0 points
 2. **Commission Buffer**: Fixed $0.10 per round-trip trade per 0.01 lot.
 3. **Authentic Bid/Ask Mechanics**: MT5 market bars are Bid.

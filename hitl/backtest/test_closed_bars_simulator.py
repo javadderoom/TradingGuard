@@ -90,7 +90,7 @@ check("ceil 10:34:30 -> 10:35",
 
 # =====================================================================
 print("(ii) Bar touching both TP and SL is a LOSS (SL-first)")
-fwd = [m1(0, 3999.9, 4000.0, 3999.8, 3999.9),   # fill: low+spread 3999.95 <= 4000
+fwd = [m1(0, 3999.9, 4000.0, 3999.7, 3999.9),   # fill: low+spread 3999.7+0.22=3999.92 <= 4000
        m1(1, 3999.9, 4025.0, 3990.0, 4010.0)]   # high >= TP 4021 AND low <= SL 3993
 r = evaluate_council_decision({"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3993.0, "tp": 4021.0},
                               fwd, "XAUUSD")
@@ -107,14 +107,14 @@ check("SELL both TP+SL touched -> LOSS", r['status'] == 'LOSS')
 
 # =====================================================================
 print("(iii) Spread symmetric BUY vs SELL (same bid/ask convention)")
-# BUY: fill bar low 3999.85 (ask 4000.00), TP bar high exactly 4021 (bid reaches TP)
-fwd_buy = [m1(0, 3999.9, 4000.0, 3999.85, 3999.9),
+# BUY: fill bar low 3999.70 (ask 3999.92), TP bar high exactly 4021 (bid reaches TP)
+fwd_buy = [m1(0, 3999.9, 4000.0, 3999.70, 3999.9),
            m1(1, 4020.0, 4021.0, 4019.0, 4020.5)]
 rb = evaluate_council_decision({"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3993.0, "tp": 4021.0},
                                fwd_buy, "XAUUSD")
-# SELL: fill bar high 4000.00 (bid), TP bar low 3978.85 (ask 3979.00 reaches TP)
+# SELL: fill bar high 4000.00 (bid), TP bar low 3978.78 (ask 3979.00 reaches TP with 0.22 spread)
 fwd_sell = [m1(0, 4000.1, 4000.0, 3999.9, 4000.1),
-            m1(1, 3980.0, 3981.0, 3978.85, 3979.5)]
+            m1(1, 3980.0, 3981.0, 3978.78, 3979.5)]
 rs = evaluate_council_decision({"decision": "SELL_LIMIT", "entry": 4000.0, "sl": 4007.0, "tp": 3979.0},
                                fwd_sell, "XAUUSD")
 print(f"    BUY WIN pnl={rb['realized_pnl_usd']}  SELL WIN pnl={rs['realized_pnl_usd']}")
@@ -129,7 +129,7 @@ rs2 = evaluate_council_decision({"decision": "SELL_LIMIT", "entry": 4000.0, "sl"
 check("SELL TP not hit when ask (low+spread) has not reached TP",
       rs2['status'] != 'WIN', f"status={rs2['status']}")
 # BUY SL vs SELL SL equal loss
-fwd_buy_sl = [m1(0, 3999.9, 4000.0, 3999.85, 3999.9), m1(1, 3995.0, 3996.0, 3993.0, 3994.0)]
+fwd_buy_sl = [m1(0, 3999.9, 4000.0, 3999.70, 3999.9), m1(1, 3995.0, 3996.0, 3993.0, 3994.0)]
 fwd_sell_sl = [m1(0, 4000.1, 4000.0, 3999.9, 4000.1), m1(1, 4005.0, 4007.0, 4004.0, 4006.0)]
 rb2 = evaluate_council_decision({"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3993.0, "tp": 4021.0},
                                 fwd_buy_sl, "XAUUSD")
@@ -153,34 +153,32 @@ check("canonical TTL is 75", CANONICAL_TTL_MINUTES == 75)
 # =====================================================================
 print("(v) Breakeven exit accounts for spread and commission (was PnL 0.0)")
 # BUY: fill bar0; bar1 high 4014 -> MFE 14pts = 2.0R arms BE at END of
-# bar1 (active_sl 4000.15); bar2 retraces to low 3999.0 -> BE exit.
-# (The old code armed the ratchet from bar1's high and exited on the same
-# bar's low; the canonical rule evaluates exits on start-of-bar levels,
-# so a retrace bar is required.) Gross +$0.15 spread, -$0.10 commission.
-fwd_be = [m1(0, 3999.9, 4000.0, 3999.85, 3999.9),
+# bar1 (active_sl 4000.22); bar2 retraces to low 3999.0 -> BE exit.
+# (The canonical rule evaluates exits on start-of-bar levels, so a retrace bar is required.)
+# Gross +$0.22 spread, -$0.10 commission = +$0.12 net PnL.
+fwd_be = [m1(0, 3999.9, 4000.0, 3999.70, 3999.9),
           m1(1, 4010.0, 4014.0, 4000.10, 4012.0),
           m1(2, 4012.0, 4012.0, 3999.0, 4000.0)]
 rbe = evaluate_council_decision({"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3993.0, "tp": 4021.0},
                                 fwd_be, "XAUUSD", breakeven_rr=2.0)
 print(f"    BUY BE: {rbe['status']} pnl={rbe['realized_pnl_usd']}")
 check("BUY BE status", rbe['status'] == 'BREAKEVEN')
-check("BUY BE pnl = +$0.15 spread - $0.10 commission = +$0.05",
-      rbe['realized_pnl_usd'] == 0.05, f"got {rbe['realized_pnl_usd']}")
-# SELL mirror: bar1 low 3985.5 -> MFE 14.35pts = 2.05R arms BE at END
-# of bar1 (active_sl 3999.85); bar2 rallies to high 4000.0 -> ask 4000.15
-# >= 3999.85 -> BE exit. (Old data had MFE 13.85pts = 1.98R, just below
-# the 2.0 threshold, so the ratchet never armed.)
+check("BUY BE pnl = +$0.22 spread - $0.10 commission = +$0.12",
+      rbe['realized_pnl_usd'] == 0.12, f"got {rbe['realized_pnl_usd']}")
+# SELL mirror: bar1 low 3985.0 -> MFE 14.78pts = 2.11R arms BE at END
+# of bar1 (active_sl 3999.78); bar2 rallies to high 4000.0 -> ask 4000.22
+# >= 3999.78 -> BE exit.
 fwd_be_s = [m1(0, 4000.1, 4000.0, 3999.9, 4000.1),
-            m1(1, 3990.0, 3999.90, 3985.5, 3988.0),
+            m1(1, 3990.0, 3999.90, 3985.0, 3988.0),
             m1(2, 3988.0, 4000.0, 3988.0, 3990.0)]
 rbe_s = evaluate_council_decision({"decision": "SELL_LIMIT", "entry": 4000.0, "sl": 4007.0, "tp": 3979.0},
                                   fwd_be_s, "XAUUSD", breakeven_rr=2.0)
 print(f"    SELL BE: {rbe_s['status']} pnl={rbe_s['realized_pnl_usd']}")
-check("SELL BE pnl = +$0.05 (same as BUY)", rbe_s['status'] == 'BREAKEVEN'
-      and rbe_s['realized_pnl_usd'] == 0.05, f"got {rbe_s['realized_pnl_usd']}")
+check("SELL BE pnl = +$0.12 (same as BUY)", rbe_s['status'] == 'BREAKEVEN'
+      and rbe_s['realized_pnl_usd'] == 0.12, f"got {rbe_s['realized_pnl_usd']}")
 
 # OPEN_AT_END is flagged unrealised
-fwd_open = [m1(0, 3999.9, 4000.0, 3999.85, 3999.9),
+fwd_open = [m1(0, 3999.9, 4000.0, 3999.70, 3999.9),
             m1(1, 4005.0, 4006.0, 4004.0, 4005.0)]
 ro = evaluate_council_decision({"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3993.0, "tp": 4021.0},
                                fwd_open, "XAUUSD")
