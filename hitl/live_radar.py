@@ -35,11 +35,15 @@ class LiveMarketRadar:
     ):
         self.engine = engine
         self.client = client
-        self.target_symbols = target_symbols or ["GBPUSD", "XAUUSD", "NQ"]
+        self.target_symbols = target_symbols or ["GBPUSD", "XAUUSD", "NQ", "BTCUSD"]
         self.last_trigger_times: Dict[Tuple[str, str], float] = {}  # (symbol, "BUY"/"SELL") -> timestamp
         self.last_sweep_extremes: Dict[Tuple[str, str], float] = {} # (symbol, "BUY"/"SELL") -> extreme price
         self.cooldown_seconds: float = 1800.0 # 30 minutes between duplicate alerts per direction
         self._is_evaluating: bool = False
+
+        # Autonomous Quant Strategy Bridge (Council & Snap Bypassed)
+        from hitl.quant_engine.live_quant_bridge import LiveQuantBridge
+        self.quant_bridge = LiveQuantBridge(self.engine, self.client)
 
     def is_killzone_active(self) -> Tuple[bool, str]:
         """
@@ -589,6 +593,14 @@ class LiveMarketRadar:
 
     def poll(self):
         """Called periodically by watchdog/bot loop (e.g. every 15-20 seconds)."""
+        # 1. Pure Mathematical Quant Strategy Scanning (Council & Snap Bypassed)
+        try:
+            if hasattr(self, 'quant_bridge') and self.quant_bridge:
+                self.quant_bridge.scan_all()
+        except Exception as q_err:
+            print(f"[LiveRadar] Quant bridge scan error: {q_err}")
+
+        # 2. Institutional SMC Strategy Scanning (Council Deliberation)
         is_active, session_name = self.is_killzone_active()
         if not is_active:
             return

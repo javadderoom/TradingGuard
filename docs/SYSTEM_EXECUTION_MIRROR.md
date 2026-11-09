@@ -1297,14 +1297,13 @@ Based on verified historical data across 175 trading days (Gold/Cable), 131 days
 | **2026-12** *(Holiday est)* | -3.00R | +5.00R | **+2.00R** | **+$23.00** | SMC discipline prevents negative month |
 | **Estimated Annual Total** | **~+400R** | **~+180R** | **~+580R** | **~$6,670 USD** | **12 / 12 Months Profitable** |
 
-### 26.5 Live Session Execution Reality: Active vs Offline Engines
+### 26.5 Live Session Execution Reality: Active Dual-Pillar Deployment
 - **Active in Today's Live Trading Session**:
-  - **Institutional SMC Live Radar (`hitl/live_radar.py`)**: Active in real-time, scanning M5/M15/H1/1D charts for Liquidity Sweeps, FVGs, MSS, and SMT Divergence during London and NY Killzones.
-  - **Investment Council & SubQ Snap AI (`hitl/council.py`, `hitl/snap_decision_engine.py`)**: Active, deliberating and voting on SMC setups.
-  - **Account Profile & Prop Firm Risk Governor (`hitl/account_risk_manager.py`)**: Active, enforcing open trades, concurrent risk %, daily drawdown %, and overall drawdown circuit breakers.
-  - **Market Watchdog (`hitl/watchdog.py`)**: Active, monitoring price momentum, spread blowouts, and stale order cancellations.
-- **Offline / Backtest Engine (Not Live on Today's Session)**:
-  - **Symbolic Quant Engine (`hitl/quant_engine/`)**: Currently operates strictly as an autonomous research, discovery, walk-forward validation, and backtest suite. Its mathematical rules (Lag-5 Autocorrelation, Price Z-Score Expansion) are **not currently connected** to the live polling loop of `LiveMarketRadar`.
+  1. **Institutional SMC Live Radar (`hitl/live_radar.py`)**: Active in real-time, scanning M5/M15/H1/1D charts for Liquidity Sweeps, FVGs, MSS, and SMT Divergence during London and NY Killzones. Evaluated through visual chart packaging and deliberated by the AI Investment Council & SubQ Snap.
+  2. **Autonomous Live Quant Bridge (`hitl/quant_engine/live_quant_bridge.py`)**: Active in real-time, scanning 120-bar M5 state-spaces across BTC, NQ, Cable, and Gold for the 7 ratified mathematical rules.
+     - **Council & Snap Bypass Mandate**: Operates strictly on symbolic mathematical predicates. Completely bypasses LLM Council deliberation and SubQ Snap calls to preserve pure statistical edge and avoid API latencies.
+  3. **Account Profile & Prop Firm Risk Governor (`hitl/account_risk_manager.py`)**: Universal pre-execution gatekeeper for **both** SMC and Quant trades. Enforces max 2 open trades, 1.5% concurrent risk ceiling, 4.0% daily DD safe buffer, and 10.0% overall DD safe buffer.
+  4. **Market Watchdog (`hitl/watchdog.py`)**: Active, monitoring price momentum spikes (>2.0x ATR), spread blowouts, and dynamic breakeven ratcheting.
 
 
 
