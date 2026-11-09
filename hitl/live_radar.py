@@ -35,7 +35,9 @@ class LiveMarketRadar:
     ):
         self.engine = engine
         self.client = client
-        self.target_symbols = target_symbols or ["GBPUSD", "XAUUSD", "NQ", "BTCUSD"]
+        # Bitcoin/Crypto decommissioned from SMC Live Radar per 1-year empirical audit (-49.56R drag).
+        # Crypto trades strictly through autonomous mathematical quant (LiveQuantBridge).
+        self.target_symbols = target_symbols or ["GBPUSD", "XAUUSD", "NQ"]
         self.last_trigger_times: Dict[Tuple[str, str], float] = {}  # (symbol, "BUY"/"SELL") -> timestamp
         self.last_sweep_extremes: Dict[Tuple[str, str], float] = {} # (symbol, "BUY"/"SELL") -> extreme price
         self.cooldown_seconds: float = 1800.0 # 30 minutes between duplicate alerts per direction
@@ -59,6 +61,9 @@ class LiveMarketRadar:
         Scans a single symbol for prominent liquidity sweeps and M1/M5 displacement.
         Returns detected setup details or None.
         """
+        # Bitcoin/Crypto is permanently decommissioned from SMC scanning
+        if "BTC" in symbol.upper() or "ETH" in symbol.upper():
+            return None
         if not self.engine.ensure_connected():
             return None
 

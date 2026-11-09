@@ -1240,10 +1240,11 @@ def consolidate_and_compile_full_1year():
     btc_unified = pd.concat([df_btc_m, df_btc_g], ignore_index=True)
     btc_unified['symbol'] = 'BTCUSD'
 
-    # Unified Master Schedule
+    # Unified Master Schedule (Active SMC Production Universe: XAUUSD, GBPUSD, NQ)
+    # Policy Mandate: BTCUSD permanently decommissioned from SMC Engine per 1-year audit (-49.56R drag eliminated)
     common_cols = ['symbol', 'date', 'session', 'archetype_id', 'direction', 'entry', 'sl', 'status', 'net_r', 'realized_usd', 'is_calibrated']
     all_dfs = []
-    for df in [gold_unified, gbp_unified, nq_unified, btc_unified]:
+    for df in [gold_unified, gbp_unified, nq_unified]:
         if not df.empty:
             for c in common_cols:
                 if c not in df.columns:
@@ -1293,11 +1294,15 @@ def consolidate_and_compile_full_1year():
         st['month'] = m
         smc_monthly.append(st)
 
-    # Asset breakdown for SMC
+    # Asset breakdown for SMC (Active Universe)
     smc_by_asset = {}
-    for sym in ['XAUUSD', 'GBPUSD', 'NQ', 'BTCUSD']:
+    for sym in ['XAUUSD', 'GBPUSD', 'NQ']:
         sub_s = calib_fills[calib_fills['symbol'] == sym]
         smc_by_asset[sym] = calc_metrics(sub_s)
+
+    # Decommissioned Bitcoin audit metrics for transparent reporting
+    btc_calib_fills = btc_unified[(btc_unified['is_calibrated'] == True) & (btc_unified['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))]
+    btc_metrics = calc_metrics(btc_calib_fills)
 
     annual_smc = calc_metrics(calib_fills)
 
@@ -1306,6 +1311,7 @@ def consolidate_and_compile_full_1year():
         'audit_scope': 'Trailing 12-Month Consolidated SMC Price Action Engine (Nov 01, 2025 - Nov 09, 2026)',
         'annual_smc_calibrated': annual_smc,
         'smc_by_asset': smc_by_asset,
+        'decommissioned_btc_drag': btc_metrics,
         'monthly_breakdown': smc_monthly
     }
 

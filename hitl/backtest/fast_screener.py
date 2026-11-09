@@ -786,6 +786,18 @@ def screen_ict_session(
     sym = symbol.upper()
     is_gbp = "GBP" in sym
     is_crypto = "BTC" in sym or "ETH" in sym
+
+    # Policy Mandate: Bitcoin/Crypto permanently decommissioned from SMC Price Action Engine
+    # 1-year empirical audit proved -49.56R drag (17.6% WR, PF 0.76). Crypto trades exclusively via Autonomous Quant Engine.
+    if is_crypto:
+        return {
+            "has_setup": False,
+            "reason": "Veto: Bitcoin/Crypto permanently decommissioned from SMC Engine per 1-year empirical audit (-49.56R drag). Crypto trades exclusively via Autonomous Quant Engine.",
+            "setup_type": "NONE",
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time
+        }
+
     is_spx = "SPX" in sym or "US500" in sym
     is_ym = "YM" in sym or "US30" in sym
     is_nq = "NQ" in sym or "NAS" in sym or "US100" in sym
