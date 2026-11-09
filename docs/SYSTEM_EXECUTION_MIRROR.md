@@ -1215,8 +1215,9 @@ TradingGuard enforces account-level exposure constraints, drawdowns, and concurr
 
 ### 25.3 Central Configuration & Persistence
 - Configuration file: `hitl/memory/account_risk_profile.json`
-- Supports automatic live equity synchronization (`use_auto_account_size: true`) or custom reference capital overrides (e.g. `$10,000.00`, `$50,000.00`, `$100,000.00`).
-- High Water Mark and daily reference equity are tracked persistently and dynamically refreshed on daily boundary rollover.
+- Supports automatic live equity synchronization (`use_auto_account_size: true`, active default) or custom reference capital overrides (e.g. `$10,000.00`, `$50,000.00`, `$100,000.00`).
+- **Dynamic HWM & Baseline Calibration**: High Water Mark (HWM) and daily starting reference equity dynamically anchor to the live connected MT5 account equity. If an obsolete placeholder (e.g. template `$10,000.00`) is detected on a different account scale, the governor automatically re-anchors HWM to current equity to prevent spurious drawdown breaches.
+- Calling `reset_circuit_breaker(engine)` re-anchors both HWM and daily reference to live account equity.
 
 ### 25.4 Universal Pre-Execution Order Gating
 Every proposed order—whether dispatched autonomously by the Investment Council, submitted via `/buylimit`/`/selllimit`, or queued from the Live Market Radar—must pass `AccountRiskManager.evaluate_order_feasibility()` inside `hitl/mt5_engine.py:validate_limit_order`:

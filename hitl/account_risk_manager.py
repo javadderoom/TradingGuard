@@ -26,7 +26,7 @@ PROFILE_FILE = MEMORY_DIR / "account_risk_profile.json"
 DEFAULT_PROFILES = {
     "account_mode": "PROP_FIRM",
     "account_size_usd": 10000.0,
-    "use_auto_account_size": False,
+    "use_auto_account_size": True,
     "profiles": {
         "PROP_FIRM": {
             "name": "Prop Firm Challenge / Funded",
@@ -154,10 +154,21 @@ class AccountRiskManager:
             return True
         return False
 
-    def reset_circuit_breaker(self) -> bool:
-        """Manually resets active circuit breaker."""
+    def reset_circuit_breaker(self, engine: Optional[Any] = None) -> bool:
+        """Manually resets active circuit breaker and re-anchors baselines to live equity."""
         self.state["circuit_breaker_active"] = False
         self.state["circuit_breaker_reason"] = ""
+        if engine:
+            try:
+                acc = engine.get_account_summary()
+                if acc and acc.get("equity", 0) > 0:
+                    eq = round(float(acc["equity"]), 2)
+                    self.state["high_water_mark_equity"] = eq
+                    self.state["daily_reference_equity"] = eq
+                    if self.state.get("use_auto_account_size", True):
+                        self.state["account_size_usd"] = eq
+            except Exception:
+                pass
         self.save()
         return True
 
@@ -214,7 +225,8 @@ class AccountRiskManager:
 
         # 2. High Water Mark (HWM) Tracking
         hwm = self.state.get("high_water_mark_equity")
-        if hwm is None or current_equity > hwm:
+        # Re-anchor HWM if uninitialized, or if new equity peak, or if unlinked placeholder far above live equity
+        if hwm is None or current_equity > hwm or (self.state.get("use_auto_account_size", True) and hwm > current_equity * 1.5):
             self.state["high_water_mark_equity"] = round(current_equity, 2)
             hwm = current_equity
             self.save()

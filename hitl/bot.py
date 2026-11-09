@@ -1199,7 +1199,7 @@ def run_bot():
                             )
                         elif data == "prop_reset_breaker":
                             from hitl.account_risk_manager import risk_governor
-                            risk_governor.reset_circuit_breaker()
+                            risk_governor.reset_circuit_breaker(engine)
                             card = risk_governor.format_status_card(engine)
                             kb = risk_governor.get_telegram_inline_keyboard()
                             client.send_message(
