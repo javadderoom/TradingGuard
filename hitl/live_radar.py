@@ -252,6 +252,10 @@ class LiveMarketRadar:
             print("[LiveRadar] Missing TELEGRAM_CHAT_ID. Cannot alert.")
             return
 
+        # Record cooldown per (symbol, side) IMMEDIATELY to prevent duplicate trigger loops
+        self.last_trigger_times[(sym, side)] = time.time()
+        self.last_sweep_extremes[(sym, side)] = setup["sweep_extreme"]
+
         print(f"[LiveRadar] 🚨 TRIGGERED: {sym} | {setup['setup_type']} | Sweep: {setup['swept_target']} (+{setup['sweep_delta_pips']} {pips_unit})")
 
         # 1. Silently Prepare 4-TF Candlestick Charts & Merged 2x2 Grid Image
@@ -306,11 +310,7 @@ class LiveMarketRadar:
             screener = None
         if not screener or not screener.get("has_setup"):
             veto = (screener or {}).get("reason", "live bars unavailable for screening")
-            self.client.send_message(
-                chat_id,
-                f"🛡️ *{sym_icon} {sym} · STAND ASIDE*\n"
-                f"🛑 *Final Verdict:* Screener veto (closed bars): {veto}"
-            )
+            print(f"[LiveRadar] Screener veto for {sym}: {veto} (silent background log)")
             try:
                 from hitl.council_decisions import log_council_decision
                 log_council_decision(
@@ -563,14 +563,9 @@ class LiveMarketRadar:
                     if trigger_text and len(trigger_text) > 5:
                         cdo_line = f"\n🔭 *Next Trigger:* {trigger_text}"
 
-                self.client.send_message(
-                    chat_id,
-                    f"🛡️ *{sym_icon} {sym} · STAND ASIDE*\n"
-                    f"🛑 *Final Verdict:* {veto_reason}"
-                    f"{cdo_line}"
-                )
+                print(f"[LiveRadar] Council Stand Aside for {sym}: {veto_reason} (silent background log)")
 
-                # Persist Stand Aside decision to ledger for Review Council
+                # Persist Stand Aside decision to ledger for Review Council (silent, zero Telegram clutter)
                 try:
                     from hitl.council_decisions import log_council_decision
                     log_council_decision(
@@ -587,11 +582,10 @@ class LiveMarketRadar:
                 except Exception as log_err:
                     print(f"[LiveRadar] Decision logging error: {log_err}")
 
-                print(f"[LiveRadar] Dispatched Stand Aside Notice to Telegram: {sym} | Reason: {veto_reason}")
+                print(f"[LiveRadar] Logged Stand Aside to ledger: {sym} | Reason: {veto_reason}")
 
         except Exception as e:
-            print(f"[LiveRadar] Pipeline error: {e}")
-            self.client.send_message(chat_id, f"⚠️ Autonomous Council Pipeline Error: `{e}`")
+            print(f"[LiveRadar] Pipeline error for {sym}: {e}")
 
     def poll(self):
         """Called periodically by watchdog/bot loop (e.g. every 15-20 seconds)."""
