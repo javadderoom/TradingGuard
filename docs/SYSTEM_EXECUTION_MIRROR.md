@@ -1157,3 +1157,31 @@ Columns: `ID,Symbol,Type,TriggerTime,Entry,SL,TP,Lot,TTL`
 - Executable end-to-end via `TradingGuard_Executor.mq5` (`TradingGuard_Executor.ex5`) inside MT5 Strategy Tester.
 - Strictly zero manual CSV editing or fabricated trade timestamps.
 
+---
+
+## 24. Institutional Backtest Reporting Standards (Monthly/Annual Mandate & Anti-Extrapolation Directive)
+
+To eliminate misleading performance claims, curve-fitting artifacts, and artificial annualization, all backtests and performance evaluations across TradingGuard must strictly comply with three immutable reporting standards:
+
+### 24.1 Mandatory Calendar Month Breakdown
+- Every backtest report must present an explicit, month-by-month performance table showing:
+  - Calendar Month (e.g., `2026-08`, `2026-09`, `2026-10`)
+  - Total Filled Trades & Win Rate (%)
+  - Realized PnL in USD & Net R
+  - Maximum Month Drawdown (in R and USD)
+  - Profit Factor per month
+- Aggregating months together into a single monolithic number without monthly granularity is strictly prohibited.
+
+### 24.2 Zero Annualized Extrapolation Directive
+- **Strictly Zero Multiplier Extrapolations**: Taking a 2-week, 1-month, or partial quarterly dataset and multiplying it (e.g. $\times 26$ or $\times 12$) to claim an "Annual Return", "Yearly PnL", or "Annualized Sharpe" is **categorically forbidden**.
+- Annual figures may ONLY be reported if a complete, contiguous 12-month period of verified broker tick/bar data has been genuinely executed through the simulator end-to-end.
+- If a dataset covers only 3 months, it must be reported strictly as a 3-month sample.
+
+### 24.3 Transparent Historical Span & Data Scarcity Disclosure
+- Every test report must prominently declare its exact data boundaries:
+  - Start Date & End Date
+  - Total Calendar Days & Total Trading Days
+  - Total Bar Count & Bar Resolution (e.g., M1, M5)
+- **Data Scarcity Protocol**: If the available dataset is insufficient to assess multi-seasonal or long-term regime robustness, state the data deficit bluntly upfront. The agent must proactively request/recommend extracting extended historical data from MT5 before certifying any strategy for live deployment.
+
+
