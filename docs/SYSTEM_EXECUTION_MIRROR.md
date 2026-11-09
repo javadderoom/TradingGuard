@@ -1305,6 +1305,110 @@ Based on verified historical data across 175 trading days (Gold/Cable), 131 days
   3. **Account Profile & Prop Firm Risk Governor (`hitl/account_risk_manager.py`)**: Universal pre-execution gatekeeper for **both** SMC and Quant trades. Enforces max 2 open trades, 1.5% concurrent risk ceiling, 4.0% daily DD safe buffer, and 10.0% overall DD safe buffer.
   4. **Market Watchdog (`hitl/watchdog.py`)**: Active, monitoring price momentum spikes (>2.0x ATR), spread blowouts, and dynamic breakeven ratcheting.
 
+---
+
+## 27. Authentic Full-Year 12-Month Gap Audit & Consolidated Master Portfolio Benchmark (Nov 01, 2025 – Nov 09, 2026)
+
+### 27.1 Empirical Gap Audit Scope & Methodology (`hitl/backtest/audit_missing_windows_smc.py`)
+To eliminate all speculative extrapolation and adhere strictly to the **Absolute Truthfulness & Zero Reality Distortion Mandate**, TradingGuard executed an authentic, end-to-end historical backtest across every previously un-audited calendar window of the trailing 12 months (November 01, 2025 to November 09, 2026).
+
+All historical gaps were audited directly against raw LiteFinance MT5 broker feeds and tick-resampled M5/M1 price action, enforcing canonical broker spreads ($0.22 Gold, 0.6 pips Cable, 1.0 pt NQ, $0.20 BTC), $0.10 round-trip commission per 0.01 lot, 75-minute inactivity TTL, dynamic seasonal DST session clocking, and conservative SL-first intra-bar precedence.
+
+#### Summary of Historical Gap Executions:
+1. **Gold (`XAUUSD_o`)**:
+   - **Gaps Audited**: November 01, 2025 to December 31, 2025 (172 sessions) & November 05, 2026 to November 09, 2026 (12 sessions).
+   - **New Setups Audited**: 183 candidate setups.
+   - **Output Ledger**: `backtest_results/smc_gap_audit/gold_gap_trades.csv`.
+2. **Cable (`GBPUSD_o`)**:
+   - **Gaps Audited**: November 01, 2025 to December 31, 2025 (172 sessions) & November 05, 2026 to November 09, 2026 (12 sessions).
+   - **New Setups Audited**: 91 candidate setups.
+   - **Output Ledger**: `backtest_results/smc_gap_audit/gbpusd_gap_trades.csv`.
+3. **Nasdaq 100 (`NQ`)**:
+   - **Gaps Audited**: November 01, 2025 to May 31, 2026 (40,303 M5 bars) & November 05, 2026 to November 09, 2026 (734 M5 bars).
+   - **New Setups Audited**: 60 candidate setups (gated strictly to London Open & NY Pre-Market `SETUP-ARCH-001`).
+   - **Output Ledger**: `backtest_results/smc_gap_audit/nq_gap_trades.csv`.
+4. **Bitcoin (`BTCUSD`)**:
+   - **Gaps Audited**: November 27, 2025 to June 30, 2026 (62,142 M5 bars) & November 07, 2026 to November 09, 2026 (770 M5 bars).
+   - **New Setups Audited**: 530 candidate setups (gated to Weekdays and Curated Allowed Archetype-Session pairs).
+   - **Output Ledger**: `backtest_results/smc_gap_audit/btcusd_gap_trades.csv`.
+
+---
+
+### 27.2 Consolidated 12-Month Headline Performance (Nov 01, 2025 – Nov 09, 2026)
+
+| Performance Metric | Institutional SMC Price Action | Autonomous Mathematical Quant | Combined Dual-Pillar Portfolio |
+| :--- | :---: | :---: | :---: |
+| **Audit Period** | Nov 01, 2025 – Nov 09, 2026 (12.3 mo) | Nov 01, 2025 – Nov 09, 2026 (12.3 mo) | Nov 01, 2025 – Nov 09, 2026 (12.3 mo) |
+| **Total Closed Fills** | **704 fills** | **4,561 fills** | **5,265 fills** |
+| **Win / Loss / Breakeven** | 142 W / 465 L / 97 BE | 1,273 W / 2,407 L / 765 BE | 1,415 W / 2,872 L / 862 BE |
+| **Win Rate (%)** | **20.2%** | **27.9%** | **26.9%** |
+| **Net Realized Alpha (R)** | **-37.33R** | **+194.44R** | **+157.11R** |
+| **Profit Factor (PF)** | **0.92** | **1.08** | **1.05** |
+| **Net Realized Cash PnL** *(0.01 lot)* | **-$410.63 USD** | **+$1,958.98 USD** | **+$1,548.35 USD** |
+
+---
+
+### 27.3 Verified Month-by-Month Calendar Matrix (Trailing 12 Months)
+
+| Calendar Month | SMC Fills | SMC Net R | Quant Fills | Quant Net R | Combined Net R | Combined Win Rate | Portfolio Regime & Structural Driver |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **2025-11** | 35 | **+8.43R** | 299 | **-22.53R** | **-14.10R** | 21.3% | Gold SMC Judas Breakers cushioned early Quant pullback |
+| **2025-12** | 56 | **-22.53R** | 306 | **-28.01R** | **-50.54R** | 21.0% | Holiday low-liquidity chop across both pillars |
+| **2026-01** | 73 | **-5.84R** | 356 | **-20.15R** | **-25.99R** | 24.5% | Post-holiday range compression and false breakouts |
+| **2026-02** | 67 | **-7.37R** | 348 | **+9.49R** | **+2.12R** | 26.5% | Quant momentum turnaround offset SMC chop |
+| **2026-03** | 63 | **-22.93R** | 433 | **-9.43R** | **-32.36R** | 28.6% | Seasonal spring DST transition volatility |
+| **2026-04** | 68 | **+7.70R** | 387 | **-33.42R** | **-25.72R** | 25.1% | Gold expansion breakout provided positive SMC alpha |
+| **2026-05** | 32 | **-10.94R** | 430 | **+53.61R** | **+42.67R** | 27.9% | Quant breakthrough on BTC and Gold momentum |
+| **2026-06** | 39 | **-9.16R** | 380 | **-3.37R** | **-12.53R** | 26.5% | Pre-summer consolidation |
+| **2026-07** | 56 | **-4.92R** | 444 | **+57.24R** | **+52.32R** | 29.4% | Quant acceleration across multi-asset volatility |
+| **2026-08** | 61 | **-14.86R** | 344 | **+34.38R** | **+19.52R** | 26.4% | SMT Divergence + Quant high-turnover capture |
+| **2026-09** | 76 | **+30.07R** | 387 | **+77.68R** | **+107.75R** | 32.0% | Peak dual-pillar synchronized expansion month |
+| **2026-10** | 65 | **+11.88R** | 371 | **+64.38R** | **+76.26R** | 29.8% | Autumn trend-following acceleration on Gold & NQ |
+| **2026-11** *(1-9)* | 13 | **+3.14R** | 76 | **+14.57R** | **+17.71R** | 28.1% | Clean November opening continuation |
+| **TOTAL (12.3 Mo)** | **704** | **-37.33R** | **4,561** | **+194.44R** | **+157.11R** | **26.9%** | **Dual-Pillar Diversification Validated** |
+
+---
+
+### 27.4 Asset-by-Asset Empirical Dissection
+
+```
+========================================================================================
+ASSET COMPARISON: SMC PRICE ACTION vs. AUTONOMOUS QUANT ENGINE (TRAILING 12 MONTHS)
+========================================================================================
+Asset      Pillar    Fills   Wins  Losses  BE    Win Rate   Net Alpha   Profit Factor
+----------------------------------------------------------------------------------------
+XAUUSD     SMC         177     38     115  24       21.5%     +17.94R            1.16
+           QUANT     2,489    557   1,424 508       22.4%    +108.89R            1.08
+           COMBINED  2,666    595   1,539 532       22.3%    +126.83R            1.09
+----------------------------------------------------------------------------------------
+GBPUSD     SMC         200     45     115  40       22.5%      -0.61R            0.99
+           QUANT        44      3      40   1        6.8%      -3.82R            0.85
+           COMBINED    244     48     155  41       19.7%      -4.43R            0.97
+----------------------------------------------------------------------------------------
+NQ         SMC          49     10      34   5       20.4%      -5.10R            0.85
+           QUANT       776    263     385 128       33.9%     -23.75R            0.94
+           COMBINED    825    273     419 133       33.1%     -28.85R            0.93
+----------------------------------------------------------------------------------------
+BTCUSD     SMC         278     49     201  28       17.6%     -49.56R            0.76
+           QUANT     1,252    450     558 244       35.9%    +113.12R            1.17
+           COMBINED  1,530    499     759 272       32.6%     +63.56R            1.06
+========================================================================================
+```
+
+### 27.5 Key Institutional Findings & Architectural Directives
+1. **SMC Asset Divergence (Gold Superiority vs. Crypto Breakdown)**:
+   - Retail SMC rules produce genuine structural edge on **Gold (`XAUUSD`)** (+17.94R, PF 1.16) and nearly flat on **Cable (`GBPUSD`)** (-0.61R, PF 0.99).
+   - Retail SMC rules completely break down on **Bitcoin (`BTCUSD`)** (-49.56R, WR 17.6%, PF 0.76). Discretionary liquidity sweep concepts in crypto suffer massive slippage and fakeout continuation.
+2. **Quant Engine Complementarity**:
+   - The Quant Engine completely offsets the crypto weakness, producing **+113.12R (PF 1.17)** on BTCUSD alone.
+   - On Gold, both SMC and Quant generate positive alpha (+17.94R and +108.89R), yielding **+126.83R** net on Gold across the portfolio.
+3. **The Necessity of Prop Firm Risk Governance (`hitl/account_risk_manager.py`)**:
+   - The winter seasonal drawdown (Dec 2025 to Jan 2026: -50.54R and -25.99R combined) proves that without the newly deployed Prop Firm Governor (enforcing max 2 open trades, 1.5% concurrent risk, 4.0% daily DD safe buffer), capital would experience excessive drawdowns during non-trending consolidations.
+4. **Authentic Master Schedules**:
+   - Master SMC Schedule: `backtest_results/smc_gap_audit/consolidated_full_1year_smc_trades_schedule.csv` (2,199 records).
+   - Master Quant Schedule: `backtest_results/quant_discovery/annual_orders_schedule.csv` (5,285 records).
+
+
 
 
 

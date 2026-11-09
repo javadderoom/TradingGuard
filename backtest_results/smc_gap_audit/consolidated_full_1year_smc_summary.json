@@ -1,0 +1,200 @@
+{
+  "audit_scope": "Trailing 12-Month Consolidated SMC Price Action Engine (Nov 01, 2025 - Nov 09, 2026)",
+  "annual_smc_calibrated": {
+    "fills": 704,
+    "wins": 142,
+    "losses": 465,
+    "be": 97,
+    "wr": 20.2,
+    "net_r": -37.33,
+    "pf": 0.92,
+    "net_pnl": 1187.26
+  },
+  "smc_by_asset": {
+    "XAUUSD": {
+      "fills": 177,
+      "wins": 38,
+      "losses": 115,
+      "be": 24,
+      "wr": 21.5,
+      "net_r": 17.94,
+      "pf": 1.16,
+      "net_pnl": 99.85
+    },
+    "GBPUSD": {
+      "fills": 200,
+      "wins": 45,
+      "losses": 115,
+      "be": 40,
+      "wr": 22.5,
+      "net_r": -0.61,
+      "pf": 0.99,
+      "net_pnl": 1268.61
+    },
+    "NQ": {
+      "fills": 49,
+      "wins": 10,
+      "losses": 34,
+      "be": 5,
+      "wr": 20.4,
+      "net_r": -5.1,
+      "pf": 0.85,
+      "net_pnl": -40.39
+    },
+    "BTCUSD": {
+      "fills": 278,
+      "wins": 49,
+      "losses": 201,
+      "be": 28,
+      "wr": 17.6,
+      "net_r": -49.56,
+      "pf": 0.76,
+      "net_pnl": -140.81
+    }
+  },
+  "monthly_breakdown": [
+    {
+      "fills": 35,
+      "wins": 9,
+      "losses": 22,
+      "be": 4,
+      "wr": 25.7,
+      "net_r": 8.43,
+      "pf": 1.38,
+      "net_pnl": 33.9,
+      "month": "2025-11"
+    },
+    {
+      "fills": 56,
+      "wins": 6,
+      "losses": 43,
+      "be": 7,
+      "wr": 10.7,
+      "net_r": -22.53,
+      "pf": 0.48,
+      "net_pnl": -76.47,
+      "month": "2025-12"
+    },
+    {
+      "fills": 73,
+      "wins": 15,
+      "losses": 49,
+      "be": 9,
+      "wr": 20.5,
+      "net_r": -5.84,
+      "pf": 0.88,
+      "net_pnl": 1088.6,
+      "month": "2026-01"
+    },
+    {
+      "fills": 67,
+      "wins": 12,
+      "losses": 45,
+      "be": 10,
+      "wr": 17.9,
+      "net_r": -7.37,
+      "pf": 0.84,
+      "net_pnl": -720.85,
+      "month": "2026-02"
+    },
+    {
+      "fills": 63,
+      "wins": 8,
+      "losses": 45,
+      "be": 10,
+      "wr": 12.7,
+      "net_r": -22.93,
+      "pf": 0.49,
+      "net_pnl": -250.61,
+      "month": "2026-03"
+    },
+    {
+      "fills": 68,
+      "wins": 16,
+      "losses": 38,
+      "be": 14,
+      "wr": 23.5,
+      "net_r": 7.7,
+      "pf": 1.2,
+      "net_pnl": 1720.93,
+      "month": "2026-04"
+    },
+    {
+      "fills": 32,
+      "wins": 4,
+      "losses": 24,
+      "be": 4,
+      "wr": 12.5,
+      "net_r": -10.94,
+      "pf": 0.55,
+      "net_pnl": -54.53,
+      "month": "2026-05"
+    },
+    {
+      "fills": 39,
+      "wins": 6,
+      "losses": 29,
+      "be": 4,
+      "wr": 15.4,
+      "net_r": -9.16,
+      "pf": 0.69,
+      "net_pnl": -11.7,
+      "month": "2026-06"
+    },
+    {
+      "fills": 56,
+      "wins": 11,
+      "losses": 39,
+      "be": 6,
+      "wr": 19.6,
+      "net_r": -4.92,
+      "pf": 0.87,
+      "net_pnl": -499.14,
+      "month": "2026-07"
+    },
+    {
+      "fills": 61,
+      "wins": 11,
+      "losses": 46,
+      "be": 4,
+      "wr": 18.0,
+      "net_r": -14.86,
+      "pf": 0.68,
+      "net_pnl": -1274.81,
+      "month": "2026-08"
+    },
+    {
+      "fills": 76,
+      "wins": 23,
+      "losses": 40,
+      "be": 13,
+      "wr": 30.3,
+      "net_r": 30.07,
+      "pf": 1.75,
+      "net_pnl": 484.63,
+      "month": "2026-09"
+    },
+    {
+      "fills": 65,
+      "wins": 17,
+      "losses": 37,
+      "be": 11,
+      "wr": 26.2,
+      "net_r": 11.88,
+      "pf": 1.32,
+      "net_pnl": 1100.87,
+      "month": "2026-10"
+    },
+    {
+      "fills": 13,
+      "wins": 4,
+      "losses": 8,
+      "be": 1,
+      "wr": 30.8,
+      "net_r": 3.14,
+      "pf": 1.39,
+      "net_pnl": -353.56,
+      "month": "2026-11"
+    }
+  ]
+}
