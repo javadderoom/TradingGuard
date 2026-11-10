@@ -1449,6 +1449,53 @@ BTCUSD     Decommissioned    278     49     201  28       17.6%     -49.56R 0.76
 3. **Master Quant Schedule**: `backtest_results/quant_discovery/annual_orders_schedule.csv` (5,285 records, 4,561 fills).
 4. **Autonomous Quant Bridge**: `hitl/quant_engine/live_quant_bridge.py` & `hitl/backtest/fast_screener.py` verified 100% synchronized with no undocumented runtime logic.
 
+---
+
+## 28. Autonomous Quantitative Subagent Suite Architecture
+
+To eliminate reliance on generic developer agents and ensure institutional-grade quantitative rigor across research, calibration, and verification, TradingGuard deploys a dedicated triad of specialized subagents located in `.agents/agents/`:
+
+```mermaid
+flowchart TD
+    subgraph Discovery ["1. Alpha Research"]
+        PM["PatternMiner<br/>(Alpha Discovery & Anomaly Hunter)"]
+        RawData[("Historical Market Data<br/>Tick / M1 / M5 / H1 / 1D")] --> PM
+        PM --> Candidates["Candidate Setup Cards<br/>(N >= 30, t-stat > 2.5, Regime Invariant)"]
+    end
+
+    subgraph Calibration ["2. Strategy Calibration & Trade Management"]
+        Candidates --> SO["StrategyOptimizer<br/>(Microstructure & Trade Mgmt Calibrator)"]
+        SO --> EngineTuning["Root Parameter & Rule Tuning<br/>(evaluator.py & fast_screener.py)<br/>• BE Ratchet (+1.8R vs +1.0R)<br/>• Distal Targets (2.5R - 3.5R)<br/>• Min Sweep Depths<br/>• Double MSS Confirmation"]
+        EngineTuning --> WFOTest["Walk-Forward Optimization (WFO)<br/>70% In-Sample / 30% Out-of-Sample"]
+    end
+
+    subgraph Verification ["3. Verification & Institutional Reality Gate"]
+        WFOTest --> QBA["QuantBacktestAuditor<br/>(Verification & Truth Engine)"]
+        QBA --> SimExecution["Pessimistic Intra-Bar Execution<br/>• SL-First Priority<br/>• Live Spreads & Commissions<br/>• Closed M5/M1 Bar Realism<br/>• Zero Post-Hoc Filtering Audit"]
+        SimExecution --> MetricAudit{"Pass Institutional Gates?<br/>• Profit Factor >= 1.40<br/>• Max DD <= 15.0R<br/>• Positive Payoff Ratio<br/>• <= 3 Negative Months"}
+    end
+
+    subgraph Production ["4. Deployment & Living SSOT"]
+        MetricAudit -- "PASS" --> SSOT["Synchronize docs/SYSTEM_EXECUTION_MIRROR.md"]
+        SSOT --> LiveBridge["Production Deployment<br/>(live_radar.py & live_quant_bridge.py)"]
+        MetricAudit -- "FAIL" --> Reject["Reject Parameter Set & Send Diagnostic Feedback"]
+        Reject --> SO
+    end
+```
+
+### 28.1 Agent Profiles & Institutional Mandates
+
+| Agent Name | Location | Role | Institutional Mandate |
+| :--- | :--- | :--- | :--- |
+| **`QuantBacktestAuditor`** | `.agents/agents/QuantBacktestAuditor/agent.md` | Verification & Truth Engine | **Zero Developer Shortcuts**: Rejects post-hoc pandas filtering. Mandates root-level generator elimination of pruned setups. Enforces pessimistic intra-bar fill priority (SL evaluated before TP if both touched in the same bar), realistic broker spreads (\$0.22 Gold, 0.6 pips Cable, 1.0 pt NQ, \$0.20 BTC), and \$0.10/0.01 lot commissions. Reports unvarnished metrics with brutal neutrality. |
+| **`StrategyOptimizer`** | `.agents/agents/StrategyOptimizer/agent.md` | Trade Management & Calibrator | **Solves Realized R:R Paradox**: Delays premature breakeven ratchet arming (+1.5R/+1.8R/+2.0R or swing trailing) to let runners reach 2.5R–3.5R targets. Calibrates sweep depths, FVG thresholds, and Double MSS confirmations. Enforces 70/30 Walk-Forward Optimization (WFO) to prevent curve-fitting (rejecting OOS PF degradation > 25%). |
+| **`PatternMiner`** | `.agents/agents/PatternMiner/agent.md` | Alpha Discovery & Anomaly Hunter | **Statistical Edge Mining**: Discovers recurring structural SMC/ICT setups (prominent liquidity sweeps, Judas swings, SMT divergences) and mathematical state spaces via genetic programming. Enforces minimum trade sample ($N \ge 30$), Student's $t$-statistic $> 2.5$, and cross-regime invariance. Outputs standardized Setup Cards. |
+
+### 28.2 Verification & Integration
+- Automated integrity verification suite: `app/tests/test_quant_subagents_suite.py` (YAML validation, permission enforcement, required toolsets, and mandate coverage).
+- Zero discrepancies: All agent directives are synchronized 1:1 with runtime tool execution and version-controlled inside the repository.
+
+
 
 
 
