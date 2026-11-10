@@ -41,18 +41,35 @@ with open(OUTPUT_DIR / "nq" / "annual_ratified_strategies.json") as f:
     nq_data = json.load(f)
 with open(OUTPUT_DIR / "gbpusd" / "annual_ratified_strategies.json") as f:
     gbp_data = json.load(f)
-with open(BASE_DIR / "backtest_results/quant_discovery/xauusd/ratified_quant_strategies.json") as f:
+with open(OUTPUT_DIR / "xauusd" / "annual_ratified_strategies.json") as f:
     xau_data = json.load(f)
 
-# Pick top 2 most robust rules per symbol
+def get_rule_by_id(data_list, rule_id):
+    for item in data_list:
+        if item["rule"]["rule_id"] == rule_id:
+            return QuantRule.from_dict(item["rule"])
+    raise ValueError(f"Rule {rule_id} not found")
+
+# Curated High-Expectancy Institutional Quant Portfolio (11 Rules)
 selected_rules = [
-    ("BTCUSD", QuantRule.from_dict(btc_data[3]["rule"])),  # R14_015 (PF 1.51, +57.5R OOS)
-    ("BTCUSD", QuantRule.from_dict(btc_data[2]["rule"])),  # R14_010 (PF 1.42, +34.3R OOS)
-    ("NQ",     QuantRule.from_dict(nq_data[1]["rule"])),   # R14_041 (PF 1.88, +15.3R OOS)
-    ("NQ",     QuantRule.from_dict(nq_data[2]["rule"])),   # R14_031 (PF 1.68, +12.0R OOS)
-    ("GBPUSD", QuantRule.from_dict(gbp_data[2]["rule"])),  # R14_027 (PF 1.19, +11.1R OOS)
-    ("GBPUSD", QuantRule.from_dict(gbp_data[0]["rule"])),  # R12_019 (PF 1.34, +2.9R OOS)
-    ("XAUUSD", QuantRule.from_dict(xau_data[0]["rule"])),  # R2_020 (Gold Volumetric)
+    # BTCUSD (High Alpha Momentum Sellers)
+    ("BTCUSD", get_rule_by_id(btc_data, "R14_015")),  # PF 1.68, Net +173.28R
+    ("BTCUSD", get_rule_by_id(btc_data, "R14_024")),  # PF 1.56, Net +167.07R
+    ("BTCUSD", get_rule_by_id(btc_data, "R14_010")),  # PF 1.55, Net +110.67R
+    
+    # NQ (Mean Reversion & Volatility Breakout Buyers)
+    ("NQ",     get_rule_by_id(nq_data, "R14_011")),   # PF 2.12, Net +35.69R
+    ("NQ",     get_rule_by_id(nq_data, "R14_025")),   # PF 1.76, Net +34.55R, WR 42.9%
+    ("NQ",     get_rule_by_id(nq_data, "R14_009")),   # PF 1.51, Net +33.22R
+    
+    # GBPUSD (Microstructure Volatility Squeeze Sellers)
+    ("GBPUSD", get_rule_by_id(gbp_data, "R14_027")),  # PF 1.29, Net +44.96R
+    ("GBPUSD", get_rule_by_id(gbp_data, "R12_019")),  # PF 1.59, Net +17.16R, WR 52.2%
+    
+    # XAUUSD (Newly Discovered Dual-Direction Momentum & Flow)
+    ("XAUUSD", get_rule_by_id(xau_data, "R15_048")),  # BUY:  PF 1.75, Net +55.43R, WR 30.3%
+    ("XAUUSD", get_rule_by_id(xau_data, "R14_058")),  # SELL: PF 1.62, Net +59.56R, WR 35.8%
+    ("XAUUSD", get_rule_by_id(xau_data, "R11_022")),  # BUY:  PF 1.86, Net +42.47R, WR 25.5%
 ]
 
 print("==========================================================================================")

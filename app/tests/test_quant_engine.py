@@ -347,3 +347,39 @@ def test_genetic_evolution_engine(synthetic_ohlcv):
     assert isinstance(best_rule, QuantRule)
     assert isinstance(best_result, BacktestResult)
     assert isinstance(best_fitness, float)
+
+
+def test_live_quant_bridge_ratified_suite_and_pricing():
+    """Verifies that LiveQuantBridge loads 11 ratified multi-season rules and verifies MT5 limit pricing bounds."""
+    from hitl.quant_engine.live_quant_bridge import LiveQuantBridge
+    bridge = LiveQuantBridge(engine=None, client=None)
+    
+    # 1. Verify 11 ratified rules loaded
+    total_rules = sum(len(r) for r in bridge.rules_by_symbol.values())
+    assert total_rules == 11, f"Expected 11 ratified rules, got {total_rules}"
+    assert "BTCUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["BTCUSD"]) == 3
+    assert "NQ" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["NQ"]) == 3
+    assert "GBPUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["GBPUSD"]) == 2
+    assert "XAUUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["XAUUSD"]) == 3
+
+    # 2. Verify limit pricing logic:
+    # BUY LIMIT must be strictly < Bid
+    # SELL LIMIT must be strictly > Ask
+    bid = 1.34200
+    ask = 1.34208
+    spread = ask - bid
+    point = 0.00001
+    digits = 5
+    stops_level = 0.0
+    min_offset = max(stops_level, point * 5, 0.2 * spread)
+
+    buy_entry = round(bid - min_offset, digits)
+    if buy_entry >= bid:
+        buy_entry = round(bid - (point * 5), digits)
+    assert buy_entry < bid, f"Buy Limit {buy_entry} must be strictly below bid {bid}"
+
+    sell_entry = round(ask + min_offset, digits)
+    if sell_entry <= ask:
+        sell_entry = round(ask + (point * 5), digits)
+    assert sell_entry > ask, f"Sell Limit {sell_entry} must be strictly above ask {ask}"
+

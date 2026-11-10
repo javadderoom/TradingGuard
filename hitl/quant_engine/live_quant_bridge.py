@@ -44,27 +44,27 @@ class LiveQuantBridge:
     def load_ratified_rules(self) -> None:
         """Loads verified annual multi-season ratified rules from discovery files."""
         try:
-            # 1. BTCUSD
+            # 1. BTCUSD (High Alpha Momentum Sellers)
             btc_path = DISCOVERY_DIR / "annual_1year" / "btcusd" / "annual_ratified_strategies.json"
             if btc_path.exists():
                 import json
                 with open(btc_path, "r", encoding="utf-8") as f:
                     btc_data = json.load(f)
                 self.rules_by_symbol["BTCUSD"] = [
-                    QuantRule.from_dict(r["rule"]) for r in btc_data if r["rule"]["rule_id"] in ["R14_015", "R14_010"]
+                    QuantRule.from_dict(r["rule"]) for r in btc_data if r["rule"]["rule_id"] in ["R14_015", "R14_024", "R14_010"]
                 ]
 
-            # 2. Nasdaq 100 (NQ)
+            # 2. Nasdaq 100 (NQ - Mean Reversion & Volatility Breakout Buyers)
             nq_path = DISCOVERY_DIR / "annual_1year" / "nq" / "annual_ratified_strategies.json"
             if nq_path.exists():
                 import json
                 with open(nq_path, "r", encoding="utf-8") as f:
                     nq_data = json.load(f)
                 self.rules_by_symbol["NQ"] = [
-                    QuantRule.from_dict(r["rule"]) for r in nq_data if r["rule"]["rule_id"] in ["R14_041", "R14_031"]
+                    QuantRule.from_dict(r["rule"]) for r in nq_data if r["rule"]["rule_id"] in ["R14_011", "R14_025", "R14_009"]
                 ]
 
-            # 3. GBPUSD (Cable)
+            # 3. GBPUSD (Cable - Microstructure Volatility Squeeze Sellers)
             gbp_path = DISCOVERY_DIR / "annual_1year" / "gbpusd" / "annual_ratified_strategies.json"
             if gbp_path.exists():
                 import json
@@ -74,15 +74,24 @@ class LiveQuantBridge:
                     QuantRule.from_dict(r["rule"]) for r in gbp_data if r["rule"]["rule_id"] in ["R14_027", "R12_019"]
                 ]
 
-            # 4. XAUUSD (Gold)
-            xau_path = DISCOVERY_DIR / "xauusd" / "ratified_quant_strategies.json"
+            # 4. XAUUSD (Gold - Dual-Direction Momentum & Orderflow)
+            xau_path = DISCOVERY_DIR / "annual_1year" / "xauusd" / "annual_ratified_strategies.json"
             if xau_path.exists():
                 import json
                 with open(xau_path, "r", encoding="utf-8") as f:
                     xau_data = json.load(f)
                 self.rules_by_symbol["XAUUSD"] = [
-                    QuantRule.from_dict(r["rule"]) for r in xau_data if r["rule"]["rule_id"] in ["R2_020"]
+                    QuantRule.from_dict(r["rule"]) for r in xau_data if r["rule"]["rule_id"] in ["R15_048", "R14_058", "R11_022"]
                 ]
+            else:
+                legacy_xau = DISCOVERY_DIR / "xauusd" / "ratified_quant_strategies.json"
+                if legacy_xau.exists():
+                    import json
+                    with open(legacy_xau, "r", encoding="utf-8") as f:
+                        xau_data = json.load(f)
+                    self.rules_by_symbol["XAUUSD"] = [
+                        QuantRule.from_dict(r["rule"]) for r in xau_data if r["rule"]["rule_id"] in ["R2_020"]
+                    ]
 
             total_rules = sum(len(r) for r in self.rules_by_symbol.values())
             print(f"[LiveQuantBridge] Loaded {total_rules} ratified quant rules across {len(self.rules_by_symbol)} symbols.")
@@ -160,21 +169,22 @@ class LiveQuantBridge:
             order_type_str = "BUY_LIMIT" if is_buy else "SELL_LIMIT"
 
             point = sym_info.point
-            min_offset = max(getattr(sym_info, 'stops_level', 0) * point, point * 3, 0.5 * spread)
+            stops_level = getattr(sym_info, 'stops_level', 0) * point
+            min_offset = max(stops_level, point * 5, 0.2 * spread)
 
-            # Anchor limit entry close to market to ensure fill on proximal touch
+            # Anchor limit entry strictly outside spread to ensure immediate broker validity
             if is_buy:
-                # Proximal entry: strictly below ask to form valid BUY LIMIT
-                entry = round(tick.ask - min_offset, digits)
-                if entry >= tick.ask:
-                    entry = round(tick.ask - (point * 3), digits)
+                # BUY LIMIT: Must be strictly below current market bid
+                entry = round(tick.bid - min_offset, digits)
+                if entry >= tick.bid:
+                    entry = round(tick.bid - (point * 5), digits)
                 sl = round(entry - (rule.sl_atr_mult * atr), digits)
                 tp = round(entry + (rule.tp_atr_mult * atr), digits)
             else:
-                # Proximal entry: strictly above bid to form valid SELL LIMIT
-                entry = round(tick.bid + min_offset, digits)
-                if entry <= tick.bid:
-                    entry = round(tick.bid + (point * 3), digits)
+                # SELL LIMIT: Must be strictly above current market ask
+                entry = round(tick.ask + min_offset, digits)
+                if entry <= tick.ask:
+                    entry = round(tick.ask + (point * 5), digits)
                 sl = round(entry + (rule.sl_atr_mult * atr), digits)
                 tp = round(entry - (rule.tp_atr_mult * atr), digits)
 

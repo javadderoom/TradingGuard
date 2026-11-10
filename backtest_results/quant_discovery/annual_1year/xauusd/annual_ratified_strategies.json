@@ -1,1 +1,3448 @@
-[]
+[
+  {
+    "rule": {
+      "rule_id": "R11_022",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_21",
+          "op": "between",
+          "threshold": [
+            0.0008201060642796389,
+            0.0015567771435113845
+          ]
+        },
+        {
+          "feature": "velocity_8",
+          "op": ">=",
+          "threshold": -0.0023717349217512312
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (0.0008 <= velocity_21 <= 0.0016) AND (velocity_8 >= -0.0024) AND (kurtosis_30 > 1.1932) | TP: 3.0xATR, SL: 1.0xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R11_022",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 52,
+        "win_rate": 25.0,
+        "net_r": 26.39,
+        "profit_factor": 1.99,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 2.15
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 42,
+        "win_rate": 26.19,
+        "net_r": 16.08,
+        "profit_factor": 1.71,
+        "max_drawdown_r": 6.97,
+        "sharpe_ratio": 1.45
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.861,
+        "walk_forward_efficiency": 0.916,
+        "drawdown_expansion_ratio": 1.743
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R11_022",
+      "signals": 104,
+      "fills": 94,
+      "wins": 24,
+      "losses": 48,
+      "breakevens": 8,
+      "expired": 14,
+      "win_rate_pct": 25.53,
+      "net_r": 42.47,
+      "net_pnl_usd": 501.08,
+      "profit_factor": 1.86,
+      "max_drawdown_r": 6.97,
+      "sharpe_ratio": 2.56
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_048",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (kurtosis_30 > 1.1932) | TP: 3.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_048",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 97,
+        "win_rate": 31.96,
+        "net_r": 39.41,
+        "profit_factor": 1.81,
+        "max_drawdown_r": 6.66,
+        "sharpe_ratio": 2.55
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 48,
+        "win_rate": 27.08,
+        "net_r": 16.03,
+        "profit_factor": 1.64,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.53
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.906,
+        "walk_forward_efficiency": 0.612,
+        "drawdown_expansion_ratio": 0.601
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_048",
+      "signals": 223,
+      "fills": 145,
+      "wins": 44,
+      "losses": 70,
+      "breakevens": 9,
+      "expired": 22,
+      "win_rate_pct": 30.34,
+      "net_r": 55.43,
+      "net_pnl_usd": 651.6,
+      "profit_factor": 1.75,
+      "max_drawdown_r": 6.66,
+      "sharpe_ratio": 2.97
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R11_052",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": -0.0004168621680273872
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (kurtosis_30 > 1.1932) AND (velocity_55 >= 0.0074) AND (accel_8 > -0.0004) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R11_052",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 85,
+        "win_rate": 18.82,
+        "net_r": 37.48,
+        "profit_factor": 1.93,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.44
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 46,
+        "win_rate": 15.22,
+        "net_r": 12.11,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.11
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.762,
+        "walk_forward_efficiency": 0.486,
+        "drawdown_expansion_ratio": 0.8
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R11_052",
+      "signals": 194,
+      "fills": 131,
+      "wins": 23,
+      "losses": 62,
+      "breakevens": 8,
+      "expired": 38,
+      "win_rate_pct": 17.56,
+      "net_r": 49.59,
+      "net_pnl_usd": 582.84,
+      "profit_factor": 1.75,
+      "max_drawdown_r": 5.0,
+      "sharpe_ratio": 2.63
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_014",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": -0.0004168621680273872
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (kurtosis_30 > 1.1932) AND (accel_8 > -0.0004) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_014",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 85,
+        "win_rate": 18.82,
+        "net_r": 37.48,
+        "profit_factor": 1.93,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.44
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 46,
+        "win_rate": 15.22,
+        "net_r": 12.11,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.11
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.762,
+        "walk_forward_efficiency": 0.486,
+        "drawdown_expansion_ratio": 0.8
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_014",
+      "signals": 194,
+      "fills": 131,
+      "wins": 23,
+      "losses": 62,
+      "breakevens": 8,
+      "expired": 38,
+      "win_rate_pct": 17.56,
+      "net_r": 49.59,
+      "net_pnl_usd": 582.84,
+      "profit_factor": 1.75,
+      "max_drawdown_r": 5.0,
+      "sharpe_ratio": 2.63
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_042",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": -0.0004168621680273872
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > -0.0004) AND (kurtosis_30 > 1.1932) AND (velocity_55 >= 0.0074) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_042",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 85,
+        "win_rate": 18.82,
+        "net_r": 37.48,
+        "profit_factor": 1.93,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.44
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 46,
+        "win_rate": 15.22,
+        "net_r": 12.11,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.11
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.762,
+        "walk_forward_efficiency": 0.486,
+        "drawdown_expansion_ratio": 0.8
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_042",
+      "signals": 194,
+      "fills": 131,
+      "wins": 23,
+      "losses": 62,
+      "breakevens": 8,
+      "expired": 38,
+      "win_rate_pct": 17.56,
+      "net_r": 49.59,
+      "net_pnl_usd": 582.84,
+      "profit_factor": 1.75,
+      "max_drawdown_r": 5.0,
+      "sharpe_ratio": 2.63
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_063",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": -0.0004168621680273872
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (kurtosis_30 > 1.1932) AND (accel_8 > -0.0004) AND (velocity_55 >= 0.0074) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_063",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 85,
+        "win_rate": 18.82,
+        "net_r": 37.48,
+        "profit_factor": 1.93,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.44
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 46,
+        "win_rate": 15.22,
+        "net_r": 12.11,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 1.11
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.762,
+        "walk_forward_efficiency": 0.486,
+        "drawdown_expansion_ratio": 0.8
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_063",
+      "signals": 194,
+      "fills": 131,
+      "wins": 23,
+      "losses": 62,
+      "breakevens": 8,
+      "expired": 38,
+      "win_rate_pct": 17.56,
+      "net_r": 49.59,
+      "net_pnl_usd": 582.84,
+      "profit_factor": 1.75,
+      "max_drawdown_r": 5.0,
+      "sharpe_ratio": 2.63
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_044",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 1.2xATR, BE: 1.2R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_044",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 103,
+        "win_rate": 19.42,
+        "net_r": 32.45,
+        "profit_factor": 1.72,
+        "max_drawdown_r": 5.96,
+        "sharpe_ratio": 2.13
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 53,
+        "win_rate": 15.09,
+        "net_r": 12.02,
+        "profit_factor": 1.49,
+        "max_drawdown_r": 5.06,
+        "sharpe_ratio": 1.17
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.869,
+        "walk_forward_efficiency": 0.557,
+        "drawdown_expansion_ratio": 0.849
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_044",
+      "signals": 223,
+      "fills": 156,
+      "wins": 28,
+      "losses": 64,
+      "breakevens": 32,
+      "expired": 32,
+      "win_rate_pct": 17.95,
+      "net_r": 44.47,
+      "net_pnl_usd": 521.1,
+      "profit_factor": 1.64,
+      "max_drawdown_r": 5.96,
+      "sharpe_ratio": 2.42
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_058",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) AND (directional_vol_imb <= -0.7234) | TP: 3.5xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_058",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 37.36,
+        "net_r": 35.89,
+        "profit_factor": 1.75,
+        "max_drawdown_r": 5.24,
+        "sharpe_ratio": 2.41
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 82,
+        "win_rate": 34.15,
+        "net_r": 23.67,
+        "profit_factor": 1.49,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 1.68
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.851,
+        "walk_forward_efficiency": 0.992,
+        "drawdown_expansion_ratio": 0.954
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R14_058",
+      "signals": 176,
+      "fills": 173,
+      "wins": 62,
+      "losses": 92,
+      "breakevens": 10,
+      "expired": 9,
+      "win_rate_pct": 35.84,
+      "net_r": 59.56,
+      "net_pnl_usd": 698.66,
+      "profit_factor": 1.62,
+      "max_drawdown_r": 8.62,
+      "sharpe_ratio": 2.91
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_033",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.3074387295525264
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.8,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (ma_divergence > 0.3074) AND (kurtosis_30 > 1.1932) | TP: 4.0xATR, SL: 1.8xATR, BE: 1.2R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_033",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 81,
+        "win_rate": 23.46,
+        "net_r": 24.75,
+        "profit_factor": 1.84,
+        "max_drawdown_r": 6.62,
+        "sharpe_ratio": 2.22
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 42,
+        "win_rate": 16.67,
+        "net_r": 6.14,
+        "profit_factor": 1.3,
+        "max_drawdown_r": 4.45,
+        "sharpe_ratio": 0.77
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.704,
+        "walk_forward_efficiency": 0.373,
+        "drawdown_expansion_ratio": 0.672
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_033",
+      "signals": 201,
+      "fills": 123,
+      "wins": 26,
+      "losses": 43,
+      "breakevens": 13,
+      "expired": 41,
+      "win_rate_pct": 21.14,
+      "net_r": 30.89,
+      "net_pnl_usd": 359.87,
+      "profit_factor": 1.62,
+      "max_drawdown_r": 6.62,
+      "sharpe_ratio": 2.25
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_065",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "ma_divergence",
+          "op": ">",
+          "threshold": 0.3074387295525264
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.8,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (ma_divergence > 0.3074) AND (kurtosis_30 > 1.1932) AND (velocity_55 >= 0.0074) | TP: 4.0xATR, SL: 1.8xATR, BE: 1.2R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_065",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 81,
+        "win_rate": 23.46,
+        "net_r": 24.75,
+        "profit_factor": 1.84,
+        "max_drawdown_r": 6.62,
+        "sharpe_ratio": 2.22
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 42,
+        "win_rate": 16.67,
+        "net_r": 6.14,
+        "profit_factor": 1.3,
+        "max_drawdown_r": 4.45,
+        "sharpe_ratio": 0.77
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.704,
+        "walk_forward_efficiency": 0.373,
+        "drawdown_expansion_ratio": 0.672
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_065",
+      "signals": 201,
+      "fills": 123,
+      "wins": 26,
+      "losses": 43,
+      "breakevens": 13,
+      "expired": 41,
+      "win_rate_pct": 21.14,
+      "net_r": 30.89,
+      "net_pnl_usd": 359.87,
+      "profit_factor": 1.62,
+      "max_drawdown_r": 6.62,
+      "sharpe_ratio": 2.25
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_055",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (kurtosis_30 > 1.1932) AND (velocity_55 >= 0.0074) | TP: 3.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_055",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 100,
+        "win_rate": 29.0,
+        "net_r": 40.55,
+        "profit_factor": 1.85,
+        "max_drawdown_r": 6.0,
+        "sharpe_ratio": 2.67
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 53,
+        "win_rate": 20.75,
+        "net_r": 7.53,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 5.48,
+        "sharpe_ratio": 0.72
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.671,
+        "walk_forward_efficiency": 0.279,
+        "drawdown_expansion_ratio": 0.913
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_055",
+      "signals": 223,
+      "fills": 153,
+      "wins": 40,
+      "losses": 72,
+      "breakevens": 6,
+      "expired": 35,
+      "win_rate_pct": 26.14,
+      "net_r": 48.09,
+      "net_pnl_usd": 562.36,
+      "profit_factor": 1.61,
+      "max_drawdown_r": 6.0,
+      "sharpe_ratio": 2.61
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_040",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (kurtosis_30 > 1.1932) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_040",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 98,
+        "win_rate": 20.41,
+        "net_r": 39.72,
+        "profit_factor": 1.8,
+        "max_drawdown_r": 6.14,
+        "sharpe_ratio": 2.34
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 50,
+        "win_rate": 14.0,
+        "net_r": 7.95,
+        "profit_factor": 1.27,
+        "max_drawdown_r": 6.52,
+        "sharpe_ratio": 0.72
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.707,
+        "walk_forward_efficiency": 0.301,
+        "drawdown_expansion_ratio": 1.061
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_040",
+      "signals": 223,
+      "fills": 148,
+      "wins": 27,
+      "losses": 72,
+      "breakevens": 9,
+      "expired": 40,
+      "win_rate_pct": 18.24,
+      "net_r": 47.68,
+      "net_pnl_usd": 558.39,
+      "profit_factor": 1.61,
+      "max_drawdown_r": 6.52,
+      "sharpe_ratio": 2.35
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_035",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        },
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": null,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (velocity_55 >= 0.0074) AND (kurtosis_30 > 1.1932) | TP: 4.0xATR, SL: 1.2xATR, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_035",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 97,
+        "win_rate": 20.62,
+        "net_r": 40.11,
+        "profit_factor": 1.77,
+        "max_drawdown_r": 7.17,
+        "sharpe_ratio": 2.35
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 50,
+        "win_rate": 14.0,
+        "net_r": 5.93,
+        "profit_factor": 1.18,
+        "max_drawdown_r": 7.53,
+        "sharpe_ratio": 0.53
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.668,
+        "walk_forward_efficiency": 0.222,
+        "drawdown_expansion_ratio": 1.05
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_035",
+      "signals": 223,
+      "fills": 147,
+      "wins": 27,
+      "losses": 76,
+      "breakevens": 0,
+      "expired": 44,
+      "win_rate_pct": 18.37,
+      "net_r": 46.03,
+      "net_pnl_usd": 537.85,
+      "profit_factor": 1.56,
+      "max_drawdown_r": 7.53,
+      "sharpe_ratio": 2.25
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_018",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": -0.0004168621680273872
+        },
+        {
+          "feature": "velocity_55",
+          "op": ">=",
+          "threshold": 0.0074440968872600665
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (kurtosis_30 > 1.1932) AND (accel_8 > -0.0004) AND (velocity_55 >= 0.0074) | TP: 3.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_018",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 89,
+        "win_rate": 25.84,
+        "net_r": 30.61,
+        "profit_factor": 1.7,
+        "max_drawdown_r": 6.0,
+        "sharpe_ratio": 2.2
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 9.03,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 0.9
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.78,
+        "walk_forward_efficiency": 0.444,
+        "drawdown_expansion_ratio": 0.666
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_018",
+      "signals": 194,
+      "fills": 137,
+      "wins": 34,
+      "losses": 66,
+      "breakevens": 6,
+      "expired": 31,
+      "win_rate_pct": 24.82,
+      "net_r": 39.65,
+      "net_pnl_usd": 462.67,
+      "profit_factor": 1.56,
+      "max_drawdown_r": 6.0,
+      "sharpe_ratio": 2.31
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R12_052",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0015485778140857387,
+            0.0074440968872600665
+          ]
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (0.0015 <= velocity_55 <= 0.0074) AND (autocorr_lag1 > 0.2321) | TP: 4.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R12_052",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 86,
+        "win_rate": 30.23,
+        "net_r": 22.65,
+        "profit_factor": 1.72,
+        "max_drawdown_r": 7.23,
+        "sharpe_ratio": 2.28
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 52,
+        "win_rate": 21.15,
+        "net_r": 5.39,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 4.13,
+        "sharpe_ratio": 0.74
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.722,
+        "walk_forward_efficiency": 0.358,
+        "drawdown_expansion_ratio": 0.571
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R12_052",
+      "signals": 157,
+      "fills": 138,
+      "wins": 37,
+      "losses": 45,
+      "breakevens": 0,
+      "expired": 56,
+      "win_rate_pct": 26.81,
+      "net_r": 28.04,
+      "net_pnl_usd": 322.69,
+      "profit_factor": 1.53,
+      "max_drawdown_r": 7.23,
+      "sharpe_ratio": 2.27
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_040",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0015485778140857387,
+            0.0074440968872600665
+          ]
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (0.0015 <= velocity_55 <= 0.0074) AND (autocorr_lag1 > 0.2321) AND (accel_8 > 0.0013) | TP: 4.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_040",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 86,
+        "win_rate": 30.23,
+        "net_r": 22.65,
+        "profit_factor": 1.72,
+        "max_drawdown_r": 7.23,
+        "sharpe_ratio": 2.28
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 52,
+        "win_rate": 21.15,
+        "net_r": 5.39,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 4.13,
+        "sharpe_ratio": 0.74
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.722,
+        "walk_forward_efficiency": 0.358,
+        "drawdown_expansion_ratio": 0.571
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_040",
+      "signals": 157,
+      "fills": 138,
+      "wins": 37,
+      "losses": 45,
+      "breakevens": 0,
+      "expired": 56,
+      "win_rate_pct": 26.81,
+      "net_r": 28.04,
+      "net_pnl_usd": 322.69,
+      "profit_factor": 1.53,
+      "max_drawdown_r": 7.23,
+      "sharpe_ratio": 2.27
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_061",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            0.0015485778140857387,
+            0.0074440968872600665
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) AND (0.0015 <= velocity_55 <= 0.0074) | TP: 4.0xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_061",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 86,
+        "win_rate": 30.23,
+        "net_r": 22.65,
+        "profit_factor": 1.72,
+        "max_drawdown_r": 7.23,
+        "sharpe_ratio": 2.28
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 52,
+        "win_rate": 21.15,
+        "net_r": 5.39,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 4.13,
+        "sharpe_ratio": 0.74
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.722,
+        "walk_forward_efficiency": 0.358,
+        "drawdown_expansion_ratio": 0.571
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_061",
+      "signals": 157,
+      "fills": 138,
+      "wins": 37,
+      "losses": 45,
+      "breakevens": 0,
+      "expired": 56,
+      "win_rate_pct": 26.81,
+      "net_r": 28.04,
+      "net_pnl_usd": 322.69,
+      "profit_factor": 1.53,
+      "max_drawdown_r": 7.23,
+      "sharpe_ratio": 2.27
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R9_036",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.8,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) | TP: 4.0xATR, SL: 1.8xATR, BE: 1.8R, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R9_036",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 39.56,
+        "net_r": 34.14,
+        "profit_factor": 1.71,
+        "max_drawdown_r": 4.0,
+        "sharpe_ratio": 2.34
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 82,
+        "win_rate": 32.93,
+        "net_r": 16.27,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 9.14,
+        "sharpe_ratio": 1.21
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.78,
+        "walk_forward_efficiency": 0.717,
+        "drawdown_expansion_ratio": 2.286
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R9_036",
+      "signals": 176,
+      "fills": 173,
+      "wins": 63,
+      "losses": 94,
+      "breakevens": 12,
+      "expired": 4,
+      "win_rate_pct": 36.42,
+      "net_r": 50.42,
+      "net_pnl_usd": 589.26,
+      "profit_factor": 1.52,
+      "max_drawdown_r": 9.14,
+      "sharpe_ratio": 2.53
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_036",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) | TP: 3.5xATR, SL: 2.5xATR, BE: 1.2R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_036",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 90,
+        "win_rate": 32.22,
+        "net_r": 14.54,
+        "profit_factor": 1.41,
+        "max_drawdown_r": 5.61,
+        "sharpe_ratio": 1.54
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 34.12,
+        "net_r": 20.07,
+        "profit_factor": 1.61,
+        "max_drawdown_r": 4.07,
+        "sharpe_ratio": 2.1
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.137,
+        "walk_forward_efficiency": 2.075,
+        "drawdown_expansion_ratio": 0.726
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_036",
+      "signals": 176,
+      "fills": 175,
+      "wins": 58,
+      "losses": 60,
+      "breakevens": 3,
+      "expired": 54,
+      "win_rate_pct": 33.14,
+      "net_r": 34.61,
+      "net_pnl_usd": 398.07,
+      "profit_factor": 1.51,
+      "max_drawdown_r": 5.61,
+      "sharpe_ratio": 2.57
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_041",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": null,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) | TP: 4.0xATR, SL: 1.2xATR, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_041",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 57,
+        "win_rate": 19.3,
+        "net_r": 16.63,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 8.65,
+        "sharpe_ratio": 1.25
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 51,
+        "win_rate": 15.69,
+        "net_r": 17.63,
+        "profit_factor": 1.57,
+        "max_drawdown_r": 9.65,
+        "sharpe_ratio": 1.42
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.07,
+        "walk_forward_efficiency": 1.594,
+        "drawdown_expansion_ratio": 1.116
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_041",
+      "signals": 111,
+      "fills": 108,
+      "wins": 19,
+      "losses": 64,
+      "breakevens": 0,
+      "expired": 25,
+      "win_rate_pct": 17.59,
+      "net_r": 34.27,
+      "net_pnl_usd": 400.48,
+      "profit_factor": 1.51,
+      "max_drawdown_r": 9.65,
+      "sharpe_ratio": 1.88
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_016",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) | TP: 4.0xATR, SL: 1.5xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_016",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 23.08,
+        "net_r": 19.57,
+        "profit_factor": 1.41,
+        "max_drawdown_r": 6.24,
+        "sharpe_ratio": 1.39
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 23.53,
+        "net_r": 26.82,
+        "profit_factor": 1.61,
+        "max_drawdown_r": 4.27,
+        "sharpe_ratio": 1.91
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.138,
+        "walk_forward_efficiency": 2.06,
+        "drawdown_expansion_ratio": 0.685
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_016",
+      "signals": 176,
+      "fills": 176,
+      "wins": 41,
+      "losses": 86,
+      "breakevens": 9,
+      "expired": 40,
+      "win_rate_pct": 23.3,
+      "net_r": 46.39,
+      "net_pnl_usd": 539.82,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 7.62,
+      "sharpe_ratio": 2.33
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_041",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": null,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) AND (directional_vol_imb <= -0.7234) | TP: 3.5xATR, SL: 2.0xATR, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_041",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 90,
+        "win_rate": 44.44,
+        "net_r": 30.82,
+        "profit_factor": 1.69,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.45
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 82,
+        "win_rate": 39.02,
+        "net_r": 14.78,
+        "profit_factor": 1.31,
+        "max_drawdown_r": 6.06,
+        "sharpe_ratio": 1.23
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.776,
+        "walk_forward_efficiency": 0.721,
+        "drawdown_expansion_ratio": 1.211
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_041",
+      "signals": 176,
+      "fills": 172,
+      "wins": 72,
+      "losses": 86,
+      "breakevens": 0,
+      "expired": 14,
+      "win_rate_pct": 41.86,
+      "net_r": 45.6,
+      "net_pnl_usd": 530.05,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 9.0,
+      "sharpe_ratio": 2.62
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_029",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) | TP: 4.0xATR, SL: 1.5xATR, BE: 1.8R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_029",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 23.08,
+        "net_r": 21.3,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 5.98,
+        "sharpe_ratio": 1.52
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 22.35,
+        "net_r": 24.11,
+        "profit_factor": 1.54,
+        "max_drawdown_r": 4.27,
+        "sharpe_ratio": 1.74
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.053,
+        "walk_forward_efficiency": 1.702,
+        "drawdown_expansion_ratio": 0.715
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_029",
+      "signals": 176,
+      "fills": 176,
+      "wins": 40,
+      "losses": 85,
+      "breakevens": 14,
+      "expired": 37,
+      "win_rate_pct": 22.73,
+      "net_r": 45.41,
+      "net_pnl_usd": 528.53,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 7.62,
+      "sharpe_ratio": 2.31
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_010",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (-0.0006 <= velocity_55 <= 0.0029) AND (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) | TP: 4.0xATR, SL: 1.2xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_010",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 57,
+        "win_rate": 24.56,
+        "net_r": 20.8,
+        "profit_factor": 1.57,
+        "max_drawdown_r": 6.57,
+        "sharpe_ratio": 1.46
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 51,
+        "win_rate": 17.65,
+        "net_r": 13.18,
+        "profit_factor": 1.42,
+        "max_drawdown_r": 8.91,
+        "sharpe_ratio": 1.08
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.907,
+        "walk_forward_efficiency": 0.953,
+        "drawdown_expansion_ratio": 1.356
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_010",
+      "signals": 111,
+      "fills": 108,
+      "wins": 23,
+      "losses": 65,
+      "breakevens": 0,
+      "expired": 20,
+      "win_rate_pct": 21.3,
+      "net_r": 33.98,
+      "net_pnl_usd": 397.03,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 8.91,
+      "sharpe_ratio": 1.81
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_015",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) | TP: 4.0xATR, SL: 1.2xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_015",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 57,
+        "win_rate": 24.56,
+        "net_r": 20.8,
+        "profit_factor": 1.57,
+        "max_drawdown_r": 6.57,
+        "sharpe_ratio": 1.46
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 51,
+        "win_rate": 17.65,
+        "net_r": 13.18,
+        "profit_factor": 1.42,
+        "max_drawdown_r": 8.91,
+        "sharpe_ratio": 1.08
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.907,
+        "walk_forward_efficiency": 0.953,
+        "drawdown_expansion_ratio": 1.356
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_015",
+      "signals": 111,
+      "fills": 108,
+      "wins": 23,
+      "losses": 65,
+      "breakevens": 0,
+      "expired": 20,
+      "win_rate_pct": 21.3,
+      "net_r": 33.98,
+      "net_pnl_usd": 397.03,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 8.91,
+      "sharpe_ratio": 1.81
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_030",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (-0.0006 <= velocity_55 <= 0.0029) AND (autocorr_lag1 > 0.2321) | TP: 4.0xATR, SL: 1.2xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_030",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 57,
+        "win_rate": 24.56,
+        "net_r": 20.8,
+        "profit_factor": 1.57,
+        "max_drawdown_r": 6.57,
+        "sharpe_ratio": 1.46
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 51,
+        "win_rate": 17.65,
+        "net_r": 13.18,
+        "profit_factor": 1.42,
+        "max_drawdown_r": 8.91,
+        "sharpe_ratio": 1.08
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.907,
+        "walk_forward_efficiency": 0.953,
+        "drawdown_expansion_ratio": 1.356
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_030",
+      "signals": 111,
+      "fills": 108,
+      "wins": 23,
+      "losses": 65,
+      "breakevens": 0,
+      "expired": 20,
+      "win_rate_pct": 21.3,
+      "net_r": 33.98,
+      "net_pnl_usd": 397.03,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 8.91,
+      "sharpe_ratio": 1.81
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_029",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.2,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (-0.0006 <= velocity_55 <= 0.0029) AND (autocorr_lag1 > 0.2321) AND (accel_8 > 0.0013) | TP: 4.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_029",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 57,
+        "win_rate": 24.56,
+        "net_r": 20.8,
+        "profit_factor": 1.57,
+        "max_drawdown_r": 6.57,
+        "sharpe_ratio": 1.46
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 51,
+        "win_rate": 17.65,
+        "net_r": 12.56,
+        "profit_factor": 1.42,
+        "max_drawdown_r": 7.88,
+        "sharpe_ratio": 1.04
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.903,
+        "walk_forward_efficiency": 0.908,
+        "drawdown_expansion_ratio": 1.2
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_029",
+      "signals": 111,
+      "fills": 108,
+      "wins": 23,
+      "losses": 64,
+      "breakevens": 4,
+      "expired": 17,
+      "win_rate_pct": 21.3,
+      "net_r": 33.36,
+      "net_pnl_usd": 390.03,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 7.88,
+      "sharpe_ratio": 1.79
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R8_046",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (-0.0006 <= velocity_55 <= 0.0029) AND (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) | TP: 4.5xATR, SL: 2.5xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R8_046",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 54,
+        "win_rate": 22.22,
+        "net_r": 12.68,
+        "profit_factor": 1.62,
+        "max_drawdown_r": 4.44,
+        "sharpe_ratio": 1.57
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 47,
+        "win_rate": 23.4,
+        "net_r": 8.03,
+        "profit_factor": 1.39,
+        "max_drawdown_r": 5.02,
+        "sharpe_ratio": 1.03
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.859,
+        "walk_forward_efficiency": 0.952,
+        "drawdown_expansion_ratio": 1.132
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R8_046",
+      "signals": 111,
+      "fills": 101,
+      "wins": 23,
+      "losses": 36,
+      "breakevens": 0,
+      "expired": 42,
+      "win_rate_pct": 22.77,
+      "net_r": 20.71,
+      "net_pnl_usd": 238.46,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 5.02,
+      "sharpe_ratio": 1.84
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_049",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) AND (accel_8 > 0.0013) | TP: 4.5xATR, SL: 2.5xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_049",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 54,
+        "win_rate": 22.22,
+        "net_r": 12.68,
+        "profit_factor": 1.62,
+        "max_drawdown_r": 4.44,
+        "sharpe_ratio": 1.57
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 47,
+        "win_rate": 23.4,
+        "net_r": 8.03,
+        "profit_factor": 1.39,
+        "max_drawdown_r": 5.02,
+        "sharpe_ratio": 1.03
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.859,
+        "walk_forward_efficiency": 0.952,
+        "drawdown_expansion_ratio": 1.132
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R14_049",
+      "signals": 111,
+      "fills": 101,
+      "wins": 23,
+      "losses": 36,
+      "breakevens": 0,
+      "expired": 42,
+      "win_rate_pct": 22.77,
+      "net_r": 20.71,
+      "net_pnl_usd": 238.46,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 5.02,
+      "sharpe_ratio": 1.84
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_032",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "kurtosis_30",
+          "op": ">",
+          "threshold": 1.1931961768275163
+        },
+        {
+          "feature": "velocity_8",
+          "op": ">=",
+          "threshold": -0.0023717349217512312
+        },
+        {
+          "feature": "velocity_21",
+          "op": "between",
+          "threshold": [
+            0.0008201060642796389,
+            0.0015567771435113845
+          ]
+        }
+      ],
+      "tp_atr_mult": 3.0,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 1.5,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (kurtosis_30 > 1.1932) AND (velocity_8 >= -0.0024) AND (0.0008 <= velocity_21 <= 0.0016) | TP: 3.0xATR, SL: 2.5xATR, BE: 1.5R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_032",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 50,
+        "win_rate": 32.0,
+        "net_r": 11.84,
+        "profit_factor": 1.75,
+        "max_drawdown_r": 3.9,
+        "sharpe_ratio": 1.88
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 41,
+        "win_rate": 36.59,
+        "net_r": 4.68,
+        "profit_factor": 1.27,
+        "max_drawdown_r": 3.57,
+        "sharpe_ratio": 0.76
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.724,
+        "walk_forward_efficiency": 0.594,
+        "drawdown_expansion_ratio": 0.914
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_032",
+      "signals": 104,
+      "fills": 91,
+      "wins": 31,
+      "losses": 28,
+      "breakevens": 0,
+      "expired": 32,
+      "win_rate_pct": 34.07,
+      "net_r": 16.52,
+      "net_pnl_usd": 189.18,
+      "profit_factor": 1.5,
+      "max_drawdown_r": 3.9,
+      "sharpe_ratio": 1.87
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R14_018",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 3.5,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": null,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) AND (directional_vol_imb <= -0.7234) | TP: 3.5xATR, SL: 2.0xATR, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R14_018",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 90,
+        "win_rate": 47.78,
+        "net_r": 30.06,
+        "profit_factor": 1.63,
+        "max_drawdown_r": 5.0,
+        "sharpe_ratio": 2.32
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 82,
+        "win_rate": 42.68,
+        "net_r": 16.39,
+        "profit_factor": 1.34,
+        "max_drawdown_r": 5.86,
+        "sharpe_ratio": 1.34
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.822,
+        "walk_forward_efficiency": 0.82,
+        "drawdown_expansion_ratio": 1.173
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R14_018",
+      "signals": 176,
+      "fills": 172,
+      "wins": 78,
+      "losses": 91,
+      "breakevens": 0,
+      "expired": 3,
+      "win_rate_pct": 45.35,
+      "net_r": 46.45,
+      "net_pnl_usd": 540.2,
+      "profit_factor": 1.49,
+      "max_drawdown_r": 9.0,
+      "sharpe_ratio": 2.6
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_052",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 1.2,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) | TP: 1.8xATR, SL: 1.0xATR, BE: 1.2R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_052",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 41.76,
+        "net_r": 26.23,
+        "profit_factor": 1.59,
+        "max_drawdown_r": 9.13,
+        "sharpe_ratio": 2.08
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 36.47,
+        "net_r": 14.42,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 3.37,
+        "sharpe_ratio": 1.22
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.834,
+        "walk_forward_efficiency": 0.827,
+        "drawdown_expansion_ratio": 0.369
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_052",
+      "signals": 176,
+      "fills": 176,
+      "wins": 69,
+      "losses": 85,
+      "breakevens": 22,
+      "expired": 0,
+      "win_rate_pct": 39.2,
+      "net_r": 40.65,
+      "net_pnl_usd": 472.36,
+      "profit_factor": 1.46,
+      "max_drawdown_r": 13.13,
+      "sharpe_ratio": 2.35
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_055",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) | TP: 1.8xATR, SL: 1.5xATR, BE: 1.8R, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_055",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 57.14,
+        "net_r": 23.4,
+        "profit_factor": 1.58,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 2.25
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 83,
+        "win_rate": 53.01,
+        "net_r": 13.8,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 3.8,
+        "sharpe_ratio": 1.38
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.846,
+        "walk_forward_efficiency": 0.887,
+        "drawdown_expansion_ratio": 0.826
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_055",
+      "signals": 176,
+      "fills": 174,
+      "wins": 96,
+      "losses": 78,
+      "breakevens": 0,
+      "expired": 0,
+      "win_rate_pct": 55.17,
+      "net_r": 37.2,
+      "net_pnl_usd": 429.0,
+      "profit_factor": 1.45,
+      "max_drawdown_r": 9.2,
+      "sharpe_ratio": 2.58
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R8_036",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) | TP: 1.8xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R8_036",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 57.14,
+        "net_r": 23.4,
+        "profit_factor": 1.58,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 2.25
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 83,
+        "win_rate": 51.81,
+        "net_r": 13.24,
+        "profit_factor": 1.32,
+        "max_drawdown_r": 3.8,
+        "sharpe_ratio": 1.33
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.837,
+        "walk_forward_efficiency": 0.851,
+        "drawdown_expansion_ratio": 0.826
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R8_036",
+      "signals": 176,
+      "fills": 174,
+      "wins": 95,
+      "losses": 78,
+      "breakevens": 0,
+      "expired": 1,
+      "win_rate_pct": 54.6,
+      "net_r": 36.64,
+      "net_pnl_usd": 422.27,
+      "profit_factor": 1.45,
+      "max_drawdown_r": 9.2,
+      "sharpe_ratio": 2.54
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_020",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) AND (directional_vol_imb <= -0.7234) | TP: 1.8xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_020",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 57.14,
+        "net_r": 23.4,
+        "profit_factor": 1.58,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 2.25
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 83,
+        "win_rate": 51.81,
+        "net_r": 13.24,
+        "profit_factor": 1.32,
+        "max_drawdown_r": 3.8,
+        "sharpe_ratio": 1.33
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.837,
+        "walk_forward_efficiency": 0.851,
+        "drawdown_expansion_ratio": 0.826
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_020",
+      "signals": 176,
+      "fills": 174,
+      "wins": 95,
+      "losses": 78,
+      "breakevens": 0,
+      "expired": 1,
+      "win_rate_pct": 54.6,
+      "net_r": 36.64,
+      "net_pnl_usd": 422.27,
+      "profit_factor": 1.45,
+      "max_drawdown_r": 9.2,
+      "sharpe_ratio": 2.54
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_031",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (directional_vol_imb <= -0.7234) AND (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) | TP: 1.8xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_031",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 57.14,
+        "net_r": 23.4,
+        "profit_factor": 1.58,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 2.25
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 83,
+        "win_rate": 51.81,
+        "net_r": 13.24,
+        "profit_factor": 1.32,
+        "max_drawdown_r": 3.8,
+        "sharpe_ratio": 1.33
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.837,
+        "walk_forward_efficiency": 0.851,
+        "drawdown_expansion_ratio": 0.826
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_031",
+      "signals": 176,
+      "fills": 174,
+      "wins": 95,
+      "losses": 78,
+      "breakevens": 0,
+      "expired": 1,
+      "win_rate_pct": 54.6,
+      "net_r": 36.64,
+      "net_pnl_usd": 422.27,
+      "profit_factor": 1.45,
+      "max_drawdown_r": 9.2,
+      "sharpe_ratio": 2.54
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_037",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) | TP: 4.0xATR, SL: 2.0xATR, BE: 2.0R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_037",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 55,
+        "win_rate": 27.27,
+        "net_r": 12.63,
+        "profit_factor": 1.5,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 1.35
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 7.13,
+        "profit_factor": 1.29,
+        "max_drawdown_r": 5.03,
+        "sharpe_ratio": 0.83
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.861,
+        "walk_forward_efficiency": 0.849,
+        "drawdown_expansion_ratio": 1.093
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_037",
+      "signals": 111,
+      "fills": 103,
+      "wins": 26,
+      "losses": 46,
+      "breakevens": 0,
+      "expired": 31,
+      "win_rate_pct": 25.24,
+      "net_r": 19.77,
+      "net_pnl_usd": 226.94,
+      "profit_factor": 1.4,
+      "max_drawdown_r": 5.03,
+      "sharpe_ratio": 1.55
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_049",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": null,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (-0.0006 <= velocity_55 <= 0.0029) AND (autocorr_lag1 > 0.2321) | TP: 4.0xATR, SL: 2.0xATR, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_049",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 55,
+        "win_rate": 27.27,
+        "net_r": 12.63,
+        "profit_factor": 1.5,
+        "max_drawdown_r": 4.6,
+        "sharpe_ratio": 1.35
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 48,
+        "win_rate": 22.92,
+        "net_r": 7.13,
+        "profit_factor": 1.29,
+        "max_drawdown_r": 5.03,
+        "sharpe_ratio": 0.83
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.861,
+        "walk_forward_efficiency": 0.849,
+        "drawdown_expansion_ratio": 1.093
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_049",
+      "signals": 111,
+      "fills": 103,
+      "wins": 26,
+      "losses": 46,
+      "breakevens": 0,
+      "expired": 31,
+      "win_rate_pct": 25.24,
+      "net_r": 19.77,
+      "net_pnl_usd": 226.94,
+      "profit_factor": 1.4,
+      "max_drawdown_r": 5.03,
+      "sharpe_ratio": 1.55
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_035",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 1.8,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (-0.1356 <= ma_divergence <= 0.3074) AND (0.0005 <= gk_vol <= 0.0005) AND (directional_vol_imb <= -0.7234) | TP: 1.8xATR, SL: 1.0xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_035",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 46.15,
+        "net_r": 26.6,
+        "profit_factor": 1.52,
+        "max_drawdown_r": 7.4,
+        "sharpe_ratio": 2.0
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 84,
+        "win_rate": 40.48,
+        "net_r": 13.16,
+        "profit_factor": 1.25,
+        "max_drawdown_r": 4.4,
+        "sharpe_ratio": 1.05
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.822,
+        "walk_forward_efficiency": 0.744,
+        "drawdown_expansion_ratio": 0.595
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_035",
+      "signals": 176,
+      "fills": 175,
+      "wins": 76,
+      "losses": 98,
+      "breakevens": 0,
+      "expired": 1,
+      "win_rate_pct": 43.43,
+      "net_r": 39.76,
+      "net_pnl_usd": 459.6,
+      "profit_factor": 1.39,
+      "max_drawdown_r": 11.4,
+      "sharpe_ratio": 2.17
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_032",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.13563429604327137,
+            0.3074387295525264
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.0,
+      "be_ratchet_r": 2.0,
+      "ttl_bars": 18,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0005 <= gk_vol <= 0.0005) AND (-0.1356 <= ma_divergence <= 0.3074) AND (directional_vol_imb <= -0.7234) | TP: 4.0xATR, SL: 1.0xATR, BE: 2.0R, TTL: 18b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_032",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 91,
+        "win_rate": 16.48,
+        "net_r": 21.06,
+        "profit_factor": 1.41,
+        "max_drawdown_r": 7.02,
+        "sharpe_ratio": 1.22
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 15.29,
+        "net_r": 16.2,
+        "profit_factor": 1.29,
+        "max_drawdown_r": 8.95,
+        "sharpe_ratio": 0.95
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.912,
+        "walk_forward_efficiency": 1.157,
+        "drawdown_expansion_ratio": 1.275
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_032",
+      "signals": 176,
+      "fills": 176,
+      "wins": 28,
+      "losses": 102,
+      "breakevens": 27,
+      "expired": 19,
+      "win_rate_pct": 15.91,
+      "net_r": 37.26,
+      "net_pnl_usd": 432.19,
+      "profit_factor": 1.35,
+      "max_drawdown_r": 10.93,
+      "sharpe_ratio": 1.53
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_023",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "accel_21",
+          "op": "<=",
+          "threshold": 0.0001965815800940776
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (autocorr_lag1 > 0.2321) AND (accel_8 > 0.0013) AND (accel_21 <= 0.0002) | TP: 4.0xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_023",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 103,
+        "win_rate": 15.53,
+        "net_r": 19.11,
+        "profit_factor": 1.47,
+        "max_drawdown_r": 13.2,
+        "sharpe_ratio": 1.72
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 71,
+        "win_rate": 18.31,
+        "net_r": 6.75,
+        "profit_factor": 1.18,
+        "max_drawdown_r": 8.49,
+        "sharpe_ratio": 0.68
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.803,
+        "walk_forward_efficiency": 0.531,
+        "drawdown_expansion_ratio": 0.643
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_023",
+      "signals": 187,
+      "fills": 174,
+      "wins": 29,
+      "losses": 65,
+      "breakevens": 0,
+      "expired": 80,
+      "win_rate_pct": 16.67,
+      "net_r": 25.86,
+      "net_pnl_usd": 292.97,
+      "profit_factor": 1.34,
+      "max_drawdown_r": 14.0,
+      "sharpe_ratio": 1.73
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_017",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.5,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": null,
+      "ttl_bars": 72,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) | TP: 4.5xATR, SL: 2.5xATR, TTL: 72b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_017",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 52,
+        "win_rate": 32.69,
+        "net_r": 9.34,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 5.98,
+        "sharpe_ratio": 1.01
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 47,
+        "win_rate": 34.04,
+        "net_r": 8.05,
+        "profit_factor": 1.3,
+        "max_drawdown_r": 6.0,
+        "sharpe_ratio": 0.91
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.978,
+        "walk_forward_efficiency": 1.296,
+        "drawdown_expansion_ratio": 1.003
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_017",
+      "signals": 111,
+      "fills": 99,
+      "wins": 33,
+      "losses": 50,
+      "breakevens": 0,
+      "expired": 16,
+      "win_rate_pct": 33.33,
+      "net_r": 17.39,
+      "net_pnl_usd": 198.8,
+      "profit_factor": 1.32,
+      "max_drawdown_r": 6.0,
+      "sharpe_ratio": 1.36
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_015",
+      "direction": "SELL",
+      "predicates": [
+        {
+          "feature": "gk_vol",
+          "op": "between",
+          "threshold": [
+            0.0004550270773351449,
+            0.0005352162646384565
+          ]
+        },
+        {
+          "feature": "directional_vol_imb",
+          "op": "<=",
+          "threshold": -0.7234113813680061
+        },
+        {
+          "feature": "ma_divergence",
+          "op": "between",
+          "threshold": [
+            -0.7977729568966034,
+            -0.5272851903608069
+          ]
+        }
+      ],
+      "tp_atr_mult": 4.0,
+      "sl_atr_mult": 1.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 48,
+      "cooldown_bars": 6,
+      "formula": "[SELL] (0.0005 <= gk_vol <= 0.0005) AND (directional_vol_imb <= -0.7234) AND (-0.7978 <= ma_divergence <= -0.5273) | TP: 4.0xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_015",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 85,
+        "win_rate": 28.24,
+        "net_r": 17.99,
+        "profit_factor": 1.37,
+        "max_drawdown_r": 9.51,
+        "sharpe_ratio": 1.23
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 85,
+        "win_rate": 24.71,
+        "net_r": 10.37,
+        "profit_factor": 1.2,
+        "max_drawdown_r": 12.81,
+        "sharpe_ratio": 0.73
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.874,
+        "walk_forward_efficiency": 0.867,
+        "drawdown_expansion_ratio": 1.347
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_015",
+      "signals": 174,
+      "fills": 171,
+      "wins": 46,
+      "losses": 95,
+      "breakevens": 26,
+      "expired": 4,
+      "win_rate_pct": 26.9,
+      "net_r": 31.02,
+      "net_pnl_usd": 357.56,
+      "profit_factor": 1.31,
+      "max_drawdown_r": 13.95,
+      "sharpe_ratio": 1.51
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_043",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        },
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        }
+      ],
+      "tp_atr_mult": 2.2,
+      "sl_atr_mult": 2.0,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (autocorr_lag1 > 0.2321) AND (-0.0006 <= velocity_55 <= 0.0029) AND (accel_8 > 0.0013) | TP: 2.2xATR, SL: 2.0xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_043",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 56,
+        "win_rate": 44.64,
+        "net_r": 5.11,
+        "profit_factor": 1.2,
+        "max_drawdown_r": 4.47,
+        "sharpe_ratio": 0.71
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 49,
+        "win_rate": 46.94,
+        "net_r": 5.59,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 5.29,
+        "sharpe_ratio": 0.8
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 1.038,
+        "walk_forward_efficiency": 1.648,
+        "drawdown_expansion_ratio": 1.184
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_043",
+      "signals": 111,
+      "fills": 105,
+      "wins": 48,
+      "losses": 43,
+      "breakevens": 0,
+      "expired": 14,
+      "win_rate_pct": 45.71,
+      "net_r": 10.7,
+      "net_pnl_usd": 117.9,
+      "profit_factor": 1.22,
+      "max_drawdown_r": 5.29,
+      "sharpe_ratio": 1.06
+    }
+  },
+  {
+    "rule": {
+      "rule_id": "R15_059",
+      "direction": "BUY",
+      "predicates": [
+        {
+          "feature": "velocity_55",
+          "op": "between",
+          "threshold": [
+            -0.0005788453595890903,
+            0.0028601954630892807
+          ]
+        },
+        {
+          "feature": "accel_8",
+          "op": ">",
+          "threshold": 0.0012694954895254651
+        },
+        {
+          "feature": "autocorr_lag1",
+          "op": ">",
+          "threshold": 0.2320533908649837
+        }
+      ],
+      "tp_atr_mult": 2.2,
+      "sl_atr_mult": 2.5,
+      "be_ratchet_r": 1.8,
+      "ttl_bars": 24,
+      "cooldown_bars": 6,
+      "formula": "[BUY] (-0.0006 <= velocity_55 <= 0.0029) AND (accel_8 > 0.0013) AND (autocorr_lag1 > 0.2321) | TP: 2.2xATR, SL: 2.5xATR, BE: 1.8R, TTL: 24b"
+    },
+    "walk_forward_report": {
+      "rule_id": "R15_059",
+      "symbol": "XAUUSD",
+      "verdict": "RATIFIED",
+      "rejection_reasons": [],
+      "in_sample": {
+        "bars": 60000,
+        "trades": 55,
+        "win_rate": 47.27,
+        "net_r": 5.02,
+        "profit_factor": 1.24,
+        "max_drawdown_r": 4.18,
+        "sharpe_ratio": 0.83
+      },
+      "out_of_sample": {
+        "bars": 39900,
+        "trades": 48,
+        "win_rate": 50.0,
+        "net_r": 3.96,
+        "profit_factor": 1.19,
+        "max_drawdown_r": 5.51,
+        "sharpe_ratio": 0.65
+      },
+      "overfitting_metrics": {
+        "degradation_ratio_pf": 0.96,
+        "walk_forward_efficiency": 1.186,
+        "drawdown_expansion_ratio": 1.318
+      }
+    },
+    "annual_metrics": {
+      "symbol": "XAUUSD",
+      "rule_id": "R15_059",
+      "signals": 111,
+      "fills": 103,
+      "wins": 50,
+      "losses": 34,
+      "breakevens": 0,
+      "expired": 19,
+      "win_rate_pct": 48.54,
+      "net_r": 8.99,
+      "net_pnl_usd": 97.52,
+      "profit_factor": 1.22,
+      "max_drawdown_r": 5.51,
+      "sharpe_ratio": 1.05
+    }
+  }
+]
