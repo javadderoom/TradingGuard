@@ -1088,33 +1088,8 @@ def screen_ict_session(
                 return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
-    # Decommissioned on Gold (-46.5R) and GBPUSD (-20.5R) per 4-season empirical audits
-    if not ("XAU" in symbol.upper() or is_gbp):
-        min_expansion_pts = 60.0 if is_index else (400.0 if is_crypto else (0.80 if is_silver else 0.0035))
-        if total_range >= min_expansion_pts and not (in_mid_equilibrium or is_inside_day) and setup_registry.is_archetype_ratified("SETUP-ARCH-009"):
-            arch_id = "SETUP-ARCH-009"
-            sl_buf = 4.0 if is_index else (25.0 if is_crypto else 0.0010)
-            if is_session_bearish and (range_low + 0.45 * total_range) <= current_price <= range_high:
-                if current_price >= (range_low + 0.618 * total_range):
-                    ote_entry = range_low + 0.705 * total_range
-                    sl_p = range_high + sl_buf
-                    return _package_setup(arch_id, "BEARISH_TREND_RETEST", round(ote_entry, 1 if is_index else (5 if is_fx else 2)), sl_p, "Bearish Trend Continuation: OTE Premium Retracement", "SHORT")
-                elif (has_fvg and fvg_dir == "BEARISH") or (has_breaker and breaker_type == "BEARISH_BREAKER"):
-                    entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BEARISH") else breaker_price
-                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=False, is_fx=is_fx, ratio=short_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index) if has_fvg else entry_poi
-                    sl_p = range_high + sl_buf
-                    return _package_setup(arch_id, "BEARISH_TREND_RETEST", scaled_entry, sl_p, "Bearish Trend Continuation: Retracement to Breakdown POI", "SHORT")
-
-            elif is_session_bullish and range_low <= current_price <= (range_high - 0.45 * total_range):
-                if current_price <= (range_high - 0.618 * total_range):
-                    ote_entry = range_high - 0.705 * total_range
-                    sl_p = range_low - sl_buf
-                    return _package_setup(arch_id, "BULLISH_TREND_RETEST", round(ote_entry, 1 if is_index else (5 if is_fx else 2)), sl_p, "Bullish Trend Continuation: OTE Discount Retracement", "LONG")
-                elif (has_fvg and fvg_dir == "BULLISH") or (has_breaker and breaker_type == "BULLISH_BREAKER"):
-                    entry_poi = fvg_proximal if (has_fvg and fvg_dir == "BULLISH") else breaker_price
-                    scaled_entry = scale_poi_depth(fvg_proximal, fvg_distal, is_bullish=True, is_fx=is_fx, ratio=long_phase["poi_ratio"], is_crypto=is_crypto, is_index=is_index) if has_fvg else entry_poi
-                    sl_p = range_low - sl_buf
-                    return _package_setup(arch_id, "BULLISH_TREND_RETEST", scaled_entry, sl_p, "Bullish Trend Continuation: Retracement to Breakout POI", "LONG")
+    # PERMANENTLY DECOMMISSIONED ACROSS ALL ASSETS (-77.41R loss, 11.6% WR in 1-year audit)
+    # Deep OTE 50%-70.5% retracements consistently enter into adverse momentum continuations.
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)
     # Decommissioned on NQ per empirical audit (14.5% WR, severe pre-market drag)

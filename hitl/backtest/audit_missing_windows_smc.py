@@ -280,29 +280,7 @@ def audit_gold_gaps() -> pd.DataFrame:
                         'sweep_type': 'Expansion_Low'
                     })
 
-            # 5. SETUP-ARCH-009 (Pro-Trend OTE)
-            session_rng = max(b['high'] for b in recent_m5) - min(b['low'] for b in recent_m5)
-            if session_rng >= 12.0 and not in_mid_equilibrium:
-                r_high = max(b['high'] for b in recent_m5)
-                r_low = min(b['low'] for b in recent_m5)
-                if h1_state == "BULLISH_MSS":
-                    detected_setups.append({
-                        'archetype': 'PRO_TREND_RETEST_OTE',
-                        'archetype_id': 'SETUP-ARCH-009',
-                        'direction': 'LONG',
-                        'entry': r_high - 0.705 * session_rng,
-                        'sl': r_low - 1.50,
-                        'sweep_type': 'OTE_Discount'
-                    })
-                elif h1_state == "BEARISH_MSS":
-                    detected_setups.append({
-                        'archetype': 'PRO_TREND_RETEST_OTE',
-                        'archetype_id': 'SETUP-ARCH-009',
-                        'direction': 'SHORT',
-                        'entry': r_low + 0.705 * session_rng,
-                        'sl': r_high + 1.50,
-                        'sweep_type': 'OTE_Premium'
-                    })
+            # 5. SETUP-ARCH-009 permanently decommissioned per 1-year audit (-77.41R drag eliminated)
 
             # 6. SETUP-ARCH-010 (Prominent Sweep + MSS)
             has_prom, prom_dir, prom_entry, prom_sl, prom_desc, sweep_src = detect_prominent_sweep_and_mss(hist_m5)
@@ -588,29 +566,7 @@ def audit_gbpusd_gaps() -> pd.DataFrame:
                         'sweep_type': 'Expansion_Low'
                     })
 
-            # 5. SETUP-ARCH-009 (Pro-Trend OTE)
-            session_rng = max(b['high'] for b in recent_m5) - min(b['low'] for b in recent_m5)
-            if session_rng >= 0.0040 and not in_mid_equilibrium:
-                r_high = max(b['high'] for b in recent_m5)
-                r_low = min(b['low'] for b in recent_m5)
-                if h1_state == "BULLISH_MSS":
-                    detected_setups.append({
-                        'archetype': 'PRO_TREND_RETEST_OTE',
-                        'archetype_id': 'SETUP-ARCH-009',
-                        'direction': 'LONG',
-                        'entry': r_high - 0.705 * session_rng,
-                        'sl': r_low - 0.0010,
-                        'sweep_type': 'OTE_Discount'
-                    })
-                elif h1_state == "BEARISH_MSS":
-                    detected_setups.append({
-                        'archetype': 'PRO_TREND_RETEST_OTE',
-                        'archetype_id': 'SETUP-ARCH-009',
-                        'direction': 'SHORT',
-                        'entry': r_low + 0.705 * session_rng,
-                        'sl': r_high + 0.0010,
-                        'sweep_type': 'OTE_Premium'
-                    })
+            # 5. SETUP-ARCH-009 permanently decommissioned per 1-year audit (-77.41R drag eliminated)
 
             # 6. SETUP-ARCH-010 (Prominent Sweep + MSS)
             if swept_pdh and sl_m5:
