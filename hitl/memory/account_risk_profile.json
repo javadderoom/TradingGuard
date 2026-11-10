@@ -5,7 +5,7 @@
   "profiles": {
     "PROP_FIRM": {
       "name": "Prop Firm Challenge / Funded",
-      "max_open_trades": 2,
+      "max_open_trades": 3,
       "max_concurrent_risk_pct": 1.5,
       "hard_concurrent_risk_pct": 2.0,
       "max_daily_drawdown_pct": 4.0,
@@ -29,5 +29,5 @@
   "high_water_mark_equity": 1142.51,
   "circuit_breaker_active": false,
   "circuit_breaker_reason": "",
-  "last_updated": "2026-11-09T18:40:00.000000"
+  "last_updated": "2026-11-09T18:42:30.018027"
 }
