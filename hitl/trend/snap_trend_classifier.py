@@ -25,8 +25,8 @@ class SnapTrendClassifier:
     """
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
-        self.api_key = api_key or SNAP_API_KEY
-        self.api_url = api_url or SNAP_API_URL
+        self.api_key = SNAP_API_KEY if api_key is None else api_key
+        self.api_url = SNAP_API_URL if api_url is None else api_url
         self.model = SNAP_MODEL or "subq-snap-1.1"
 
     def classify_trend(
@@ -65,13 +65,13 @@ class SnapTrendClassifier:
             f"Daily Range: Low {on_chart['daily_structure']['daily_low']} - High {on_chart['daily_structure']['daily_high']} (ADR 14: {on_chart['daily_structure']['adr_14']}, Utilized: {on_chart['daily_structure']['adr_utilization_pct']}%)\n"
             f"Previous Day: Low {on_chart['daily_structure']['pdl']} - High {on_chart['daily_structure']['pdh']} (Swept PDH: {on_chart['daily_structure']['has_swept_pdh']}, Swept PDL: {on_chart['daily_structure']['has_swept_pdl']})\n"
             f"Weekly Context: Open {on_chart['weekly_structure']['cwo']} (Relation: {on_chart['weekly_structure']['relation_to_weekly_open']})\n"
-            f"Asian Range: {on_chart['session_ranges']['asian_low']} - {on_chart['session_ranges']['asian_high']} | London Range: {on_chart['session_ranges']['london_low']} - {on_chart['session_ranges']['london_high']}\n"
-            f"H1 Structure Regime: {on_chart['htf_trend']['h1_regime']} | SMT Divergence: {on_chart['smt_divergence']['type']} ({on_chart['smt_divergence']['note']})\n"
-            f"Primary Draw on Liquidity: {on_chart['draw_on_liquidity']['type']} at {on_chart['draw_on_liquidity']['target_price']}\n\n"
+            f"Asian Range: {on_chart['session_ranges'].get('asian_low', 'N/A')} - {on_chart['session_ranges'].get('asian_high', 'N/A')} | London Range: {on_chart['session_ranges'].get('london_low', 'Pending')} - {on_chart['session_ranges'].get('london_high', 'Pending')}\n"
+            f"H1 Structure Regime: {on_chart['htf_trend'].get('h1_regime', 'N/A')} | SMT Divergence: {on_chart['smt_divergence'].get('type', 'NONE')} ({on_chart['smt_divergence'].get('note', '')})\n"
+            f"Primary Draw on Liquidity: {on_chart['draw_on_liquidity'].get('type', 'N/A')} at {on_chart['draw_on_liquidity'].get('target_price', 'N/A')}\n\n"
             f"--- Off-Chart Macro & Sentiment ---\n"
-            f"Retail Crowd Positioning: {off_chart['retail_sentiment']['retail_long_pct']}% Long / {off_chart['retail_sentiment']['retail_short_pct']}% Short (Contrarian: {off_chart['retail_sentiment']['contrarian_bias']})\n"
-            f"Catalyst Danger Score: Session={off_chart['catalysts']['session_risk']} | Day={off_chart['catalysts']['day_risk']}\n"
-            f"Active Session: {off_chart['session_context']['session_label']}"
+            f"Retail Crowd Positioning: {off_chart.get('retail_sentiment', {}).get('retail_long_pct', 50)}% Long / {off_chart.get('retail_sentiment', {}).get('retail_short_pct', 50)}% Short (Contrarian: {off_chart.get('retail_sentiment', {}).get('contrarian_bias', 'NEUTRAL')})\n"
+            f"Catalyst Danger Score: Session={off_chart.get('catalysts', {}).get('session_risk', 'LOW')} | Day={off_chart.get('catalysts', {}).get('day_risk', 'LOW')}\n"
+            f"Active Session: {off_chart.get('session_context', {}).get('session_label', 'Active')}"
         )
 
         questions = {
@@ -279,17 +279,17 @@ class SnapTrendClassifier:
         elif retail_long_pct <= 30.0:
             score_day += 1.5  # Institutional short squeeze
 
-        if score_day >= 2.0:
+        if score_day >= 1.0:
             day_bias = "BULLISH"
-            day_conf = min(0.92, round(0.65 + (score_day * 0.04), 2))
+            day_conf = min(0.92, round(0.60 + (score_day * 0.05), 2))
             candle_arch = "EXPANSION_UP_DAY"
             target_p = round(dol.get("target_price") or pdh, 2)
             dol_type = "BUY_SIDE_LIQUIDITY"
             inval_p = round(daily_st.get("daily_low") or pdl, 2)
             day_rationale = "Bullish order flow dominant; expanding toward overhead buy-side liquidity."
-        elif score_day <= -2.0:
+        elif score_day <= -1.0:
             day_bias = "BEARISH"
-            day_conf = min(0.92, round(0.65 + (abs(score_day) * 0.04), 2))
+            day_conf = min(0.92, round(0.60 + (abs(score_day) * 0.05), 2))
             candle_arch = "EXPANSION_DOWN_DAY"
             target_p = round(dol.get("target_price") or pdl, 2)
             dol_type = "SELL_SIDE_LIQUIDITY"
