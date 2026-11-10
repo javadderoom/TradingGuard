@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-09T11:12:04.867095",
+  "last_updated": "2026-11-10T10:13:05.608376",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -23,7 +23,7 @@
         "min_rr": "1:3.0",
         "stop_buffer_rule": "Extreme of Judas Sweep Wick + Max(1.5 * 5M ATR, 2.0 * Median Session Spread), with hard floor at 3.5 pips (FX) / $1.80 (XAUUSD)."
       },
-      "auditor_notes": "Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution."
+      "auditor_notes": "Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution. NOTE: DECOMMISSIONED on GBPUSD due to -9.50R empirical drag (PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading session highs, +5.36R, PF 1.60); Bullish Breaker decommissioned (-6.02R drag, 10% WR). Active on XAUUSD (+2.50R) and NQ London Open SHORT."
     },
     {
       "id": "SETUP-ARCH-002",
@@ -92,7 +92,7 @@
         "min_rr": "1:3.0",
         "stop_buffer_rule": "FVG Distal Edge + minimum 3.0 pips (FX) / 2.0 ticks outside displacement pivot"
       },
-      "auditor_notes": "Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization."
+      "auditor_notes": "Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization. NOTE: DECOMMISSIONED on GBPUSD due to -8.50R empirical drag (PF 0.83). Active on XAUUSD (PRO_EXPANSION only)."
     },
     {
       "id": "SETUP-ARCH-005",
@@ -115,7 +115,7 @@
         "min_rr": "1:3.0",
         "stop_buffer_rule": "XAUUSD: Max($1.50, $0.80 + 1.5x 5M ATR) | XAGUSD: Max($0.06, $0.03 + 1.5x 5M ATR) beyond Judas sweep extreme"
       },
-      "auditor_notes": "Approved for algorithmic and discretionary execution exclusively within the designated London Open (07:00–09:00 UTC) and NY Open (12:30–14:30 UTC) liquidity windows. Execution is strictly conditioned on confirmed 5M structural displacement and strict enforcement of the spread-expansion cap."
+      "auditor_notes": "Approved for algorithmic and discretionary execution exclusively within the designated London Open (07:00\u201309:00 UTC) and NY Open (12:30\u201314:30 UTC) liquidity windows. Execution is strictly conditioned on confirmed 5M structural displacement and strict enforcement of the spread-expansion cap."
     },
     {
       "id": "SETUP-ARCH-006",
@@ -234,10 +234,10 @@
       "entry_trigger": "Limit order at H3 breaker retest or newly formed displacement FVG at L5.",
       "invalidation_anchor": "Structural extreme of the internal low L4 + $1.50 spread buffer.",
       "proposer": "Lead Quantitative Strategist & Human Partner (Seat #7)",
-      "status": "RATIFIED",
+      "status": "DECOMMISSIONED",
       "proposed_at": "2026-11-04T17:45:00.000000",
       "ratified_at": "2026-11-04T17:50:00.000000",
-      "vetting_verdict": "RATIFIED",
+      "vetting_verdict": "DECOMMISSIONED",
       "ratified_criteria": {
         "name": "Nested Double MSS (Macro Shift + Pullback Exhaustion Shift)",
         "category": "Structural Shift & Complex Pullback Exhaustion",
@@ -249,7 +249,7 @@
         "be_rr": 1.8,
         "stop_buffer_rule": "L4 swing extreme + $1.50 spread buffer (Gold), bounded between $3.50 min and $8.00 max."
       },
-      "auditor_notes": "Ratified following comprehensive 2-month empirical audit on Gold (Sep 1 - Nov 4, 2026). Achieved 30.0% Win Rate, +8.0R Net Profit, and 1.62 Profit Factor with sweep confirmation. Unanchored execution without sweep is strictly banned due to 10% win rate collapse."
+      "auditor_notes": "[AUDIT 2026-11-09]: Decommissioned across all assets per 12-month empirical audit. Pattern demonstrated 0.0% Win Rate across 8 fills (-3.99R drag). Multi-wave sequential requirement overfits and suffers execution decay in live markets."
     },
     {
       "id": "SETUP-ARCH-012",

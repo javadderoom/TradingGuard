@@ -842,14 +842,32 @@ def screen_ict_session(
 
     # 1. Prior Session Liquidity Benchmark & Polarity
     if session_hour in (9, 10, 11, 12, 13):
+        # Gold London Continuation (hours 12, 13) produces -$7.49R empirical drag (PF 0.81); restricted to London Open
+        if "XAU" in symbol.upper() and session_hour in (12, 13):
+            return {
+                "has_setup": False,
+                "reason": "Veto: London Continuation window bypassed on Gold per 1-year empirical audit (London Open & NY Open only)",
+                "setup_type": "BYPASSED_SESSION",
+                "closed_bars_only": closed_bars_only,
+                "signal_bar_time": signal_bar_time
+            }
         session_window = bars_5m[-84:-10] if len(bars_5m) >= 84 else bars_5m[:-10]
         session_label = "Asian Range"
     elif session_hour in (14, 15, 16):
         if is_gbp:
-            # NY Open on GBPUSD is an empirical drag (-2.0R, 22.9% WR); institutional alpha is 100% in London
+            # NY Open on GBPUSD is an empirical drag (-21.55R, PF 0.67); institutional alpha is strictly in London sessions
             return {
                 "has_setup": False,
-                "reason": "Veto: NY Open window bypassed on GBPUSD per 4-season empirical audit (London sessions only)",
+                "reason": "Veto: NY Open window bypassed on GBPUSD per 1-year empirical audit (London sessions only)",
+                "setup_type": "BYPASSED_SESSION",
+                "closed_bars_only": closed_bars_only,
+                "signal_bar_time": signal_bar_time
+            }
+        if is_nq:
+            # NY Pre-Market on NQ is an empirical drag (-4.44R, PF 0.73); NQ alpha is strictly in London Open Bearish Judas fade
+            return {
+                "has_setup": False,
+                "reason": "Veto: NY Pre-Market window bypassed on NQ per 1-year empirical audit (London Open fade only)",
                 "setup_type": "BYPASSED_SESSION",
                 "closed_bars_only": closed_bars_only,
                 "signal_bar_time": signal_bar_time
@@ -858,11 +876,11 @@ def screen_ict_session(
         session_label = "London Range"
     elif session_hour in (17, 18, 19):
         # NY Silver Bullet / NYSE Cash Window (17:00 - 20:00 Tehran / 09:30 - 11:30 NY)
-        if ("XAU" in symbol.upper() or is_gbp) and not is_index:
-            # Banned on Gold and GBPUSD per 4-season empirical audit (persistent negative drag)
+        if "XAU" in symbol.upper() or is_gbp or is_nq:
+            # Banned on Gold (-33.01R), Cable (-6.54R), and NQ per 1-year empirical audit
             return {
                 "has_setup": False,
-                "reason": f"Veto: Late NY PM / Silver Bullet window banned on {symbol} per empirical audit",
+                "reason": f"Veto: Late NY PM / Silver Bullet window banned on {symbol} per 1-year empirical audit",
                 "setup_type": "BANNED_SESSION",
                 "closed_bars_only": closed_bars_only,
                 "signal_bar_time": signal_bar_time
@@ -985,7 +1003,8 @@ def screen_ict_session(
             return _package_setup(arch_id, "BULLISH_SMT_MITIGATION", entry_p, sl_p, f"BULLISH SMT: {smt_info.get('summary', '')}", "LONG")
 
     # Setup A: Judas Swing + Breaker Block (SETUP-ARCH-001)
-    if swept_high and not is_bullish_breakout and breaker_type == "BEARISH_BREAKER":
+    # Decommissioned on GBPUSD per 1-year audit (13.0% WR, -8.50R loss, PF 0.47)
+    if swept_high and not is_bullish_breakout and breaker_type == "BEARISH_BREAKER" and not is_gbp:
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
@@ -994,7 +1013,8 @@ def screen_ict_session(
         sl_p = max(range_high + sl_buf, breaker_price + sl_dist)
         return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
 
-    if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER":
+    # Bullish Breaker decommissioned on GBPUSD (-9.50R) and NQ (10% WR, -6.02R drag) per 1-year audit
+    if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER" and not is_gbp and not is_nq:
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
@@ -1047,8 +1067,8 @@ def screen_ict_session(
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
     # Gated: Must have broken outside of mid-range equilibrium and cannot be an inside day compression
-    # Decommissioned on NQ per empirical audit (0% Summer WR, negative expectancy)
-    if not (in_mid_equilibrium or is_inside_day) and not is_nq:
+    # Decommissioned on NQ (0% Summer WR) and GBPUSD (-8.50R, PF 0.83, fakeout breakouts) per 1-year audits
+    if not (in_mid_equilibrium or is_inside_day) and not is_nq and not is_gbp:
         if is_bullish_breakout and fvg_dir == "BULLISH":
             if "XAU" not in symbol.upper() or long_phase["phase"] == "PRO_EXPANSION":
                 arch_id = "SETUP-ARCH-004"

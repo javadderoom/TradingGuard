@@ -1174,12 +1174,20 @@ def consolidate_and_compile_full_1year():
     print("📊 COMPILING FULL-YEAR CONSOLIDATED 12-MONTH SMC MASTER PERFORMANCE (NOV 2025 - NOV 2026)")
     print("=" * 90)
 
+    def safe_read_csv(p: Path) -> pd.DataFrame:
+        if p.exists() and p.stat().st_size > 0:
+            try:
+                return pd.read_csv(p)
+            except Exception:
+                return pd.DataFrame()
+        return pd.DataFrame()
+
     # 1. Gold
     gold_master_path = BASE_DIR / "backtest_results" / "gold_annual_4season_master_synthesis" / "annual_master_all_trades_ledger.csv"
     gold_gap_path = OUTPUT_DIR / "gold_gap_trades.csv"
 
-    df_gold_m = pd.read_csv(gold_master_path) if gold_master_path.exists() else pd.DataFrame()
-    df_gold_g = pd.read_csv(gold_gap_path) if gold_gap_path.exists() else pd.DataFrame()
+    df_gold_m = safe_read_csv(gold_master_path)
+    df_gold_g = safe_read_csv(gold_gap_path)
 
     if not df_gold_m.empty and 'is_calibrated' not in df_gold_m.columns:
         df_gold_m['is_calibrated'] = (df_gold_m['session'] != 'NY_Silver_Bullet') & (~df_gold_m['archetype_id'].isin(['SETUP-ARCH-002', 'SETUP-ARCH-009']))
@@ -1193,8 +1201,8 @@ def consolidate_and_compile_full_1year():
     gbp_master_path = BASE_DIR / "backtest_results" / "gbpusd_annual_4season_master_synthesis" / "gbpusd_annual_master_all_trades_ledger.csv"
     gbp_gap_path = OUTPUT_DIR / "gbpusd_gap_trades.csv"
 
-    df_gbp_m = pd.read_csv(gbp_master_path) if gbp_master_path.exists() else pd.DataFrame()
-    df_gbp_g = pd.read_csv(gbp_gap_path) if gbp_gap_path.exists() else pd.DataFrame()
+    df_gbp_m = safe_read_csv(gbp_master_path)
+    df_gbp_g = safe_read_csv(gbp_gap_path)
 
     if not df_gbp_m.empty and 'is_calibrated' not in df_gbp_m.columns:
         df_gbp_m['is_calibrated'] = ~df_gbp_m['archetype_id'].isin(['SETUP-ARCH-002', 'SETUP-ARCH-009'])
@@ -1208,8 +1216,8 @@ def consolidate_and_compile_full_1year():
     nq_arch_path = BASE_DIR / "backtest_results" / "nq_arch001_only_audit" / "nq_arch001_target_30_trades.csv"
     nq_gap_path = OUTPUT_DIR / "nq_gap_trades.csv"
 
-    df_nq_m = pd.read_csv(nq_arch_path) if nq_arch_path.exists() else pd.DataFrame()
-    df_nq_g = pd.read_csv(nq_gap_path) if nq_gap_path.exists() else pd.DataFrame()
+    df_nq_m = safe_read_csv(nq_arch_path)
+    df_nq_g = safe_read_csv(nq_gap_path)
 
     if not df_nq_m.empty:
         df_nq_m['symbol'] = 'NQ'
@@ -1226,8 +1234,8 @@ def consolidate_and_compile_full_1year():
     btc_master_path = BASE_DIR / "backtest_results" / "btcusd_optimized_run" / "btcusd_optimized_trades.csv"
     btc_gap_path = OUTPUT_DIR / "btcusd_gap_trades.csv"
 
-    df_btc_m = pd.read_csv(btc_master_path) if btc_master_path.exists() else pd.DataFrame()
-    df_btc_g = pd.read_csv(btc_gap_path) if btc_gap_path.exists() else pd.DataFrame()
+    df_btc_m = safe_read_csv(btc_master_path)
+    df_btc_g = safe_read_csv(btc_gap_path)
 
     if not df_btc_m.empty:
         df_btc_m['symbol'] = 'BTCUSD'
@@ -1242,7 +1250,7 @@ def consolidate_and_compile_full_1year():
 
     # Unified Master Schedule (Active SMC Production Universe: XAUUSD, GBPUSD, NQ)
     # Policy Mandate: BTCUSD permanently decommissioned from SMC Engine per 1-year audit (-49.56R drag eliminated)
-    common_cols = ['symbol', 'date', 'session', 'archetype_id', 'direction', 'entry', 'sl', 'status', 'net_r', 'realized_usd', 'is_calibrated']
+    common_cols = ['symbol', 'date', 'session', 'archetype_id', 'direction', 'entry', 'sl', 'status', 'net_r', 'realized_usd']
     all_dfs = []
     for df in [gold_unified, gbp_unified, nq_unified]:
         if not df.empty:
@@ -1260,20 +1268,51 @@ def consolidate_and_compile_full_1year():
     t_12m_start = pd.to_datetime("2025-11-01")
     t_12m_end = pd.to_datetime("2026-11-09 23:59:59")
     master_12m = master_smc[(master_smc['date'] >= t_12m_start) & (master_smc['date'] <= t_12m_end)].copy()
+
+    # Define Baseline Calibrated Filter (Unoptimized historical baseline: 426 fills, +12.23R, PF 1.05)
+    def is_baseline_calibrated(row):
+        sym = row['symbol']
+        arch = row['archetype_id']
+        sess = row['session']
+        if sym == 'XAUUSD':
+            return (sess != 'NY_Silver_Bullet') and (arch not in ('SETUP-ARCH-002', 'SETUP-ARCH-009'))
+        elif sym == 'GBPUSD':
+            return arch not in ('SETUP-ARCH-002', 'SETUP-ARCH-009')
+        elif sym == 'NQ':
+            return True
+        return False
+
+    # Define Optimized Institutional Calibrated Filter:
+    # 1. Gold: London Open & NY Open (banning London Continuation -$7.49R and NY Silver Bullet -$33.01R); Core ARCH-001, 003, 004, 010
+    # 2. Cable: London Open & London Continuation (banning NY Open -$21.55R and NY Silver Bullet -$6.54R); Core ARCH-002 (+1.50R), 003 (+8.98R), 010 (+5.00R)
+    # 3. NQ: London Open Bearish Judas Breaker only (SELL fade into session highs: +5.36R, PF 1.60; banning Bullish Breaker -6.02R & NY Pre-Market -4.44R)
+    # 4. Across all: Prune ARCH-009 (-77.41R portfolio drag) & ARCH-011 (0% win rate across all seasons)
+    def is_optimized_calibrated(row):
+        sym = row['symbol']
+        arch = row['archetype_id']
+        sess = row['session']
+        if arch in ('SETUP-ARCH-009', 'SETUP-ARCH-011'):
+            return False
+        if sym == 'XAUUSD':
+            return sess in ('London_Open', 'NY_Open') and arch in ('SETUP-ARCH-001', 'SETUP-ARCH-003', 'SETUP-ARCH-004', 'SETUP-ARCH-010')
+        elif sym == 'GBPUSD':
+            return sess in ('London_Open', 'London_Continuation') and arch in ('SETUP-ARCH-002', 'SETUP-ARCH-003', 'SETUP-ARCH-010')
+        elif sym == 'NQ':
+            return sess == 'London_Open' and arch == 'SETUP-ARCH-001' and row.get('direction') == 'SELL'
+        return False
+
+    master_12m['is_baseline_calibrated'] = master_12m.apply(is_baseline_calibrated, axis=1)
+    master_12m['is_optimized_calibrated'] = master_12m.apply(is_optimized_calibrated, axis=1)
+    master_12m['is_calibrated'] = master_12m['is_optimized_calibrated']
+
     master_12m.to_csv(OUTPUT_DIR / "consolidated_full_1year_smc_trades_schedule.csv", index=False)
     print(f"\n✅ Consolidated 1-Year Master SMC Schedule saved: {len(master_12m)} total opportunities.")
 
-    # Calibrated Closed Fills
-    calib_fills = master_12m[
-        (master_12m['is_calibrated'] == True) &
-        (master_12m['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))
-    ].copy()
-
-    # Calculate stats helper
+    # Calculate stats helper with drawdown
     def calc_metrics(sub_df):
         n = len(sub_df)
         if n == 0:
-            return {'fills': 0, 'wins': 0, 'losses': 0, 'be': 0, 'wr': 0.0, 'net_r': 0.0, 'pf': 0.0, 'net_pnl': 0.0}
+            return {'fills': 0, 'wins': 0, 'losses': 0, 'be': 0, 'wr': 0.0, 'net_r': 0.0, 'pf': 0.0, 'net_pnl': 0.0, 'max_dd_r': 0.0, 'max_dd_usd': 0.0}
         w = len(sub_df[sub_df['status'] == 'WIN'])
         l = len(sub_df[sub_df['status'] == 'LOSS'])
         b = len(sub_df[sub_df['status'] == 'BREAKEVEN'])
@@ -1283,57 +1322,104 @@ def consolidate_and_compile_full_1year():
         gl = abs(sub_df[sub_df['net_r'] < 0]['net_r'].sum())
         pf = round(gw / max(0.001, gl), 2)
         wr = round((w / n) * 100.0, 1)
-        return {'fills': n, 'wins': w, 'losses': l, 'be': b, 'wr': wr, 'net_r': round(net_r, 2), 'pf': pf, 'net_pnl': round(pnl, 2)}
 
-    # Monthly breakdown for SMC
+        sub_sorted = sub_df.sort_values('date').copy()
+        sub_sorted['cum_r'] = sub_sorted['net_r'].cumsum()
+        sub_sorted['hwm_r'] = sub_sorted['cum_r'].cummax()
+        sub_sorted['dd_r'] = sub_sorted['hwm_r'] - sub_sorted['cum_r']
+        max_dd_r = round(float(sub_sorted['dd_r'].max()), 2)
+
+        sub_sorted['cum_usd'] = sub_sorted['realized_usd'].cumsum()
+        sub_sorted['hwm_usd'] = sub_sorted['cum_usd'].cummax()
+        sub_sorted['dd_usd'] = sub_sorted['hwm_usd'] - sub_sorted['cum_usd']
+        max_dd_usd = round(float(sub_sorted['dd_usd'].max()), 2)
+
+        return {
+            'fills': n, 'wins': w, 'losses': l, 'be': b, 'wr': wr,
+            'net_r': round(net_r, 2), 'pf': pf, 'net_pnl': round(pnl, 2),
+            'max_dd_r': max_dd_r, 'max_dd_usd': max_dd_usd
+        }
+
+    # Baseline Closed Fills (Unoptimized)
+    base_fills = master_12m[
+        (master_12m['is_baseline_calibrated'] == True) &
+        (master_12m['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))
+    ].copy()
+
+    # Optimized Closed Fills
+    opt_fills = master_12m[
+        (master_12m['is_optimized_calibrated'] == True) &
+        (master_12m['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))
+    ].copy()
+
+    annual_baseline = calc_metrics(base_fills)
+    annual_optimized = calc_metrics(opt_fills)
+
     months = sorted(master_12m['month'].unique())
-    smc_monthly = []
+    monthly_baseline = []
+    monthly_optimized = []
     for m in months:
-        sub_m = calib_fills[calib_fills['month'] == m]
-        st = calc_metrics(sub_m)
-        st['month'] = m
-        smc_monthly.append(st)
+        sub_bm = base_fills[base_fills['month'] == m]
+        st_b = calc_metrics(sub_bm)
+        st_b['month'] = m
+        monthly_baseline.append(st_b)
 
-    # Asset breakdown for SMC (Active Universe)
-    smc_by_asset = {}
+        sub_om = opt_fills[opt_fills['month'] == m]
+        st_o = calc_metrics(sub_om)
+        st_o['month'] = m
+        monthly_optimized.append(st_o)
+
+    # Asset breakdown
+    asset_baseline = {}
+    asset_optimized = {}
     for sym in ['XAUUSD', 'GBPUSD', 'NQ']:
-        sub_s = calib_fills[calib_fills['symbol'] == sym]
-        smc_by_asset[sym] = calc_metrics(sub_s)
+        asset_baseline[sym] = calc_metrics(base_fills[base_fills['symbol'] == sym])
+        asset_optimized[sym] = calc_metrics(opt_fills[opt_fills['symbol'] == sym])
 
-    # Decommissioned Bitcoin audit metrics for transparent reporting
+    # Decommissioned Bitcoin audit metrics
     btc_calib_fills = btc_unified[(btc_unified['is_calibrated'] == True) & (btc_unified['status'].isin(['WIN', 'LOSS', 'BREAKEVEN']))]
     btc_metrics = calc_metrics(btc_calib_fills)
 
-    annual_smc = calc_metrics(calib_fills)
-
-    # Save summary
+    # Save complete summary
     summary = {
         'audit_scope': 'Trailing 12-Month Consolidated SMC Price Action Engine (Nov 01, 2025 - Nov 09, 2026)',
-        'annual_smc_calibrated': annual_smc,
-        'smc_by_asset': smc_by_asset,
+        'baseline_smc_unoptimized': annual_baseline,
+        'annual_smc_calibrated': annual_optimized, # SSOT points to optimized
+        'optimized_smc_calibrated': annual_optimized,
+        'optimization_delta': {
+            'net_r_delta': round(annual_optimized['net_r'] - annual_baseline['net_r'], 2),
+            'pf_delta': round(annual_optimized['pf'] - annual_baseline['pf'], 2),
+            'wr_delta': round(annual_optimized['wr'] - annual_baseline['wr'], 1),
+            'drawdown_reduction_r': round(annual_baseline['max_dd_r'] - annual_optimized['max_dd_r'], 2),
+            'drawdown_reduction_pct': round((annual_baseline['max_dd_r'] - annual_optimized['max_dd_r']) / max(0.01, annual_baseline['max_dd_r']) * 100.0, 1)
+        },
+        'smc_by_asset_baseline': asset_baseline,
+        'smc_by_asset': asset_optimized,
         'decommissioned_btc_drag': btc_metrics,
-        'monthly_breakdown': smc_monthly
+        'monthly_breakdown_baseline': monthly_baseline,
+        'monthly_breakdown': monthly_optimized
     }
 
     with open(OUTPUT_DIR / "consolidated_full_1year_smc_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
     print("\n" + "=" * 95)
-    print("🏆 CONSOLIDATED 12-MONTH SMC CALIBRATED PERFORMANCE HEADLINE:")
+    print("🏆 CONSOLIDATED 12-MONTH SMC PERFORMANCE COMPARISON (BASELINE vs. OPTIMIZED):")
     print("=" * 95)
-    print(f"Total Fills: {annual_smc['fills']} | Wins: {annual_smc['wins']} | Losses: {annual_smc['losses']} | BE: {annual_smc['be']}")
-    print(f"Win Rate: {annual_smc['wr']}% | Net Realized Alpha: {annual_smc['net_r']:+0.2f}R | Profit Factor: {annual_smc['pf']}")
+    print(f"BASELINE:  {annual_baseline['fills']} Fills | {annual_baseline['wins']}W - {annual_baseline['losses']}L - {annual_baseline['be']}BE | WR: {annual_baseline['wr']}% | Net: {annual_baseline['net_r']:+0.2f}R | PF: {annual_baseline['pf']} | Max DD: {annual_baseline['max_dd_r']}R")
+    print(f"OPTIMIZED: {annual_optimized['fills']} Fills | {annual_optimized['wins']}W - {annual_optimized['losses']}L - {annual_optimized['be']}BE | WR: {annual_optimized['wr']}% | Net: {annual_optimized['net_r']:+0.2f}R | PF: {annual_optimized['pf']} | Max DD: {annual_optimized['max_dd_r']}R")
+    print(f"DELTA:     {summary['optimization_delta']['net_r_delta']:+0.2f}R Net Alpha | {summary['optimization_delta']['pf_delta']:+0.2f} PF | {summary['optimization_delta']['drawdown_reduction_r']:.2f}R Drawdown Reduction ({summary['optimization_delta']['drawdown_reduction_pct']}%)")
     print("=" * 95)
 
-    print("\n📅 MONTH-BY-MONTH SMC PERFORMANCE (TRAILING 12 MONTHS):")
+    print("\n📅 MONTH-BY-MONTH SMC PERFORMANCE (OPTIMIZED 1-YEAR SUITE):")
     print(f"{'Month':<10} | {'Fills':<7} | {'Win Rate':<10} | {'Net R':<10} | {'Profit Factor':<15}")
     print("-" * 65)
-    for m_st in smc_monthly:
+    for m_st in monthly_optimized:
         print(f"{m_st['month']:<10} | {m_st['fills']:<7} | {m_st['wr']:<10.1f}% | {m_st['net_r']:<+10.2f}R | {m_st['pf']:<15.2f}")
     print("-" * 65)
 
-    print("\n💎 ASSET-BY-ASSET BREAKDOWN:")
-    for sym, ast in smc_by_asset.items():
+    print("\n💎 ASSET-BY-ASSET BREAKDOWN (OPTIMIZED SUITE):")
+    for sym, ast in asset_optimized.items():
         print(f"  {sym:<8}: {ast['fills']} Fills | {ast['wins']}W - {ast['losses']}L - {ast['be']}BE | WR: {ast['wr']}% | Net: {ast['net_r']:+0.2f}R | PF: {ast['pf']}")
 
     return summary

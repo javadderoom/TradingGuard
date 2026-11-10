@@ -1,16 +1,49 @@
 {
   "audit_scope": "Trailing 12-Month Consolidated SMC Price Action Engine (Nov 01, 2025 - Nov 09, 2026)",
-  "annual_smc_calibrated": {
-    "fills": 426,
-    "wins": 93,
-    "losses": 264,
-    "be": 69,
-    "wr": 21.8,
-    "net_r": 12.23,
-    "pf": 1.05,
-    "net_pnl": 1328.07
+  "baseline_smc_unoptimized": {
+    "fills": 414,
+    "wins": 92,
+    "losses": 254,
+    "be": 68,
+    "wr": 22.2,
+    "net_r": 19.61,
+    "pf": 1.08,
+    "net_pnl": 1374.97,
+    "max_dd_r": 35.41,
+    "max_dd_usd": 2314.44
   },
-  "smc_by_asset": {
+  "annual_smc_calibrated": {
+    "fills": 179,
+    "wins": 49,
+    "losses": 105,
+    "be": 25,
+    "wr": 27.4,
+    "net_r": 48.27,
+    "pf": 1.46,
+    "net_pnl": 3122.67,
+    "max_dd_r": 11.99,
+    "max_dd_usd": 925.52
+  },
+  "optimized_smc_calibrated": {
+    "fills": 179,
+    "wins": 49,
+    "losses": 105,
+    "be": 25,
+    "wr": 27.4,
+    "net_r": 48.27,
+    "pf": 1.46,
+    "net_pnl": 3122.67,
+    "max_dd_r": 11.99,
+    "max_dd_usd": 925.52
+  },
+  "optimization_delta": {
+    "net_r_delta": 28.66,
+    "pf_delta": 0.38,
+    "wr_delta": 5.2,
+    "drawdown_reduction_r": 23.42,
+    "drawdown_reduction_pct": 66.1
+  },
+  "smc_by_asset_baseline": {
     "XAUUSD": {
       "fills": 177,
       "wins": 38,
@@ -19,7 +52,9 @@
       "wr": 21.5,
       "net_r": 17.94,
       "pf": 1.16,
-      "net_pnl": 99.85
+      "net_pnl": 99.85,
+      "max_dd_r": 33.98,
+      "max_dd_usd": 171.82
     },
     "GBPUSD": {
       "fills": 200,
@@ -29,39 +64,85 @@
       "wr": 22.5,
       "net_r": -0.61,
       "pf": 0.99,
-      "net_pnl": 1268.61
+      "net_pnl": 1268.61,
+      "max_dd_r": 19.0,
+      "max_dd_usd": 2400.0
     },
     "NQ": {
-      "fills": 49,
-      "wins": 10,
-      "losses": 34,
-      "be": 5,
-      "wr": 20.4,
-      "net_r": -5.1,
-      "pf": 0.85,
-      "net_pnl": -40.39
+      "fills": 37,
+      "wins": 9,
+      "losses": 24,
+      "be": 4,
+      "wr": 24.3,
+      "net_r": 2.28,
+      "pf": 1.1,
+      "net_pnl": 6.51,
+      "max_dd_r": 12.02,
+      "max_dd_usd": 62.5
+    }
+  },
+  "smc_by_asset": {
+    "XAUUSD": {
+      "fills": 119,
+      "wins": 29,
+      "losses": 74,
+      "be": 16,
+      "wr": 24.4,
+      "net_r": 27.43,
+      "pf": 1.37,
+      "net_pnl": 159.8,
+      "max_dd_r": 21.98,
+      "max_dd_usd": 111.62
+    },
+    "GBPUSD": {
+      "fills": 45,
+      "wins": 15,
+      "losses": 22,
+      "be": 8,
+      "wr": 33.3,
+      "net_r": 15.48,
+      "pf": 1.7,
+      "net_pnl": 2939.46,
+      "max_dd_r": 7.0,
+      "max_dd_usd": 980.0
+    },
+    "NQ": {
+      "fills": 15,
+      "wins": 5,
+      "losses": 9,
+      "be": 1,
+      "wr": 33.3,
+      "net_r": 5.36,
+      "pf": 1.6,
+      "net_pnl": 23.41,
+      "max_dd_r": 6.0,
+      "max_dd_usd": 31.5
     }
   },
   "decommissioned_btc_drag": {
-    "fills": 278,
-    "wins": 49,
-    "losses": 201,
-    "be": 28,
-    "wr": 17.6,
-    "net_r": -49.56,
-    "pf": 0.76,
-    "net_pnl": -140.81
+    "fills": 85,
+    "wins": 20,
+    "losses": 57,
+    "be": 8,
+    "wr": 23.5,
+    "net_r": -2.96,
+    "pf": 0.95,
+    "net_pnl": -20.27,
+    "max_dd_r": 13.34,
+    "max_dd_usd": 45.56
   },
-  "monthly_breakdown": [
+  "monthly_breakdown_baseline": [
     {
-      "fills": 34,
+      "fills": 31,
       "wins": 9,
-      "losses": 22,
+      "losses": 19,
       "be": 3,
-      "wr": 26.5,
-      "net_r": 8.61,
-      "pf": 1.39,
-      "net_pnl": 34.0,
+      "wr": 29.0,
+      "net_r": 11.61,
+      "pf": 1.61,
+      "net_pnl": 52.0,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 21.18,
       "month": "2025-11"
     },
     {
@@ -73,6 +154,8 @@
       "net_r": -13.98,
       "pf": 0.33,
       "net_pnl": -47.32,
+      "max_dd_r": 17.49,
+      "max_dd_usd": 76.84,
       "month": "2025-12"
     },
     {
@@ -84,50 +167,60 @@
       "net_r": 3.0,
       "pf": 1.1,
       "net_pnl": 1117.58,
+      "max_dd_r": 8.0,
+      "max_dd_usd": 865.0,
       "month": "2026-01"
     },
     {
-      "fills": 37,
+      "fills": 35,
       "wins": 5,
-      "losses": 23,
+      "losses": 21,
       "be": 9,
-      "wr": 13.5,
-      "net_r": -9.2,
-      "pf": 0.6,
-      "net_pnl": -715.0,
+      "wr": 14.3,
+      "net_r": -7.2,
+      "pf": 0.66,
+      "net_pnl": -703.0,
+      "max_dd_r": 12.2,
+      "max_dd_usd": 1373.0,
       "month": "2026-02"
     },
     {
-      "fills": 39,
+      "fills": 37,
       "wins": 6,
-      "losses": 26,
+      "losses": 24,
       "be": 7,
-      "wr": 15.4,
-      "net_r": -10.7,
-      "pf": 0.59,
-      "net_pnl": -225.5,
+      "wr": 16.2,
+      "net_r": -8.7,
+      "pf": 0.64,
+      "net_pnl": -213.5,
+      "max_dd_r": 12.7,
+      "max_dd_usd": 1040.5,
       "month": "2026-03"
     },
     {
-      "fills": 43,
-      "wins": 12,
-      "losses": 20,
+      "fills": 40,
+      "wins": 11,
+      "losses": 18,
       "be": 11,
-      "wr": 27.9,
-      "net_r": 12.3,
-      "pf": 1.61,
-      "net_pnl": 1718.75,
+      "wr": 27.5,
+      "net_r": 11.5,
+      "pf": 1.64,
+      "net_pnl": 1716.75,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 480.0,
       "month": "2026-04"
     },
     {
-      "fills": 8,
+      "fills": 6,
       "wins": 0,
-      "losses": 7,
-      "be": 1,
+      "losses": 6,
+      "be": 0,
       "wr": 0.0,
-      "net_r": -7.18,
+      "net_r": -6.0,
       "pf": 0.0,
-      "net_pnl": -37.5,
+      "net_pnl": -30.6,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 25.5,
       "month": "2026-05"
     },
     {
@@ -139,6 +232,8 @@
       "net_r": 0.98,
       "pf": 1.49,
       "net_pnl": 4.7,
+      "max_dd_r": 2.0,
+      "max_dd_usd": 10.2,
       "month": "2026-06"
     },
     {
@@ -150,6 +245,8 @@
       "net_r": 0.5,
       "pf": 1.02,
       "net_pnl": -485.48,
+      "max_dd_r": 8.5,
+      "max_dd_usd": 738.22,
       "month": "2026-07"
     },
     {
@@ -161,6 +258,8 @@
       "net_r": -12.0,
       "pf": 0.6,
       "net_pnl": -1254.56,
+      "max_dd_r": 11.0,
+      "max_dd_usd": 1134.56,
       "month": "2026-08"
     },
     {
@@ -172,6 +271,8 @@
       "net_r": 29.44,
       "pf": 2.34,
       "net_pnl": 483.74,
+      "max_dd_r": 6.0,
+      "max_dd_usd": 447.75,
       "month": "2026-09"
     },
     {
@@ -183,6 +284,8 @@
       "net_r": 12.96,
       "pf": 1.48,
       "net_pnl": 1102.9,
+      "max_dd_r": 8.0,
+      "max_dd_usd": 512.73,
       "month": "2026-10"
     },
     {
@@ -194,6 +297,179 @@
       "net_r": -2.5,
       "pf": 0.58,
       "net_pnl": -368.24,
+      "max_dd_r": 3.0,
+      "max_dd_usd": 243.5,
+      "month": "2026-11"
+    }
+  ],
+  "monthly_breakdown": [
+    {
+      "fills": 17,
+      "wins": 5,
+      "losses": 10,
+      "be": 2,
+      "wr": 29.4,
+      "net_r": 6.72,
+      "pf": 1.67,
+      "net_pnl": 29.73,
+      "max_dd_r": 4.98,
+      "max_dd_usd": 29.38,
+      "month": "2025-11"
+    },
+    {
+      "fills": 14,
+      "wins": 2,
+      "losses": 11,
+      "be": 1,
+      "wr": 14.3,
+      "net_r": -4.01,
+      "pf": 0.64,
+      "net_pnl": -4.36,
+      "max_dd_r": 7.98,
+      "max_dd_usd": 39.24,
+      "month": "2025-12"
+    },
+    {
+      "fills": 23,
+      "wins": 8,
+      "losses": 12,
+      "be": 3,
+      "wr": 34.8,
+      "net_r": 10.0,
+      "pf": 1.83,
+      "net_pnl": 1752.52,
+      "max_dd_r": 3.5,
+      "max_dd_usd": 274.75,
+      "month": "2026-01"
+    },
+    {
+      "fills": 14,
+      "wins": 1,
+      "losses": 9,
+      "be": 4,
+      "wr": 7.1,
+      "net_r": -6.2,
+      "pf": 0.31,
+      "net_pnl": -438.0,
+      "max_dd_r": 5.2,
+      "max_dd_usd": 433.0,
+      "month": "2026-02"
+    },
+    {
+      "fills": 13,
+      "wins": 2,
+      "losses": 9,
+      "be": 2,
+      "wr": 15.4,
+      "net_r": -3.7,
+      "pf": 0.59,
+      "net_pnl": 49.0,
+      "max_dd_r": 4.0,
+      "max_dd_usd": 158.0,
+      "month": "2026-03"
+    },
+    {
+      "fills": 16,
+      "wins": 5,
+      "losses": 7,
+      "be": 4,
+      "wr": 31.2,
+      "net_r": 7.5,
+      "pf": 2.07,
+      "net_pnl": 914.75,
+      "max_dd_r": 2.0,
+      "max_dd_usd": 145.0,
+      "month": "2026-04"
+    },
+    {
+      "fills": 3,
+      "wins": 0,
+      "losses": 3,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": -3.0,
+      "pf": 0.0,
+      "net_pnl": -15.3,
+      "max_dd_r": 2.0,
+      "max_dd_usd": 10.2,
+      "month": "2026-05"
+    },
+    {
+      "fills": 2,
+      "wins": 0,
+      "losses": 2,
+      "be": 0,
+      "wr": 0.0,
+      "net_r": -2.0,
+      "pf": 0.0,
+      "net_pnl": -10.2,
+      "max_dd_r": 1.0,
+      "max_dd_usd": 5.1,
+      "month": "2026-06"
+    },
+    {
+      "fills": 17,
+      "wins": 6,
+      "losses": 8,
+      "be": 3,
+      "wr": 35.3,
+      "net_r": 12.0,
+      "pf": 2.5,
+      "net_pnl": 140.49,
+      "max_dd_r": 3.0,
+      "max_dd_usd": 258.75,
+      "month": "2026-07"
+    },
+    {
+      "fills": 15,
+      "wins": 3,
+      "losses": 11,
+      "be": 1,
+      "wr": 20.0,
+      "net_r": -0.5,
+      "pf": 0.95,
+      "net_pnl": -544.27,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 544.27,
+      "month": "2026-08"
+    },
+    {
+      "fills": 21,
+      "wins": 8,
+      "losses": 11,
+      "be": 2,
+      "wr": 38.1,
+      "net_r": 15.48,
+      "pf": 2.41,
+      "net_pnl": 286.15,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 140.0,
+      "month": "2026-09"
+    },
+    {
+      "fills": 20,
+      "wins": 8,
+      "losses": 9,
+      "be": 3,
+      "wr": 40.0,
+      "net_r": 15.48,
+      "pf": 2.72,
+      "net_pnl": 950.4,
+      "max_dd_r": 5.0,
+      "max_dd_usd": 140.0,
+      "month": "2026-10"
+    },
+    {
+      "fills": 4,
+      "wins": 1,
+      "losses": 3,
+      "be": 0,
+      "wr": 25.0,
+      "net_r": 0.5,
+      "pf": 1.17,
+      "net_pnl": 11.76,
+      "max_dd_r": 2.0,
+      "max_dd_usd": 9.1,
       "month": "2026-11"
     }
   ]

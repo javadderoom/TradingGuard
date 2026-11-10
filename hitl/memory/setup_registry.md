@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-09T11:12:04.867095` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-10T10:13:05.608376` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -12,8 +12,7 @@
 - **Entry Trigger:** `Anchor Limit Order at Breaker Block proximal edge.`
 - **Invalidation Anchor:** `Structural extreme of the Judas sweep wick with mandated ATR buffer.`
 - **Mandated Minimum R:R:** `1:3.0`
-- **Stop Buffer Requirement:** `Extreme of Judas Sweep Wick + Max(1.5 * 5M ATR, 2.0 * Median Session Spread), with hard floor at 3.5 pips (FX) / $1.80 (XAUUSD).`
-> **Supervisory Audit Verdict:** RATIFIED | *Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution.*
+> **Supervisory Audit Verdict:** RATIFIED | *Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution. [AUDIT 2026-11-10]: Decommissioned on GBPUSD due to -9.50R empirical drag (PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading session highs, +5.36R, PF 1.60); Bullish Breaker decommissioned (-6.02R drag, 10% WR). Active on XAUUSD (+2.50R) and NQ London Open SHORT.*
 
 ### 🟢 [SETUP-ARCH-002] Judas Swing & Fair Value Gap Mitigation (Liquidity Sweep & FVG Mitigation)
 - **Description:** Session sweep of liquidity followed by immediate mitigation of a newly formed 5M Fair Value Gap.
@@ -37,7 +36,7 @@
 - **Invalidation Anchor:** `Prior session boundary or FVG distal edge.`
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `FVG Distal Edge + minimum 3.0 pips (FX) / 2.0 ticks outside displacement pivot`
-> **Supervisory Audit Verdict:** RATIFIED | *Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization.*
+> **Supervisory Audit Verdict:** RATIFIED | *Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization. [AUDIT 2026-11-10]: Decommissioned on GBPUSD due to -8.50R empirical drag (PF 0.83). Active on XAUUSD (PRO_EXPANSION only).*
 
 ### 🟢 [SETUP-ARCH-005] Precious Metals Intermarket SMT Divergence & Liquidity Sweep Mitigation (Intermarket SMT Divergence & Liquidity Sweep)
 - **Description:** Relative structural non-confirmation between Gold (XAUUSD) and Silver (XAGUSD) at key session liquidity boundaries (London / NY Open). When one metal sweeps session extremes (Judas swing) while the other refuses to sweep (holding higher low or lower high), enter on the mitigation of the confirmed 5M FVG or Breaker Block aligned with institutional accumulation/distribution.
@@ -86,14 +85,6 @@
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `Sweep Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
 > **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Designed specifically to capture runaway trend expansions (such as September 11 Equal Highs sweep and September 16 PDH sweep) without demanding deep 50% HTF retracements. By locking invalidation to the M1 sweep wick, dollar risk remains strictly within the  cap while providing 1:3R to 1:6R+ asymmetry. [AUDIT 2026-11-04]: Flagship on Gold (+14.0R, PF 1.67) and 100% WR on Cable (+5.0R, 2/2 wins).*
-
-### 🟢 [SETUP-ARCH-011] Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) (Structural Shift & Complex Pullback Exhaustion)
-- **Description:** Multi-wave nested reversal formation. Price sweeps macro liquidity (L1->L2), displaces above H1 (1st MSS to H2), forms an internal pullback (H2->L3->H3->L4), and prints a 2nd MSS displacement breaking H3 to H4. Entry is placed on the retest of H3 / FVG at L5 with Stop Loss anchored below L4.
-- **Entry Trigger:** `Limit order at H3 breaker retest or newly formed displacement FVG at L5.`
-- **Invalidation Anchor:** `Structural extreme of the internal low L4 + $1.50 spread buffer.`
-- **Mandated Minimum R:R:** `1:3.0`
-- **Stop Buffer Requirement:** `L4 swing extreme + $1.50 spread buffer (Gold), bounded between $3.50 min and $8.00 max.`
-> **Supervisory Audit Verdict:** RATIFIED | *Ratified following comprehensive 2-month empirical audit on Gold (Sep 1 - Nov 4, 2026). Achieved 30.0% Win Rate, +8.0R Net Profit, and 1.62 Profit Factor with sweep confirmation. Unanchored execution without sweep is strictly banned due to 10% win rate collapse.*
 
 ### 🟢 [SETUP-ARCH-012] Macro ADR Exhaustion Mean-Reversion Snapback (Quantitative Statistical Arbitrage & Mean-Reversion)
 - **Description:** Statistical exhaustion pattern triggering when an asset expands >= 85% of its 20-day Average Daily Range (ADR) during institutional session hours before 16:00 UTC, followed by an M5 rejection bar at the intraday extreme. Exploits low probability of unilateral trend continuation past ADR without mean-reverting towards session equilibrium.
@@ -198,3 +189,10 @@
 - **Mandated Minimum R:R:** `1:5.6`
 - **Stop Buffer Requirement:** `Per Active Playbook`
 > **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7656 OOS bars with zero narrative bias.*
+
+---
+## ⏳ Candidate Archetypes Under Review / Proposed
+
+| ID | Name | Category | Status | Proposed Trigger |
+| :--- | :--- | :--- | :---: | :--- |
+| `SETUP-ARCH-011` | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Structural Shift & Complex Pullback Exhaustion | **DECOMMISSIONED** | Limit order at H3 breaker retest or newly formed displacement FVG at L5. |
