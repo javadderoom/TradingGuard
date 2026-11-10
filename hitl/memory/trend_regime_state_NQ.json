@@ -1,0 +1,193 @@
+{
+  "symbol": "NQ",
+  "horizons": {
+    "session": {
+      "bias": "RANGE_CHOP",
+      "confidence": 0.76,
+      "session_archetype": "RANGE_BOUND_CHOP",
+      "expected_range": {
+        "high": 28081.2,
+        "low": 27741.2
+      },
+      "key_trigger": 27766.2,
+      "catalyst_danger": "LOW"
+    },
+    "day": {
+      "bias": "CONSOLIDATION",
+      "confidence": 0.35,
+      "daily_dol": {
+        "target": 27600.4,
+        "type": "SELL_SIDE_LIQUIDITY",
+        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting SELL_SIDE_LIQUIDITY"
+      },
+      "invalidation": 27414.0,
+      "candle_archetype": "CONSOLIDATION_DAY"
+    },
+    "week": {
+      "bias": "BULLISH",
+      "confidence": 0.03,
+      "macro_target": 28837.1,
+      "weekly_profile": "TUESDAY_LOW_OF_WEEK"
+    }
+  },
+  "trade_management": {
+    "aligned": {
+      "tp_r": 3.5,
+      "be_ratchet_r": 1.0,
+      "mode": "INDEX_TREND_EXPANSION",
+      "note": "Index Trend Expansion: 3.5R TP with early 1.0R BE protection"
+    },
+    "counter": {
+      "tp_r": 3.0,
+      "be_ratchet_r": 0.8,
+      "mode": "INDEX_MEAN_REVERSION_FADE",
+      "note": "Judas Sweep Fade: 3.0R TP with fast 0.8R BE ratchet (Premier Edge)"
+    },
+    "sideways": {
+      "tp_r": 3.0,
+      "be_ratchet_r": 0.8,
+      "mode": "INDEX_RANGE_BOUNDARY_FADE",
+      "note": "Index Range Boundary Fade: 3.0R TP with 0.8R BE protection"
+    }
+  },
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for NQ. Session bias rated RANGE_CHOP (confidence 75%), Daily horizon aligned with CONSOLIDATION_DAY toward 27600.40. Weekly profile: TUESDAY_LOW_OF_WEEK.",
+  "source": "subq-snap-1.1",
+  "latency_ms": 3200.5,
+  "generated_at_utc": "2026-11-10 19:51:26 UTC",
+  "generated_at_tehran": "2026-11-10 23:21:26 Tehran",
+  "on_chart_telemetry": {
+    "symbol": "NQ",
+    "asset_class": "INDEX",
+    "active_anchor": "AFTER_HOURS",
+    "current_price": 27666.9,
+    "timestamp_utc": "2026-11-10 19:51:23 UTC",
+    "timestamp_tehran": "2026-11-10 23:21:23 Tehran",
+    "daily_structure": {
+      "pdh": 28021.8,
+      "pdl": 26644.9,
+      "pdc": 27966.7,
+      "daily_open": 27967.6,
+      "daily_high": 28001.2,
+      "daily_low": 27414.0,
+      "daily_range": 587.2,
+      "adr_14": 876.56,
+      "adr_utilization_pct": 67.0,
+      "has_swept_pdh": false,
+      "has_swept_pdl": false
+    },
+    "weekly_structure": {
+      "pwh": 28837.1,
+      "pwl": 26254.3,
+      "cwo": 26817.3,
+      "relation_to_weekly_open": "ABOVE_WEEKLY_OPEN"
+    },
+    "session_ranges": {
+      "asian_high": 28001.2,
+      "asian_low": 27766.2,
+      "asian_range": 235.0,
+      "london_high": 27940.8,
+      "london_low": 27769.5,
+      "london_range": 171.3
+    },
+    "london_context": {
+      "is_established": true,
+      "london_high": 27940.8,
+      "london_low": 27769.5,
+      "london_range": 171.3,
+      "swept_asian_high": false,
+      "swept_asian_low": false,
+      "pre_ny_adr_util_pct": 67.0,
+      "exhaustion_alert": true
+    },
+    "draw_on_liquidity": {
+      "type": "SELL_SIDE_LIQUIDITY",
+      "target_price": 27600.4,
+      "distance_pts": 66.5,
+      "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
+    },
+    "liquidity_pools": {
+      "overhead_bsl": [
+        27686.3,
+        27689.5,
+        27748.7
+      ],
+      "underlying_ssl": [
+        27600.4,
+        27582.9,
+        27577.4
+      ],
+      "active_h1_fvgs": [
+        {
+          "type": "BEARISH_FVG",
+          "top": 27090.6,
+          "bottom": 27026.6,
+          "midpoint": 27058.6,
+          "size": 64.0,
+          "bar_time": 1794207600
+        },
+        {
+          "type": "BULLISH_FVG",
+          "top": 27582.9,
+          "bottom": 27259.8,
+          "midpoint": 27421.35,
+          "size": 323.1,
+          "bar_time": 1794240000
+        }
+      ],
+      "active_h4_fvgs": [
+        {
+          "type": "BULLISH_FVG",
+          "top": 28131.8,
+          "bottom": 28063.7,
+          "midpoint": 28097.75,
+          "size": 68.1,
+          "bar_time": 1793779200
+        },
+        {
+          "type": "BEARISH_FVG",
+          "top": 28380.5,
+          "bottom": 28343.0,
+          "midpoint": 28361.75,
+          "size": 37.5,
+          "bar_time": 1793836800
+        }
+      ]
+    },
+    "htf_trend": {
+      "h1_regime": "CONSOLIDATION_RANGE",
+      "h1_ma20": 27788.03,
+      "h4_ma20": 27277.22,
+      "h1_displacement_3bar": 140.1
+    },
+    "smt_divergence": {
+      "has_smt": false,
+      "type": "NONE",
+      "note": "Aligned market structure"
+    }
+  },
+  "off_chart_telemetry": {
+    "symbol": "NQ",
+    "timestamp_utc": "2026-11-10 19:51:23 UTC",
+    "timestamp_tehran": "2026-11-10 23:21:23 Tehran",
+    "session_context": {
+      "is_active_killzone": false,
+      "session_label": "Outside Killzones",
+      "session_key": "Outside_Killzones"
+    },
+    "catalysts": {
+      "session_risk": "LOW",
+      "day_risk": "LOW",
+      "week_risk": "MEDIUM",
+      "upcoming_high_impact_session": [],
+      "upcoming_high_impact_day_count": 0,
+      "upcoming_high_impact_week_count": 2
+    },
+    "retail_sentiment": {
+      "sample_size": 10,
+      "retail_long_pct": 50.0,
+      "retail_short_pct": 50.0,
+      "contrarian_bias": "BALANCED",
+      "interpretation": "Retail crowd is 50.0% LONG. Institutional liquidity hunt favors two-sided structural expansion."
+    }
+  }
+}

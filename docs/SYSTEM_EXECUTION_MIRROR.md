@@ -1949,6 +1949,34 @@ The production codebase has been synchronized to support NASDAQ 100 (`NQ`) along
 5. **Verification Suite**:
    - `app/tests/test_trend_oracle.py` expanded with `test_on_chart_microstructure_nq`, `test_snap_trend_classifier_index_policy`, and `test_trend_oracle_service_nq_card`, passing across 54 total automated tests.
 
+---
+
+## 32. External Institutional Signal Ingestion Pipeline (Soli-Trader Integration)
+
+### 32.1 Architecture & Protocol Analysis
+To ingest institutional advisory levels, supply/demand zones, and weekly bias from external sources without fragile DOM scraping, TradingGuard deploys a native protocol bridge targeting `https://soli-trader.com/signals`:
+1. **Frontend Serialization**: Built with SvelteKit SSR behind ArvanCloud CDN. Server state is exposed via serialized JSON endpoints:
+   - Hub endpoint: `https://soli-trader.com/signals/__data.json`
+   - Entry detail endpoint: `https://soli-trader.com/signals/{entryId}/__data.json`
+   - Official charts: `https://soli-trader.com/signals/img/{imageId}`
+2. **Devalue Deserialization**: SvelteKit serializes referenced objects, strings, and numbers into indexed node arrays. `_unpack_sveltekit_node` resolves recursive object indices into native Python dictionaries without web scraping fragility.
+
+### 32.2 Authentication & Persistent Session Management
+- **Persistent Chrome CDP Environment**: A dedicated Google Chrome profile is maintained at `hitl/signals/soli_chrome_profile`. First-time login is completed interactively via `hitl/signals/launch_browser.bat` with remote debugging on port 9222.
+- **Session Cookie Cache**: Once authenticated, session tokens (`sid`) are persisted to `hitl/signals/soli_cookies.json`. Subsequent sync cycles bypass the browser entirely and fetch structured data via direct TLS requests in under 2 seconds.
+
+### 32.3 Standardized Data Schema & Broker Translation
+Signals are normalized into institutional records stored at `hitl/signals/active_signals.json`:
+- **Symbol Translation**: `XAUUSD` $\to$ `XAUUSD_o`, `XAGUSD` $\to$ `XAGUSD_o`, `EURUSD` $\to$ `EURUSD_o`, `USDCAD` $\to$ `USDCAD_o`, `AUDJPY` $\to$ `AUDJPY_o`, `BTCUSDT` $\to$ `BTCUSD`.
+- **Level Taxonomy**: Price levels parsed into `kind` (price/zone), `price`, `role` (support/resistance), `expectation` (react/break), and `timeframe`.
+- **Local Chart Caching**: Images are downloaded and stored at `hitl/signals/charts/soli_chart_{imageId}.png` for instant Telegram photo delivery.
+
+### 32.4 Telegram HITL Delivery & Dispatch
+- **Keyboard Access**: Added `📡 Soli Signals` directly into `MAIN_KEYBOARD` of `hitl/bot.py`.
+- **Command Dispatcher**: Listens for `/signals`, `/soli`, and `📡 Soli Signals`.
+- **Rich Card Generation**: Formats HTML advisory cards with support/resistance ranges, analyst thesis, direct portal links, and the attached official chart image.
+
+
 
 
 

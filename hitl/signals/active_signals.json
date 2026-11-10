@@ -1,0 +1,253 @@
+[
+  {
+    "entryId": "31",
+    "symbol": "DXY",
+    "brokerSymbol": "USDX",
+    "category": "forex",
+    "timeframe": "1D",
+    "caption": "نواحی شاخص دلار رو دقت کنید\nدر تایمفریم ۳ ماهه و ماهیانه ناحیه تقاضا روند رو در دست گرفته\nدر ناحیه هفتگی ناحیه عرضه هفتگی در حال کنترل قیمت هست\nچرا مهمه؟ اگر خاطرتون باشه ناحیه روزانه که کشیدیم در هفته پیش همچنان قیمت رو داره کنترل میکنه ولی چون ناحیه عرضه هفتگی هم وارد بازی شده دیگه ما ناحیه روزانه تقاضا رو جدی نمیگیریم\nپس روند بلندمدت صعودی هست ولی روند کوتاه مدت رو میشه نزولی دید\nتغییری در نواحی اتفاق بیوفته آپدیت میدم مثلا اگه از همین ناحیه روزانه یک کندل خیلی قوی بزنه رو به بالا نشون دهنده ضعف در ناحیه مقاومتی هفتگی هست پس میتونیم نواحی خرید جدید داشته باشیم.",
+    "levels": [],
+    "supports": [],
+    "resistances": [],
+    "imageId": 37,
+    "imageUrl": "https://soli-trader.com/signals/img/37",
+    "detailUrl": "https://soli-trader.com/signals/31",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:36 UTC"
+  },
+  {
+    "entryId": "32",
+    "symbol": "USDCAD",
+    "brokerSymbol": "USDCAD_o",
+    "category": "forex",
+    "timeframe": "4h",
+    "caption": "مهمترین نکته اینه که در تمامی تایمفریمهای بالا نواحی تقاضا قیمت رو در کنترل دارن\nپس برای ما ریسک کم یعنی در جهت خرید ترید کنیم \nدو ناحیه برای خرید جذاب هستن یکی در تایمفریم روزانه و یکی هم در تایمفریم ۴ ساعته\nناحیه عرضه در تایمفریم روزانه لزوما برای ترید گذاشته نشده و بیشتر برای این هست که در این ناحیه بهتر هست که تریدی در جهت خرید نداشته باشیم تا تکلیف روشن بشه\nپس برای خرید نواحی روزانه و چهار ساعته رو مد نظر داشته باشید",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 1.4,
+        "role": "support",
+        "expectation": "react",
+        "timeframe": null,
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 1.3947,
+        "role": "support",
+        "expectation": "react",
+        "timeframe": "1D",
+        "isNew": false
+      }
+    ],
+    "supports": [
+      1.4,
+      1.3947
+    ],
+    "resistances": [],
+    "imageId": 39,
+    "imageUrl": "https://soli-trader.com/signals/img/39",
+    "detailUrl": "https://soli-trader.com/signals/32",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:37 UTC"
+  },
+  {
+    "entryId": "33",
+    "symbol": "EURUSD",
+    "brokerSymbol": "EURUSD_o",
+    "category": "forex",
+    "timeframe": "4h",
+    "caption": "یورو هم در تایمفریمهای بالا نزولی هست\nدر تایمفریم ۴ ساعته ناحیه تقاضایی که مشخص کرده بودیم به خوبی واکنش داشته\nدر ادامه دوستانی که دنبال تریدهای کمریسک هستن باید در تایمفریمهای ۴ ساعته و روزانه در نواحی عرضه دنبال سل باشن و اگر هم در ناحیه ای قرار هست خریدی انجام بدید نصف ریسک معمول روی پوزیشن بگذارید",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 1.1215,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": null,
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 1.1365,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": "1D",
+        "isNew": false
+      }
+    ],
+    "supports": [],
+    "resistances": [
+      1.1215,
+      1.1365
+    ],
+    "imageId": 40,
+    "imageUrl": "https://soli-trader.com/signals/img/40",
+    "detailUrl": "https://soli-trader.com/signals/33",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:37 UTC"
+  },
+  {
+    "entryId": "34",
+    "symbol": "XAUUSD",
+    "brokerSymbol": "XAUUSD_o",
+    "category": "metals",
+    "timeframe": "4h",
+    "caption": "ناحیه ۴ ساعته هفته پیش واکنش خوبی رو برامون داشته و دیگه اعتبار این ناحیه از دست رفته\nالان دو ناحیه خیلی قوی داریم هم در ۴ ساعته و هم روزانه\nدر روزانه یک نکته مهم هم وجود داره\nاگر ناحیه قرمز روزانه شکسته بشه که انتظار هم دارم شکسته بشه روند در تایمفریم روزانه صعودی میشه و طلا راهش باز میشه تا قیمت 4238 که در تایمفریم روزانه مشخص شده",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 3966.9,
+        "role": "support",
+        "expectation": "react",
+        "timeframe": "1D",
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 4238.0,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": "1D",
+        "isNew": false
+      }
+    ],
+    "supports": [
+      3966.9
+    ],
+    "resistances": [
+      4238.0
+    ],
+    "imageId": 41,
+    "imageUrl": "https://soli-trader.com/signals/img/41",
+    "detailUrl": "https://soli-trader.com/signals/34",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:37 UTC"
+  },
+  {
+    "entryId": "35",
+    "symbol": "XAGUSD",
+    "brokerSymbol": "XAGUSD_o",
+    "category": "metals",
+    "timeframe": "1D",
+    "caption": "نقره در تایمفریم هفتگی تحت کنترل ناحیه تقاضا هست\nدر تایمفریم روزانه ناحیه اولی که برای مقاومت گفته بودیم چند روزی هست قیمت رو نگه داشته ولی از دید من این ناحیه شکسته خواهد شد پس دنبال سل دیگه در این ناحیه نباشید\nیک ناحیه تقاضای قوی در ۴ ساعته برای خرید داریم و یک ناحیه عرضه قوی در روزانه که میشه در این نواحی ترید داشت",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 49.839,
+        "role": "support",
+        "expectation": "react",
+        "timeframe": "4h",
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 56.96,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": null,
+        "isNew": false
+      }
+    ],
+    "supports": [
+      49.839
+    ],
+    "resistances": [
+      56.96
+    ],
+    "imageId": 42,
+    "imageUrl": "https://soli-trader.com/signals/img/42",
+    "detailUrl": "https://soli-trader.com/signals/35",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:38 UTC"
+  },
+  {
+    "entryId": "36",
+    "symbol": "BTCUSDT",
+    "brokerSymbol": "BTCUSD",
+    "category": "crypto",
+    "timeframe": "1D",
+    "caption": "در تایمفریم ماهیانه فروشنده ها از خودشون قدرت زیادی نشون دادن پس کمریسکترین کار اینه که طبق تحلیل هفته پیش بالاهایی که بزنه بریم برای سل تا زمانیکه برسیم به حمایت هفتگی که نزدیک حمایت ماهانه و ۳ ماهه هست که یعنی قویه\nپس فعلا در تایمفریم ۴ ساعته و روزانه نواحی که هست رو میتونید برای سل داشته باشیم",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 79885.0,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": "4h",
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 83028.0,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": null,
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 65541.0,
+        "role": "support",
+        "expectation": "react",
+        "timeframe": "1W",
+        "isNew": false
+      },
+      {
+        "kind": "price",
+        "price": 89165.0,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": "1W",
+        "isNew": false
+      }
+    ],
+    "supports": [
+      65541.0
+    ],
+    "resistances": [
+      79885.0,
+      83028.0,
+      89165.0
+    ],
+    "imageId": 43,
+    "imageUrl": "https://soli-trader.com/signals/img/43",
+    "detailUrl": "https://soli-trader.com/signals/36",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:38 UTC"
+  },
+  {
+    "entryId": "37",
+    "symbol": "AUDJPY",
+    "brokerSymbol": "AUDJPY_o",
+    "category": "forex",
+    "timeframe": "1D",
+    "caption": "فعلا کمریسکترین جا برای ترید ناحیه عرضه در تایمفریم روزانه هست",
+    "levels": [
+      {
+        "kind": "price",
+        "price": 110.48,
+        "role": "resistance",
+        "expectation": "react",
+        "timeframe": null,
+        "isNew": false
+      }
+    ],
+    "supports": [],
+    "resistances": [
+      110.48
+    ],
+    "imageId": 44,
+    "imageUrl": "https://soli-trader.com/signals/img/44",
+    "detailUrl": "https://soli-trader.com/signals/37",
+    "version": 1,
+    "updatedAt": null,
+    "extractedAt": "2026-11-10 19:47:38 UTC"
+  }
+]

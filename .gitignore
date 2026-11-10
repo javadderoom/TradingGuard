@@ -67,4 +67,9 @@ dist/
 backtest_results/cache/
 *.parquet
 
+# External signals sensitive data & cache
+hitl/signals/soli_chrome_profile/
+hitl/signals/soli_cookies.json
+hitl/signals/charts/
+
 nul

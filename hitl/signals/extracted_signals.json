@@ -1,0 +1,2779 @@
+{
+  "extracted_at": "2026-11-10 19:44:33 UTC",
+  "url": "https://soli-trader.com/signals",
+  "cards": [
+    {
+      "href": "/signals/31",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/32",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/33",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/34",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/35",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/36",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/37",
+      "text": "مشاهدهٔ کامل",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/rules",
+      "text": "قوانین سیگنال‌ها· نسخهٔ ۱",
+      "imgSrc": null
+    },
+    {
+      "href": "/signals/rules",
+      "text": "قوانین سیگنال‌ها",
+      "imgSrc": null
+    }
+  ],
+  "raw_data": {
+    "type": "data",
+    "nodes": [
+      {
+        "type": "data",
+        "data": [
+          {
+            "user": 1,
+            "showBell": 6,
+            "showSignals": 6,
+            "supportChatPublic": 6,
+            "unread": 7,
+            "courseAccessNotice": 8,
+            "seo": 9
+          },
+          {
+            "id": 2,
+            "displayName": 3,
+            "login": 4,
+            "isStaff": 5,
+            "isAdmin": 5
+          },
+          52247,
+          "جواد شیخ اعظمی",
+          "09211351330",
+          false,
+          true,
+          0,
+          null,
+          {
+            "title": 10,
+            "description": 11,
+            "canonical": 12,
+            "robots": 13,
+            "ogType": 14,
+            "ogTitle": 10,
+            "ogDescription": 11,
+            "ogSiteName": 10,
+            "ogLocale": 15,
+            "ogImage": 16,
+            "ogImageAlt": 10,
+            "twitterCard": 17,
+            "jsonLd": 18
+          },
+          "سولی تریدر",
+          "آموزش تخصصی معامله‌گری در بازارهای مالی",
+          "https://soli-trader.com/signals",
+          "index,follow",
+          "website",
+          "fa_IR",
+          "https://soli-trader.com/og-default.png",
+          "summary_large_image",
+          []
+        ],
+        "uses": {
+          "url": 1
+        }
+      },
+      {
+        "type": "data",
+        "data": [
+          {
+            "signalsPreview": 1
+          },
+          false
+        ],
+        "uses": {},
+        "slash": "ignore"
+      },
+      {
+        "type": "data",
+        "data": [
+          {
+            "seo": 1,
+            "set": 20,
+            "alertHits": 111,
+            "preparing": 26,
+            "audience": 121,
+            "isAdmin": 19,
+            "rulesVersion": 37,
+            "acceptedAt": 26,
+            "alertSymbols": 123,
+            "impersonating": 19,
+            "telegram": 124,
+            "telegramAvailable": 125,
+            "notice": 26
+          },
+          {
+            "title": 2,
+            "description": 3,
+            "canonical": 4,
+            "robots": 5,
+            "ogType": 6,
+            "ogTitle": 2,
+            "ogDescription": 3,
+            "ogSiteName": 7,
+            "ogLocale": 8,
+            "ogImage": 9,
+            "ogImageAlt": 10,
+            "twitterCard": 11,
+            "jsonLd": 12
+          },
+          "سیگنال‌های هفتگی · سولی تریدر",
+          "سیگنال‌های هفتگی سولی تریدر: سطح‌های کلیدی کریپتو، فارکس، طلا و انرژی با نمودار، هشدار تلگرامی و به‌روزرسانی‌های قابل‌ردیابی، ویژهٔ کاربران عضو. محتوای آموزشی…",
+          "https://soli-trader.com/signals",
+          "index,follow",
+          "website",
+          "سولی تریدر",
+          "fa_IR",
+          "https://soli-trader.com/og-default.png",
+          "سولی تریدر — سیگنال‌های هفتگی",
+          "summary_large_image",
+          [
+            13
+          ],
+          {
+            "@context": 14,
+            "@type": 15,
+            "name": 16,
+            "description": 17,
+            "inLanguage": 18,
+            "isAccessibleForFree": 19
+          },
+          "https://schema.org",
+          "WebPage",
+          "سیگنال‌های هفتگی سولی تریدر",
+          "سیگنال‌های هفتگی سولی تریدر: سطح‌های کلیدی کریپتو، فارکس، طلا و انرژی با نمودار، هشدار تلگرامی و به‌روزرسانی‌های قابل‌ردیابی، ویژهٔ کاربران عضو. محتوای آموزشی است، نه توصیهٔ سرمایه‌گذاری.",
+          "fa-IR",
+          false,
+          {
+            "setId": 21,
+            "title": 22,
+            "publishAt": 23,
+            "validUntil": 24,
+            "assetCount": 25,
+            "latestUpdateAt": 26,
+            "latestUpdateSymbol": 26,
+            "latestUpdateVersion": 26,
+            "entries": 27
+          },
+          5,
+          "۱۸ آبان 1405",
+          "2026-11-09 16:44:18",
+          "2026-11-15 16:00:00",
+          7,
+          null,
+          [
+            28,
+            38,
+            52,
+            64,
+            76,
+            87,
+            104
+          ],
+          {
+            "entryId": 29,
+            "category": 30,
+            "symbol": 31,
+            "displayName": 32,
+            "timeframe": 33,
+            "imageId": 34,
+            "caption": 35,
+            "captionChanged": 19,
+            "levels": 36,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          31,
+          "forex",
+          "DXY",
+          "شاخص دلار",
+          "1D",
+          37,
+          "نواحی شاخص دلار رو دقت کنید\nدر تایمفریم ۳ ماهه و ماهیانه ناحیه تقاضا روند رو در دست گرفته\nدر ناحیه هفتگی ناحیه عرضه هفتگی در حال کنترل قیمت هست\nچرا مهمه؟ اگر خاطرتون باشه ناحیه روزانه که کشیدیم در هفته پیش همچنان قیمت رو داره کنترل میکنه ولی چون ناحیه عرضه هفتگی هم وارد بازی شده دیگه ما ناحیه روزانه تقاضا رو جدی نمیگیریم\nپس روند بلندمدت صعودی هست ولی روند کوتاه مدت رو میشه نزولی دید\nتغییری در نواحی اتفاق بیوفته آپدیت میدم مثلا اگه از همین ناحیه روزانه یک کندل خیلی قوی بزنه رو به بالا نشون دهنده ضعف در ناحیه مقاومتی هفتگی هست پس میتونیم نواحی خرید جدید داشته باشیم.",
+          [],
+          1,
+          {
+            "entryId": 39,
+            "category": 30,
+            "symbol": 40,
+            "displayName": 40,
+            "timeframe": 41,
+            "imageId": 42,
+            "caption": 43,
+            "captionChanged": 19,
+            "levels": 44,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          32,
+          "USDCAD",
+          "4h",
+          39,
+          "مهمترین نکته اینه که در تمامی تایمفریمهای بالا نواحی تقاضا قیمت رو در کنترل دارن\nپس برای ما ریسک کم یعنی در جهت خرید ترید کنیم \nدو ناحیه برای خرید جذاب هستن یکی در تایمفریم روزانه و یکی هم در تایمفریم ۴ ساعته\nناحیه عرضه در تایمفریم روزانه لزوما برای ترید گذاشته نشده و بیشتر برای این هست که در این ناحیه بهتر هست که تریدی در جهت خرید نداشته باشیم تا تکلیف روشن بشه\nپس برای خرید نواحی روزانه و چهار ساعته رو مد نظر داشته باشید",
+          [
+            45,
+            50
+          ],
+          {
+            "kind": 46,
+            "price": 47,
+            "role": 48,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 26,
+            "isNew": 19
+          },
+          "price",
+          1.4,
+          "support",
+          "react",
+          {
+            "kind": 46,
+            "price": 51,
+            "role": 48,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 33,
+            "isNew": 19
+          },
+          1.3947,
+          {
+            "entryId": 53,
+            "category": 30,
+            "symbol": 54,
+            "displayName": 55,
+            "timeframe": 41,
+            "imageId": 56,
+            "caption": 57,
+            "captionChanged": 19,
+            "levels": 58,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          33,
+          "EURUSD",
+          "یورو",
+          40,
+          "یورو هم در تایمفریمهای بالا نزولی هست\nدر تایمفریم ۴ ساعته ناحیه تقاضایی که مشخص کرده بودیم به خوبی واکنش داشته\nدر ادامه دوستانی که دنبال تریدهای کمریسک هستن باید در تایمفریمهای ۴ ساعته و روزانه در نواحی عرضه دنبال سل باشن و اگر هم در ناحیه ای قرار هست خریدی انجام بدید نصف ریسک معمول روی پوزیشن بگذارید",
+          [
+            59,
+            62
+          ],
+          {
+            "kind": 46,
+            "price": 60,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 26,
+            "isNew": 19
+          },
+          1.1215,
+          "resistance",
+          {
+            "kind": 46,
+            "price": 63,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 33,
+            "isNew": 19
+          },
+          1.1365,
+          {
+            "entryId": 65,
+            "category": 66,
+            "symbol": 67,
+            "displayName": 68,
+            "timeframe": 41,
+            "imageId": 69,
+            "caption": 70,
+            "captionChanged": 19,
+            "levels": 71,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          34,
+          "metals",
+          "XAUUSD",
+          "طلا",
+          41,
+          "ناحیه ۴ ساعته هفته پیش واکنش خوبی رو برامون داشته و دیگه اعتبار این ناحیه از دست رفته\nالان دو ناحیه خیلی قوی داریم هم در ۴ ساعته و هم روزانه\nدر روزانه یک نکته مهم هم وجود داره\nاگر ناحیه قرمز روزانه شکسته بشه که انتظار هم دارم شکسته بشه روند در تایمفریم روزانه صعودی میشه و طلا راهش باز میشه تا قیمت 4238 که در تایمفریم روزانه مشخص شده",
+          [
+            72,
+            74
+          ],
+          {
+            "kind": 46,
+            "price": 73,
+            "role": 48,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 33,
+            "isNew": 19
+          },
+          3966.9,
+          {
+            "kind": 46,
+            "price": 75,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 33,
+            "isNew": 19
+          },
+          4238,
+          {
+            "entryId": 77,
+            "category": 66,
+            "symbol": 78,
+            "displayName": 79,
+            "timeframe": 33,
+            "imageId": 80,
+            "caption": 81,
+            "captionChanged": 19,
+            "levels": 82,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          35,
+          "XAGUSD",
+          "نقره",
+          42,
+          "نقره در تایمفریم هفتگی تحت کنترل ناحیه تقاضا هست\nدر تایمفریم روزانه ناحیه اولی که برای مقاومت گفته بودیم چند روزی هست قیمت رو نگه داشته ولی از دید من این ناحیه شکسته خواهد شد پس دنبال سل دیگه در این ناحیه نباشید\nیک ناحیه تقاضای قوی در ۴ ساعته برای خرید داریم و یک ناحیه عرضه قوی در روزانه که میشه در این نواحی ترید داشت",
+          [
+            83,
+            85
+          ],
+          {
+            "kind": 46,
+            "price": 84,
+            "role": 48,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 41,
+            "isNew": 19
+          },
+          49.839,
+          {
+            "kind": 46,
+            "price": 86,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 26,
+            "isNew": 19
+          },
+          56.96,
+          {
+            "entryId": 88,
+            "category": 89,
+            "symbol": 90,
+            "displayName": 91,
+            "timeframe": 33,
+            "imageId": 92,
+            "caption": 93,
+            "captionChanged": 19,
+            "levels": 94,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          36,
+          "crypto",
+          "BTCUSDT",
+          "بیت‌کوین",
+          43,
+          "در تایمفریم ماهیانه فروشنده ها از خودشون قدرت زیادی نشون دادن پس کمریسکترین کار اینه که طبق تحلیل هفته پیش بالاهایی که بزنه بریم برای سل تا زمانیکه برسیم به حمایت هفتگی که نزدیک حمایت ماهانه و ۳ ماهه هست که یعنی قویه\nپس فعلا در تایمفریم ۴ ساعته و روزانه نواحی که هست رو میتونید برای سل داشته باشیم",
+          [
+            95,
+            97,
+            99,
+            102
+          ],
+          {
+            "kind": 46,
+            "price": 96,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 41,
+            "isNew": 19
+          },
+          79885,
+          {
+            "kind": 46,
+            "price": 98,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 26,
+            "isNew": 19
+          },
+          83028,
+          {
+            "kind": 46,
+            "price": 100,
+            "role": 48,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 101,
+            "isNew": 19
+          },
+          65541,
+          "1W",
+          {
+            "kind": 46,
+            "price": 103,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 101,
+            "isNew": 19
+          },
+          89165,
+          {
+            "entryId": 34,
+            "category": 30,
+            "symbol": 105,
+            "displayName": 105,
+            "timeframe": 33,
+            "imageId": 106,
+            "caption": 107,
+            "captionChanged": 19,
+            "levels": 108,
+            "version": 37,
+            "updated": 19,
+            "updatedAt": 26,
+            "appended": 19
+          },
+          "AUDJPY",
+          44,
+          "فعلا کمریسکترین جا برای ترید ناحیه عرضه در تایمفریم روزانه هست",
+          [
+            109
+          ],
+          {
+            "kind": 46,
+            "price": 110,
+            "role": 61,
+            "expectation": 49,
+            "target": 26,
+            "timeframe": 26,
+            "isNew": 19
+          },
+          110.48,
+          {
+            "31": 112,
+            "32": 113,
+            "33": 114,
+            "34": 117,
+            "35": 118,
+            "36": 119,
+            "37": 120
+          },
+          [],
+          [
+            26,
+            26
+          ],
+          [
+            115,
+            26
+          ],
+          {
+            "ageMs": 116
+          },
+          86896680,
+          [
+            26,
+            26
+          ],
+          [
+            26,
+            26
+          ],
+          [
+            26,
+            26,
+            26,
+            26
+          ],
+          [
+            26
+          ],
+          {
+            "kind": 122,
+            "preview": 19,
+            "rulesAccepted": 19,
+            "isAdmin": 19,
+            "loginHref": 26
+          },
+          "member",
+          [],
+          "none",
+          true
+        ],
+        "uses": {
+          "dependencies": [
+            "signals:preparing",
+            "signals:telegram"
+          ]
+        }
+      }
+    ]
+  },
+  "detailed_signals": [
+    {
+      "card": {
+        "href": "/signals/31",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/31",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 10,
+                "alertOn": 10,
+                "impersonating": 10,
+                "telegramLinked": 10,
+                "telegram": 20,
+                "telegramAvailable": 21,
+                "levelStatus": 22,
+                "showResults": 10,
+                "alertHits": 23,
+                "preparing": 13,
+                "affiliates": 24,
+                "audience": 34,
+                "external": 36,
+                "marketVotes": 60
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 6,
+                "timeframe": 7,
+                "imageId": 8,
+                "caption": 9,
+                "captionChanged": 10,
+                "levels": 11,
+                "version": 12,
+                "updated": 10,
+                "updatedAt": 13,
+                "appended": 10,
+                "latestVersion": 12,
+                "versions": 14,
+                "position": 12,
+                "total": 17,
+                "prevEntryId": 13,
+                "prevSymbol": 13,
+                "nextEntryId": 18,
+                "nextSymbol": 19
+              },
+              5,
+              31,
+              "forex",
+              "DXY",
+              "شاخص دلار",
+              "1D",
+              37,
+              "نواحی شاخص دلار رو دقت کنید\nدر تایمفریم ۳ ماهه و ماهیانه ناحیه تقاضا روند رو در دست گرفته\nدر ناحیه هفتگی ناحیه عرضه هفتگی در حال کنترل قیمت هست\nچرا مهمه؟ اگر خاطرتون باشه ناحیه روزانه که کشیدیم در هفته پیش همچنان قیمت رو داره کنترل میکنه ولی چون ناحیه عرضه هفتگی هم وارد بازی شده دیگه ما ناحیه روزانه تقاضا رو جدی نمیگیریم\nپس روند بلندمدت صعودی هست ولی روند کوتاه مدت رو میشه نزولی دید\nتغییری در نواحی اتفاق بیوفته آپدیت میدم مثلا اگه از همین ناحیه روزانه یک کندل خیلی قوی بزنه رو به بالا نشون دهنده ضعف در ناحیه مقاومتی هفتگی هست پس میتونیم نواحی خرید جدید داشته باشیم.",
+              false,
+              [],
+              1,
+              null,
+              [
+                15
+              ],
+              {
+                "version": 12,
+                "effectiveAt": 16,
+                "changeNote": 13
+              },
+              "2026-11-09 16:44:18",
+              7,
+              32,
+              "USDCAD",
+              "none",
+              true,
+              [],
+              [],
+              [
+                25,
+                29
+              ],
+              {
+                "id": 12,
+                "brokerName": 26,
+                "url": 27,
+                "label": 28
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 30,
+                "brokerName": 31,
+                "url": 32,
+                "label": 33
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 35,
+                "preview": 10,
+                "rulesAccepted": 10,
+                "isAdmin": 10,
+                "loginHref": 13
+              },
+              "member",
+              {
+                "calendar": 37,
+                "polymarket": 58
+              },
+              {
+                "status": 38,
+                "events": 39,
+                "asOf": 57,
+                "stale": 10
+              },
+              "ok",
+              [
+                40,
+                47,
+                53
+              ],
+              {
+                "title": 41,
+                "currency": 42,
+                "impact": 43,
+                "at": 44,
+                "forecast": 45,
+                "previous": 46
+              },
+              "Unemployment Claims",
+              "USD",
+              "medium",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 48,
+                "currency": 42,
+                "impact": 49,
+                "at": 50,
+                "forecast": 51,
+                "previous": 52
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 54,
+                "currency": 42,
+                "impact": 49,
+                "at": 50,
+                "forecast": 55,
+                "previous": 56
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 59
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/32",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/32",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 9,
+                "alertOn": 9,
+                "impersonating": 9,
+                "telegramLinked": 9,
+                "telegram": 30,
+                "telegramAvailable": 31,
+                "levelStatus": 32,
+                "showResults": 9,
+                "alertHits": 33,
+                "preparing": 16,
+                "affiliates": 34,
+                "audience": 44,
+                "external": 46,
+                "marketVotes": 70
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 5,
+                "timeframe": 6,
+                "imageId": 7,
+                "caption": 8,
+                "captionChanged": 9,
+                "levels": 10,
+                "version": 20,
+                "updated": 9,
+                "updatedAt": 16,
+                "appended": 9,
+                "latestVersion": 20,
+                "versions": 21,
+                "position": 24,
+                "total": 25,
+                "prevEntryId": 26,
+                "prevSymbol": 27,
+                "nextEntryId": 28,
+                "nextSymbol": 29
+              },
+              5,
+              32,
+              "forex",
+              "USDCAD",
+              "4h",
+              39,
+              "مهمترین نکته اینه که در تمامی تایمفریمهای بالا نواحی تقاضا قیمت رو در کنترل دارن\nپس برای ما ریسک کم یعنی در جهت خرید ترید کنیم \nدو ناحیه برای خرید جذاب هستن یکی در تایمفریم روزانه و یکی هم در تایمفریم ۴ ساعته\nناحیه عرضه در تایمفریم روزانه لزوما برای ترید گذاشته نشده و بیشتر برای این هست که در این ناحیه بهتر هست که تریدی در جهت خرید نداشته باشیم تا تکلیف روشن بشه\nپس برای خرید نواحی روزانه و چهار ساعته رو مد نظر داشته باشید",
+              false,
+              [
+                11,
+                17
+              ],
+              {
+                "kind": 12,
+                "price": 13,
+                "role": 14,
+                "expectation": 15,
+                "target": 16,
+                "timeframe": 16,
+                "isNew": 9
+              },
+              "price",
+              1.4,
+              "support",
+              "react",
+              null,
+              {
+                "kind": 12,
+                "price": 18,
+                "role": 14,
+                "expectation": 15,
+                "target": 16,
+                "timeframe": 19,
+                "isNew": 9
+              },
+              1.3947,
+              "1D",
+              1,
+              [
+                22
+              ],
+              {
+                "version": 20,
+                "effectiveAt": 23,
+                "changeNote": 16
+              },
+              "2026-11-09 16:44:18",
+              2,
+              7,
+              31,
+              "DXY",
+              33,
+              "EURUSD",
+              "none",
+              true,
+              [],
+              [
+                16,
+                16
+              ],
+              [
+                35,
+                39
+              ],
+              {
+                "id": 20,
+                "brokerName": 36,
+                "url": 37,
+                "label": 38
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 40,
+                "brokerName": 41,
+                "url": 42,
+                "label": 43
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 45,
+                "preview": 9,
+                "rulesAccepted": 9,
+                "isAdmin": 9,
+                "loginHref": 16
+              },
+              "member",
+              {
+                "calendar": 47,
+                "polymarket": 68
+              },
+              {
+                "status": 48,
+                "events": 49,
+                "asOf": 67,
+                "stale": 9
+              },
+              "ok",
+              [
+                50,
+                57,
+                63
+              ],
+              {
+                "title": 51,
+                "currency": 52,
+                "impact": 53,
+                "at": 54,
+                "forecast": 55,
+                "previous": 56
+              },
+              "Unemployment Claims",
+              "USD",
+              "medium",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 58,
+                "currency": 52,
+                "impact": 59,
+                "at": 60,
+                "forecast": 61,
+                "previous": 62
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 64,
+                "currency": 52,
+                "impact": 59,
+                "at": 60,
+                "forecast": 65,
+                "previous": 66
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 69
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/33",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/33",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 10,
+                "alertOn": 10,
+                "impersonating": 10,
+                "telegramLinked": 10,
+                "telegram": 31,
+                "telegramAvailable": 32,
+                "levelStatus": 33,
+                "showResults": 10,
+                "alertHits": 34,
+                "preparing": 17,
+                "affiliates": 37,
+                "audience": 46,
+                "external": 48,
+                "marketVotes": 79
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 6,
+                "timeframe": 7,
+                "imageId": 8,
+                "caption": 9,
+                "captionChanged": 10,
+                "levels": 11,
+                "version": 21,
+                "updated": 10,
+                "updatedAt": 17,
+                "appended": 10,
+                "latestVersion": 21,
+                "versions": 22,
+                "position": 25,
+                "total": 26,
+                "prevEntryId": 27,
+                "prevSymbol": 28,
+                "nextEntryId": 29,
+                "nextSymbol": 30
+              },
+              5,
+              33,
+              "forex",
+              "EURUSD",
+              "یورو",
+              "4h",
+              40,
+              "یورو هم در تایمفریمهای بالا نزولی هست\nدر تایمفریم ۴ ساعته ناحیه تقاضایی که مشخص کرده بودیم به خوبی واکنش داشته\nدر ادامه دوستانی که دنبال تریدهای کمریسک هستن باید در تایمفریمهای ۴ ساعته و روزانه در نواحی عرضه دنبال سل باشن و اگر هم در ناحیه ای قرار هست خریدی انجام بدید نصف ریسک معمول روی پوزیشن بگذارید",
+              false,
+              [
+                12,
+                18
+              ],
+              {
+                "kind": 13,
+                "price": 14,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 17,
+                "isNew": 10
+              },
+              "price",
+              1.1215,
+              "resistance",
+              "react",
+              null,
+              {
+                "kind": 13,
+                "price": 19,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 20,
+                "isNew": 10
+              },
+              1.1365,
+              "1D",
+              1,
+              [
+                23
+              ],
+              {
+                "version": 21,
+                "effectiveAt": 24,
+                "changeNote": 17
+              },
+              "2026-11-09 16:44:18",
+              3,
+              7,
+              32,
+              "USDCAD",
+              34,
+              "XAUUSD",
+              "none",
+              true,
+              [],
+              [
+                35,
+                17
+              ],
+              {
+                "ageMs": 36
+              },
+              86897370,
+              [
+                38,
+                42
+              ],
+              {
+                "id": 21,
+                "brokerName": 39,
+                "url": 40,
+                "label": 41
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 25,
+                "brokerName": 43,
+                "url": 44,
+                "label": 45
+              },
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 47,
+                "preview": 10,
+                "rulesAccepted": 10,
+                "isAdmin": 10,
+                "loginHref": 17
+              },
+              "member",
+              {
+                "calendar": 49,
+                "polymarket": 77
+              },
+              {
+                "status": 50,
+                "events": 51,
+                "asOf": 76,
+                "stale": 10
+              },
+              "ok",
+              [
+                52,
+                58,
+                64,
+                66,
+                72
+              ],
+              {
+                "title": 53,
+                "currency": 54,
+                "impact": 55,
+                "at": 56,
+                "forecast": 57,
+                "previous": 57
+              },
+              "ECB President Lagarde Speaks",
+              "EUR",
+              "medium",
+              "2026-11-11T09:45:00.000Z",
+              "",
+              {
+                "title": 59,
+                "currency": 60,
+                "impact": 55,
+                "at": 61,
+                "forecast": 62,
+                "previous": 63
+              },
+              "Unemployment Claims",
+              "USD",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 53,
+                "currency": 54,
+                "impact": 55,
+                "at": 65,
+                "forecast": 57,
+                "previous": 57
+              },
+              "2026-11-12T19:30:00.000Z",
+              {
+                "title": 67,
+                "currency": 60,
+                "impact": 68,
+                "at": 69,
+                "forecast": 70,
+                "previous": 71
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 73,
+                "currency": 60,
+                "impact": 68,
+                "at": 69,
+                "forecast": 74,
+                "previous": 75
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 78
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/34",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/34",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 10,
+                "alertOn": 10,
+                "impersonating": 10,
+                "telegramLinked": 10,
+                "telegram": 32,
+                "telegramAvailable": 33,
+                "levelStatus": 34,
+                "showResults": 10,
+                "alertHits": 35,
+                "preparing": 17,
+                "affiliates": 36,
+                "audience": 46,
+                "external": 48,
+                "marketVotes": 72
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 6,
+                "timeframe": 7,
+                "imageId": 8,
+                "caption": 9,
+                "captionChanged": 10,
+                "levels": 11,
+                "version": 22,
+                "updated": 10,
+                "updatedAt": 17,
+                "appended": 10,
+                "latestVersion": 22,
+                "versions": 23,
+                "position": 26,
+                "total": 27,
+                "prevEntryId": 28,
+                "prevSymbol": 29,
+                "nextEntryId": 30,
+                "nextSymbol": 31
+              },
+              5,
+              34,
+              "metals",
+              "XAUUSD",
+              "طلا",
+              "4h",
+              41,
+              "ناحیه ۴ ساعته هفته پیش واکنش خوبی رو برامون داشته و دیگه اعتبار این ناحیه از دست رفته\nالان دو ناحیه خیلی قوی داریم هم در ۴ ساعته و هم روزانه\nدر روزانه یک نکته مهم هم وجود داره\nاگر ناحیه قرمز روزانه شکسته بشه که انتظار هم دارم شکسته بشه روند در تایمفریم روزانه صعودی میشه و طلا راهش باز میشه تا قیمت 4238 که در تایمفریم روزانه مشخص شده",
+              false,
+              [
+                12,
+                19
+              ],
+              {
+                "kind": 13,
+                "price": 14,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 18,
+                "isNew": 10
+              },
+              "price",
+              3966.9,
+              "support",
+              "react",
+              null,
+              "1D",
+              {
+                "kind": 13,
+                "price": 20,
+                "role": 21,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 18,
+                "isNew": 10
+              },
+              4238,
+              "resistance",
+              1,
+              [
+                24
+              ],
+              {
+                "version": 22,
+                "effectiveAt": 25,
+                "changeNote": 17
+              },
+              "2026-11-09 16:44:18",
+              4,
+              7,
+              33,
+              "EURUSD",
+              35,
+              "XAGUSD",
+              "none",
+              true,
+              [],
+              [
+                17,
+                17
+              ],
+              [
+                37,
+                41
+              ],
+              {
+                "id": 22,
+                "brokerName": 38,
+                "url": 39,
+                "label": 40
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 42,
+                "brokerName": 43,
+                "url": 44,
+                "label": 45
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 47,
+                "preview": 10,
+                "rulesAccepted": 10,
+                "isAdmin": 10,
+                "loginHref": 17
+              },
+              "member",
+              {
+                "calendar": 49,
+                "polymarket": 70
+              },
+              {
+                "status": 50,
+                "events": 51,
+                "asOf": 69,
+                "stale": 10
+              },
+              "ok",
+              [
+                52,
+                59,
+                65
+              ],
+              {
+                "title": 53,
+                "currency": 54,
+                "impact": 55,
+                "at": 56,
+                "forecast": 57,
+                "previous": 58
+              },
+              "Unemployment Claims",
+              "USD",
+              "medium",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 60,
+                "currency": 54,
+                "impact": 61,
+                "at": 62,
+                "forecast": 63,
+                "previous": 64
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 66,
+                "currency": 54,
+                "impact": 61,
+                "at": 62,
+                "forecast": 67,
+                "previous": 68
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 71
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/35",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/35",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 10,
+                "alertOn": 10,
+                "impersonating": 10,
+                "telegramLinked": 10,
+                "telegram": 31,
+                "telegramAvailable": 32,
+                "levelStatus": 33,
+                "showResults": 10,
+                "alertHits": 34,
+                "preparing": 17,
+                "affiliates": 35,
+                "audience": 45,
+                "external": 47,
+                "marketVotes": 71
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 6,
+                "timeframe": 7,
+                "imageId": 8,
+                "caption": 9,
+                "captionChanged": 10,
+                "levels": 11,
+                "version": 22,
+                "updated": 10,
+                "updatedAt": 17,
+                "appended": 10,
+                "latestVersion": 22,
+                "versions": 23,
+                "position": 2,
+                "total": 26,
+                "prevEntryId": 27,
+                "prevSymbol": 28,
+                "nextEntryId": 29,
+                "nextSymbol": 30
+              },
+              5,
+              35,
+              "metals",
+              "XAGUSD",
+              "نقره",
+              "1D",
+              42,
+              "نقره در تایمفریم هفتگی تحت کنترل ناحیه تقاضا هست\nدر تایمفریم روزانه ناحیه اولی که برای مقاومت گفته بودیم چند روزی هست قیمت رو نگه داشته ولی از دید من این ناحیه شکسته خواهد شد پس دنبال سل دیگه در این ناحیه نباشید\nیک ناحیه تقاضای قوی در ۴ ساعته برای خرید داریم و یک ناحیه عرضه قوی در روزانه که میشه در این نواحی ترید داشت",
+              false,
+              [
+                12,
+                19
+              ],
+              {
+                "kind": 13,
+                "price": 14,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 18,
+                "isNew": 10
+              },
+              "price",
+              49.839,
+              "support",
+              "react",
+              null,
+              "4h",
+              {
+                "kind": 13,
+                "price": 20,
+                "role": 21,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 17,
+                "isNew": 10
+              },
+              56.96,
+              "resistance",
+              1,
+              [
+                24
+              ],
+              {
+                "version": 22,
+                "effectiveAt": 25,
+                "changeNote": 17
+              },
+              "2026-11-09 16:44:18",
+              7,
+              34,
+              "XAUUSD",
+              36,
+              "BTCUSDT",
+              "none",
+              true,
+              [],
+              [
+                17,
+                17
+              ],
+              [
+                36,
+                40
+              ],
+              {
+                "id": 22,
+                "brokerName": 37,
+                "url": 38,
+                "label": 39
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 41,
+                "brokerName": 42,
+                "url": 43,
+                "label": 44
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 46,
+                "preview": 10,
+                "rulesAccepted": 10,
+                "isAdmin": 10,
+                "loginHref": 17
+              },
+              "member",
+              {
+                "calendar": 48,
+                "polymarket": 69
+              },
+              {
+                "status": 49,
+                "events": 50,
+                "asOf": 68,
+                "stale": 10
+              },
+              "ok",
+              [
+                51,
+                58,
+                64
+              ],
+              {
+                "title": 52,
+                "currency": 53,
+                "impact": 54,
+                "at": 55,
+                "forecast": 56,
+                "previous": 57
+              },
+              "Unemployment Claims",
+              "USD",
+              "medium",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 59,
+                "currency": 53,
+                "impact": 60,
+                "at": 61,
+                "forecast": 62,
+                "previous": 63
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 65,
+                "currency": 53,
+                "impact": 60,
+                "at": 61,
+                "forecast": 66,
+                "previous": 67
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 70
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/36",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/36",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 10,
+                "alertOn": 10,
+                "impersonating": 10,
+                "telegramLinked": 10,
+                "telegram": 37,
+                "telegramAvailable": 38,
+                "levelStatus": 39,
+                "showResults": 10,
+                "alertHits": 40,
+                "preparing": 17,
+                "affiliates": 41,
+                "audience": 51,
+                "external": 53,
+                "marketVotes": 77
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 6,
+                "timeframe": 7,
+                "imageId": 8,
+                "caption": 9,
+                "captionChanged": 10,
+                "levels": 11,
+                "version": 27,
+                "updated": 10,
+                "updatedAt": 17,
+                "appended": 10,
+                "latestVersion": 27,
+                "versions": 28,
+                "position": 31,
+                "total": 32,
+                "prevEntryId": 33,
+                "prevSymbol": 34,
+                "nextEntryId": 35,
+                "nextSymbol": 36
+              },
+              5,
+              36,
+              "crypto",
+              "BTCUSDT",
+              "بیت‌کوین",
+              "1D",
+              43,
+              "در تایمفریم ماهیانه فروشنده ها از خودشون قدرت زیادی نشون دادن پس کمریسکترین کار اینه که طبق تحلیل هفته پیش بالاهایی که بزنه بریم برای سل تا زمانیکه برسیم به حمایت هفتگی که نزدیک حمایت ماهانه و ۳ ماهه هست که یعنی قویه\nپس فعلا در تایمفریم ۴ ساعته و روزانه نواحی که هست رو میتونید برای سل داشته باشیم",
+              false,
+              [
+                12,
+                19,
+                21,
+                25
+              ],
+              {
+                "kind": 13,
+                "price": 14,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 18,
+                "isNew": 10
+              },
+              "price",
+              79885,
+              "resistance",
+              "react",
+              null,
+              "4h",
+              {
+                "kind": 13,
+                "price": 20,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 17,
+                "isNew": 10
+              },
+              83028,
+              {
+                "kind": 13,
+                "price": 22,
+                "role": 23,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 24,
+                "isNew": 10
+              },
+              65541,
+              "support",
+              "1W",
+              {
+                "kind": 13,
+                "price": 26,
+                "role": 15,
+                "expectation": 16,
+                "target": 17,
+                "timeframe": 24,
+                "isNew": 10
+              },
+              89165,
+              1,
+              [
+                29
+              ],
+              {
+                "version": 27,
+                "effectiveAt": 30,
+                "changeNote": 17
+              },
+              "2026-11-09 16:44:18",
+              6,
+              7,
+              35,
+              "XAGUSD",
+              37,
+              "AUDJPY",
+              "none",
+              true,
+              [],
+              [
+                17,
+                17,
+                17,
+                17
+              ],
+              [
+                42,
+                46
+              ],
+              {
+                "id": 27,
+                "brokerName": 43,
+                "url": 44,
+                "label": 45
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 47,
+                "brokerName": 48,
+                "url": 49,
+                "label": 50
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 52,
+                "preview": 10,
+                "rulesAccepted": 10,
+                "isAdmin": 10,
+                "loginHref": 17
+              },
+              "member",
+              {
+                "calendar": 54,
+                "polymarket": 75
+              },
+              {
+                "status": 55,
+                "events": 56,
+                "asOf": 74,
+                "stale": 10
+              },
+              "ok",
+              [
+                57,
+                64,
+                70
+              ],
+              {
+                "title": 58,
+                "currency": 59,
+                "impact": 60,
+                "at": 61,
+                "forecast": 62,
+                "previous": 63
+              },
+              "Unemployment Claims",
+              "USD",
+              "medium",
+              "2026-11-12T13:30:00.000Z",
+              "194K",
+              "189K",
+              {
+                "title": 65,
+                "currency": 59,
+                "impact": 66,
+                "at": 67,
+                "forecast": 68,
+                "previous": 69
+              },
+              "Core PPI m/m",
+              "high",
+              "2026-11-13T13:30:00.000Z",
+              "0.3%",
+              "0.7%",
+              {
+                "title": 71,
+                "currency": 59,
+                "impact": 66,
+                "at": 67,
+                "forecast": 72,
+                "previous": 73
+              },
+              "PPI m/m",
+              "0.4%",
+              "1.3%",
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 76
+              },
+              "unavailable",
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/37",
+        "text": "مشاهدهٔ کامل",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/37",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "entry": 1,
+                "isAdmin": 9,
+                "alertOn": 9,
+                "impersonating": 9,
+                "telegramLinked": 9,
+                "telegram": 24,
+                "telegramAvailable": 25,
+                "levelStatus": 26,
+                "showResults": 9,
+                "alertHits": 27,
+                "preparing": 16,
+                "affiliates": 28,
+                "audience": 38,
+                "external": 40,
+                "marketVotes": 46
+              },
+              {
+                "setId": 2,
+                "entryId": 3,
+                "category": 4,
+                "symbol": 5,
+                "displayName": 5,
+                "timeframe": 6,
+                "imageId": 7,
+                "caption": 8,
+                "captionChanged": 9,
+                "levels": 10,
+                "version": 17,
+                "updated": 9,
+                "updatedAt": 16,
+                "appended": 9,
+                "latestVersion": 17,
+                "versions": 18,
+                "position": 21,
+                "total": 21,
+                "prevEntryId": 22,
+                "prevSymbol": 23,
+                "nextEntryId": 16,
+                "nextSymbol": 16
+              },
+              5,
+              37,
+              "forex",
+              "AUDJPY",
+              "1D",
+              44,
+              "فعلا کمریسکترین جا برای ترید ناحیه عرضه در تایمفریم روزانه هست",
+              false,
+              [
+                11
+              ],
+              {
+                "kind": 12,
+                "price": 13,
+                "role": 14,
+                "expectation": 15,
+                "target": 16,
+                "timeframe": 16,
+                "isNew": 9
+              },
+              "price",
+              110.48,
+              "resistance",
+              "react",
+              null,
+              1,
+              [
+                19
+              ],
+              {
+                "version": 17,
+                "effectiveAt": 20,
+                "changeNote": 16
+              },
+              "2026-11-09 16:44:18",
+              7,
+              36,
+              "BTCUSDT",
+              "none",
+              true,
+              [],
+              [
+                16
+              ],
+              [
+                29,
+                33
+              ],
+              {
+                "id": 17,
+                "brokerName": 30,
+                "url": 31,
+                "label": 32
+              },
+              "Litefinance",
+              "https://litefinance.org/?uid=975753844",
+              "ثبت‌نام در Litefinance",
+              {
+                "id": 34,
+                "brokerName": 35,
+                "url": 36,
+                "label": 37
+              },
+              3,
+              "Alpari",
+              "https://trade.alpariforexfa.org/signup?lang=fa&Referral=69899",
+              "ثبت‌نام در Alpari",
+              {
+                "kind": 39,
+                "preview": 9,
+                "rulesAccepted": 9,
+                "isAdmin": 9,
+                "loginHref": 16
+              },
+              "member",
+              {
+                "calendar": 41,
+                "polymarket": 45
+              },
+              {
+                "status": 42,
+                "events": 43,
+                "asOf": 44,
+                "stale": 9
+              },
+              "ok",
+              [],
+              "2026-11-10T19:43:46.045Z",
+              {
+                "status": 24
+              },
+              {}
+            ],
+            "uses": {
+              "dependencies": [
+                "signals:preparing",
+                "signals:telegram"
+              ],
+              "search_params": [
+                "v"
+              ],
+              "params": [
+                "entryId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/rules",
+        "text": "قوانین سیگنال‌ها· نسخهٔ ۱",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/rules",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "rules": 1,
+                "accepted": 5,
+                "acceptedAt": 6,
+                "next": 7,
+                "impersonating": 5,
+                "isAdmin": 5,
+                "audience": 8
+              },
+              {
+                "version": 2,
+                "body": 3,
+                "publishedAt": 4
+              },
+              1,
+              "این سیگنال‌ها آموزشی هستن، نه توصیهٔ مالی.\nتصمیم آخر و مسئولیتش با خودتونه.\n\nبدون حد ضرر وارد هیچ تریدی نشید.\nهمیشه، حتی وقتی خیلی مطمئنید.\n\nریسک هر ترید حداکثر ۱٪ حسابتون.\nهر جا گفتم «نصف ریسک»، یعنی ۰٫۵٪.\n\nقیمت‌ها ناحیهٔ واکنش هستن، نه نقطهٔ ورود قطعی.\nصبر کنید قیمت برسه و واکنشش رو ببینید.\n\nهیچ سیگنالی نتیجهٔ تضمین‌شده نداره.\nنتیجهٔ واقعی شما به ورود، حد ضرر و مدیریت ریسک خودتون بستگی داره.\n\nسیگنال‌ها رو نفروشید و جایی بازنشر نکنید.\nاگر می‌خواید به کسی نشون بدید، لینک صفحه رو بفرستید.\n\nممکنه وسط هفته یک سیگنال رو به‌روز کنم.\nقبل از ترید برچسب «به‌روزرسانی شد» رو چک کنید.",
+              "2026-09-28 21:35:48",
+              false,
+              null,
+              "/signals",
+              {
+                "kind": 9,
+                "preview": 5,
+                "rulesAccepted": 5,
+                "isAdmin": 5,
+                "loginHref": 6
+              },
+              "member"
+            ],
+            "uses": {
+              "search_params": [
+                "next"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "card": {
+        "href": "/signals/rules",
+        "text": "قوانین سیگنال‌ها",
+        "imgSrc": null
+      },
+      "detail_raw": {
+        "type": "data",
+        "nodes": [
+          {
+            "type": "data",
+            "data": [
+              {
+                "user": 1,
+                "showBell": 6,
+                "showSignals": 6,
+                "supportChatPublic": 6,
+                "unread": 7,
+                "courseAccessNotice": 8,
+                "seo": 9
+              },
+              {
+                "id": 2,
+                "displayName": 3,
+                "login": 4,
+                "isStaff": 5,
+                "isAdmin": 5
+              },
+              52247,
+              "جواد شیخ اعظمی",
+              "09211351330",
+              false,
+              true,
+              0,
+              null,
+              {
+                "title": 10,
+                "description": 11,
+                "canonical": 12,
+                "robots": 13,
+                "ogType": 14,
+                "ogTitle": 10,
+                "ogDescription": 11,
+                "ogSiteName": 10,
+                "ogLocale": 15,
+                "ogImage": 16,
+                "ogImageAlt": 10,
+                "twitterCard": 17,
+                "jsonLd": 18
+              },
+              "سولی تریدر",
+              "آموزش تخصصی معامله‌گری در بازارهای مالی",
+              "https://soli-trader.com/signals/rules",
+              "noindex,follow",
+              "website",
+              "fa_IR",
+              "https://soli-trader.com/og-default.png",
+              "summary_large_image",
+              []
+            ],
+            "uses": {
+              "url": 1
+            }
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "signalsPreview": 1
+              },
+              false
+            ],
+            "uses": {},
+            "slash": "ignore"
+          },
+          {
+            "type": "data",
+            "data": [
+              {
+                "rules": 1,
+                "accepted": 5,
+                "acceptedAt": 6,
+                "next": 7,
+                "impersonating": 5,
+                "isAdmin": 5,
+                "audience": 8
+              },
+              {
+                "version": 2,
+                "body": 3,
+                "publishedAt": 4
+              },
+              1,
+              "این سیگنال‌ها آموزشی هستن، نه توصیهٔ مالی.\nتصمیم آخر و مسئولیتش با خودتونه.\n\nبدون حد ضرر وارد هیچ تریدی نشید.\nهمیشه، حتی وقتی خیلی مطمئنید.\n\nریسک هر ترید حداکثر ۱٪ حسابتون.\nهر جا گفتم «نصف ریسک»، یعنی ۰٫۵٪.\n\nقیمت‌ها ناحیهٔ واکنش هستن، نه نقطهٔ ورود قطعی.\nصبر کنید قیمت برسه و واکنشش رو ببینید.\n\nهیچ سیگنالی نتیجهٔ تضمین‌شده نداره.\nنتیجهٔ واقعی شما به ورود، حد ضرر و مدیریت ریسک خودتون بستگی داره.\n\nسیگنال‌ها رو نفروشید و جایی بازنشر نکنید.\nاگر می‌خواید به کسی نشون بدید، لینک صفحه رو بفرستید.\n\nممکنه وسط هفته یک سیگنال رو به‌روز کنم.\nقبل از ترید برچسب «به‌روزرسانی شد» رو چک کنید.",
+              "2026-09-28 21:35:48",
+              false,
+              null,
+              "/signals",
+              {
+                "kind": 9,
+                "preview": 5,
+                "rulesAccepted": 5,
+                "isAdmin": 5,
+                "loginHref": 6
+              },
+              "member"
+            ],
+            "uses": {
+              "search_params": [
+                "next"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

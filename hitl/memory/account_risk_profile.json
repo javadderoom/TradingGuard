@@ -25,9 +25,9 @@
     }
   },
   "daily_reference_equity": 1142.51,
-  "daily_reference_date": "2026-11-09",
-  "high_water_mark_equity": 1142.51,
+  "daily_reference_date": "2026-11-10",
+  "high_water_mark_equity": 1146.11,
   "circuit_breaker_active": false,
   "circuit_breaker_reason": "",
-  "last_updated": "2026-11-09T18:42:30.018027"
+  "last_updated": "2026-11-10T19:02:37.272926"
 }

@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Institutional AI Playbook & Memory Ledger
-**Last Calibration:** `2026-11-09T10:43:04.557610` | **Version:** `2.0.0-LEAN`
+**Last Calibration:** `2026-11-10T21:00:00.558362` | **Version:** `2.0.0-LEAN`
 
 This playbook represents the continuous learning feedback loop of the Antigravity 6-Seat Investment Council.
 It is updated dynamically after every executed trade and every counterfactual audit of debated stand-asides.
@@ -851,6 +851,7 @@ Rules proposed by the LLM review council. They do **not** affect live council de
 | 2026-07-30 15:30 | XAUUSD | [SETUP-ARCH-007] BEARISH SMT: BEARI... | +25.30 / -1.07 pts | **PROTECTIVE_VETO** | PROTECTIVE VETO: If entered at 4061.95, trade would have filled at min 0 and hit SL at min 21 for -$9.68 loss. Council stand-aside successfully defended capital! |
 | 2026-10-28 12:00 | XAUUSD | [SETUP-ARCH-007] BULLISH SMT: BULLI... | +25.61 / -4.57 pts | **DAMAGING_STAND_ASIDE** | MISSED WINNER: If entered at 4032.16, trade would have filled at min 1 and hit TP at min 88 for +$12.00 profit. Council veto caused alpha leakage. [Peak Excursion: 4060.09 (Max R:R 1:5.08, +15.8 units beyond TP, Efficiency: 43.3%)]. |
 | 2026-11-09 10:32 | MULTI | Review Council Audit: 1 decisions e... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Market exhibited equilibrium chop. Council discipline successfully avoided overtrading in dead zones. |
+| 2026-11-10 21:00 | MULTI | Review Council Audit: 13 decisions ... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Detected 12 missed winning setup(s) due to overly rigid directional filters. Directive: Authorize selective counter-trend entries on prominent Asian/session extremes when M5 displacement MSS is confirmed. |
 
 ---
 ## 🎯 Executed Trade Post-Mortems

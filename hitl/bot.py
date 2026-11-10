@@ -46,11 +46,11 @@ from hitl.council import convene_investment_council
 # Collapsible Mobile Bottom Menus (Reply Keyboard)
 MAIN_KEYBOARD = {
     "keyboard": [
-        [{"text": "🔮 Trend Oracle"}, {"text": "📊 Market Analysis"}],
-        [{"text": "🌅 Morning Briefing"}, {"text": "🧪 Backtest Suite"}],
-        [{"text": "🏢 Prop & Risk Settings"}, {"text": "🛡️ Account Status"}],
-        [{"text": "📋 Pending Orders"}, {"text": "📊 Open Positions"}],
-        [{"text": "❓ Help & Syntax"}]
+        [{"text": "🔮 Trend Oracle"}, {"text": "📡 Soli Signals"}],
+        [{"text": "📊 Market Analysis"}, {"text": "🌅 Morning Briefing"}],
+        [{"text": "🧪 Backtest Suite"}, {"text": "🛡️ Account Status"}],
+        [{"text": "🏢 Prop & Risk Settings"}, {"text": "📋 Pending Orders"}],
+        [{"text": "📊 Open Positions"}, {"text": "❓ Help & Syntax"}]
     ],
     "resize_keyboard": True,
     "is_persistent": True
@@ -659,6 +659,33 @@ def handle_trend_command(client: TelegramClient, chat_id: int | str, symbol: str
         client.send_message(chat_id, f"⚠️ *Trend Forecast Error:* {e}")
 
 
+def handle_soli_signals_command(client: TelegramClient, chat_id: int | str):
+    """Synchronizes and dispatches all active Soli-Trader institutional key levels and charts."""
+    client.send_message(chat_id, "📡 *Fetching latest institutional key levels from Soli-Trader...*")
+    try:
+        from hitl.signals.soli_service import SoliTraderService
+        service = SoliTraderService()
+        signals = service.sync_all_signals()
+        if not signals:
+            client.send_message(
+                chat_id,
+                "⚠️ *No signals retrieved from Soli-Trader.*\nSession cookie may be missing or expired."
+            )
+            return
+
+        client.send_message(chat_id, f"✅ *Successfully synchronized {len(signals)} institutional key levels:*")
+        for sig in signals:
+            card_html = service.format_telegram_card(sig)
+            img_id = sig.get("imageId")
+            chart_path = service.get_chart_image_path(img_id) if img_id else None
+            if chart_path:
+                client.send_photo(chat_id, chart_path, caption=card_html, parse_mode="HTML")
+            else:
+                client.send_message(chat_id, card_html, parse_mode="HTML")
+    except Exception as e:
+        client.send_message(chat_id, f"⚠️ *Error syncing Soli-Trader signals:* `{e}`")
+
+
 def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: int | str):
     """Reports overall account and system operational status."""
     acc = engine.get_account_summary()
@@ -931,6 +958,8 @@ def run_bot():
                     elif any(k in text.lower() for k in ["/briefing", "briefing", "morning", "صبحگاهی", "شروع روز", "morning briefing"]):
                         from hitl.review_engine import run_morning_briefing
                         run_morning_briefing(engine, client, sender_id)
+                    elif any(k in text.lower() for k in ["/signals", "/soli", "📡 soli signals", "📡 سیگنال", "soli signals", "سیگنال"]):
+                        handle_soli_signals_command(client, sender_id)
                     elif any(k in text for k in ["📋", "اردر", "/orders", "orders"]):
                         handle_orders_command(client, engine, sender_id)
                     elif any(k in text for k in ["📊", "پوزیشن", "/positions", "positions"]):

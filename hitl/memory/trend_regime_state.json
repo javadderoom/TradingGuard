@@ -3,20 +3,20 @@
   "horizons": {
     "session": {
       "bias": "BEARISH",
-      "confidence": 0.99,
+      "confidence": 0.98,
       "session_archetype": "BEARISH_EXPANSION",
       "expected_range": {
-        "high": 4130.34,
+        "high": 4148.98,
         "low": 4098.1
       },
-      "key_trigger": 4127.84,
+      "key_trigger": 4146.48,
       "catalyst_danger": "LOW"
     },
     "day": {
       "bias": "BEARISH",
       "confidence": 0.96,
       "daily_dol": {
-        "target": 4032.84,
+        "target": 4036.28,
         "type": "SELL_SIDE_LIQUIDITY",
         "rationale": "SubQ Snap classified BEARISH_DAY targeting SELL_SIDE_LIQUIDITY"
       },
@@ -25,21 +25,42 @@
     },
     "week": {
       "bias": "BULLISH",
-      "confidence": 0.47,
+      "confidence": 0.52,
       "macro_target": 4146.82,
       "weekly_profile": "TUESDAY_LOW_OF_WEEK"
     }
   },
-  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. Session bias rated BEARISH (confidence 98%), Daily horizon aligned with BEARISH_DAY toward 4032.84. Weekly profile: TUESDAY_LOW_OF_WEEK.",
+  "trade_management": {
+    "aligned": {
+      "tp_r": 3.5,
+      "be_ratchet_r": 1.5,
+      "mode": "TREND_EXPANSION",
+      "note": "Target Distal DOL with 1.5R BE protection"
+    },
+    "counter": {
+      "tp_r": 1.5,
+      "be_ratchet_r": 1.0,
+      "mode": "COUNTER_TREND_SCALP",
+      "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"
+    },
+    "sideways": {
+      "tp_r": 3.5,
+      "be_ratchet_r": 1.0,
+      "mode": "EQUILIBRIUM_BOUNDARY_FADE",
+      "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"
+    }
+  },
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. Session bias rated BEARISH (confidence 98%), Daily horizon aligned with BEARISH_DAY toward 4036.28. Weekly profile: TUESDAY_LOW_OF_WEEK.",
   "source": "subq-snap-1.1",
-  "latency_ms": 783.6,
-  "generated_at_utc": "2026-11-10 14:54:52 UTC",
-  "generated_at_tehran": "2026-11-10 18:24:52 Tehran",
+  "latency_ms": 770.0,
+  "generated_at_utc": "2026-11-10 16:15:03 UTC",
+  "generated_at_tehran": "2026-11-10 19:45:03 Tehran",
   "on_chart_telemetry": {
     "symbol": "XAUUSD",
-    "current_price": 4038.72,
-    "timestamp_utc": "2026-11-10 14:54:52 UTC",
-    "timestamp_tehran": "2026-11-10 18:24:52 Tehran",
+    "active_anchor": "PRE_NY",
+    "current_price": 4039.01,
+    "timestamp_utc": "2026-11-10 16:15:02 UTC",
+    "timestamp_tehran": "2026-11-10 19:45:02 Tehran",
     "daily_structure": {
       "pdh": 4148.55,
       "pdl": 4054.16,
@@ -60,39 +81,41 @@
       "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
     },
     "session_ranges": {
-      "asian_high": 4127.84,
+      "asian_high": 4146.48,
       "asian_low": 4108.1,
-      "asian_range": 19.74,
+      "asian_range": 38.38,
       "london_high": 4126.82,
-      "london_low": 4088.73,
-      "london_range": 38.09
+      "london_low": 4081.15,
+      "london_range": 45.67
+    },
+    "london_context": {
+      "is_established": true,
+      "london_high": 4126.82,
+      "london_low": 4081.15,
+      "london_range": 45.67,
+      "swept_asian_high": false,
+      "swept_asian_low": true,
+      "pre_ny_adr_util_pct": 124.1,
+      "exhaustion_alert": true
     },
     "draw_on_liquidity": {
       "type": "SELL_SIDE_LIQUIDITY",
-      "target_price": 4032.84,
-      "distance_pts": 5.88,
+      "target_price": 4036.28,
+      "distance_pts": 2.73,
       "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
     },
     "liquidity_pools": {
       "overhead_bsl": [
-        4050.45,
-        4057.36,
-        4061.26
+        4045.66,
+        4054.03,
+        4057.36
       ],
       "underlying_ssl": [
-        4032.84,
-        4029.96,
-        4027.46
+        4036.28,
+        4034.09,
+        4032.84
       ],
       "active_h1_fvgs": [
-        {
-          "type": "BULLISH_FVG",
-          "top": 4099.68,
-          "bottom": 4073.14,
-          "midpoint": 4086.41,
-          "size": 26.54,
-          "bar_time": 1794189600
-        },
         {
           "type": "BULLISH_FVG",
           "top": 4119.37,
@@ -100,6 +123,14 @@
           "midpoint": 4112.88,
           "size": 12.98,
           "bar_time": 1794193200
+        },
+        {
+          "type": "BEARISH_FVG",
+          "top": 4119.0,
+          "bottom": 4110.94,
+          "midpoint": 4114.97,
+          "size": 8.06,
+          "bar_time": 1794211200
         }
       ],
       "active_h4_fvgs": [
@@ -123,9 +154,9 @@
     },
     "htf_trend": {
       "h1_regime": "BEARISH_EXPANSION",
-      "h1_ma20": 4106.36,
-      "h4_ma20": 4090.39,
-      "h1_displacement_3bar": -35.34
+      "h1_ma20": 4098.41,
+      "h4_ma20": 4090.41,
+      "h1_displacement_3bar": -12.84
     },
     "smt_divergence": {
       "has_smt": false,
@@ -135,8 +166,8 @@
   },
   "off_chart_telemetry": {
     "symbol": "XAUUSD",
-    "timestamp_utc": "2026-11-10 14:54:52 UTC",
-    "timestamp_tehran": "2026-11-10 18:24:52 Tehran",
+    "timestamp_utc": "2026-11-10 16:15:02 UTC",
+    "timestamp_tehran": "2026-11-10 19:45:02 Tehran",
     "session_context": {
       "is_active_killzone": true,
       "session_label": "New York Regular Session",
