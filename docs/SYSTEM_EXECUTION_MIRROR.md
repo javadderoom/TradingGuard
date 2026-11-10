@@ -1648,6 +1648,43 @@ ANNUAL TOTAL   110   25W - 72L - 13BE     22.7%    +15.50R     1.22    |  29W - 
 4. `hitl/backtest/simulate_asymmetric_trade_management.py`: Asymmetric policy simulator.
 5. `hitl/backtest/audit_policy_seasonal_robustness.py`: 4-season robustness verifier.
 
+---
+
+### 29.6 Dual-Session Dynamic Re-Anchoring (Pre-London vs Pre-NY Architecture)
+
+To evaluate whether updating the trend forecast prior to the New York Open (12:30 UTC / 16:00 Tehran) provides incremental statistical edge, a dedicated 274-day empirical audit was conducted on authentic MT5 Gold tick/bar data (`hitl/backtest/audit_pre_ny_reanchoring.py` and `audit_ny_screener_trades.py`).
+
+#### 1. Empirical Discovery: The Pitfall of Naive Mid-Day Directional Flipping
+In retail ICT theory, it is often assumed that if London sweeps Asian High and rejects, New York will automatically reverse (bearish). Testing this on 274 trading days revealed the exact opposite:
+- After London swept Asian High, New York closed **GREEN (UP) in 51.1% of days (23 days)**, but closed **RED (DOWN) in only 28.9% of days (13 days)**.
+- London sweeps of Asian High on Gold were predominantly **liquidity accumulation for New York trend continuation**.
+- Re-anchoring the directional prediction at 12:30 UTC by flipping the bias degraded New York session trades:
+  - **Static Daily Macro Anchor**: 54 Fills | 16W - 32L - 6BE | WR: 29.6% | **Net: +8.00R | PF: 1.25**
+  - **Flipped Pre-NY Re-Anchor**: 54 Fills | 11W - 32L - 11BE | WR: 20.4% | **Net: +2.50R | PF: 1.08**
+  - **Alpha Destruction**: Destroyed **-5.50R** of net alpha because winning 3.5R runners were prematurely capped at 1.5R counter-trend targets.
+
+#### 2. The Validated Hybrid Dual-Anchor Architecture
+To capture the benefits of London session facts without destroying macro alpha, TradingGuard deploys a **Hybrid Dual-Anchor Engine**:
+1. **Persistent Directional Macro Anchor**:
+   The directional forecast (`UP` / `DOWN` / `SIDEWAYS`) remains firmly anchored to the Daily & HTF structure (Model A). This preserves the annual **+33.50R (PF 1.58)** performance across the portfolio.
+2. **Dynamic Pre-NY Telemetry & Range Enrichment**:
+   When evaluated between 11:00 UTC and 17:00 UTC (14:30 to 20:30 Tehran), `extract_on_chart_microstructure` automatically identifies `active_anchor = "PRE_NY"`:
+   - Confirms London Established Range (`london_high` and `london_low`, range in points).
+   - Computes Pre-NY ADR Utilization (`pre_ny_adr_util_pct`).
+   - Dispatches an **ADR Range Alert** if utilization $\ge 60\%$, warning the operator that session expansion runway is limited and equilibrium rotations are probable.
+3. **Verified New York Session Performance**:
+   Under this hybrid architecture, the 54 ratified New York session trades achieved:
+   - **54 Fills | 13W - 29L - 12BE | Win Rate: 24.1% | Net Alpha: +10.50R | Profit Factor: 1.36**
+   - Outperformed unoptimized static execution (+8.00R, PF 1.25) through early +1.0R breakeven protection on range-fade setups while letting macro trend runners hit full 3.5R targets.
+
+#### 3. Verification Artifacts & Test Coverage
+- Automated test coverage: `app/tests/test_trend_oracle.py::test_on_chart_microstructure_keys` verifies `active_anchor` and `london_context` telemetry schema.
+- Backtest suites:
+  - `hitl/backtest/audit_pre_ny_reanchoring.py`: 274-day dual-anchor comparative benchmark.
+  - `hitl/backtest/diagnose_london_to_ny_dynamics.py`: London archetype transition matrix.
+  - `hitl/backtest/audit_ny_screener_trades.py`: 264-trade NY session execution audit.
+  - `hitl/backtest/test_hybrid_dual_anchor.py`: Hybrid portfolio verification (+10.50R, PF 1.36).
+
 
 
 

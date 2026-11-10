@@ -27,6 +27,10 @@ def test_on_chart_microstructure_keys():
     assert "liquidity_pools" in data
     assert "htf_trend" in data
     assert "smt_divergence" in data
+    assert "active_anchor" in data
+    assert "london_context" in data
+    assert data["active_anchor"] in ("PRE_LONDON", "PRE_NY", "AFTER_HOURS")
+    assert "is_established" in data["london_context"]
 
     # Check key numerical bounds
     assert data["daily_structure"]["adr_14"] > 0

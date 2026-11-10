@@ -145,15 +145,37 @@ class TrendOracle:
         ct_tm = tm.get("counter", {"tp_r": 1.5, "be_ratchet_r": 1.0})
         sd_tm = tm.get("sideways", {"tp_r": 3.5, "be_ratchet_r": 1.0})
 
+        # Dual-Session Anchor Telemetry
+        active_anchor = on_chart.get("active_anchor", "PRE_LONDON")
+        lon_ctx = on_chart.get("london_context", {})
+        if active_anchor == "PRE_NY":
+            anchor_header = "🗽 *Session Anchor:* `Pre-NY (London Context Confirmed)`"
+            if lon_ctx.get("is_established"):
+                exh_str = " ⚠️ *ADR Alert:* `>60% consumed, equilibrium rotation expected`" if lon_ctx.get("exhaustion_alert") else ""
+                anchor_detail = (
+                    f"• London Established Range: `${lon_ctx.get('london_low', 0):.2f}` – `${lon_ctx.get('london_high', 0):.2f}` (`{lon_ctx.get('london_range', 0)} pts`)\n"
+                    f"• Pre-NY ADR Utilization: `{lon_ctx.get('pre_ny_adr_util_pct', 0)}%`{exh_str}\n\n"
+                )
+            else:
+                anchor_detail = ""
+        elif active_anchor == "PRE_LONDON":
+            anchor_header = "☀️ *Session Anchor:* `Pre-London (Asian Context)`"
+            anchor_detail = ""
+        else:
+            anchor_header = "🌙 *Session Anchor:* `Post-NY / Asian Session`"
+            anchor_detail = ""
+
         card = (
             f"🔮 *OmniTrend Oracle — {sym} Multi-Horizon Forecast*\n"
             f"⏱ *Generated:* `{forecast.get('generated_at_tehran', '')}`\n"
-            f"💲 *Current Price:* `${curr_p:.2f}`\n\n"
+            f"💲 *Current Price:* `${curr_p:.2f}`\n"
+            f"{anchor_header}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"⏰ *1. SESSION HORIZON (Next 2–6h)*\n"
             f"• Bias: {sess_icon} *{sess_bias}* (Conf: `{sess_conf}%`)\n"
             f"• Archetype: `{sess_arch}`\n"
             f"• Expected Range: `${sess_range.get('low', 0):.2f}` – `${sess_range.get('high', 0):.2f}`\n"
+            f"{anchor_detail}"
             f"• Catalyst Risk: {risk_badge}\n\n"
             f"📅 *2. DAILY HORIZON (24 Hours)*\n"
             f"• Bias: {day_icon} *{day_bias}* (Conf: `{day_conf}%`)\n"

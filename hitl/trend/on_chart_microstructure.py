@@ -174,7 +174,7 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
     rates_h4 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_H4, 0, 60)
     rates_h1 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_H1, 0, 120)
     rates_m15 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_M15, 0, 100)
-    rates_m5 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_M5, 0, 150)
+    rates_m5 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_M5, 0, 300)
 
     if rates_d1 is None or len(rates_d1) < 5 or rates_h1 is None or len(rates_h1) < 20:
         return {
@@ -218,20 +218,36 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
         pwl = min(b["low"] for b in d1[-10:-5])
         cwo = d1[-5]["open"]
 
-    # 3. Session Ranges (Asia & London)
-    # Asian Session: 00:00 to 06:00 UTC
+    # 3. Session Ranges (Asia & London) and Dynamic Dual-Anchor Resolution
     now_utc = datetime.datetime.now(TZ_UTC)
     today_utc_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
     today_start_ts = int(today_utc_start.timestamp())
 
+    # Asian Session: 00:00 to 06:00 UTC
     asian_bars = [b for b in m5 if today_start_ts <= b["time"] <= today_start_ts + (6 * 3600)]
     asian_high = max((b["high"] for b in asian_bars), default=daily_high)
     asian_low = min((b["low"] for b in asian_bars), default=daily_low)
 
-    # London Session: 08:00 to 11:00 UTC
-    london_bars = [b for b in m5 if today_start_ts + (8 * 3600) <= b["time"] <= today_start_ts + (11 * 3600)]
+    # London Session: 08:00 to 12:00 UTC
+    london_bars = [b for b in m5 if today_start_ts + (8 * 3600) <= b["time"] <= today_start_ts + (12 * 3600)]
+    is_london_established = (len(london_bars) >= 12) or (now_utc.hour >= 12)
     london_high = max((b["high"] for b in london_bars), default=asian_high)
     london_low = min((b["low"] for b in london_bars), default=asian_low)
+    london_range = round(london_high - london_low, 2)
+    london_swept_asian_h = london_high > asian_high
+    london_swept_asian_l = london_low < asian_low
+
+    # Dynamic Session Anchor: Pre-London vs Pre-NY vs After-Hours
+    if now_utc.hour < 11:
+        active_anchor = "PRE_LONDON"
+    elif now_utc.hour < 17:
+        active_anchor = "PRE_NY"
+    else:
+        active_anchor = "AFTER_HOURS"
+
+    pre_ny_range = max(daily_high, london_high) - min(daily_low, london_low)
+    pre_ny_adr_util = round((pre_ny_range / max(0.1, adr_14)) * 100.0, 1)
+    adr_exhaustion_alert = pre_ny_adr_util >= 60.0
 
     # 4. Draw on Liquidity (DOL) Mapping
     # Unswept highs/lows
@@ -297,6 +313,7 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
 
     return {
         "symbol": "XAUUSD",
+        "active_anchor": active_anchor,
         "current_price": round(curr_p, 2),
         "timestamp_utc": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "timestamp_tehran": now_utc.astimezone(TZ_TEHRAN).strftime("%Y-%m-%d %H:%M:%S Tehran"),
@@ -326,6 +343,16 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
             "london_high": round(london_high, 2),
             "london_low": round(london_low, 2),
             "london_range": round(london_high - london_low, 2)
+        },
+        "london_context": {
+            "is_established": is_london_established,
+            "london_high": round(london_high, 2),
+            "london_low": round(london_low, 2),
+            "london_range": round(london_range, 2),
+            "swept_asian_high": london_swept_asian_h,
+            "swept_asian_low": london_swept_asian_l,
+            "pre_ny_adr_util_pct": pre_ny_adr_util,
+            "exhaustion_alert": adr_exhaustion_alert
         },
         "draw_on_liquidity": primary_dol,
         "liquidity_pools": {

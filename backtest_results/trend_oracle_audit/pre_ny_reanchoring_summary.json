@@ -1,0 +1,15 @@
+{
+  "days": 274,
+  "model_a_pre_london": {
+    "trend_calls": 175,
+    "win_rate": 52.0,
+    "inversion_rate": 48.0,
+    "dol_rate": 69.1
+  },
+  "model_b_pre_ny_reanchor": {
+    "trend_calls": 105,
+    "win_rate": 52.4,
+    "inversion_rate": 47.6,
+    "dol_rate": 38.1
+  }
+}
