@@ -503,6 +503,18 @@ class LiveMarketRadar:
                         ]
                     }
 
+                    trend_badge = ""
+                    try:
+                        from hitl.trend.trend_oracle import trend_oracle
+                        fc = trend_oracle.get_forecast(symbol=sym, force_refresh=False)
+                        day_bias = fc.get("horizons", {}).get("day", {}).get("bias", "")
+                        day_conf = int(fc.get("horizons", {}).get("day", {}).get("confidence", 0.0) * 100)
+                        if day_bias:
+                            t_icon = "🟢" if day_bias == "BULLISH" else ("🔴" if day_bias == "BEARISH" else "🟡")
+                            trend_badge = f"🔮 *Trend Oracle:* {t_icon} {day_bias} (`{day_conf}%` Conf) [Advisory]\n"
+                    except Exception:
+                        pass
+
                     ticket_caption = (
                         f"⚡ *{sym_icon} {sym} · {order_lbl}*\n\n"
                         f"📍 *Entry:* `{plan['entry']:{fmt}}`\n"
@@ -510,6 +522,7 @@ class LiveMarketRadar:
                         f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}* [Capped])\n"
                         f"{be_str}"
                         f"{smt_str}"
+                        f"{trend_badge}"
                         f"💡 *Hunt:*  `{setup['swept_target']}` (+{setup['sweep_delta_pips']} {pips_unit})\n"
                         f"⚖️ *Lot:*   `0.01`\n"
                         f"✅ *Final Verdict:* {clean_verdict}"

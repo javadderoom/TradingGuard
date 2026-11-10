@@ -640,6 +640,25 @@ def handle_news_command(client: TelegramClient, chat_id: int | str, symbol: str 
     client.send_message(chat_id, text)
 
 
+def handle_trend_command(client: TelegramClient, chat_id: int | str, symbol: str = "XAUUSD", force_refresh: bool = False):
+    """Generates and displays OmniTrend multi-horizon forecast card."""
+    try:
+        from hitl.trend.trend_oracle import trend_oracle
+        fc = trend_oracle.get_forecast(symbol=symbol, force_refresh=force_refresh)
+        card = trend_oracle.format_telegram_card(fc)
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "🔁 Refresh Forecast", "callback_data": f"trend_refresh_{symbol}"},
+                    {"text": "📸 View Chart", "callback_data": "pack_gold"}
+                ]
+            ]
+        }
+        client.send_message(chat_id, card, reply_markup=keyboard)
+    except Exception as e:
+        client.send_message(chat_id, f"⚠️ *Trend Forecast Error:* {e}")
+
+
 def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: int | str):
     """Reports overall account and system operational status."""
     acc = engine.get_account_summary()
@@ -943,6 +962,8 @@ def run_bot():
                         watchdog.send_heartbeat(sender_id, is_manual=True)
                     elif any(k in text.lower() for k in ["/news", "news", "تقویم", "اخبار"]):
                         handle_news_command(client, sender_id, "XAUUSD")
+                    elif any(k in text.lower() for k in ["/trend", "trend", "روند", "پیش بینی روند"]):
+                        handle_trend_command(client, sender_id, "XAUUSD")
                     elif any(k in text for k in ["❓", "راهنما", "/help", "/start", "help"]):
                         client.send_message(
                             sender_id,
@@ -992,6 +1013,9 @@ def run_bot():
                             handle_council_command(client, sender_id, "GBPUSD")
                         elif data in ["council_nq", "council_nasdaq"]:
                             handle_council_command(client, sender_id, "NQ")
+                        elif data.startswith("trend_refresh_"):
+                            sym = data.replace("trend_refresh_", "")
+                            handle_trend_command(client, sender_id, symbol=sym, force_refresh=True)
                         elif data.startswith("cancel_"):
                             ticket_str = data.split("_")[1]
                             if ticket_str.isdigit():

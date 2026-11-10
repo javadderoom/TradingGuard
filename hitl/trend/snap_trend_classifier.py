@@ -1,0 +1,397 @@
+"""
+TradingGuard HITL - SubQ Snap Multi-Horizon Trend Classifier
+Combines on-chart microstructure vectors and off-chart macro/sentiment intelligence
+using Subquadratic SubQ Snap (or deterministic quantitative matrix fallback) to produce
+probabilistic directional forecasts across Session, Day, and Week horizons.
+"""
+
+import sys
+import json
+import time
+import urllib.request
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from hitl.config import SNAP_API_KEY, SNAP_API_URL, SNAP_MODEL
+
+
+class SnapTrendClassifier:
+    """
+    Subquadratic Multimodal Trend Classifier.
+    """
+
+    def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
+        self.api_key = api_key or SNAP_API_KEY
+        self.api_url = api_url or SNAP_API_URL
+        self.model = SNAP_MODEL or "subq-snap-1.1"
+
+    def classify_trend(
+        self,
+        on_chart: Dict[str, Any],
+        off_chart: Dict[str, Any],
+        timeout: int = 12
+    ) -> Dict[str, Any]:
+        """
+        Classifies trend across Session, Day, and Week horizons.
+        Uses SubQ Snap when configured, otherwise applies the deterministic quantitative matrix.
+        """
+        if self.api_key and self.api_url:
+            try:
+                res = self._call_snap_api(on_chart, off_chart, timeout=timeout)
+                if res and "horizons" in res:
+                    return res
+            except Exception as e:
+                print(f"[SnapTrendClassifier] API call failed: {e}. Falling back to deterministic engine.")
+
+        # Deterministic Quantitative Matrix Fallback
+        return self._evaluate_deterministic_matrix(on_chart, off_chart)
+
+    def _call_snap_api(
+        self,
+        on_chart: Dict[str, Any],
+        off_chart: Dict[str, Any],
+        timeout: int
+    ) -> Optional[Dict[str, Any]]:
+        """Invokes SubQ Snap classification endpoint using the official state+questions schema."""
+        state_str = (
+            f"=== ASSET: Gold (XAUUSD) ===\n"
+            f"Timestamp: {on_chart.get('timestamp_utc')}\n"
+            f"Current Price: {on_chart.get('current_price')}\n\n"
+            f"--- On-Chart Microstructure ---\n"
+            f"Daily Range: Low {on_chart['daily_structure']['daily_low']} - High {on_chart['daily_structure']['daily_high']} (ADR 14: {on_chart['daily_structure']['adr_14']}, Utilized: {on_chart['daily_structure']['adr_utilization_pct']}%)\n"
+            f"Previous Day: Low {on_chart['daily_structure']['pdl']} - High {on_chart['daily_structure']['pdh']} (Swept PDH: {on_chart['daily_structure']['has_swept_pdh']}, Swept PDL: {on_chart['daily_structure']['has_swept_pdl']})\n"
+            f"Weekly Context: Open {on_chart['weekly_structure']['cwo']} (Relation: {on_chart['weekly_structure']['relation_to_weekly_open']})\n"
+            f"Asian Range: {on_chart['session_ranges']['asian_low']} - {on_chart['session_ranges']['asian_high']} | London Range: {on_chart['session_ranges']['london_low']} - {on_chart['session_ranges']['london_high']}\n"
+            f"H1 Structure Regime: {on_chart['htf_trend']['h1_regime']} | SMT Divergence: {on_chart['smt_divergence']['type']} ({on_chart['smt_divergence']['note']})\n"
+            f"Primary Draw on Liquidity: {on_chart['draw_on_liquidity']['type']} at {on_chart['draw_on_liquidity']['target_price']}\n\n"
+            f"--- Off-Chart Macro & Sentiment ---\n"
+            f"Retail Crowd Positioning: {off_chart['retail_sentiment']['retail_long_pct']}% Long / {off_chart['retail_sentiment']['retail_short_pct']}% Short (Contrarian: {off_chart['retail_sentiment']['contrarian_bias']})\n"
+            f"Catalyst Danger Score: Session={off_chart['catalysts']['session_risk']} | Day={off_chart['catalysts']['day_risk']}\n"
+            f"Active Session: {off_chart['session_context']['session_label']}"
+        )
+
+        questions = {
+            "session_horizon": {
+                "type": "choice",
+                "instructions": "Determine the high-probability institutional directional bias for the upcoming 2-6 hour session.",
+                "criteria": {
+                    "BULLISH_EXPANSION": "Session order flow is bullish; expected to sweep Asian low or expand higher into overhead BSL.",
+                    "BEARISH_EXPANSION": "Session order flow is bearish; expected to sweep Asian high or expand lower into underlying SSL.",
+                    "RANGE_BOUND_CHOP": "Session is trapped in equilibrium consolidation or high catalyst danger whipsaw."
+                }
+            },
+            "day_horizon": {
+                "type": "choice",
+                "instructions": "Determine the daily candle archetype and directional close for Gold over the next 24 hours.",
+                "criteria": {
+                    "BULLISH_DAY": "Daily candle is expected to close green with higher highs, targeting upper Draw on Liquidity.",
+                    "BEARISH_DAY": "Daily candle is expected to close red with lower lows, targeting lower Draw on Liquidity.",
+                    "CONSOLIDATION_DAY": "Inside day or balanced equilibrium; lack of directional expansion conviction."
+                }
+            },
+            "weekly_profile": {
+                "type": "choice",
+                "instructions": "Identify the multi-day weekly ICT expansion profile.",
+                "criteria": {
+                    "TUESDAY_LOW_OF_WEEK": "Classic ICT bullish profile where the low of the week establishes on Tuesday during European/NY flow.",
+                    "TUESDAY_HIGH_OF_WEEK": "Classic ICT bearish profile where the high of the week establishes on Tuesday during European/NY flow.",
+                    "MID_WEEK_REVERSAL": "Wednesday/Thursday expansion reversal against the early week probe.",
+                    "NEUTRAL_CHOP": "Weekly balance without clear macro displacement."
+                }
+            }
+        }
+
+        request_body = {
+            "model": self.model,
+            "state": state_str,
+            "questions": questions
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        req = urllib.request.Request(
+            self.api_url,
+            data=json.dumps(request_body).encode("utf-8"),
+            headers=headers,
+            method="POST"
+        )
+
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                answers = data.get("answers", {})
+
+                # Parse session choice
+                sess_obj = answers.get("session_horizon", {})
+                sess_raw = sess_obj.get("choice", "RANGE_BOUND_CHOP")
+                sess_bias = "BULLISH" if "BULLISH" in sess_raw else ("BEARISH" if "BEARISH" in sess_raw else "RANGE_CHOP")
+                sess_conf = sess_obj.get("confidence", 0.70)
+
+                # Parse day choice
+                day_obj = answers.get("day_horizon", {})
+                day_raw = day_obj.get("choice", "CONSOLIDATION_DAY")
+                day_bias = "BULLISH" if "BULLISH" in day_raw else ("BEARISH" if "BEARISH" in day_raw else "CONSOLIDATION")
+                day_conf = day_obj.get("confidence", 0.75)
+
+                # Parse week choice
+                week_obj = answers.get("weekly_profile", {})
+                week_raw = week_obj.get("choice", "NEUTRAL_CHOP")
+                week_bias = "BULLISH" if "LOW_OF_WEEK" in week_raw else ("BEARISH" if "HIGH_OF_WEEK" in week_raw else "NEUTRAL")
+                week_conf = week_obj.get("confidence", 0.68)
+
+                # Synthesize with numerical levels from on_chart
+                dol = on_chart.get("draw_on_liquidity", {})
+                daily_st = on_chart.get("daily_structure", {})
+                sess_rng = on_chart.get("session_ranges", {})
+                pdl = daily_st.get("pdl", on_chart["current_price"] - 15.0)
+                pdh = daily_st.get("pdh", on_chart["current_price"] + 15.0)
+
+                target_p = dol.get("target_price", pdl if day_bias == "BEARISH" else pdh)
+                inval_p = daily_st.get("daily_high", pdh) if day_bias == "BEARISH" else daily_st.get("daily_low", pdl)
+
+                return {
+                    "symbol": "XAUUSD",
+                    "horizons": {
+                        "session": {
+                            "bias": sess_bias,
+                            "confidence": round(sess_conf, 2),
+                            "session_archetype": sess_raw,
+                            "expected_range": {
+                                "high": round(sess_rng.get("asian_high", pdh) + (2.5 if sess_bias == "BEARISH" else 10.0), 2),
+                                "low": round(sess_rng.get("asian_low", pdl) - (10.0 if sess_bias == "BEARISH" else 2.5), 2)
+                            },
+                            "key_trigger": round(sess_rng.get("asian_high" if sess_bias == "BEARISH" else "asian_low", on_chart["current_price"]), 2),
+                            "catalyst_danger": off_chart["catalysts"]["session_risk"]
+                        },
+                        "day": {
+                            "bias": day_bias,
+                            "confidence": round(day_conf, 2),
+                            "daily_dol": {
+                                "target": round(target_p, 2),
+                                "type": dol.get("type", "LIQUIDITY_TARGET"),
+                                "rationale": f"SubQ Snap classified {day_raw} targeting {dol.get('type')}"
+                            },
+                            "invalidation": round(inval_p, 2),
+                            "candle_archetype": day_raw
+                        },
+                        "week": {
+                            "bias": week_bias,
+                            "confidence": round(week_conf, 2),
+                            "macro_target": round(on_chart["weekly_structure"]["pwl" if week_bias == "BEARISH" else "pwh"], 2),
+                            "weekly_profile": week_raw
+                        }
+                    },
+                    "synthesis_rationale": (
+                        f"SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. "
+                        f"Session bias rated {sess_bias} (confidence {int(sess_conf*100)}%), Daily horizon aligned with {day_raw} toward {target_p:.2f}. "
+                        f"Weekly profile: {week_raw}."
+                    ),
+                    "source": "subq-snap-1.1"
+                }
+        return None
+
+    def _build_prompt(self, on_chart: Dict[str, Any], off_chart: Dict[str, Any]) -> str:
+        """Constructs high-density structured prompt for SubQ Snap."""
+        return (
+            "Analyze the following institutional state vector for Gold (XAUUSD) and forecast the trend:\n\n"
+            f"=== ON-CHART MICROSTRUCTURE ===\n"
+            f"{json.dumps(on_chart, indent=2)}\n\n"
+            f"=== OFF-CHART MACRO & SENTIMENT ===\n"
+            f"{json.dumps(off_chart, indent=2)}\n\n"
+            "Produce strict JSON output formatted as:\n"
+            "{\n"
+            '  "symbol": "XAUUSD",\n'
+            '  "horizons": {\n'
+            '    "session": {"bias": "BULLISH"|"BEARISH"|"RANGE_CHOP", "confidence": float, "session_archetype": str, "expected_range": {"high": float, "low": float}, "key_trigger": float, "catalyst_danger": str},\n'
+            '    "day": {"bias": "BULLISH"|"BEARISH"|"CONSOLIDATION", "confidence": float, "daily_dol": {"target": float, "type": str, "rationale": str}, "invalidation": float, "candle_archetype": str},\n'
+            '    "week": {"bias": "BULLISH"|"BEARISH"|"NEUTRAL", "confidence": float, "macro_target": float, "weekly_profile": str}\n'
+            "  },\n"
+            '  "synthesis_rationale": str\n'
+            "}"
+        )
+
+    def _evaluate_deterministic_matrix(
+        self,
+        on_chart: Dict[str, Any],
+        off_chart: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Deterministic Quantitative Institutional Rule Matrix.
+        Guarantees zero-failure, authentic institutional logic matching ICT & Macro fundamentals.
+        """
+        curr_p = on_chart.get("current_price", 0.0)
+        daily_st = on_chart.get("daily_structure", {})
+        weekly_st = on_chart.get("weekly_structure", {})
+        dol = on_chart.get("draw_on_liquidity", {})
+        htf = on_chart.get("htf_trend", {})
+        smt = on_chart.get("smt_divergence", {})
+        sess = on_chart.get("session_ranges", {})
+
+        sentiment = off_chart.get("retail_sentiment", {})
+        catalysts = off_chart.get("catalysts", {})
+
+        pdh = daily_st.get("pdh", curr_p + 15.0)
+        pdl = daily_st.get("pdl", curr_p - 15.0)
+        pdc = daily_st.get("pdc", curr_p)
+        cwo = weekly_st.get("cwo", curr_p)
+        pwh = weekly_st.get("pwh", curr_p + 40.0)
+        pwl = weekly_st.get("pwl", curr_p - 40.0)
+
+        has_swept_pdh = daily_st.get("has_swept_pdh", False)
+        has_swept_pdl = daily_st.get("has_swept_pdl", False)
+
+        h1_regime = htf.get("h1_regime", "CONSOLIDATION_RANGE")
+        retail_long_pct = sentiment.get("retail_long_pct", 50.0)
+        session_danger = catalysts.get("session_risk", "LOW")
+
+        # --- 1. DAILY HORIZON CALCULATION ---
+        # Baseline directional score: positive = Bullish, negative = Bearish
+        score_day = 0.0
+
+        if has_swept_pdh and curr_p < pdh:
+            score_day -= 2.5  # SFP at highs
+        elif has_swept_pdl and curr_p > pdl:
+            score_day += 2.5  # SFP at lows
+        elif curr_p > pdc:
+            score_day += 1.0
+        else:
+            score_day -= 1.0
+
+        if h1_regime == "BULLISH_EXPANSION":
+            score_day += 2.0
+        elif h1_regime == "BEARISH_EXPANSION":
+            score_day -= 2.0
+
+        if smt.get("type") == "BULLISH_SMT":
+            score_day += 1.5
+        elif smt.get("type") == "BEARISH_SMT":
+            score_day -= 1.5
+
+        if retail_long_pct >= 70.0:
+            score_day -= 1.5  # Institutional flush of retail longs
+        elif retail_long_pct <= 30.0:
+            score_day += 1.5  # Institutional short squeeze
+
+        if score_day >= 2.0:
+            day_bias = "BULLISH"
+            day_conf = min(0.92, round(0.65 + (score_day * 0.04), 2))
+            candle_arch = "EXPANSION_UP_DAY"
+            target_p = round(dol.get("target_price") or pdh, 2)
+            dol_type = "BUY_SIDE_LIQUIDITY"
+            inval_p = round(daily_st.get("daily_low") or pdl, 2)
+            day_rationale = "Bullish order flow dominant; expanding toward overhead buy-side liquidity."
+        elif score_day <= -2.0:
+            day_bias = "BEARISH"
+            day_conf = min(0.92, round(0.65 + (abs(score_day) * 0.04), 2))
+            candle_arch = "EXPANSION_DOWN_DAY"
+            target_p = round(dol.get("target_price") or pdl, 2)
+            dol_type = "SELL_SIDE_LIQUIDITY"
+            inval_p = round(daily_st.get("daily_high") or pdh, 2)
+            day_rationale = "Bearish order flow dominant; expanding toward underlying sell-side liquidity."
+        else:
+            day_bias = "CONSOLIDATION"
+            day_conf = 0.60
+            candle_arch = "INSIDE_DOJI_DAY"
+            target_p = round(pdc, 2)
+            dol_type = "MEAN_REVERSION"
+            inval_p = round(pdh, 2)
+            day_rationale = "Balanced forces / lack of structural displacement; range-bound equilibrium."
+
+        # --- 2. SESSION HORIZON CALCULATION ---
+        asian_high = sess.get("asian_high", pdh)
+        asian_low = sess.get("asian_low", pdl)
+        asian_range = sess.get("asian_range", 10.0)
+
+        if session_danger == "CRITICAL":
+            sess_bias = "RANGE_CHOP"
+            sess_conf = 0.55
+            sess_arch = "CATALYST_WHIPSAW_RISK"
+            exp_high = round(curr_p + (asian_range * 1.5), 2)
+            exp_low = round(curr_p - (asian_range * 1.5), 2)
+            key_trig = curr_p
+        elif day_bias == "BULLISH":
+            # If bullish, Judas swing sweeps Asian low then expands up
+            sess_bias = "BULLISH"
+            sess_conf = day_conf
+            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p <= asian_low + 2.0 else "UNILATERAL_EXPANSION"
+            exp_high = round(max(asian_high + 8.0, target_p), 2)
+            exp_low = round(asian_low - 2.5, 2)
+            key_trig = round(asian_low, 2)
+        elif day_bias == "BEARISH":
+            # If bearish, Judas swing sweeps Asian high then expands down
+            sess_bias = "BEARISH"
+            sess_conf = day_conf
+            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p >= asian_high - 2.0 else "UNILATERAL_EXPANSION"
+            exp_high = round(asian_high + 2.5, 2)
+            exp_low = round(min(asian_low - 8.0, target_p), 2)
+            key_trig = round(asian_high, 2)
+        else:
+            sess_bias = "RANGE_CHOP"
+            sess_conf = 0.58
+            sess_arch = "RANGE_BOUND_CONSOLIDATION"
+            exp_high = round(asian_high, 2)
+            exp_low = round(asian_low, 2)
+            key_trig = round((asian_high + asian_low) / 2, 2)
+
+        # --- 3. WEEKLY HORIZON CALCULATION ---
+        if curr_p > cwo and day_bias == "BULLISH":
+            week_bias = "BULLISH"
+            week_conf = 0.76
+            week_target = round(pwh, 2)
+            week_profile = "TUESDAY_LOW_OF_WEEK_EXPANSION"
+        elif curr_p < cwo and day_bias == "BEARISH":
+            week_bias = "BEARISH"
+            week_conf = 0.78
+            week_target = round(pwl, 2)
+            week_profile = "TUESDAY_HIGH_OF_WEEK_EXPANSION"
+        else:
+            week_bias = "NEUTRAL"
+            week_conf = 0.62
+            week_target = round(cwo, 2)
+            week_profile = "MID_WEEK_EQUILIBRIUM"
+
+        synthesis = (
+            f"Synthesizing on-chart MTF state with off-chart macro intelligence for Gold: "
+            f"Daily bias is {day_bias} (Conf: {int(day_conf*100)}%) with primary DOL targeting {dol_type} at {target_p:.2f}. "
+            f"Session posture reflects {sess_arch} ({sess_bias}) with anticipated boundary [{exp_low:.2f} - {exp_high:.2f}]. "
+            f"Weekly context aligns with {week_profile} toward {week_target:.2f}."
+        )
+
+        return {
+            "symbol": "XAUUSD",
+            "horizons": {
+                "session": {
+                    "bias": sess_bias,
+                    "confidence": sess_conf,
+                    "session_archetype": sess_arch,
+                    "expected_range": {"high": exp_high, "low": exp_low},
+                    "key_trigger": key_trig,
+                    "catalyst_danger": session_danger
+                },
+                "day": {
+                    "bias": day_bias,
+                    "confidence": day_conf,
+                    "daily_dol": {
+                        "target": target_p,
+                        "type": dol_type,
+                        "rationale": day_rationale
+                    },
+                    "invalidation": inval_p,
+                    "candle_archetype": candle_arch
+                },
+                "week": {
+                    "bias": week_bias,
+                    "confidence": week_conf,
+                    "macro_target": week_target,
+                    "weekly_profile": week_profile
+                }
+            },
+            "synthesis_rationale": synthesis
+        }

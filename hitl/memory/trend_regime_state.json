@@ -1,0 +1,161 @@
+{
+  "symbol": "XAUUSD",
+  "horizons": {
+    "session": {
+      "bias": "BEARISH",
+      "confidence": 0.99,
+      "session_archetype": "BEARISH_EXPANSION",
+      "expected_range": {
+        "high": 4130.34,
+        "low": 4098.1
+      },
+      "key_trigger": 4127.84,
+      "catalyst_danger": "LOW"
+    },
+    "day": {
+      "bias": "BEARISH",
+      "confidence": 0.96,
+      "daily_dol": {
+        "target": 4032.84,
+        "type": "SELL_SIDE_LIQUIDITY",
+        "rationale": "SubQ Snap classified BEARISH_DAY targeting SELL_SIDE_LIQUIDITY"
+      },
+      "invalidation": 4146.48,
+      "candle_archetype": "BEARISH_DAY"
+    },
+    "week": {
+      "bias": "BULLISH",
+      "confidence": 0.47,
+      "macro_target": 4146.82,
+      "weekly_profile": "TUESDAY_LOW_OF_WEEK"
+    }
+  },
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. Session bias rated BEARISH (confidence 98%), Daily horizon aligned with BEARISH_DAY toward 4032.84. Weekly profile: TUESDAY_LOW_OF_WEEK.",
+  "source": "subq-snap-1.1",
+  "latency_ms": 783.6,
+  "generated_at_utc": "2026-11-10 14:54:52 UTC",
+  "generated_at_tehran": "2026-11-10 18:24:52 Tehran",
+  "on_chart_telemetry": {
+    "symbol": "XAUUSD",
+    "current_price": 4038.72,
+    "timestamp_utc": "2026-11-10 14:54:52 UTC",
+    "timestamp_tehran": "2026-11-10 18:24:52 Tehran",
+    "daily_structure": {
+      "pdh": 4148.55,
+      "pdl": 4054.16,
+      "pdc": 4141.1,
+      "daily_open": 4136.36,
+      "daily_high": 4146.48,
+      "daily_low": 4032.84,
+      "daily_range": 113.64,
+      "adr_14": 91.57,
+      "adr_utilization_pct": 124.1,
+      "has_swept_pdh": false,
+      "has_swept_pdl": true
+    },
+    "weekly_structure": {
+      "pwh": 4146.82,
+      "pwl": 3890.91,
+      "cwo": 4063.24,
+      "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
+    },
+    "session_ranges": {
+      "asian_high": 4127.84,
+      "asian_low": 4108.1,
+      "asian_range": 19.74,
+      "london_high": 4126.82,
+      "london_low": 4088.73,
+      "london_range": 38.09
+    },
+    "draw_on_liquidity": {
+      "type": "SELL_SIDE_LIQUIDITY",
+      "target_price": 4032.84,
+      "distance_pts": 5.88,
+      "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
+    },
+    "liquidity_pools": {
+      "overhead_bsl": [
+        4050.45,
+        4057.36,
+        4061.26
+      ],
+      "underlying_ssl": [
+        4032.84,
+        4029.96,
+        4027.46
+      ],
+      "active_h1_fvgs": [
+        {
+          "type": "BULLISH_FVG",
+          "top": 4099.68,
+          "bottom": 4073.14,
+          "midpoint": 4086.41,
+          "size": 26.54,
+          "bar_time": 1794189600
+        },
+        {
+          "type": "BULLISH_FVG",
+          "top": 4119.37,
+          "bottom": 4106.39,
+          "midpoint": 4112.88,
+          "size": 12.98,
+          "bar_time": 1794193200
+        }
+      ],
+      "active_h4_fvgs": [
+        {
+          "type": "BULLISH_FVG",
+          "top": 3996.34,
+          "bottom": 3964.73,
+          "midpoint": 3980.53,
+          "size": 31.61,
+          "bar_time": 1793764800
+        },
+        {
+          "type": "BULLISH_FVG",
+          "top": 4030.41,
+          "bottom": 4009.49,
+          "midpoint": 4019.95,
+          "size": 20.92,
+          "bar_time": 1793779200
+        }
+      ]
+    },
+    "htf_trend": {
+      "h1_regime": "BEARISH_EXPANSION",
+      "h1_ma20": 4106.36,
+      "h4_ma20": 4090.39,
+      "h1_displacement_3bar": -35.34
+    },
+    "smt_divergence": {
+      "has_smt": false,
+      "type": "NONE",
+      "note": "Aligned market structure"
+    }
+  },
+  "off_chart_telemetry": {
+    "symbol": "XAUUSD",
+    "timestamp_utc": "2026-11-10 14:54:52 UTC",
+    "timestamp_tehran": "2026-11-10 18:24:52 Tehran",
+    "session_context": {
+      "is_active_killzone": true,
+      "session_label": "New York Regular Session",
+      "session_key": "NY_Post_Open"
+    },
+    "catalysts": {
+      "session_risk": "LOW",
+      "day_risk": "LOW",
+      "week_risk": "MEDIUM",
+      "upcoming_high_impact_session": [],
+      "upcoming_high_impact_day_count": 0,
+      "upcoming_high_impact_week_count": 2
+    },
+    "retail_sentiment": {
+      "sample_size": 10,
+      "retail_long_pct": 87.5,
+      "retail_short_pct": 12.5,
+      "contrarian_bias": "INSTITUTIONAL_SHORT_HUNT",
+      "interpretation": "Retail crowd is 87.5% LONG. Institutional liquidity hunt favors flushing Sell-Side Liquidity."
+    }
+  }
+}

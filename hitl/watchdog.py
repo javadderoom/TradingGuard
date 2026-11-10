@@ -50,6 +50,8 @@ class MarketWatchdog:
         # Closed-Loop Review State
         self.last_post_mortem_date: Optional[datetime.date] = None
         self.last_morning_briefing_date: Optional[datetime.date] = None
+        self.last_london_briefing_date: Optional[datetime.date] = None
+        self.last_ny_briefing_date: Optional[datetime.date] = None
         self.last_circuit_alerted: bool = False
 
     def send_heartbeat(self, chat_id: int | str, is_manual: bool = False):
@@ -379,3 +381,47 @@ class MarketWatchdog:
                     run_morning_briefing(self.engine, self.client, chat_id)
                 except Exception as e:
                     print(f"[Watchdog] Morning Briefing Error: {e}")
+
+        # C) Proactive OmniTrend Session Briefings (15m before London and NY Open)
+        if is_weekday:
+            try:
+                from zoneinfo import ZoneInfo
+                from hitl.backtest.session_clock import get_session_times_for_date
+                now_tehran = datetime.datetime.now(ZoneInfo("Asia/Tehran"))
+                sess_times = get_session_times_for_date(now_tehran.date())
+
+                lon_target = sess_times["london"]["tehran_time"] - datetime.timedelta(minutes=15)
+                ny_target = sess_times["new_york"]["tehran_time"] - datetime.timedelta(minutes=15)
+
+                # London Open Briefing window (15m to 5m before open)
+                if lon_target <= now_tehran < (lon_target + datetime.timedelta(minutes=10)):
+                    if self.last_london_briefing_date != now_tehran.date():
+                        self.last_london_briefing_date = now_tehran.date()
+                        self.send_trend_briefing(chat_id, "London")
+
+                # NY Open Briefing window (15m to 5m before open)
+                if ny_target <= now_tehran < (ny_target + datetime.timedelta(minutes=10)):
+                    if self.last_ny_briefing_date != now_tehran.date():
+                        self.last_ny_briefing_date = now_tehran.date()
+                        self.send_trend_briefing(chat_id, "New York")
+            except Exception as e:
+                print(f"[Watchdog] Trend Briefing Error: {e}")
+
+    def send_trend_briefing(self, chat_id: int | str, session_name: str):
+        """Sends proactive session trend forecast card to Telegram."""
+        try:
+            from hitl.trend.trend_oracle import trend_oracle
+            fc = trend_oracle.get_forecast(symbol="XAUUSD", force_refresh=True)
+            card = trend_oracle.format_telegram_card(fc)
+            header = f"🚨 *Proactive {session_name} Session Trend Briefing (15m to Open)*\n\n"
+            keyboard = {
+                "inline_keyboard": [
+                    [
+                        {"text": "🔁 Refresh Forecast", "callback_data": "trend_refresh_XAUUSD"},
+                        {"text": "📸 View Chart", "callback_data": "pack_gold"}
+                    ]
+                ]
+            }
+            self.client.send_message(chat_id, header + card, reply_markup=keyboard)
+        except Exception as e:
+            print(f"[Watchdog] Failed to send trend briefing: {e}")
