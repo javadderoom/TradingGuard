@@ -139,6 +139,12 @@ class TrendOracle:
         smt = on_chart.get("smt_divergence", {})
         smt_badge = f"⚡ *SMT:* {smt.get('type')}" if smt.get("has_smt") else "🔹 *SMT:* Neutral"
 
+        # Asymmetric Trade Management Policy
+        tm = forecast.get("trade_management", {})
+        al_tm = tm.get("aligned", {"tp_r": 3.5, "be_ratchet_r": 1.5})
+        ct_tm = tm.get("counter", {"tp_r": 1.5, "be_ratchet_r": 1.0})
+        sd_tm = tm.get("sideways", {"tp_r": 3.5, "be_ratchet_r": 1.0})
+
         card = (
             f"🔮 *OmniTrend Oracle — {sym} Multi-Horizon Forecast*\n"
             f"⏱ *Generated:* `{forecast.get('generated_at_tehran', '')}`\n"
@@ -157,6 +163,10 @@ class TrendOracle:
             f"• Bias: {week_icon} *{week_bias}* (Conf: `{week_conf}%`)\n"
             f"• Weekly Profile: `{week_prof}`\n"
             f"• Macro Target: *${week_target:.2f}*\n\n"
+            f"🎯 *4. ASYMMETRIC EXECUTION POLICY*\n"
+            f"• Trend-Aligned Setups : `TP {al_tm.get('tp_r', 3.5):.1f}R` | `BE {al_tm.get('be_ratchet_r', 1.5):.1f}R`\n"
+            f"• Counter-Trend Scalps : `TP {ct_tm.get('tp_r', 1.5):.1f}R` | `BE {ct_tm.get('be_ratchet_r', 1.0):.1f}R`\n"
+            f"• Sideways Range Fades : `TP {sd_tm.get('tp_r', 3.5):.1f}R` | `BE {sd_tm.get('be_ratchet_r', 1.0):.1f}R`\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📊 *OFF-CHART & MACRO INTELLIGENCE:*\n"
             f"• Retail Sentiment: `{retail_l}% Long` / `{retail_s}% Short`\n"

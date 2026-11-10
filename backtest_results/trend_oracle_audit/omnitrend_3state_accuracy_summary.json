@@ -1,0 +1,22 @@
+{
+  "audit_scope": "OmniTrend Oracle Historical Accuracy Audit (XAUUSD_o)",
+  "total_trading_days": 260,
+  "date_range": "2025-11-10 to 2026-11-10",
+  "overall_3state_exact_match_rate": 26.9,
+  "overall_directional_hit_rate": 29.6,
+  "overall_dol_touch_rate": 40.0,
+  "critical_inversion_rate": 7.7,
+  "trend_calls_breakdown": {
+    "total_trend_calls": 60,
+    "directional_win_rate": 56.7,
+    "dol_touch_rate": 81.7,
+    "up_calls_count": 32,
+    "up_calls_win_rate": 53.1,
+    "down_calls_count": 28,
+    "down_calls_win_rate": 60.7
+  },
+  "sideways_calls_breakdown": {
+    "total_sideways_calls": 200,
+    "exact_compression_match_rate": 21.5
+  }
+}

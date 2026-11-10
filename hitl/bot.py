@@ -46,26 +46,26 @@ from hitl.council import convene_investment_council
 # Collapsible Mobile Bottom Menus (Reply Keyboard)
 MAIN_KEYBOARD = {
     "keyboard": [
-        [{"text": "📊 Market Analysis"}, {"text": "🧪 Backtest Suite"}],
-        [{"text": "🌅 Morning Briefing"}, {"text": "🔍 Review Council"}],
+        [{"text": "🔮 Trend Oracle"}, {"text": "📊 Market Analysis"}],
+        [{"text": "🌅 Morning Briefing"}, {"text": "🧪 Backtest Suite"}],
         [{"text": "🏢 Prop & Risk Settings"}, {"text": "🛡️ Account Status"}],
         [{"text": "📋 Pending Orders"}, {"text": "📊 Open Positions"}],
         [{"text": "❓ Help & Syntax"}]
     ],
     "resize_keyboard": True,
-    "is_persistent": False
+    "is_persistent": True
 }
 
 ANALYSIS_KEYBOARD = {
     "keyboard": [
-        [{"text": "🥇 Gold Full Pack"}, {"text": "💷 GBP Full Pack"}],
-        [{"text": "💶 EUR Full Pack"}, {"text": "💻 Nasdaq Full Pack"}],
-        [{"text": "🏛️ Gold Council Only"}, {"text": "🏛️ GBP Council Only"}],
-        [{"text": "🏛️ EUR Council Only"}, {"text": "🏛️ NQ Council Only"}],
+        [{"text": "🔮 Gold Trend Oracle"}, {"text": "🥇 Gold Full Pack"}],
+        [{"text": "💷 GBP Full Pack"}, {"text": "💶 EUR Full Pack"}],
+        [{"text": "💻 Nasdaq Full Pack"}, {"text": "🏛️ Gold Council Only"}],
+        [{"text": "🏛️ GBP Council Only"}, {"text": "🏛️ NQ Council Only"}],
         [{"text": "🔙 Back to Main Menu"}]
     ],
     "resize_keyboard": True,
-    "is_persistent": False
+    "is_persistent": True
 }
 
 BACKTEST_KEYBOARD = {
@@ -962,7 +962,7 @@ def run_bot():
                         watchdog.send_heartbeat(sender_id, is_manual=True)
                     elif any(k in text.lower() for k in ["/news", "news", "تقویم", "اخبار"]):
                         handle_news_command(client, sender_id, "XAUUSD")
-                    elif any(k in text.lower() for k in ["/trend", "trend", "روند", "پیش بینی روند"]):
+                    elif any(k in text.lower() for k in ["trend oracle", "/trend", "trend", "روند", "پیش بینی روند"]):
                         handle_trend_command(client, sender_id, "XAUUSD")
                     elif any(k in text for k in ["❓", "راهنما", "/help", "/start", "help"]):
                         client.send_message(

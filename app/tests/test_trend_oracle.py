@@ -48,7 +48,7 @@ def test_off_chart_macro_keys():
 
 def test_snap_trend_classifier_deterministic_bullish():
     """Verifies deterministic matrix logic on synthetic bullish institutional state."""
-    classifier = SnapTrendClassifier(api_key=None, api_url=None)  # Force deterministic mode
+    classifier = SnapTrendClassifier(api_key="", api_url="")  # Force deterministic mode
 
     on_chart_synthetic = {
         "symbol": "XAUUSD",
@@ -60,9 +60,9 @@ def test_snap_trend_classifier_deterministic_bullish():
             "daily_open": 2710.0,
             "daily_high": 2725.0,
             "daily_low": 2698.0,  # Swept PDL
-            "daily_range": 27.0,
+            "daily_range": 12.0,
             "adr_14": 30.0,
-            "adr_utilization_pct": 90.0,
+            "adr_utilization_pct": 35.0,
             "has_swept_pdh": False,
             "has_swept_pdl": True
         },
@@ -103,10 +103,19 @@ def test_snap_trend_classifier_deterministic_bullish():
     assert horizons["session"]["bias"] == "BULLISH"
     assert horizons["day"]["daily_dol"]["target"] == 2740.0
 
+    # Verify asymmetric trade management recommendations
+    assert "trade_management" in res
+    assert res["trade_management"]["aligned"]["tp_r"] == 3.5
+    assert res["trade_management"]["aligned"]["be_ratchet_r"] == 1.5
+    assert res["trade_management"]["counter"]["tp_r"] == 1.5
+    assert res["trade_management"]["counter"]["be_ratchet_r"] == 1.0
+    assert res["trade_management"]["sideways"]["tp_r"] == 3.5
+    assert res["trade_management"]["sideways"]["be_ratchet_r"] == 1.0
+
 
 def test_snap_trend_classifier_deterministic_bearish():
     """Verifies deterministic matrix logic on synthetic bearish institutional state."""
-    classifier = SnapTrendClassifier(api_key=None, api_url=None)
+    classifier = SnapTrendClassifier(api_key="", api_url="")
 
     on_chart_synthetic = {
         "symbol": "XAUUSD",
@@ -118,9 +127,9 @@ def test_snap_trend_classifier_deterministic_bearish():
             "daily_open": 2732.0,
             "daily_high": 2738.0,  # Swept PDH
             "daily_low": 2725.0,
-            "daily_range": 13.0,
-            "adr_14": 25.0,
-            "adr_utilization_pct": 52.0,
+            "daily_range": 10.0,
+            "adr_14": 30.0,
+            "adr_utilization_pct": 33.3,
             "has_swept_pdh": True,
             "has_swept_pdl": False
         },
@@ -160,6 +169,42 @@ def test_snap_trend_classifier_deterministic_bearish():
     assert horizons["day"]["bias"] == "BEARISH"
     assert horizons["session"]["bias"] == "BEARISH"
     assert horizons["day"]["daily_dol"]["target"] == 2690.0
+
+
+def test_snap_trend_classifier_adr_exhaustion_gating():
+    """Verifies that when ADR utilization >= 55%, classifier forces CONSOLIDATION (Sideways)."""
+    classifier = SnapTrendClassifier(api_key="", api_url="")
+
+    on_chart_exhausted = {
+        "symbol": "XAUUSD",
+        "current_price": 2745.0,
+        "daily_structure": {
+            "pdh": 2740.0,
+            "pdl": 2700.0,
+            "pdc": 2715.0,
+            "daily_open": 2710.0,
+            "daily_high": 2748.0,
+            "daily_low": 2708.0,
+            "daily_range": 40.0,
+            "adr_14": 40.0,
+            "adr_utilization_pct": 75.0,  # Range exhausted
+            "has_swept_pdh": True,
+            "has_swept_pdl": False
+        },
+        "weekly_structure": {"pwh": 2760.0, "pwl": 2680.0, "cwo": 2710.0},
+        "session_ranges": {"asian_high": 2730.0, "asian_low": 2712.0},
+        "draw_on_liquidity": {"type": "BUY_SIDE_LIQUIDITY", "target_price": 2760.0},
+        "htf_trend": {"h1_regime": "BULLISH_EXPANSION"},
+        "smt_divergence": {"has_smt": False, "type": "NONE"}
+    }
+
+    off_chart = {"catalysts": {"session_risk": "LOW"}, "retail_sentiment": {"retail_long_pct": 50.0}}
+
+    res = classifier.classify_trend(on_chart_exhausted, off_chart)
+    assert res["horizons"]["day"]["bias"] == "CONSOLIDATION"
+    assert res["horizons"]["day"]["candle_archetype"] == "ADR_EXHAUSTED_ROTATION"
+    assert res["trade_management"]["sideways"]["tp_r"] == 3.5
+    assert res["trade_management"]["sideways"]["be_ratchet_r"] == 1.0
 
 
 def test_trend_oracle_service_and_card_formatting():

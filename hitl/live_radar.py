@@ -509,9 +509,23 @@ class LiveMarketRadar:
                         fc = trend_oracle.get_forecast(symbol=sym, force_refresh=False)
                         day_bias = fc.get("horizons", {}).get("day", {}).get("bias", "")
                         day_conf = int(fc.get("horizons", {}).get("day", {}).get("confidence", 0.0) * 100)
+                        tm = fc.get("trade_management", {})
                         if day_bias:
                             t_icon = "🟢" if day_bias == "BULLISH" else ("🔴" if day_bias == "BEARISH" else "🟡")
-                            trend_badge = f"🔮 *Trend Oracle:* {t_icon} {day_bias} (`{day_conf}%` Conf) [Advisory]\n"
+                            is_aligned = (setup['side'] == 'BUY' and day_bias == 'BULLISH') or (setup['side'] == 'SELL' and day_bias == 'BEARISH')
+                            is_counter = (setup['side'] == 'BUY' and day_bias == 'BEARISH') or (setup['side'] == 'SELL' and day_bias == 'BULLISH')
+
+                            if is_aligned:
+                                pol = tm.get("aligned", {"tp_r": 3.5, "be_ratchet_r": 1.5})
+                                regime_lbl = f"Trend-Aligned [TP: {pol['tp_r']:.1f}R | BE: {pol['be_ratchet_r']:.1f}R]"
+                            elif is_counter:
+                                pol = tm.get("counter", {"tp_r": 1.5, "be_ratchet_r": 1.0})
+                                regime_lbl = f"Counter-Fade [TP: {pol['tp_r']:.1f}R | BE: {pol['be_ratchet_r']:.1f}R]"
+                            else:
+                                pol = tm.get("sideways", {"tp_r": 3.5, "be_ratchet_r": 1.0})
+                                regime_lbl = f"Range Fade [TP: {pol['tp_r']:.1f}R | BE: {pol['be_ratchet_r']:.1f}R]"
+
+                            trend_badge = f"🔮 *Trend Oracle:* {t_icon} {day_bias} (`{day_conf}%`) · _{regime_lbl}_\n"
                     except Exception:
                         pass
 

@@ -188,6 +188,11 @@ class SnapTrendClassifier:
                             "weekly_profile": week_raw
                         }
                     },
+                    "trade_management": {
+                        "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
+                        "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
+                        "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
+                    },
                     "synthesis_rationale": (
                         f"SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. "
                         f"Session bias rated {sess_bias} (confidence {int(sess_conf*100)}%), Daily horizon aligned with {day_raw} toward {target_p:.2f}. "
@@ -243,6 +248,8 @@ class SnapTrendClassifier:
         cwo = weekly_st.get("cwo", curr_p)
         pwh = weekly_st.get("pwh", curr_p + 40.0)
         pwl = weekly_st.get("pwl", curr_p - 40.0)
+        adr_14 = daily_st.get("adr_14", 25.0)
+        adr_util = daily_st.get("adr_utilization_pct", 20.0)
 
         has_swept_pdh = daily_st.get("has_swept_pdh", False)
         has_swept_pdl = daily_st.get("has_swept_pdl", False)
@@ -251,50 +258,74 @@ class SnapTrendClassifier:
         retail_long_pct = sentiment.get("retail_long_pct", 50.0)
         session_danger = catalysts.get("session_risk", "LOW")
 
-        # --- 1. DAILY HORIZON CALCULATION ---
-        # Baseline directional score: positive = Bullish, negative = Bearish
+        # --- 1. DAILY HORIZON CALCULATION (Calibrated Institutional Scoring) ---
         score_day = 0.0
 
+        # Feature A: SFP at Daily Extremes
         if has_swept_pdh and curr_p < pdh:
             score_day -= 2.5  # SFP at highs
         elif has_swept_pdl and curr_p > pdl:
             score_day += 2.5  # SFP at lows
-        elif curr_p > pdc:
-            score_day += 1.0
-        else:
-            score_day -= 1.0
 
+        # Feature B: Damped Previous Day Close (PDC) Relation
+        noise_buffer = 0.05 * max(10.0, adr_14)
+        if curr_p > pdc + noise_buffer:
+            score_day += 0.5
+        elif curr_p < pdc - noise_buffer:
+            score_day -= 0.5
+
+        # Feature C: H1 Structural Displacement Regime
         if h1_regime == "BULLISH_EXPANSION":
-            score_day += 2.0
+            score_day += 1.8
         elif h1_regime == "BEARISH_EXPANSION":
-            score_day -= 2.0
+            score_day -= 1.8
 
+        # Feature D: Institutional SMT Divergence (Gold vs Silver)
         if smt.get("type") == "BULLISH_SMT":
             score_day += 1.5
         elif smt.get("type") == "BEARISH_SMT":
             score_day -= 1.5
 
+        # Feature E: Retail Contrarian Sentiment Positioning
         if retail_long_pct >= 70.0:
             score_day -= 1.5  # Institutional flush of retail longs
         elif retail_long_pct <= 30.0:
             score_day += 1.5  # Institutional short squeeze
 
-        if score_day >= 1.0:
+        # Feature F: Weekly Range Premium / Discount Exhaustion
+        if pwh > pwl:
+            w_pct = (curr_p - pwl) / (pwh - pwl)
+            if w_pct >= 0.85:
+                score_day -= 1.0  # Resistance / exhaustion at weekly highs
+            elif w_pct <= 0.15:
+                score_day += 1.0  # Support / exhaustion at weekly lows
+
+        # Calibrated Thresholding: Selective High-Conviction Gating & ADR Cap
+        if adr_util >= 55.0:
+            # Range exhaustion: > 55% of ADR consumed prior to main expansion
+            day_bias = "CONSOLIDATION"
+            day_conf = 0.65
+            candle_arch = "ADR_EXHAUSTED_ROTATION"
+            target_p = round(pdc, 2)
+            dol_type = "MEAN_REVERSION"
+            inval_p = round(pdh if curr_p < pdc else pdl, 2)
+            day_rationale = f"ADR utilization at {adr_util}%; high probability of session equilibrium rotation."
+        elif score_day >= 1.5:
             day_bias = "BULLISH"
-            day_conf = min(0.92, round(0.60 + (score_day * 0.05), 2))
+            day_conf = min(0.92, round(0.65 + (score_day * 0.04), 2))
             candle_arch = "EXPANSION_UP_DAY"
             target_p = round(dol.get("target_price") or pdh, 2)
             dol_type = "BUY_SIDE_LIQUIDITY"
             inval_p = round(daily_st.get("daily_low") or pdl, 2)
-            day_rationale = "Bullish order flow dominant; expanding toward overhead buy-side liquidity."
-        elif score_day <= -1.0:
+            day_rationale = f"High-conviction bullish displacement (score +{score_day:.1f}); targeting overhead BSL."
+        elif score_day <= -1.5:
             day_bias = "BEARISH"
-            day_conf = min(0.92, round(0.60 + (abs(score_day) * 0.05), 2))
+            day_conf = min(0.92, round(0.65 + (abs(score_day) * 0.04), 2))
             candle_arch = "EXPANSION_DOWN_DAY"
             target_p = round(dol.get("target_price") or pdl, 2)
             dol_type = "SELL_SIDE_LIQUIDITY"
             inval_p = round(daily_st.get("daily_high") or pdh, 2)
-            day_rationale = "Bearish order flow dominant; expanding toward underlying sell-side liquidity."
+            day_rationale = f"High-conviction bearish displacement (score {score_day:.1f}); targeting underlying SSL."
         else:
             day_bias = "CONSOLIDATION"
             day_conf = 0.60
@@ -392,6 +423,11 @@ class SnapTrendClassifier:
                     "macro_target": week_target,
                     "weekly_profile": week_profile
                 }
+            },
+            "trade_management": {
+                "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
+                "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
+                "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
             },
             "synthesis_rationale": synthesis
         }
