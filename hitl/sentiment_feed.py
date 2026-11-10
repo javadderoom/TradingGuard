@@ -76,6 +76,8 @@ def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
         sym = "XAGUSD"
     elif "XAU" in _sym or "GOLD" in _sym:
         sym = "XAUUSD"
+    elif "NQ" in _sym or "NAS" in _sym or "USTEC" in _sym or "US100" in _sym:
+        sym = "NDX"
     else:
         sym = "XAUUSD"
     url = f"https://www.tradingview.com/symbols/{sym}/ideas/"
@@ -173,6 +175,8 @@ def format_sentiment_summary(symbol: str = "XAUUSD") -> str:
         sym = "XAGUSD"
     elif "XAU" in _sym or "GOLD" in _sym:
         sym = "XAUUSD"
+    elif "NQ" in _sym or "NAS" in _sym or "USTEC" in _sym or "US100" in _sym:
+        sym = "NDX"
     else:
         sym = "XAUUSD"
     ideas = fetch_tradingview_ideas(sym)

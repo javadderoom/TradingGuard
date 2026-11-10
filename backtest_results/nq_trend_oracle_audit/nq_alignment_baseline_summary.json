@@ -1,0 +1,32 @@
+[
+  {
+    "category": "COUNTER_TREND",
+    "fills": 25,
+    "wins": 5,
+    "losses": 14,
+    "be": 6,
+    "win_rate": 20.0,
+    "net_r": 3.41,
+    "profit_factor": 1.24
+  },
+  {
+    "category": "TREND_ALIGNED",
+    "fills": 28,
+    "wins": 6,
+    "losses": 18,
+    "be": 4,
+    "win_rate": 21.4,
+    "net_r": 2.85,
+    "profit_factor": 1.16
+  },
+  {
+    "category": "SIDEWAYS",
+    "fills": 137,
+    "wins": 22,
+    "losses": 94,
+    "be": 21,
+    "win_rate": 16.1,
+    "net_r": -17.71,
+    "profit_factor": 0.81
+  }
+]

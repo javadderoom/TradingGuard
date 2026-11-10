@@ -44,10 +44,14 @@ def _resolve_asset_symbols(symbol: str) -> Tuple[str, Optional[str], str, float,
         smt = "GBPUSD_o" if mt5.symbol_info("GBPUSD_o") else ("GBPUSD" if mt5.symbol_info("GBPUSD") else None)
         return prim, smt, "FOREX", 0.0001, 0.0005, 5
 
-    elif "NQ" in s_clean or "NAS" in s_clean or "USTEC" in s_clean:
+    elif "NQ" in s_clean or "NAS" in s_clean or "USTEC" in s_clean or "US100" in s_clean:
         prim = "NQ_o" if mt5.symbol_info("NQ_o") else ("NQ" if mt5.symbol_info("NQ") else "USTEC")
-        smt = "ES_o" if mt5.symbol_info("ES_o") else ("ES" if mt5.symbol_info("ES") else None)
-        return prim, smt, "INDEX", 1.0, 2.0, 2
+        smt = None
+        for cand in ["SPX", "ES_o", "ES", "US500", "US500_o", "SP500"]:
+            if mt5.symbol_info(cand):
+                smt = cand
+                break
+        return prim, smt, "INDEX", 1.0, 15.0, 2
 
     else:
         # Default: Gold

@@ -1,0 +1,20 @@
+{
+  "asset": "NASDAQ 100",
+  "symbol": "NQ",
+  "smt_benchmark": "SPX",
+  "total_days_audited": 275,
+  "active_trend_days": 84,
+  "active_trend_pct": 30.5,
+  "sideways_days": 191,
+  "sideways_pct": 69.5,
+  "directional_hit_rate_pct": 40.5,
+  "directional_correct_count": 34,
+  "dol_hit_rate_pct": 52.4,
+  "dol_hit_count": 44,
+  "inversion_rate_pct": 45.2,
+  "inversion_count": 38,
+  "up_calls_count": 38,
+  "up_win_rate_pct": 44.7,
+  "down_calls_count": 46,
+  "down_win_rate_pct": 37.0
+}

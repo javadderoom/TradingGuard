@@ -1,0 +1,14 @@
+{
+  "al_tp": 3.5,
+  "al_be": 1.0,
+  "ct_tp": 3.0,
+  "ct_be": 0.8,
+  "sd_tp": 3.0,
+  "sd_be": 0.8,
+  "wins": 56,
+  "losses": 95,
+  "be": 39,
+  "win_rate": 29.5,
+  "net_r": 77.0,
+  "profit_factor": 1.81
+}

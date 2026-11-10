@@ -59,6 +59,7 @@ class SnapTrendClassifier:
         """Invokes SubQ Snap classification endpoint using the official state+questions schema."""
         sym = on_chart.get("symbol", "XAUUSD")
         is_forex = "GBP" in sym.upper() or "EUR" in sym.upper()
+        is_index = "NQ" in sym.upper() or "NAS" in sym.upper() or "USTEC" in sym.upper() or "US100" in sym.upper() or "SPX" in sym.upper()
         decimals = 5 if is_forex else 2
 
         state_str = (
@@ -154,20 +155,27 @@ class SnapTrendClassifier:
                 dol = on_chart.get("draw_on_liquidity", {})
                 daily_st = on_chart.get("daily_structure", {})
                 sess_rng = on_chart.get("session_ranges", {})
-                pdl = daily_st.get("pdl", on_chart["current_price"] - (0.0050 if is_forex else 15.0))
-                pdh = daily_st.get("pdh", on_chart["current_price"] + (0.0050 if is_forex else 15.0))
+                default_band = 0.0050 if is_forex else (150.0 if is_index else 15.0)
+                pdl = daily_st.get("pdl", on_chart["current_price"] - default_band)
+                pdh = daily_st.get("pdh", on_chart["current_price"] + default_band)
 
                 target_p = dol.get("target_price", pdl if day_bias == "BEARISH" else pdh)
                 inval_p = daily_st.get("daily_high", pdh) if day_bias == "BEARISH" else daily_st.get("daily_low", pdl)
 
-                sweep_buf = 0.00025 if is_forex else 2.5
-                exp_buf = 0.0010 if is_forex else 10.0
+                sweep_buf = 0.00025 if is_forex else (25.0 if is_index else 2.5)
+                exp_buf = 0.0010 if is_forex else (80.0 if is_index else 10.0)
 
                 if is_forex:
                     tm_policy = {
                         "aligned": {"tp_r": 2.0, "be_ratchet_r": 1.0, "mode": "FOREX_TREND_EXPANSION", "note": "Forex Trend Expansion: 2.0R TP with 1.0R BE protection"},
                         "counter": {"tp_r": 2.5, "be_ratchet_r": 1.0, "mode": "PREMIER_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 2.5R TP with 1.0R BE ratchet (Premier Edge)"},
                         "sideways": {"tp_r": 2.5, "be_ratchet_r": 0.8, "mode": "FOREX_RANGE_BOUNDARY_FADE", "note": "Forex Range Fade: 2.5R TP with 0.8R BE protection"}
+                    }
+                elif is_index:
+                    tm_policy = {
+                        "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "INDEX_TREND_EXPANSION", "note": "Index Trend Expansion: 3.5R TP with early 1.0R BE protection"},
+                        "counter": {"tp_r": 3.0, "be_ratchet_r": 0.8, "mode": "INDEX_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 3.0R TP with fast 0.8R BE ratchet (Premier Edge)"},
+                        "sideways": {"tp_r": 3.0, "be_ratchet_r": 0.8, "mode": "INDEX_RANGE_BOUNDARY_FADE", "note": "Index Range Boundary Fade: 3.0R TP with 0.8R BE protection"}
                     }
                 else:
                     tm_policy = {
@@ -251,6 +259,7 @@ class SnapTrendClassifier:
         """
         sym = on_chart.get("symbol", "XAUUSD")
         is_forex = "GBP" in sym.upper() or "EUR" in sym.upper()
+        is_index = "NQ" in sym.upper() or "NAS" in sym.upper() or "USTEC" in sym.upper() or "US100" in sym.upper() or "SPX" in sym.upper()
         decimals = 5 if is_forex else 2
 
         curr_p = on_chart.get("current_price", 0.0)
@@ -264,14 +273,14 @@ class SnapTrendClassifier:
         sentiment = off_chart.get("retail_sentiment", {})
         catalysts = off_chart.get("catalysts", {})
 
-        default_band = 0.0050 if is_forex else 15.0
+        default_band = 0.0050 if is_forex else (150.0 if is_index else 15.0)
         pdh = daily_st.get("pdh", curr_p + default_band)
         pdl = daily_st.get("pdl", curr_p - default_band)
         pdc = daily_st.get("pdc", curr_p)
         cwo = weekly_st.get("cwo", curr_p)
         pwh = weekly_st.get("pwh", curr_p + (default_band * 2))
         pwl = weekly_st.get("pwl", curr_p - (default_band * 2))
-        adr_14 = daily_st.get("adr_14", 0.0080 if is_forex else 25.0)
+        adr_14 = daily_st.get("adr_14", 0.0080 if is_forex else (300.0 if is_index else 25.0))
         adr_util = daily_st.get("adr_utilization_pct", 20.0)
 
         has_swept_pdh = daily_st.get("has_swept_pdh", False)
@@ -291,7 +300,7 @@ class SnapTrendClassifier:
             score_day += 2.5  # SFP at lows
 
         # Feature B: Damped Previous Day Close (PDC) Relation
-        noise_buffer = 0.05 * max(0.0030 if is_forex else 10.0, adr_14)
+        noise_buffer = 0.05 * max(0.0030 if is_forex else (50.0 if is_index else 10.0), adr_14)
         if curr_p > pdc + noise_buffer:
             score_day += 0.5
         elif curr_p < pdc - noise_buffer:
@@ -361,11 +370,11 @@ class SnapTrendClassifier:
         # --- 2. SESSION HORIZON CALCULATION ---
         asian_high = sess.get("asian_high", pdh)
         asian_low = sess.get("asian_low", pdl)
-        asian_range = sess.get("asian_range", 0.0030 if is_forex else 10.0)
+        asian_range = sess.get("asian_range", 0.0030 if is_forex else (100.0 if is_index else 10.0))
 
-        judas_offset = 0.0002 if is_forex else 2.0
-        sweep_buf = 0.00025 if is_forex else 2.5
-        exp_buf = 0.0008 if is_forex else 8.0
+        judas_offset = 0.0002 if is_forex else (20.0 if is_index else 2.0)
+        sweep_buf = 0.00025 if is_forex else (25.0 if is_index else 2.5)
+        exp_buf = 0.0010 if is_forex else (80.0 if is_index else 8.0)
 
         if session_danger == "CRITICAL":
             sess_bias = "RANGE_CHOP"
@@ -427,6 +436,12 @@ class SnapTrendClassifier:
                 "aligned": {"tp_r": 2.0, "be_ratchet_r": 1.0, "mode": "FOREX_TREND_EXPANSION", "note": "Forex Trend Expansion: 2.0R TP with 1.0R BE protection"},
                 "counter": {"tp_r": 2.5, "be_ratchet_r": 1.0, "mode": "PREMIER_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 2.5R TP with 1.0R BE ratchet (Premier Edge)"},
                 "sideways": {"tp_r": 2.5, "be_ratchet_r": 0.8, "mode": "FOREX_RANGE_BOUNDARY_FADE", "note": "Forex Range Fade: 2.5R TP with 0.8R BE protection"}
+            }
+        elif is_index:
+            tm_policy = {
+                "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "INDEX_TREND_EXPANSION", "note": "Index Trend Expansion: 3.5R TP with early 1.0R BE protection"},
+                "counter": {"tp_r": 3.0, "be_ratchet_r": 0.8, "mode": "INDEX_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 3.0R TP with fast 0.8R BE ratchet (Premier Edge)"},
+                "sideways": {"tp_r": 3.0, "be_ratchet_r": 0.8, "mode": "INDEX_RANGE_BOUNDARY_FADE", "note": "Index Range Boundary Fade: 3.0R TP with 0.8R BE protection"}
             }
         else:
             tm_policy = {

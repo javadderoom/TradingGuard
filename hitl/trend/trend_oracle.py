@@ -105,8 +105,9 @@ class TrendOracle:
         """
         sym = forecast.get("symbol", "XAUUSD")
         is_forex = "GBP" in sym.upper() or "EUR" in sym.upper()
+        is_index = "NQ" in sym.upper() or "NAS" in sym.upper() or "USTEC" in sym.upper() or "US100" in sym.upper() or "SPX" in sym.upper()
         decimals = 5 if is_forex else 2
-        p_pfx = "" if is_forex else "$"
+        p_pfx = "$" if (not is_forex and not is_index) else ""
         unit_str = "pips" if is_forex else "pts"
 
         horizons = forecast.get("horizons", {})
@@ -154,9 +155,22 @@ class TrendOracle:
 
         # Asymmetric Trade Management Policy
         tm = forecast.get("trade_management", {})
-        al_tm = tm.get("aligned", {"tp_r": 2.0 if is_forex else 3.5, "be_ratchet_r": 1.0 if is_forex else 1.5})
-        ct_tm = tm.get("counter", {"tp_r": 2.5 if is_forex else 1.5, "be_ratchet_r": 1.0})
-        sd_tm = tm.get("sideways", {"tp_r": 2.5 if is_forex else 3.5, "be_ratchet_r": 0.8 if is_forex else 1.0})
+        if is_forex:
+            def_al = {"tp_r": 2.0, "be_ratchet_r": 1.0}
+            def_ct = {"tp_r": 2.5, "be_ratchet_r": 1.0}
+            def_sd = {"tp_r": 2.5, "be_ratchet_r": 0.8}
+        elif is_index:
+            def_al = {"tp_r": 3.5, "be_ratchet_r": 1.0}
+            def_ct = {"tp_r": 3.0, "be_ratchet_r": 0.8}
+            def_sd = {"tp_r": 3.0, "be_ratchet_r": 0.8}
+        else:
+            def_al = {"tp_r": 3.5, "be_ratchet_r": 1.5}
+            def_ct = {"tp_r": 1.5, "be_ratchet_r": 1.0}
+            def_sd = {"tp_r": 3.5, "be_ratchet_r": 1.0}
+
+        al_tm = tm.get("aligned", def_al)
+        ct_tm = tm.get("counter", def_ct)
+        sd_tm = tm.get("sideways", def_sd)
 
         # Dual-Session Anchor Telemetry
         active_anchor = on_chart.get("active_anchor", "PRE_LONDON")
@@ -199,9 +213,9 @@ class TrendOracle:
             f"• Weekly Profile: `{week_prof}`\n"
             f"• Macro Target: *{p_pfx}{week_target:.{decimals}f}*\n\n"
             f"🎯 *4. ASYMMETRIC EXECUTION POLICY*\n"
-            f"• Trend-Aligned Setups : `TP {al_tm.get('tp_r', 2.0 if is_forex else 3.5):.1f}R` | `BE {al_tm.get('be_ratchet_r', 1.0 if is_forex else 1.5):.1f}R`\n"
-            f"• Counter-Trend Scalps : `TP {ct_tm.get('tp_r', 2.5 if is_forex else 1.5):.1f}R` | `BE {ct_tm.get('be_ratchet_r', 1.0):.1f}R`\n"
-            f"• Sideways Range Fades : `TP {sd_tm.get('tp_r', 2.5 if is_forex else 3.5):.1f}R` | `BE {sd_tm.get('be_ratchet_r', 0.8 if is_forex else 1.0):.1f}R`\n\n"
+            f"• Trend-Aligned Setups : `TP {al_tm.get('tp_r', def_al['tp_r']):.1f}R` | `BE {al_tm.get('be_ratchet_r', def_al['be_ratchet_r']):.1f}R`\n"
+            f"• Counter-Trend Scalps : `TP {ct_tm.get('tp_r', def_ct['tp_r']):.1f}R` | `BE {ct_tm.get('be_ratchet_r', def_ct['be_ratchet_r']):.1f}R`\n"
+            f"• Sideways Range Fades : `TP {sd_tm.get('tp_r', def_sd['tp_r']):.1f}R` | `BE {sd_tm.get('be_ratchet_r', def_sd['be_ratchet_r']):.1f}R`\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📊 *OFF-CHART & MACRO INTELLIGENCE:*\n"
             f"• Retail Sentiment: `{retail_l}% Long` / `{retail_s}% Short`\n"

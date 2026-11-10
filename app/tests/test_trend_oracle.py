@@ -324,3 +324,92 @@ def test_trend_oracle_service_gbpusd_card():
     assert "TP 2.0R" in card
     assert "TP 2.5R" in card
 
+
+def test_on_chart_microstructure_nq():
+    """Verifies that on-chart microstructure extraction works seamlessly on NASDAQ 100 (NQ)."""
+    data = extract_on_chart_microstructure("NQ")
+    assert "symbol" in data
+    assert "NQ" in data["symbol"]
+    assert data["asset_class"] == "INDEX"
+    assert "current_price" in data
+    assert data["daily_structure"]["adr_14"] > 0
+    assert data["draw_on_liquidity"]["target_price"] > 0
+    assert "smt_divergence" in data
+
+
+def test_snap_trend_classifier_index_policy():
+    """Verifies that Index assets receive the calibrated 3.5R / 3.0R / 0.8R asymmetric execution policy."""
+    classifier = SnapTrendClassifier(api_key="", api_url="")
+
+    on_chart_index = {
+        "symbol": "NQ",
+        "asset_class": "INDEX",
+        "current_price": 27500.0,
+        "daily_structure": {
+            "pdh": 27700.0,
+            "pdl": 27300.0,
+            "pdc": 27450.0,
+            "daily_open": 27420.0,
+            "daily_high": 27550.0,
+            "daily_low": 27280.0,  # Swept PDL
+            "daily_range": 270.0,
+            "adr_14": 350.0,
+            "adr_utilization_pct": 35.0,
+            "has_swept_pdh": False,
+            "has_swept_pdl": True
+        },
+        "weekly_structure": {
+            "pwh": 28000.0,
+            "pwl": 27000.0,
+            "cwo": 27400.0,
+            "relation_to_weekly_open": "ABOVE_WEEKLY_OPEN"
+        },
+        "session_ranges": {
+            "asian_high": 27520.0,
+            "asian_low": 27380.0,
+            "asian_range": 140.0
+        },
+        "draw_on_liquidity": {
+            "type": "BUY_SIDE_LIQUIDITY",
+            "target_price": 27700.0,
+            "distance_pts": 200.0
+        },
+        "htf_trend": {
+            "h1_regime": "BULLISH_EXPANSION"
+        },
+        "smt_divergence": {
+            "has_smt": True,
+            "type": "BULLISH_SMT"
+        }
+    }
+
+    off_chart = {"catalysts": {"session_risk": "LOW"}, "retail_sentiment": {"retail_long_pct": 35.0}}
+    res = classifier.classify_trend(on_chart_index, off_chart)
+
+    assert res["symbol"] == "NQ"
+    assert res["horizons"]["day"]["bias"] == "BULLISH"
+    assert res["trade_management"]["aligned"]["tp_r"] == 3.5
+    assert res["trade_management"]["aligned"]["be_ratchet_r"] == 1.0
+    assert res["trade_management"]["counter"]["tp_r"] == 3.0
+    assert res["trade_management"]["counter"]["be_ratchet_r"] == 0.8
+    assert res["trade_management"]["sideways"]["tp_r"] == 3.0
+    assert res["trade_management"]["sideways"]["be_ratchet_r"] == 0.8
+
+
+def test_trend_oracle_service_nq_card():
+    """Verifies that TrendOracle formats Telegram card correctly for NQ without currency symbol."""
+    oracle = TrendOracle()
+    fc = oracle.get_forecast("NQ", force_refresh=True)
+
+    assert "symbol" in fc
+    assert "NQ" in fc["symbol"]
+    card = oracle.format_telegram_card(fc)
+
+    assert "OmniTrend Oracle — NQ" in card
+    # Should not have dollar signs on the current price line
+    assert "$" not in card.split("Current Price:")[1].split("\n")[0]
+    # Trade policy should reflect index parameters
+    assert "TP 3.5R" in card
+    assert "TP 3.0R" in card
+
+
