@@ -189,8 +189,8 @@
       "description": "High-probability trend continuation archetype executing during the New York session (15:30-17:30 Tehran / 08:00-10:00 NY) when price is aligned with the Macro Directional Filter (SELL_ONLY or BUY_ONLY). Bypasses mid-range chop filters by recognizing internal retracement into the unmitigated origin of the prior session's impulse leg (London Breaker Block, 15M/1H FVG, or 50% Mean Threshold). Requires M1 Market Structure Shift (MSS) displacement confirmation before entry.",
       "entry_trigger": "M1 retracement into the displacement FVG / Breaker following confirmed M1 MSS at the London breakdown/breakout origin zone.",
       "invalidation_anchor": "Retracement swing peak + spread buffer (1.0 pip for GBPUSD; 1.5-2.5 pips for EURUSD).",
-      "status": "RATIFIED",
-      "vetting_verdict": "RATIFIED",
+      "status": "DECOMMISSIONED",
+      "vetting_verdict": "DECOMMISSIONED",
       "ratified_criteria": {
         "name": "Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation)",
         "category": "Pro-Trend POI Mitigation & Trend Continuation",

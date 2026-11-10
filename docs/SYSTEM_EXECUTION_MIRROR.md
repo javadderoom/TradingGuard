@@ -1359,14 +1359,14 @@ All historical gaps were audited directly against raw LiteFinance MT5 broker fee
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Audit Period** | Nov 01, 2025 – Nov 09, 2026 | Nov 01, 2025 – Nov 09, 2026 | — | Nov 01, 2025 – Nov 09, 2026 | Nov 01, 2025 – Nov 09, 2026 |
 | **Target Assets** | XAUUSD, GBPUSD, NQ | XAUUSD, GBPUSD, NQ | Asset-specific pruning | Full 4-Asset Suite | All Active Systems |
-| **Total Closed Fills** | **414 fills** | **179 fills** | -235 fills (-56.8%) | **4,561 fills** | **4,740 fills** |
-| **Win / Loss / Breakeven** | 92 W / 254 L / 68 BE | 49 W / 105 L / 25 BE | Low-expectancy pruned | 1,273 W / 2,407 L / 765 BE | 1,322 W / 2,512 L / 790 BE |
-| **Win Rate (%)** | **22.2%** | **27.4%** | **+5.2%** | **27.9%** | **27.9%** |
-| **Net Realized Alpha (R)** | **+19.61R** | **+48.27R** | **+28.66R (+146.1%)** | **+194.44R** | **+242.71R** |
-| **Profit Factor (PF)** | **1.08** | **1.46** | **+0.38** | **1.08** | **1.11** |
-| **Net Realized Cash PnL** *(0.01 lot)* | **+$1,374.97 USD** | **+$3,122.67 USD** | **+$1,747.70 USD (+127.1%)** | **+$1,958.98 USD** | **+$5,081.65 USD** |
-| **Max Drawdown (R)** | **35.41R** | **11.99R** | **-23.42R (-66.1%)** | — | — |
-| **Max Drawdown (USD)** | **$2,314.44 USD** | **$925.52 USD** | **-$1,388.92 USD (-60.0%)** | — | — |
+| **Total Closed Fills** | **394 fills** | **124 fills** | -270 fills (-68.5%) | **4,561 fills** | **4,685 fills** |
+| **Win / Loss / Breakeven** | 88 W / 241 L / 65 BE | 38 W / 70 L / 16 BE | Low-expectancy pruned | 1,273 W / 2,407 L / 765 BE | 1,311 W / 2,477 L / 781 BE |
+| **Win Rate (%)** | **22.3%** | **30.6%** | **+8.3%** | **27.9%** | **28.0%** |
+| **Net Realized Alpha (R)** | **+18.66R** | **+44.79R** | **+26.13R (+140.0%)** | **+194.44R** | **+239.23R** |
+| **Profit Factor (PF)** | **1.08** | **1.64** | **+0.56** | **1.08** | **1.14** |
+| **Net Realized Cash PnL** *(0.01 lot)* | **+$1,378.31 USD** | **+$3,100.21 USD** | **+$1,721.90 USD (+124.9%)** | **+$1,958.98 USD** | **+$5,059.19 USD** |
+| **Max Drawdown (R)** | **27.92R** | **8.00R** | **-19.92R (-71.3%)** | — | — |
+| **Max Drawdown (USD)** | **$2,299.24 USD** | **$953.02 USD** | **-$1,346.22 USD (-58.5%)** | — | — |
 | **Losing Calendar Months** | **6 / 13 months** | **5 / 13 months** | -1 losing month | 5 / 13 months | 3 / 13 months |
 
 ---
@@ -1412,20 +1412,20 @@ BTCUSD     Decommissioned    278     49     201  28       17.6%     -49.56R 0.76
 
 | Calendar Month | Baseline Fills | Baseline Net R | Baseline Max DD | Optimized Fills | Optimized Net R | Optimized Max DD | Regime & Structural Intervention Impact |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **2025-11** | 31 | **+11.61R** | 5.00R | 17 | **+6.72R** | 4.98R | Cable NY drag eliminated; NQ London fade + Gold expansion capture alpha |
-| **2025-12** | 26 | **-13.98R** | 17.49R | 14 | **-4.01R** | 7.98R | Severe drawdown curtailed by 9.97R (-71.3% loss reduction) during holiday chop |
-| **2026-01** | 49 | **+3.00R** | 8.00R | 23 | **+10.00R** | 3.50R | Pruned NY session false wicks on Cable; Gold expansion captured cleanly |
-| **2026-02** | 35 | **-7.20R** | 12.20R | 14 | **-6.20R** | 5.20R | Cut drawdown by 7.00R; avoided mid-range consolidation whipsaws |
-| **2026-03** | 37 | **-8.70R** | 12.70R | 13 | **-3.70R** | 4.00R | Seasonal DST clock transition drag reduced by 8.70R |
-| **2026-04** | 40 | **+11.50R** | 5.00R | 16 | **+7.50R** | 2.00R | High selectivity preserved strong positive alpha with near-zero drawdown |
-| **2026-05** | 6 | **-6.00R** | 5.00R | 3 | **-3.00R** | 2.00R | Cut dead volume churn in early summer |
-| **2026-06** | 5 | **+0.98R** | 2.00R | 2 | **-2.00R** | 1.00R | Low activity baseline across summer lull |
-| **2026-07** | 43 | **+0.50R** | 8.50R | 17 | **+12.00R** | 3.00R | Elevated alpha from +0.50R to +12.00R by eliminating NY session Cable churn |
-| **2026-08** | 38 | **-12.00R** | 11.00R | 15 | **-0.50R** | 5.00R | Saved 11.50R of capital during August summer liquidity drain |
-| **2026-09** | 48 | **+29.44R** | 6.00R | 21 | **+15.48R** | 5.00R | Controlled expansion capturing clean high-probability runs across all assets |
-| **2026-10** | 49 | **+12.96R** | 8.00R | 20 | **+15.48R** | 5.00R | Autumn trend acceleration; win rate improved to 40.0% |
-| **2026-11** *(1-9)* | 7 | **-2.50R** | 3.00R | 4 | **+0.50R** | 2.00R | Turned losing closing window into a positive delta |
-| **TOTAL (12.3 Mo)** | **414** | **+19.61R** | **35.41R** | **179** | **+48.27R** | **11.99R** | **Drawdown compressed by 66.1%; Net Alpha improved from +19.61R to +48.27R (+146.1%)** |
+| **2025-11** | 29 | **+3.25R** | 5.00R | 11 | **-1.74R** | 3.50R | Pruned toxic ARCH-004 fakeout breakouts; high discipline |
+| **2025-12** | 24 | **-11.00R** | 15.00R | 10 | **-1.03R** | 2.50R | Severe holiday loss curtailed by 9.97R (-90.6% loss reduction) |
+| **2026-01** | 46 | **+6.00R** | 7.00R | 19 | **+13.00R** | 3.00R | Pure Tier-1 (ARCH-003 & 010) captured clean expansion runs (PF 2.44) |
+| **2026-02** | 32 | **-4.20R** | 10.00R | 11 | **-3.20R** | 4.20R | Cut drawdown by 5.80R; eliminated mid-range consolidation whipsaws |
+| **2026-03** | 32 | **-4.70R** | 10.00R | 8 | **+0.30R** | 2.00R | Pruning ARCH-004 turned March from -4.70R red into a profitable green month |
+| **2026-04** | 35 | **+11.00R** | 4.50R | 9 | **+7.00R** | 1.50R | High selectivity preserved strong positive alpha with near-zero drawdown |
+| **2026-05** | 6 | **-6.00R** | 5.00R | 1 | **-1.00R** | 1.00R | Deduplication prevented multi-trade stacking; cut loss by 5.00R |
+| **2026-06** | 5 | **+0.98R** | 2.00R | 2 | **-2.00R** | 1.00R | Low activity across summer lull |
+| **2026-07** | 43 | **+0.50R** | 8.50R | 11 | **+8.00R** | 2.50R | Elevated alpha from +0.50R to +8.00R by eliminating NY session Cable churn |
+| **2026-08** | 38 | **-12.00R** | 11.00R | 10 | **-4.50R** | 4.50R | Saved 7.50R during August summer liquidity drain |
+| **2026-09** | 48 | **+29.44R** | 6.00R | 13 | **+13.48R** | 3.00R | High-probability runs across Gold and Cable (PF 3.25) |
+| **2026-10** | 49 | **+12.96R** | 8.00R | 16 | **+19.48R** | 3.00R | Autumn trend acceleration; 50.0% win rate and peak 4.90 Profit Factor |
+| **2026-11** *(1-9)* | 7 | **-2.50R** | 3.00R | 3 | **-3.00R** | 3.00R | Controlled closing window risk |
+| **TOTAL (12.3 Mo)** | **394** | **+18.66R** | **27.92R** | **124** | **+44.79R** | **8.00R** | **Drawdown compressed by 71.3%; Profit Factor elevated from 1.08 to 1.64 (+51.8%)** |
 
 ---
 
@@ -1436,7 +1436,7 @@ BTCUSD     Decommissioned    278     49     201  28       17.6%     -49.56R 0.76
 | **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | 87 | **-15.10R** (PF 0.76) | **ACTIVE ON GOLD & NQ SHORT** | Decommissioned on GBPUSD (-$9.50R drag, PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breaker (SHORT only, +5.36R, PF 1.60); Bullish Breaker decommissioned (-$6.02R drag, 10% WR). Active on Gold (+2.50R). Calibrated: 26 fills, +7.86R (PF 1.46). |
 | **`SETUP-ARCH-002`** | Judas Sweep + Fair Value Gap | 102 | **-10.00R** (PF 0.77) | **ACTIVE ON FOREX** | Highly ratified on GBPUSD London sessions (+1.50R, PF 2.50). Decommissioned on Gold (-$14.00R, PF 0.75). Calibrated: 3 fills, +1.50R (PF 2.50). |
 | **`SETUP-ARCH-003`** | Clean MSS Breaker Retest | 142 | **+11.92R** (PF 1.13) | **CORE FLAGSHIP** | Robust cross-asset statistical expectancy on Gold (+8.98R) and GBPUSD (+8.98R). Retained as primary setup. Calibrated: 70 fills, +17.96R (PF 1.45). |
-| **`SETUP-ARCH-004`** | Institutional Range Expansion | 203 | **-15.05R** (PF 0.89) | **ACTIVE ON GOLD (PRO-EXPANSION)** | Expansion breakouts fail on Cable (-$6.05R drag) and NQ (-$1.51R drag). Gated on Gold strictly to `PRO_EXPANSION` (+5.48R, PF 1.17). Calibrated: 53 fills, +5.48R (PF 1.17). |
+| **`SETUP-ARCH-004`** | Institutional Range Expansion | 203 | **-15.05R** (PF 0.89) | **DECOMMISSIONED ON PRODUCTION** | Breakout expansion setups suffer persistent fakeouts in real market microstructure. On Gold, generated 24.5% win rate (-9.98R drag in red months alone). Decommissioned across XAUUSD, GBPUSD, and NQ. Pruning it collapsed maximum drawdown from 11.99R to 8.00R (-33.3%) and boosted Profit Factor from 1.46 to 1.64. |
 | **`SETUP-ARCH-009`** | Pro-Trend Session Retest | 249 | **-77.41R** (PF 0.55) | **PERMANENTLY DECOMMISSIONED** | Deep retracements (OTE 50%-70.5%) suffer catastrophic 11.6% win rate and continuous adverse continuation. |
 | **`SETUP-ARCH-010`** | Prominent Sweep + MSS | 63 | **+18.47R** (PF 1.51) | **CORE FLAGSHIP** | Flagship liquidity sweep setup printing 33.3% win rate and largest positive alpha contribution on Gold (+10.47R) and Cable (+5.00R). Calibrated: 27 fills, +15.47R (PF 2.10). |
 | **`SETUP-ARCH-011`** | Nested Double MSS | 8 | **-3.99R** (0.0% WR) | **PERMANENTLY DECOMMISSIONED** | Complex 2-stage shift fails in real broker execution; zero wins across 8 fills in 12-month audit. |

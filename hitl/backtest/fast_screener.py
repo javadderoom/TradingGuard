@@ -1066,26 +1066,23 @@ def screen_ict_session(
             return _package_setup(arch_id, "BULLISH_BREAKER_RETEST", breaker_price, sl_p, f"Bullish Breaker Block retest at {breaker_price:{fmt}}", "LONG")
 
     # Setup D: Institutional Range Expansion (SETUP-ARCH-004)
-    # Gated: Must have broken outside of mid-range equilibrium and cannot be an inside day compression
-    # Decommissioned on NQ (0% Summer WR) and GBPUSD (-8.50R, PF 0.83, fakeout breakouts) per 1-year audits
-    if not (in_mid_equilibrium or is_inside_day) and not is_nq and not is_gbp:
+    # Decommissioned on XAUUSD (-15.05R drag, 24.5% WR), GBPUSD (-8.50R drag), and NQ (0% WR) per 1-year audits.
+    if not (in_mid_equilibrium or is_inside_day) and not is_nq and not is_gbp and "XAU" not in symbol.upper():
         if is_bullish_breakout and fvg_dir == "BULLISH":
-            if "XAU" not in symbol.upper() or long_phase["phase"] == "PRO_EXPANSION":
-                arch_id = "SETUP-ARCH-004"
-                if not setup_registry.is_archetype_ratified(arch_id):
-                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
-                sl_p = fvg_distal - sl_buf
-                return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
+            arch_id = "SETUP-ARCH-004"
+            if not setup_registry.is_archetype_ratified(arch_id):
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
+            sl_p = fvg_distal - sl_buf
+            return _package_setup(arch_id, "BULLISH_EXPANSION", fvg_proximal, sl_p, f"Breakout above {session_label} High with Bullish FVG", "LONG")
 
         if is_bearish_breakdown and fvg_dir == "BEARISH":
-            if "XAU" not in symbol.upper() or short_phase["phase"] == "PRO_EXPANSION":
-                arch_id = "SETUP-ARCH-004"
-                if not setup_registry.is_archetype_ratified(arch_id):
-                    return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-                sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
-                sl_p = fvg_distal + sl_buf
-                return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
+            arch_id = "SETUP-ARCH-004"
+            if not setup_registry.is_archetype_ratified(arch_id):
+                return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
+            sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
+            sl_p = fvg_distal + sl_buf
+            return _package_setup(arch_id, "BEARISH_EXPANSION", fvg_proximal, sl_p, f"Breakdown below {session_label} Low with Bearish FVG", "SHORT")
 
     # Setup E: Pro-Trend Session Breakdown/Breakout Origin Retest (SETUP-ARCH-009)
     # PERMANENTLY DECOMMISSIONED ACROSS ALL ASSETS (-77.41R loss, 11.6% WR in 1-year audit)

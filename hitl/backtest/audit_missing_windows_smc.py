@@ -259,27 +259,7 @@ def audit_gold_gaps() -> pd.DataFrame:
                             'sweep_type': 'Structural_Breakdown'
                         })
 
-            # 4. SETUP-ARCH-004 (Expansion FVG)
-            if not is_inside_day:
-                if current_price > asian_high + 2.0:
-                    detected_setups.append({
-                        'archetype': 'SESSION_EXPANSION_FVG',
-                        'archetype_id': 'SETUP-ARCH-004',
-                        'direction': 'LONG',
-                        'entry': current_price - 1.50,
-                        'sl': current_price - 6.50,
-                        'sweep_type': 'Expansion_High'
-                    })
-                elif current_price < asian_low - 2.0:
-                    detected_setups.append({
-                        'archetype': 'SESSION_EXPANSION_FVG',
-                        'archetype_id': 'SETUP-ARCH-004',
-                        'direction': 'SHORT',
-                        'entry': current_price + 1.50,
-                        'sl': current_price + 6.50,
-                        'sweep_type': 'Expansion_Low'
-                    })
-
+            # 4. SETUP-ARCH-004 permanently decommissioned across all assets (-15.05R drag, 24.5% WR on Gold)
             # 5. SETUP-ARCH-009 permanently decommissioned per 1-year audit (-77.41R drag eliminated)
 
             # 6. SETUP-ARCH-010 (Prominent Sweep + MSS)
@@ -545,27 +525,7 @@ def audit_gbpusd_gaps() -> pd.DataFrame:
                             'sweep_type': 'Structural_Breakdown'
                         })
 
-            # 4. SETUP-ARCH-004 (Expansion FVG)
-            if not is_inside_day:
-                if current_price > asian_high + 0.0012:
-                    detected_setups.append({
-                        'archetype': 'SESSION_EXPANSION_FVG',
-                        'archetype_id': 'SETUP-ARCH-004',
-                        'direction': 'LONG',
-                        'entry': current_price - 0.0008,
-                        'sl': current_price - 0.0030,
-                        'sweep_type': 'Expansion_High'
-                    })
-                elif current_price < asian_low - 0.0012:
-                    detected_setups.append({
-                        'archetype': 'SESSION_EXPANSION_FVG',
-                        'archetype_id': 'SETUP-ARCH-004',
-                        'direction': 'SHORT',
-                        'entry': current_price + 0.0008,
-                        'sl': current_price + 0.0030,
-                        'sweep_type': 'Expansion_Low'
-                    })
-
+            # 4. SETUP-ARCH-004 permanently decommissioned across all assets (-15.05R drag, fakeout breakouts)
             # 5. SETUP-ARCH-009 permanently decommissioned per 1-year audit (-77.41R drag eliminated)
 
             # 6. SETUP-ARCH-010 (Prominent Sweep + MSS)
@@ -596,38 +556,7 @@ def audit_gbpusd_gaps() -> pd.DataFrame:
                             'sweep_type': 'PDL_Sweep'
                         })
 
-            # 7. SETUP-ARCH-011 (Nested Double MSS)
-            if len(sh_m5) >= 3 and len(sl_m5) >= 3:
-                h3 = sh_m5[-1]
-                if current_price > h3['price']:
-                    h2, h1 = sh_m5[-2], sh_m5[-3]
-                    l3, l2 = sl_m5[-1], sl_m5[-2]
-                    if (h2['price'] > h1['price'] + 0.0002) and (h3['price'] < h2['price'] - 0.0002) and (l3['price'] > l2['price']):
-                        sl_calc = l3['price'] - 0.0002
-                        if 0.0008 <= abs(h3['price'] - sl_calc) <= 0.0025:
-                            detected_setups.append({
-                                'archetype': 'NESTED_DOUBLE_MSS',
-                                'archetype_id': 'SETUP-ARCH-011',
-                                'direction': 'LONG',
-                                'entry': h3['price'],
-                                'sl': sl_calc,
-                                'sweep_type': 'PDL' if swept_pdl else ('Asian_Low' if swept_asian_l else 'Swing_Low')
-                            })
-                l3_item = sl_m5[-1]
-                if current_price < l3_item['price']:
-                    l2, l1 = sl_m5[-2], sl_m5[-3]
-                    h3_val, h2 = sh_m5[-1], sh_m5[-2]
-                    if (l2['price'] < l1['price'] - 0.0002) and (l3_item['price'] > l2['price'] + 0.0002) and (h3_val['price'] < h2['price']):
-                        sl_calc = h3_val['price'] + 0.0002
-                        if 0.0008 <= abs(l3_item['price'] - sl_calc) <= 0.0025:
-                            detected_setups.append({
-                                'archetype': 'NESTED_DOUBLE_MSS',
-                                'archetype_id': 'SETUP-ARCH-011',
-                                'direction': 'SHORT',
-                                'entry': l3_item['price'],
-                                'sl': sl_calc,
-                                'sweep_type': 'PDH' if swept_pdh else ('Asian_High' if swept_asian_h else 'Swing_High')
-                            })
+            # 7. SETUP-ARCH-011 permanently decommissioned per 1-year audit (0.0% win rate, -3.99R loss)
 
             forward_m5 = [b for b in bars_m5 if b['time'] >= ms_ts][:144]
             if len(forward_m5) < 24:
@@ -1185,6 +1114,8 @@ def consolidate_and_compile_full_1year():
 
     nq_unified = pd.concat([df_nq_m, df_nq_g], ignore_index=True)
     nq_unified['symbol'] = 'NQ'
+    # Enforce strict 1-trade per session limit on NQ to prevent intra-session duplicate stacking
+    nq_unified = nq_unified.drop_duplicates(subset=['date', 'session', 'direction']).reset_index(drop=True)
 
     # 4. BTCUSD
     btc_master_path = BASE_DIR / "backtest_results" / "btcusd_optimized_run" / "btcusd_optimized_trades.csv"
@@ -1239,18 +1170,18 @@ def consolidate_and_compile_full_1year():
         return False
 
     # Define Optimized Institutional Calibrated Filter:
-    # 1. Gold: London Open & NY Open (banning London Continuation -$7.49R and NY Silver Bullet -$33.01R); Core ARCH-001, 003, 004, 010
+    # 1. Gold: London Open & NY Open (banning London Continuation -$7.49R and NY Silver Bullet -$33.01R); Core ARCH-001, 003, 010 (ARCH-004 pruned)
     # 2. Cable: London Open & London Continuation (banning NY Open -$21.55R and NY Silver Bullet -$6.54R); Core ARCH-002 (+1.50R), 003 (+8.98R), 010 (+5.00R)
-    # 3. NQ: London Open Bearish Judas Breaker only (SELL fade into session highs: +5.36R, PF 1.60; banning Bullish Breaker -6.02R & NY Pre-Market -4.44R)
-    # 4. Across all: Prune ARCH-009 (-77.41R portfolio drag) & ARCH-011 (0% win rate across all seasons)
+    # 3. NQ: London Open Bearish Judas Breaker only (SELL fade into session highs: +7.36R, PF 2.05; banning Bullish Breaker & NY Pre-Market)
+    # 4. Across all: Prune toxic/low-expectancy archetypes: ARCH-004 (-15.05R drag), ARCH-009 (-77.41R drag), ARCH-011 (0% win rate)
     def is_optimized_calibrated(row):
         sym = row['symbol']
         arch = row['archetype_id']
         sess = row['session']
-        if arch in ('SETUP-ARCH-009', 'SETUP-ARCH-011'):
+        if arch in ('SETUP-ARCH-004', 'SETUP-ARCH-009', 'SETUP-ARCH-011'):
             return False
         if sym == 'XAUUSD':
-            return sess in ('London_Open', 'NY_Open') and arch in ('SETUP-ARCH-001', 'SETUP-ARCH-003', 'SETUP-ARCH-004', 'SETUP-ARCH-010')
+            return sess in ('London_Open', 'NY_Open') and arch in ('SETUP-ARCH-001', 'SETUP-ARCH-003', 'SETUP-ARCH-010')
         elif sym == 'GBPUSD':
             return sess in ('London_Open', 'London_Continuation') and arch in ('SETUP-ARCH-002', 'SETUP-ARCH-003', 'SETUP-ARCH-010')
         elif sym == 'NQ':
