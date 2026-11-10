@@ -1,0 +1,18 @@
+{
+  "symbol": "GBPUSD_o",
+  "total_days": 275,
+  "date_range": "2025-10-27 to 2026-11-10",
+  "trend_calls": 122,
+  "trend_pct": 44.4,
+  "directional_win_rate": 51.6,
+  "inversions": 58,
+  "inversion_rate": 47.5,
+  "dol_touch_rate": 52.5,
+  "up_calls": 47,
+  "up_win_rate": 48.9,
+  "down_calls": 75,
+  "down_win_rate": 53.3,
+  "sideways_calls": 153,
+  "sideways_pct": 55.6,
+  "sideways_compression_rate": 23.5
+}

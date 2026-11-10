@@ -57,8 +57,12 @@ class SnapTrendClassifier:
         timeout: int
     ) -> Optional[Dict[str, Any]]:
         """Invokes SubQ Snap classification endpoint using the official state+questions schema."""
+        sym = on_chart.get("symbol", "XAUUSD")
+        is_forex = "GBP" in sym.upper() or "EUR" in sym.upper()
+        decimals = 5 if is_forex else 2
+
         state_str = (
-            f"=== ASSET: Gold (XAUUSD) ===\n"
+            f"=== ASSET: {sym} ===\n"
             f"Timestamp: {on_chart.get('timestamp_utc')}\n"
             f"Current Price: {on_chart.get('current_price')}\n\n"
             f"--- On-Chart Microstructure ---\n"
@@ -86,7 +90,7 @@ class SnapTrendClassifier:
             },
             "day_horizon": {
                 "type": "choice",
-                "instructions": "Determine the daily candle archetype and directional close for Gold over the next 24 hours.",
+                "instructions": f"Determine the daily candle archetype and directional close for {sym} over the next 24 hours.",
                 "criteria": {
                     "BULLISH_DAY": "Daily candle is expected to close green with higher highs, targeting upper Draw on Liquidity.",
                     "BEARISH_DAY": "Daily candle is expected to close red with lower lows, targeting lower Draw on Liquidity.",
@@ -150,69 +154,83 @@ class SnapTrendClassifier:
                 dol = on_chart.get("draw_on_liquidity", {})
                 daily_st = on_chart.get("daily_structure", {})
                 sess_rng = on_chart.get("session_ranges", {})
-                pdl = daily_st.get("pdl", on_chart["current_price"] - 15.0)
-                pdh = daily_st.get("pdh", on_chart["current_price"] + 15.0)
+                pdl = daily_st.get("pdl", on_chart["current_price"] - (0.0050 if is_forex else 15.0))
+                pdh = daily_st.get("pdh", on_chart["current_price"] + (0.0050 if is_forex else 15.0))
 
                 target_p = dol.get("target_price", pdl if day_bias == "BEARISH" else pdh)
                 inval_p = daily_st.get("daily_high", pdh) if day_bias == "BEARISH" else daily_st.get("daily_low", pdl)
 
+                sweep_buf = 0.00025 if is_forex else 2.5
+                exp_buf = 0.0010 if is_forex else 10.0
+
+                if is_forex:
+                    tm_policy = {
+                        "aligned": {"tp_r": 2.0, "be_ratchet_r": 1.0, "mode": "FOREX_TREND_EXPANSION", "note": "Forex Trend Expansion: 2.0R TP with 1.0R BE protection"},
+                        "counter": {"tp_r": 2.5, "be_ratchet_r": 1.0, "mode": "PREMIER_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 2.5R TP with 1.0R BE ratchet (Premier Edge)"},
+                        "sideways": {"tp_r": 2.5, "be_ratchet_r": 0.8, "mode": "FOREX_RANGE_BOUNDARY_FADE", "note": "Forex Range Fade: 2.5R TP with 0.8R BE protection"}
+                    }
+                else:
+                    tm_policy = {
+                        "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
+                        "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
+                        "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
+                    }
+
                 return {
-                    "symbol": "XAUUSD",
+                    "symbol": sym,
                     "horizons": {
                         "session": {
                             "bias": sess_bias,
                             "confidence": round(sess_conf, 2),
                             "session_archetype": sess_raw,
                             "expected_range": {
-                                "high": round(sess_rng.get("asian_high", pdh) + (2.5 if sess_bias == "BEARISH" else 10.0), 2),
-                                "low": round(sess_rng.get("asian_low", pdl) - (10.0 if sess_bias == "BEARISH" else 2.5), 2)
+                                "high": round(sess_rng.get("asian_high", pdh) + (sweep_buf if sess_bias == "BEARISH" else exp_buf), decimals),
+                                "low": round(sess_rng.get("asian_low", pdl) - (exp_buf if sess_bias == "BEARISH" else sweep_buf), decimals)
                             },
-                            "key_trigger": round(sess_rng.get("asian_high" if sess_bias == "BEARISH" else "asian_low", on_chart["current_price"]), 2),
+                            "key_trigger": round(sess_rng.get("asian_high" if sess_bias == "BEARISH" else "asian_low", on_chart["current_price"]), decimals),
                             "catalyst_danger": off_chart["catalysts"]["session_risk"]
                         },
                         "day": {
                             "bias": day_bias,
                             "confidence": round(day_conf, 2),
                             "daily_dol": {
-                                "target": round(target_p, 2),
+                                "target": round(target_p, decimals),
                                 "type": dol.get("type", "LIQUIDITY_TARGET"),
                                 "rationale": f"SubQ Snap classified {day_raw} targeting {dol.get('type')}"
                             },
-                            "invalidation": round(inval_p, 2),
+                            "invalidation": round(inval_p, decimals),
                             "candle_archetype": day_raw
                         },
                         "week": {
                             "bias": week_bias,
                             "confidence": round(week_conf, 2),
-                            "macro_target": round(on_chart["weekly_structure"]["pwl" if week_bias == "BEARISH" else "pwh"], 2),
+                            "macro_target": round(on_chart["weekly_structure"]["pwl" if week_bias == "BEARISH" else "pwh"], decimals),
                             "weekly_profile": week_raw
                         }
                     },
-                    "trade_management": {
-                        "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
-                        "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
-                        "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
-                    },
+                    "trade_management": tm_policy,
                     "synthesis_rationale": (
-                        f"SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts. "
-                        f"Session bias rated {sess_bias} (confidence {int(sess_conf*100)}%), Daily horizon aligned with {day_raw} toward {target_p:.2f}. "
+                        f"SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for {sym}. "
+                        f"Session bias rated {sess_bias} (confidence {int(sess_conf*100)}%), Daily horizon aligned with {day_raw} toward {target_p:.{decimals}f}. "
                         f"Weekly profile: {week_raw}."
                     ),
                     "source": "subq-snap-1.1"
                 }
         return None
+        return None
 
     def _build_prompt(self, on_chart: Dict[str, Any], off_chart: Dict[str, Any]) -> str:
         """Constructs high-density structured prompt for SubQ Snap."""
+        sym = on_chart.get("symbol", "XAUUSD")
         return (
-            "Analyze the following institutional state vector for Gold (XAUUSD) and forecast the trend:\n\n"
+            f"Analyze the following institutional state vector for {sym} and forecast the trend:\n\n"
             f"=== ON-CHART MICROSTRUCTURE ===\n"
             f"{json.dumps(on_chart, indent=2)}\n\n"
             f"=== OFF-CHART MACRO & SENTIMENT ===\n"
             f"{json.dumps(off_chart, indent=2)}\n\n"
             "Produce strict JSON output formatted as:\n"
             "{\n"
-            '  "symbol": "XAUUSD",\n'
+            f'  "symbol": "{sym}",\n'
             '  "horizons": {\n'
             '    "session": {"bias": "BULLISH"|"BEARISH"|"RANGE_CHOP", "confidence": float, "session_archetype": str, "expected_range": {"high": float, "low": float}, "key_trigger": float, "catalyst_danger": str},\n'
             '    "day": {"bias": "BULLISH"|"BEARISH"|"CONSOLIDATION", "confidence": float, "daily_dol": {"target": float, "type": str, "rationale": str}, "invalidation": float, "candle_archetype": str},\n'
@@ -231,6 +249,10 @@ class SnapTrendClassifier:
         Deterministic Quantitative Institutional Rule Matrix.
         Guarantees zero-failure, authentic institutional logic matching ICT & Macro fundamentals.
         """
+        sym = on_chart.get("symbol", "XAUUSD")
+        is_forex = "GBP" in sym.upper() or "EUR" in sym.upper()
+        decimals = 5 if is_forex else 2
+
         curr_p = on_chart.get("current_price", 0.0)
         daily_st = on_chart.get("daily_structure", {})
         weekly_st = on_chart.get("weekly_structure", {})
@@ -242,13 +264,14 @@ class SnapTrendClassifier:
         sentiment = off_chart.get("retail_sentiment", {})
         catalysts = off_chart.get("catalysts", {})
 
-        pdh = daily_st.get("pdh", curr_p + 15.0)
-        pdl = daily_st.get("pdl", curr_p - 15.0)
+        default_band = 0.0050 if is_forex else 15.0
+        pdh = daily_st.get("pdh", curr_p + default_band)
+        pdl = daily_st.get("pdl", curr_p - default_band)
         pdc = daily_st.get("pdc", curr_p)
         cwo = weekly_st.get("cwo", curr_p)
-        pwh = weekly_st.get("pwh", curr_p + 40.0)
-        pwl = weekly_st.get("pwl", curr_p - 40.0)
-        adr_14 = daily_st.get("adr_14", 25.0)
+        pwh = weekly_st.get("pwh", curr_p + (default_band * 2))
+        pwl = weekly_st.get("pwl", curr_p - (default_band * 2))
+        adr_14 = daily_st.get("adr_14", 0.0080 if is_forex else 25.0)
         adr_util = daily_st.get("adr_utilization_pct", 20.0)
 
         has_swept_pdh = daily_st.get("has_swept_pdh", False)
@@ -268,7 +291,7 @@ class SnapTrendClassifier:
             score_day += 2.5  # SFP at lows
 
         # Feature B: Damped Previous Day Close (PDC) Relation
-        noise_buffer = 0.05 * max(10.0, adr_14)
+        noise_buffer = 0.05 * max(0.0030 if is_forex else 10.0, adr_14)
         if curr_p > pdc + noise_buffer:
             score_day += 0.5
         elif curr_p < pdc - noise_buffer:
@@ -280,7 +303,7 @@ class SnapTrendClassifier:
         elif h1_regime == "BEARISH_EXPANSION":
             score_day -= 1.8
 
-        # Feature D: Institutional SMT Divergence (Gold vs Silver)
+        # Feature D: Institutional SMT Divergence
         if smt.get("type") == "BULLISH_SMT":
             score_day += 1.5
         elif smt.get("type") == "BEARISH_SMT":
@@ -306,97 +329,114 @@ class SnapTrendClassifier:
             day_bias = "CONSOLIDATION"
             day_conf = 0.65
             candle_arch = "ADR_EXHAUSTED_ROTATION"
-            target_p = round(pdc, 2)
+            target_p = round(pdc, decimals)
             dol_type = "MEAN_REVERSION"
-            inval_p = round(pdh if curr_p < pdc else pdl, 2)
+            inval_p = round(pdh if curr_p < pdc else pdl, decimals)
             day_rationale = f"ADR utilization at {adr_util}%; high probability of session equilibrium rotation."
         elif score_day >= 1.5:
             day_bias = "BULLISH"
             day_conf = min(0.92, round(0.65 + (score_day * 0.04), 2))
             candle_arch = "EXPANSION_UP_DAY"
-            target_p = round(dol.get("target_price") or pdh, 2)
+            target_p = round(dol.get("target_price") or pdh, decimals)
             dol_type = "BUY_SIDE_LIQUIDITY"
-            inval_p = round(daily_st.get("daily_low") or pdl, 2)
+            inval_p = round(daily_st.get("daily_low") or pdl, decimals)
             day_rationale = f"High-conviction bullish displacement (score +{score_day:.1f}); targeting overhead BSL."
         elif score_day <= -1.5:
             day_bias = "BEARISH"
             day_conf = min(0.92, round(0.65 + (abs(score_day) * 0.04), 2))
             candle_arch = "EXPANSION_DOWN_DAY"
-            target_p = round(dol.get("target_price") or pdl, 2)
+            target_p = round(dol.get("target_price") or pdl, decimals)
             dol_type = "SELL_SIDE_LIQUIDITY"
-            inval_p = round(daily_st.get("daily_high") or pdh, 2)
+            inval_p = round(daily_st.get("daily_high") or pdh, decimals)
             day_rationale = f"High-conviction bearish displacement (score {score_day:.1f}); targeting underlying SSL."
         else:
             day_bias = "CONSOLIDATION"
             day_conf = 0.60
             candle_arch = "INSIDE_DOJI_DAY"
-            target_p = round(pdc, 2)
+            target_p = round(pdc, decimals)
             dol_type = "MEAN_REVERSION"
-            inval_p = round(pdh, 2)
+            inval_p = round(pdh, decimals)
             day_rationale = "Balanced forces / lack of structural displacement; range-bound equilibrium."
 
         # --- 2. SESSION HORIZON CALCULATION ---
         asian_high = sess.get("asian_high", pdh)
         asian_low = sess.get("asian_low", pdl)
-        asian_range = sess.get("asian_range", 10.0)
+        asian_range = sess.get("asian_range", 0.0030 if is_forex else 10.0)
+
+        judas_offset = 0.0002 if is_forex else 2.0
+        sweep_buf = 0.00025 if is_forex else 2.5
+        exp_buf = 0.0008 if is_forex else 8.0
 
         if session_danger == "CRITICAL":
             sess_bias = "RANGE_CHOP"
             sess_conf = 0.55
             sess_arch = "CATALYST_WHIPSAW_RISK"
-            exp_high = round(curr_p + (asian_range * 1.5), 2)
-            exp_low = round(curr_p - (asian_range * 1.5), 2)
-            key_trig = curr_p
+            exp_high = round(curr_p + (asian_range * 1.5), decimals)
+            exp_low = round(curr_p - (asian_range * 1.5), decimals)
+            key_trig = round(curr_p, decimals)
         elif day_bias == "BULLISH":
             # If bullish, Judas swing sweeps Asian low then expands up
             sess_bias = "BULLISH"
             sess_conf = day_conf
-            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p <= asian_low + 2.0 else "UNILATERAL_EXPANSION"
-            exp_high = round(max(asian_high + 8.0, target_p), 2)
-            exp_low = round(asian_low - 2.5, 2)
-            key_trig = round(asian_low, 2)
+            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p <= asian_low + judas_offset else "UNILATERAL_EXPANSION"
+            exp_high = round(max(asian_high + exp_buf, target_p), decimals)
+            exp_low = round(asian_low - sweep_buf, decimals)
+            key_trig = round(asian_low, decimals)
         elif day_bias == "BEARISH":
             # If bearish, Judas swing sweeps Asian high then expands down
             sess_bias = "BEARISH"
             sess_conf = day_conf
-            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p >= asian_high - 2.0 else "UNILATERAL_EXPANSION"
-            exp_high = round(asian_high + 2.5, 2)
-            exp_low = round(min(asian_low - 8.0, target_p), 2)
-            key_trig = round(asian_high, 2)
+            sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p >= asian_high - judas_offset else "UNILATERAL_EXPANSION"
+            exp_high = round(asian_high + sweep_buf, decimals)
+            exp_low = round(min(asian_low - exp_buf, target_p), decimals)
+            key_trig = round(asian_high, decimals)
         else:
             sess_bias = "RANGE_CHOP"
             sess_conf = 0.58
             sess_arch = "RANGE_BOUND_CONSOLIDATION"
-            exp_high = round(asian_high, 2)
-            exp_low = round(asian_low, 2)
-            key_trig = round((asian_high + asian_low) / 2, 2)
+            exp_high = round(asian_high, decimals)
+            exp_low = round(asian_low, decimals)
+            key_trig = round((asian_high + asian_low) / 2, decimals)
 
         # --- 3. WEEKLY HORIZON CALCULATION ---
         if curr_p > cwo and day_bias == "BULLISH":
             week_bias = "BULLISH"
             week_conf = 0.76
-            week_target = round(pwh, 2)
+            week_target = round(pwh, decimals)
             week_profile = "TUESDAY_LOW_OF_WEEK_EXPANSION"
         elif curr_p < cwo and day_bias == "BEARISH":
             week_bias = "BEARISH"
             week_conf = 0.78
-            week_target = round(pwl, 2)
+            week_target = round(pwl, decimals)
             week_profile = "TUESDAY_HIGH_OF_WEEK_EXPANSION"
         else:
             week_bias = "NEUTRAL"
             week_conf = 0.62
-            week_target = round(cwo, 2)
+            week_target = round(cwo, decimals)
             week_profile = "MID_WEEK_EQUILIBRIUM"
 
         synthesis = (
-            f"Synthesizing on-chart MTF state with off-chart macro intelligence for Gold: "
-            f"Daily bias is {day_bias} (Conf: {int(day_conf*100)}%) with primary DOL targeting {dol_type} at {target_p:.2f}. "
-            f"Session posture reflects {sess_arch} ({sess_bias}) with anticipated boundary [{exp_low:.2f} - {exp_high:.2f}]. "
-            f"Weekly context aligns with {week_profile} toward {week_target:.2f}."
+            f"Synthesizing on-chart MTF state with off-chart macro intelligence for {sym}: "
+            f"Daily bias is {day_bias} (Conf: {int(day_conf*100)}%) with primary DOL targeting {dol_type} at {target_p:.{decimals}f}. "
+            f"Session posture reflects {sess_arch} ({sess_bias}) with anticipated boundary [{exp_low:.{decimals}f} - {exp_high:.{decimals}f}]. "
+            f"Weekly context aligns with {week_profile} toward {week_target:.{decimals}f}."
         )
 
+        if is_forex:
+            tm_policy = {
+                "aligned": {"tp_r": 2.0, "be_ratchet_r": 1.0, "mode": "FOREX_TREND_EXPANSION", "note": "Forex Trend Expansion: 2.0R TP with 1.0R BE protection"},
+                "counter": {"tp_r": 2.5, "be_ratchet_r": 1.0, "mode": "PREMIER_MEAN_REVERSION_FADE", "note": "Judas Sweep Fade: 2.5R TP with 1.0R BE ratchet (Premier Edge)"},
+                "sideways": {"tp_r": 2.5, "be_ratchet_r": 0.8, "mode": "FOREX_RANGE_BOUNDARY_FADE", "note": "Forex Range Fade: 2.5R TP with 0.8R BE protection"}
+            }
+        else:
+            tm_policy = {
+                "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
+                "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
+                "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
+            }
+
         return {
-            "symbol": "XAUUSD",
+            "symbol": sym,
             "horizons": {
                 "session": {
                     "bias": sess_bias,
@@ -424,10 +464,6 @@ class SnapTrendClassifier:
                     "weekly_profile": week_profile
                 }
             },
-            "trade_management": {
-                "aligned": {"tp_r": 3.5, "be_ratchet_r": 1.5, "mode": "TREND_EXPANSION", "note": "Target Distal DOL with 1.5R BE protection"},
-                "counter": {"tp_r": 1.5, "be_ratchet_r": 1.0, "mode": "COUNTER_TREND_SCALP", "note": "Defensive Scalp: 1.5R TP with fast 1.0R BE ratchet"},
-                "sideways": {"tp_r": 3.5, "be_ratchet_r": 1.0, "mode": "EQUILIBRIUM_BOUNDARY_FADE", "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"}
-            },
+            "trade_management": tm_policy,
             "synthesis_rationale": synthesis
         }

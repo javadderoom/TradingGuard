@@ -22,26 +22,38 @@ TZ_UTC = datetime.timezone.utc
 TZ_TEHRAN = ZoneInfo("Asia/Tehran")
 
 
-def _find_gold_symbol() -> str:
-    """Detects available Gold symbol in MT5."""
+def _resolve_asset_symbols(symbol: str) -> Tuple[str, Optional[str], str, float, float, int]:
+    """
+    Resolves primary symbol, correlated SMT symbol, asset class, pip size, min FVG size, and decimals.
+    Returns: (primary_symbol, smt_symbol, asset_class, pip_size, min_fvg, decimals)
+    """
     if not mt5.terminal_info():
         mt5.initialize()
-    for candidate in ["XAUUSD_o", "XAUUSD", "GOLD"]:
-        info = mt5.symbol_info(candidate)
-        if info:
-            return candidate
-    return "XAUUSD_o"
 
+    s_clean = symbol.upper().replace("_O", "").replace("_", "")
 
-def _find_silver_symbol() -> Optional[str]:
-    """Detects available Silver symbol in MT5 for SMT divergence."""
-    if not mt5.terminal_info():
-        mt5.initialize()
-    for candidate in ["XAGUSD_o", "XAGUSD", "SILVER"]:
-        info = mt5.symbol_info(candidate)
-        if info:
-            return candidate
-    return None
+    if "GBP" in s_clean:
+        # Primary: Cable
+        prim = "GBPUSD_o" if mt5.symbol_info("GBPUSD_o") else "GBPUSD"
+        # Correlated SMT: Euro
+        smt = "EURUSD_o" if mt5.symbol_info("EURUSD_o") else ("EURUSD" if mt5.symbol_info("EURUSD") else None)
+        return prim, smt, "FOREX", 0.0001, 0.0005, 5
+
+    elif "EUR" in s_clean:
+        prim = "EURUSD_o" if mt5.symbol_info("EURUSD_o") else "EURUSD"
+        smt = "GBPUSD_o" if mt5.symbol_info("GBPUSD_o") else ("GBPUSD" if mt5.symbol_info("GBPUSD") else None)
+        return prim, smt, "FOREX", 0.0001, 0.0005, 5
+
+    elif "NQ" in s_clean or "NAS" in s_clean or "USTEC" in s_clean:
+        prim = "NQ_o" if mt5.symbol_info("NQ_o") else ("NQ" if mt5.symbol_info("NQ") else "USTEC")
+        smt = "ES_o" if mt5.symbol_info("ES_o") else ("ES" if mt5.symbol_info("ES") else None)
+        return prim, smt, "INDEX", 1.0, 2.0, 2
+
+    else:
+        # Default: Gold
+        prim = "XAUUSD_o" if mt5.symbol_info("XAUUSD_o") else ("XAUUSD" if mt5.symbol_info("XAUUSD") else "GOLD")
+        smt = "XAGUSD_o" if mt5.symbol_info("XAGUSD_o") else ("XAGUSD" if mt5.symbol_info("XAGUSD") else "SILVER")
+        return prim, smt, "METALS", 0.10, 1.0, 2
 
 
 def _calc_atr(bars: List[Dict[str, Any]], period: int = 14) -> float:
@@ -59,7 +71,7 @@ def _calc_atr(bars: List[Dict[str, Any]], period: int = 14) -> float:
     return float(np.mean(trs[-period:])) if trs else 10.0
 
 
-def _detect_fvg(bars: List[Dict[str, Any]], lookback: int = 30) -> List[Dict[str, Any]]:
+def _detect_fvg(bars: List[Dict[str, Any]], lookback: int = 30, min_fvg_size: float = 1.0, decimals: int = 2) -> List[Dict[str, Any]]:
     """Detects active Fair Value Gaps (imbalances) on higher timeframes."""
     fvgs = []
     recent = bars[-lookback:]
@@ -71,89 +83,89 @@ def _detect_fvg(bars: List[Dict[str, Any]], lookback: int = 30) -> List[Dict[str
         # Bullish FVG: Candle 1 High < Candle 3 Low
         if c3["low"] > c1["high"]:
             gap = c3["low"] - c1["high"]
-            if gap >= 1.0:  # Minimum 1 pt on Gold
+            if gap >= min_fvg_size:
                 fvgs.append({
                     "type": "BULLISH_FVG",
-                    "top": c3["low"],
-                    "bottom": c1["high"],
-                    "midpoint": round((c3["low"] + c1["high"]) / 2, 2),
-                    "size": round(gap, 2),
+                    "top": round(c3["low"], decimals),
+                    "bottom": round(c1["high"], decimals),
+                    "midpoint": round((c3["low"] + c1["high"]) / 2, decimals),
+                    "size": round(gap, decimals),
                     "bar_time": c2["time"]
                 })
 
         # Bearish FVG: Candle 1 Low > Candle 3 High
         if c1["low"] > c3["high"]:
             gap = c1["low"] - c3["high"]
-            if gap >= 1.0:
+            if gap >= min_fvg_size:
                 fvgs.append({
                     "type": "BEARISH_FVG",
-                    "top": c1["low"],
-                    "bottom": c3["high"],
-                    "midpoint": round((c1["low"] + c3["high"]) / 2, 2),
-                    "size": round(gap, 2),
+                    "top": round(c1["low"], decimals),
+                    "bottom": round(c3["high"], decimals),
+                    "midpoint": round((c1["low"] + c3["high"]) / 2, decimals),
+                    "size": round(gap, decimals),
                     "bar_time": c2["time"]
                 })
     return fvgs
 
 
 def _check_smt_divergence(
-    gold_h1: List[Dict[str, Any]],
-    silver_symbol: Optional[str]
+    primary_h1: List[Dict[str, Any]],
+    smt_symbol: Optional[str],
+    primary_label: str = "Gold",
+    smt_label: str = "Silver"
 ) -> Dict[str, Any]:
     """
-    Checks for Institutional SMT Divergence between Gold and Silver on H1.
-    Bullish SMT: Gold makes Higher Low while Silver makes Lower Low.
-    Bearish SMT: Gold makes Lower High while Silver makes Higher High.
+    Checks for Institutional SMT Divergence between primary asset and correlated benchmark on H1.
     """
-    if not silver_symbol:
-        return {"has_smt": False, "type": "NONE", "note": "Silver unavailable"}
+    if not smt_symbol:
+        return {"has_smt": False, "type": "NONE", "note": f"{smt_label} benchmark unavailable"}
 
-    rates_ag = mt5.copy_rates_from_pos(silver_symbol, mt5.TIMEFRAME_H1, 0, len(gold_h1))
-    if rates_ag is None or len(rates_ag) < 10:
-        return {"has_smt": False, "type": "NONE", "note": "Silver bars unavailable"}
+    rates_smt = mt5.copy_rates_from_pos(smt_symbol, mt5.TIMEFRAME_H1, 0, len(primary_h1))
+    if rates_smt is None or len(rates_smt) < 10:
+        return {"has_smt": False, "type": "NONE", "note": f"{smt_label} bars unavailable"}
 
-    ag_h1 = [{"high": float(r["high"]), "low": float(r["low"]), "time": int(r["time"])} for r in rates_ag]
+    smt_h1 = [{"high": float(r["high"]), "low": float(r["low"]), "time": int(r["time"])} for r in rates_smt]
 
     # Compare last 2 prominent swing points
-    if len(gold_h1) >= 20 and len(ag_h1) >= 20:
-        au_recent_high = max(b["high"] for b in gold_h1[-10:])
-        au_prior_high = max(b["high"] for b in gold_h1[-20:-10])
+    if len(primary_h1) >= 20 and len(smt_h1) >= 20:
+        p_recent_high = max(b["high"] for b in primary_h1[-10:])
+        p_prior_high = max(b["high"] for b in primary_h1[-20:-10])
 
-        ag_recent_high = max(b["high"] for b in ag_h1[-10:])
-        ag_prior_high = max(b["high"] for b in ag_h1[-20:-10])
+        s_recent_high = max(b["high"] for b in smt_h1[-10:])
+        s_prior_high = max(b["high"] for b in smt_h1[-20:-10])
 
         # Bearish SMT: One made a higher high, the other failed
-        if (au_recent_high > au_prior_high and ag_recent_high <= ag_prior_high):
+        if (p_recent_high > p_prior_high and s_recent_high <= s_prior_high):
             return {
                 "has_smt": True,
                 "type": "BEARISH_SMT",
-                "note": "Gold broke higher high while Silver lagged/failed to confirm (Bearish SMT)"
+                "note": f"{primary_label} broke higher high while {smt_label} lagged/failed to confirm (Bearish SMT)"
             }
-        elif (au_recent_high <= au_prior_high and ag_recent_high > ag_prior_high):
+        elif (p_recent_high <= p_prior_high and s_recent_high > s_prior_high):
             return {
                 "has_smt": True,
                 "type": "BEARISH_SMT",
-                "note": "Silver broke higher high while Gold showed relative weakness (Bearish SMT)"
+                "note": f"{smt_label} broke higher high while {primary_label} showed relative weakness (Bearish SMT)"
             }
 
         # Bullish SMT: One made lower low, the other held higher low
-        au_recent_low = min(b["low"] for b in gold_h1[-10:])
-        au_prior_low = min(b["low"] for b in gold_h1[-20:-10])
+        p_recent_low = min(b["low"] for b in primary_h1[-10:])
+        p_prior_low = min(b["low"] for b in primary_h1[-20:-10])
 
-        ag_recent_low = min(b["low"] for b in ag_h1[-10:])
-        ag_prior_low = min(b["low"] for b in ag_h1[-20:-10])
+        s_recent_low = min(b["low"] for b in smt_h1[-10:])
+        s_prior_low = min(b["low"] for b in smt_h1[-20:-10])
 
-        if (au_recent_low < au_prior_low and ag_recent_low >= ag_prior_low):
+        if (p_recent_low < p_prior_low and s_recent_low >= s_prior_low):
             return {
                 "has_smt": True,
                 "type": "BULLISH_SMT",
-                "note": "Gold swept lower low while Silver held higher low (Institutional Accumulation SMT)"
+                "note": f"{primary_label} swept lower low while {smt_label} held higher low (Bullish SMT)"
             }
-        elif (au_recent_low >= au_prior_low and ag_recent_low < ag_prior_low):
+        elif (p_recent_low >= p_prior_low and s_recent_low < s_prior_low):
             return {
                 "has_smt": True,
                 "type": "BULLISH_SMT",
-                "note": "Gold refused to make lower low while Silver swept low (Bullish SMT)"
+                "note": f"{primary_label} refused to make lower low while {smt_label} swept low (Bullish SMT)"
             }
 
     return {"has_smt": False, "type": "NONE", "note": "Aligned market structure"}
@@ -161,26 +173,26 @@ def _check_smt_divergence(
 
 def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
     """
-    Extracts complete on-chart multi-timeframe microstructure telemetry for Gold.
+    Extracts complete on-chart multi-timeframe microstructure telemetry for any supported asset (Gold, Cable, Index).
     """
     if not mt5.terminal_info():
         mt5.initialize()
 
-    gold_sym = _find_gold_symbol()
-    silver_sym = _find_silver_symbol()
+    prim_sym, smt_sym, asset_class, pip_size, min_fvg, decimals = _resolve_asset_symbols(symbol)
+    pip_factor = 10000.0 if asset_class == "FOREX" else 1.0
 
     # 1. Fetch MTF rates
-    rates_d1 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_D1, 0, 30)
-    rates_h4 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_H4, 0, 60)
-    rates_h1 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_H1, 0, 120)
-    rates_m15 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_M15, 0, 100)
-    rates_m5 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_M5, 0, 300)
+    rates_d1 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_D1, 0, 30)
+    rates_h4 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_H4, 0, 60)
+    rates_h1 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_H1, 0, 120)
+    rates_m15 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_M15, 0, 100)
+    rates_m5 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_M5, 0, 300)
 
     if rates_d1 is None or len(rates_d1) < 5 or rates_h1 is None or len(rates_h1) < 20:
         return {
-            "symbol": symbol,
+            "symbol": prim_sym,
             "status": "DATA_ERROR",
-            "error": "Failed to fetch sufficient MT5 rates for Gold"
+            "error": f"Failed to fetch sufficient MT5 rates for {prim_sym}"
         }
 
     # Convert to standard dict lists
@@ -205,10 +217,11 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
     daily_range = daily_high - daily_low
 
     adr_14 = _calc_atr(d1, 14)
-    adr_pct = round((daily_range / max(0.1, adr_14)) * 100.0, 1)
+    min_adr_denom = 0.0010 if asset_class == "FOREX" else 0.10
+    adr_pct = round((daily_range / max(min_adr_denom, adr_14)) * 100.0, 1)
 
     # Weekly Levels (aggregate last 5-10 D1 bars)
-    rates_w1 = mt5.copy_rates_from_pos(gold_sym, mt5.TIMEFRAME_W1, 0, 5)
+    rates_w1 = mt5.copy_rates_from_pos(prim_sym, mt5.TIMEFRAME_W1, 0, 5)
     if rates_w1 is not None and len(rates_w1) >= 2:
         pwh = float(rates_w1[-2]["high"])
         pwl = float(rates_w1[-2]["low"])
@@ -233,7 +246,7 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
     is_london_established = (len(london_bars) >= 12) or (now_utc.hour >= 12)
     london_high = max((b["high"] for b in london_bars), default=asian_high)
     london_low = min((b["low"] for b in london_bars), default=asian_low)
-    london_range = round(london_high - london_low, 2)
+    london_range = round(london_high - london_low, decimals)
     london_swept_asian_h = london_high > asian_high
     london_swept_asian_l = london_low < asian_low
 
@@ -246,59 +259,58 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
         active_anchor = "AFTER_HOURS"
 
     pre_ny_range = max(daily_high, london_high) - min(daily_low, london_low)
-    pre_ny_adr_util = round((pre_ny_range / max(0.1, adr_14)) * 100.0, 1)
+    pre_ny_adr_util = round((pre_ny_range / max(min_adr_denom, adr_14)) * 100.0, 1)
     adr_exhaustion_alert = pre_ny_adr_util >= 60.0
 
     # 4. Draw on Liquidity (DOL) Mapping
-    # Unswept highs/lows
     h1_highs = [b["high"] for b in h1[-48:]]
     h1_lows = [b["low"] for b in h1[-48:]]
 
-    unfilled_fvgs = _detect_fvg(h1, lookback=40)
-    unfilled_h4_fvgs = _detect_fvg(h4, lookback=30)
+    unfilled_fvgs = _detect_fvg(h1, lookback=40, min_fvg_size=min_fvg, decimals=decimals)
+    unfilled_h4_fvgs = _detect_fvg(h4, lookback=30, min_fvg_size=min_fvg, decimals=decimals)
 
     # Targets above market (Buy-Side Liquidity & Bearish FVGs to retest)
     bsl_targets = sorted([h for h in set(h1_highs) if h > curr_p])[:3]
     # Targets below market (Sell-Side Liquidity & Bullish FVGs to retest)
     ssl_targets = sorted([l for l in set(h1_lows) if l < curr_p], reverse=True)[:3]
 
-    # Primary Daily DOL candidate:
-    # If price swept PDH and displaced lower, target is PDL or lower FVG.
-    # If price swept PDL and displaced higher, target is PDH or upper FVG.
     has_swept_pdh = daily_high > pdh
     has_swept_pdl = daily_low < pdl
+
+    dist_digits = 1 if asset_class == "FOREX" else 2
 
     if has_swept_pdh and curr_p < pdh:
         primary_dol = {
             "type": "SELL_SIDE_LIQUIDITY",
-            "target_price": round(pdl, 2),
-            "distance_pts": round(curr_p - pdl, 2),
+            "target_price": round(pdl, decimals),
+            "distance_pts": round((curr_p - pdl) * pip_factor, dist_digits),
             "rationale": "Swept PDH with bearish displacement; Draw on Liquidity is PDL."
         }
     elif has_swept_pdl and curr_p > pdl:
         primary_dol = {
             "type": "BUY_SIDE_LIQUIDITY",
-            "target_price": round(pdh, 2),
-            "distance_pts": round(pdh - curr_p, 2),
+            "target_price": round(pdh, decimals),
+            "distance_pts": round((pdh - curr_p) * pip_factor, dist_digits),
             "rationale": "Swept PDL with bullish displacement; Draw on Liquidity is PDH."
         }
     elif curr_p > pdc:
+        tgt = bsl_targets[0] if bsl_targets else pdh
         primary_dol = {
             "type": "BUY_SIDE_LIQUIDITY",
-            "target_price": round(bsl_targets[0] if bsl_targets else pdh, 2),
-            "distance_pts": round((bsl_targets[0] if bsl_targets else pdh) - curr_p, 2),
+            "target_price": round(tgt, decimals),
+            "distance_pts": round((tgt - curr_p) * pip_factor, dist_digits),
             "rationale": "Trading above previous day close; expanding toward resting buy-side liquidity."
         }
     else:
+        tgt = ssl_targets[0] if ssl_targets else pdl
         primary_dol = {
             "type": "SELL_SIDE_LIQUIDITY",
-            "target_price": round(ssl_targets[0] if ssl_targets else pdl, 2),
-            "distance_pts": round(curr_p - (ssl_targets[0] if ssl_targets else pdl), 2),
+            "target_price": round(tgt, decimals),
+            "distance_pts": round((curr_p - tgt) * pip_factor, dist_digits),
             "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
         }
 
     # 5. Higher Timeframe Market Structure Bias
-    # Fast H1 swing structure
     h1_ma20 = np.mean([b["close"] for b in h1[-20:]])
     h4_ma20 = np.mean([b["close"] for b in h4[-20:]])
 
@@ -309,46 +321,47 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
     h1_regime = "BULLISH_EXPANSION" if is_h1_bullish else ("BEARISH_EXPANSION" if is_h1_bearish else "CONSOLIDATION_RANGE")
 
     # 6. SMT Divergence
-    smt_info = _check_smt_divergence(h1, silver_sym)
+    smt_info = _check_smt_divergence(h1, smt_sym, prim_sym, smt_sym or "Correlated Benchmark")
 
     return {
-        "symbol": "XAUUSD",
+        "symbol": prim_sym,
+        "asset_class": asset_class,
         "active_anchor": active_anchor,
-        "current_price": round(curr_p, 2),
+        "current_price": round(curr_p, decimals),
         "timestamp_utc": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "timestamp_tehran": now_utc.astimezone(TZ_TEHRAN).strftime("%Y-%m-%d %H:%M:%S Tehran"),
         "daily_structure": {
-            "pdh": round(pdh, 2),
-            "pdl": round(pdl, 2),
-            "pdc": round(pdc, 2),
-            "daily_open": round(daily_open, 2),
-            "daily_high": round(daily_high, 2),
-            "daily_low": round(daily_low, 2),
-            "daily_range": round(daily_range, 2),
-            "adr_14": round(adr_14, 2),
+            "pdh": round(pdh, decimals),
+            "pdl": round(pdl, decimals),
+            "pdc": round(pdc, decimals),
+            "daily_open": round(daily_open, decimals),
+            "daily_high": round(daily_high, decimals),
+            "daily_low": round(daily_low, decimals),
+            "daily_range": round(daily_range, decimals),
+            "adr_14": round(adr_14, decimals),
             "adr_utilization_pct": adr_pct,
             "has_swept_pdh": has_swept_pdh,
             "has_swept_pdl": has_swept_pdl
         },
         "weekly_structure": {
-            "pwh": round(pwh, 2),
-            "pwl": round(pwl, 2),
-            "cwo": round(cwo, 2),
+            "pwh": round(pwh, decimals),
+            "pwl": round(pwl, decimals),
+            "cwo": round(cwo, decimals),
             "relation_to_weekly_open": "ABOVE_WEEKLY_OPEN" if curr_p > cwo else "BELOW_WEEKLY_OPEN"
         },
         "session_ranges": {
-            "asian_high": round(asian_high, 2),
-            "asian_low": round(asian_low, 2),
-            "asian_range": round(asian_high - asian_low, 2),
-            "london_high": round(london_high, 2),
-            "london_low": round(london_low, 2),
-            "london_range": round(london_high - london_low, 2)
+            "asian_high": round(asian_high, decimals),
+            "asian_low": round(asian_low, decimals),
+            "asian_range": round(asian_high - asian_low, decimals),
+            "london_high": round(london_high, decimals),
+            "london_low": round(london_low, decimals),
+            "london_range": round(london_high - london_low, decimals)
         },
         "london_context": {
             "is_established": is_london_established,
-            "london_high": round(london_high, 2),
-            "london_low": round(london_low, 2),
-            "london_range": round(london_range, 2),
+            "london_high": round(london_high, decimals),
+            "london_low": round(london_low, decimals),
+            "london_range": round(london_range, decimals),
             "swept_asian_high": london_swept_asian_h,
             "swept_asian_low": london_swept_asian_l,
             "pre_ny_adr_util_pct": pre_ny_adr_util,
@@ -356,16 +369,16 @@ def extract_on_chart_microstructure(symbol: str = "XAUUSD") -> Dict[str, Any]:
         },
         "draw_on_liquidity": primary_dol,
         "liquidity_pools": {
-            "overhead_bsl": [round(x, 2) for x in bsl_targets],
-            "underlying_ssl": [round(x, 2) for x in ssl_targets],
+            "overhead_bsl": [round(x, decimals) for x in bsl_targets],
+            "underlying_ssl": [round(x, decimals) for x in ssl_targets],
             "active_h1_fvgs": unfilled_fvgs[:2],
             "active_h4_fvgs": unfilled_h4_fvgs[:2]
         },
         "htf_trend": {
             "h1_regime": h1_regime,
-            "h1_ma20": round(float(h1_ma20), 2),
-            "h4_ma20": round(float(h4_ma20), 2),
-            "h1_displacement_3bar": round(float(h1_displacement), 2)
+            "h1_ma20": round(float(h1_ma20), decimals),
+            "h4_ma20": round(float(h4_ma20), decimals),
+            "h1_displacement_3bar": round(float(h1_displacement), decimals)
         },
         "smt_divergence": smt_info
     }

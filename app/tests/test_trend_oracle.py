@@ -18,7 +18,7 @@ def test_on_chart_microstructure_keys():
     """Verifies that on-chart microstructure extraction returns complete institutional schema."""
     data = extract_on_chart_microstructure("XAUUSD")
     assert "symbol" in data
-    assert data["symbol"] == "XAUUSD"
+    assert "XAUUSD" in data["symbol"]
     assert "current_price" in data
     assert "daily_structure" in data
     assert "weekly_structure" in data
@@ -217,7 +217,7 @@ def test_trend_oracle_service_and_card_formatting():
     fc = oracle.get_forecast("XAUUSD", force_refresh=True)
 
     assert "symbol" in fc
-    assert fc["symbol"] == "XAUUSD"
+    assert "XAUUSD" in fc["symbol"]
     assert "horizons" in fc
     assert "session" in fc["horizons"]
     assert "day" in fc["horizons"]
@@ -235,3 +235,92 @@ def test_trend_oracle_service_and_card_formatting():
     summary = oracle.format_cli_summary(fc)
     assert "OMNITREND ORACLE" in summary
     assert "Latency" in summary
+
+
+def test_on_chart_microstructure_gbpusd():
+    """Verifies that on-chart microstructure extraction works seamlessly on Cable (GBPUSD)."""
+    data = extract_on_chart_microstructure("GBPUSD")
+    assert "symbol" in data
+    assert "GBPUSD" in data["symbol"]
+    assert data["asset_class"] == "FOREX"
+    assert "current_price" in data
+    assert data["daily_structure"]["adr_14"] > 0
+    assert data["draw_on_liquidity"]["target_price"] > 0
+    assert "smt_divergence" in data
+
+
+def test_snap_trend_classifier_forex_policy():
+    """Verifies that Forex assets receive the calibrated 2.0R / 2.5R asymmetric execution policy."""
+    classifier = SnapTrendClassifier(api_key="", api_url="")
+
+    on_chart_forex = {
+        "symbol": "GBPUSD_o",
+        "asset_class": "FOREX",
+        "current_price": 1.30500,
+        "daily_structure": {
+            "pdh": 1.31000,
+            "pdl": 1.29500,
+            "pdc": 1.30200,
+            "daily_open": 1.30100,
+            "daily_high": 1.30800,
+            "daily_low": 1.29400,  # Swept PDL
+            "daily_range": 0.00700,
+            "adr_14": 0.00850,
+            "adr_utilization_pct": 30.0,
+            "has_swept_pdh": False,
+            "has_swept_pdl": True
+        },
+        "weekly_structure": {
+            "pwh": 1.32000,
+            "pwl": 1.29000,
+            "cwo": 1.30000,
+            "relation_to_weekly_open": "ABOVE_WEEKLY_OPEN"
+        },
+        "session_ranges": {
+            "asian_high": 1.30600,
+            "asian_low": 1.30000,
+            "asian_range": 0.00600
+        },
+        "draw_on_liquidity": {
+            "type": "BUY_SIDE_LIQUIDITY",
+            "target_price": 1.31000,
+            "distance_pts": 50.0
+        },
+        "htf_trend": {
+            "h1_regime": "BULLISH_EXPANSION"
+        },
+        "smt_divergence": {
+            "has_smt": True,
+            "type": "BULLISH_SMT"
+        }
+    }
+
+    off_chart = {"catalysts": {"session_risk": "LOW"}, "retail_sentiment": {"retail_long_pct": 30.0}}
+    res = classifier.classify_trend(on_chart_forex, off_chart)
+
+    assert res["symbol"] == "GBPUSD_o"
+    assert res["horizons"]["day"]["bias"] == "BULLISH"
+    assert res["trade_management"]["aligned"]["tp_r"] == 2.0
+    assert res["trade_management"]["aligned"]["be_ratchet_r"] == 1.0
+    assert res["trade_management"]["counter"]["tp_r"] == 2.5
+    assert res["trade_management"]["counter"]["be_ratchet_r"] == 1.0
+    assert res["trade_management"]["sideways"]["tp_r"] == 2.5
+    assert res["trade_management"]["sideways"]["be_ratchet_r"] == 0.8
+
+
+def test_trend_oracle_service_gbpusd_card():
+    """Verifies that TrendOracle formats Telegram card correctly for GBPUSD without currency symbol."""
+    oracle = TrendOracle()
+    fc = oracle.get_forecast("GBPUSD_o", force_refresh=True)
+
+    assert "symbol" in fc
+    assert "GBPUSD" in fc["symbol"]
+    card = oracle.format_telegram_card(fc)
+
+    assert "OmniTrend Oracle — GBPUSD" in card
+    # Should not have dollar signs on the current price line
+    assert "$" not in card.split("Current Price:")[1].split("\n")[0]
+    # Trade policy should reflect forex parameters
+    assert "TP 2.0R" in card
+    assert "TP 2.5R" in card
+

@@ -23,16 +23,16 @@ TZ_TEHRAN = ZoneInfo("Asia/Tehran")
 
 def extract_off_chart_macro(symbol: str = "XAUUSD") -> Dict[str, Any]:
     """
-    Extracts structured off-chart intelligence (economic catalysts + retail sentiment) for Gold.
+    Extracts structured off-chart intelligence (economic catalysts + retail sentiment) for any supported asset.
     """
     now_utc = datetime.datetime.now(TZ_UTC)
     now_tehran = now_utc.astimezone(TZ_TEHRAN)
 
     # 1. Economic Calendar Analysis
     # Check events in next 6 hours (session impact), 24 hours (day impact), and 72 hours (week impact)
-    events_session = get_upcoming_events(symbol="XAUUSD", hours_ahead=6)
-    events_day = get_upcoming_events(symbol="XAUUSD", hours_ahead=24)
-    events_week = get_upcoming_events(symbol="XAUUSD", hours_ahead=72)
+    events_session = get_upcoming_events(symbol=symbol, hours_ahead=6)
+    events_day = get_upcoming_events(symbol=symbol, hours_ahead=24)
+    events_week = get_upcoming_events(symbol=symbol, hours_ahead=72)
 
     # Filter to high impact
     high_impact_session = [e for e in events_session if e.get("impact") == "High"]
@@ -55,7 +55,7 @@ def extract_off_chart_macro(symbol: str = "XAUUSD") -> Dict[str, Any]:
     week_catalyst_risk = "HIGH" if len(high_impact_week) >= 3 else ("MEDIUM" if high_impact_week else "LOW")
 
     # 2. Retail Sentiment & Contrarian Positioning
-    ideas = fetch_tradingview_ideas(symbol="XAUUSD")
+    ideas = fetch_tradingview_ideas(symbol=symbol)
     retail_long_pct = 50.0
     retail_short_pct = 50.0
     sample_size = len(ideas) if ideas else 0
@@ -84,7 +84,7 @@ def extract_off_chart_macro(symbol: str = "XAUUSD") -> Dict[str, Any]:
     is_active, session_label, session_key = get_active_session_status()
 
     return {
-        "symbol": "XAUUSD",
+        "symbol": symbol,
         "timestamp_utc": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "timestamp_tehran": now_tehran.strftime("%Y-%m-%d %H:%M:%S Tehran"),
         "session_context": {
