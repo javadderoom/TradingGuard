@@ -2093,6 +2093,33 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
    * Running the visual diagnostics exposed a critical timezone double-counting issue in the live screener path: raw MT5 server epochs were passed into `tehran_hour_from_bar_time()` (which assumed UTC and added +3:30 onto EET UTC+2 server time), shifting NY Open (`13:10 UTC` / `16:40 Tehran` / `15:10 Server`) into `session_hour = 18`, triggering the hardcoded `Veto: Late NY PM / Silver Bullet window banned` at NY Open.
    * On `2026-11-10`, the engine fired `SETUP-ARCH-014` (`H1 Bullish MSS Origin Retest` LONG @ `4099.30`, SL `4089.52`) at `12:35 Tehran` which stopped out `-1.00R`, and then vetoed NY Open starting `17:00 Tehran`.
 
+3. **Visual Co-Backtester Forensic Engine & Shared Marked Ledger (`hitl/replay_forensics.py` & `hitl/replay_ledger.py`)**:
+   * **Chronological SMC Session Scanner (`run_bot_scan`)**:
+     * Walks 5M candlesticks sequentially with causal MTF slicing (`closed_bars_only=True` drops the forming bar `bars_5m[:-1]` to evaluate `signal_bar_time = bars_5m[-1]['time']`).
+     * Forward M1 order execution begins strictly after the signal bar closes (`m1['time'] >= signal_bar_time + 300`).
+     * **Dynamic Session Clock Resolution**: Supports `clock_mode="true_tehran"` (safely shimming `chart_renderer.get_broker_utc_offset_seconds` via `try/finally` to return that bar's historical `Europe/Athens` offset and setting true UTC `dt` objects) vs `clock_mode="live_legacy"` (which faithfully reproduces the live timezone double-counting bug where 16:40 Tehran / 15:10 Server gets shifted to `session_hour=18`, triggering the NY PM Silver Bullet veto).
+     * **Anti-Spoiler Incremental Asian Range**: Asian High/Low accumulates incrementally over elapsed candles up to cursor $T$ without leaking prior to formation or before the Asian session closes at 07:00 UTC.
+     * **2D Box Geometries**: `detect_fvg_boxes` computes `{top, bottom, t_start, t_end, dir}` and `detect_breaker_boxes` computes `{top, bottom, t_start, t_end, type}` for direct chart shading.
+     * **System-Wide Risk Governance (`PROP_FIRM` Rules)**:
+       * Reference Capital: `$2,000.00`.
+       * Max Trade Risk Cap: `$20.00` per trade (`max_risk_usd=20.0`).
+       * Max Open Positions: `max_open_trades = 3` concurrently active orders/positions.
+       * Hard Concurrent Risk Limit: `2.0%` (`$40.00` total open risk).
+       * Max Daily Drawdown: `4.0%` (`$80.00/day`) circuit breaker.
+       * Max Overall Drawdown: `10.0%` (`$200.00` trailing HWM) stop.
+       * Same-Wave Duplicate Guard: 30m cooldown on identical `(archetype_id, direction, entry_ref)` signals.
+     * **Structural Runner Support**: Evaluates `SETUP-ARCH-013` with `dol_target` and extended `target_rr_cap=7.5`.
+   * **Canonical Custom Trade Evaluator (`simulate_custom_trade`)**:
+     * Simulates human proposed or edited setups through `evaluate_council_decision` with uncapped R:R (`target_rr_cap=None`, `max_risk_usd=None`).
+     * Computes true risk distance at 0.01 lot (`risk_usd_001`) and flags `$20.00` limit compliance (`exceeds_risk_cap`).
+   * **Shared Marked Co-Trade Ledger (`CoBacktestLedger`)**:
+     * Atomic JSON persistence (`.tmp` write + `replace()`) over `hitl/memory/visual_co_backtest_ledger.json`.
+     * Records strictly carry `origin`: `"BOT" | "HUMAN_PROPOSED" | "HUMAN_EDITED_BOT"`, `parent_bot_ref`, `risk_usd_001`, and `exceeds_risk_cap`.
+     * Generates side-by-side performance scorecard grouped by origin.
+   * **Agentify Alignment Feedback Store (`AgentifyFeedbackStore`)**:
+     * Atomic JSON storage over `hitl/memory/visual_feedback_cases.json`.
+     * `build_agentify_prompt`: Defensive prompt builder converting chart context, human vs bot geometry comparison, screener diagnostic flags, and user rationale into a copy-ready Markdown prompt for Antigravity alignment without crashing on `None` values.
+
 
 
 

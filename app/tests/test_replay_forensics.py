@@ -327,3 +327,28 @@ def test_shared_ledger_marks_origins_and_agentify_builds_prompt(tmp_path: Path):
     assert len(cases) == 1
     assert store.delete_case(case["case_id"]) is True
     assert len(store.list_cases()) == 0
+
+
+def test_agentify_prompt_handles_none_values_defensively(tmp_path: Path):
+    """
+    Regression test: Verifies AgentifyFeedbackStore and build_agentify_prompt
+    do not crash with AttributeError when user_setup=None, screener_diagnostics=None, or bot_trade=None.
+    """
+    feedback_file = tmp_path / "visual_feedback_cases_none.json"
+    store = AgentifyFeedbackStore(file_path=feedback_file)
+
+    none_payload = {
+        "symbol": "GBPUSD_o",
+        "timestamp": 1794409800,
+        "user_note": "Feedback purely on bot state without proposed trade",
+        "user_setup": None,
+        "bot_trade": None,
+        "screener_diagnostics": None,
+    }
+    case = store.add_case(none_payload)
+    assert "case_id" in case
+    assert "prompt_markdown" in case
+    prompt = case["prompt_markdown"]
+    assert "GBPUSD_o" in prompt
+    assert "CASE-" in prompt
+    assert "Feedback purely on bot state" in prompt

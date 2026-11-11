@@ -240,10 +240,19 @@ def build_agentify_prompt(case: Dict[str, Any]) -> str:
     tehran_str = zones.get("tehran_str", "N/A")
     date_str = zones.get("date_str", "N/A")
 
-    user_note = case.get("user_note", "No notes provided.")
-    user_setup = case.get("user_setup", {})
+    user_note = case.get("user_note") or "No notes provided."
+
+    user_setup = case.get("user_setup")
+    if not isinstance(user_setup, dict):
+        user_setup = {}
+
     bot_trade = case.get("bot_trade")
-    diag = case.get("screener_diagnostics", {})
+    if not isinstance(bot_trade, dict):
+        bot_trade = None
+
+    diag = case.get("screener_diagnostics")
+    if not isinstance(diag, dict):
+        diag = {}
 
     # Extract user geometry
     u_dir = user_setup.get("direction", "N/A")
