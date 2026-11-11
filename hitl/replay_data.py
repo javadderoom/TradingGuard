@@ -271,6 +271,7 @@ class ReplayDataManager:
 
         # Determine if a higher-timeframe forming bar is currently in progress at effective_end / replay_to
         forming_bar = False
+        replay_bucket: Optional[int] = None
         if replay_to is not None and tf != "1M":
             replay_bucket = (replay_to // bucket_sec) * bucket_sec
             # If replay_to hasn't reached the final minute of the bucket period
@@ -360,7 +361,12 @@ class ReplayDataManager:
         ]
 
         if forming_bar and len(bars) > 0:
-            bars[-1]["is_forming"] = True
+            if replay_bucket is not None and bars[-1]["time"] == replay_bucket:
+                bars[-1]["is_forming"] = True
+            else:
+                forming_bar = False
+        else:
+            forming_bar = False
 
         return {
             "bars": bars,

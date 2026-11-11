@@ -139,6 +139,41 @@ def test_causal_partial_htf_bar_prevents_lookahead():
     assert abs(bar_1d["close"] - 4058.39) < 1e-3
 
 
+def test_historical_closed_window_not_marked_forming_when_replay_to_in_future():
+    """
+    Regression test: Querying an earlier closed window [08:00, 09:00] while replay_to = 10:15
+    must return forming_bar == False and NOT mark bars[-1]["is_forming"].
+    """
+    mgr = ReplayDataManager()
+    ep_08 = 1794384000  # 2026-11-11 08:00:00 server
+    ep_09 = 1794387600  # 2026-11-11 09:00:00 server
+    ep_1015 = 1794392100  # 2026-11-11 10:15:00 server (replay_to)
+
+    res = mgr.get_candles(
+        symbol="XAUUSD_o",
+        tf="1H",
+        start_epoch=ep_08,
+        end_epoch=ep_09,
+        replay_to=ep_1015,
+    )
+    assert res["forming_bar"] is False
+    assert len(res["bars"]) == 2  # 08:00 and 09:00 bars
+    assert res["bars"][-1]["time"] == ep_09
+    assert res["bars"][-1].get("is_forming") is not True
+
+    # When query range extends to cover replay_to (10:15), the 10:00 bar IS forming
+    res_covers_cursor = mgr.get_candles(
+        symbol="XAUUSD_o",
+        tf="1H",
+        start_epoch=ep_08,
+        end_epoch=ep_1015 + 3600,
+        replay_to=ep_1015,
+    )
+    assert res_covers_cursor["forming_bar"] is True
+    assert res_covers_cursor["bars"][-1]["time"] == 1794391200  # 10:00 bar
+    assert res_covers_cursor["bars"][-1].get("is_forming") is True
+
+
 def test_broker_day_1d_and_dst_summer_offset():
     """
     Verifies 1D bar spans Europe/Athens 00:00..23:59 rather than 00:00 UTC,
