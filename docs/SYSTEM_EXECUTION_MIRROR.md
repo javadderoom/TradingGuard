@@ -121,14 +121,14 @@ All setups are strictly gated by Review Council ratification:
 
 | Archetype ID | Name | Trigger Mechanism | Asset-Specific Physical Filters & Status |
 | :--- | :--- | :--- | :--- |
-| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | Session high/low swept + 5M Breaker Block confirmed. | Breaker tolerance $\le 1.50\text{ pts}$ on Gold. **DECOMMISSIONED ON GBPUSD** (-$9.50R drag, PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading Judas highs: +5.36R, PF 1.60); Bullish Breaker decommissioned (-$6.02R drag, 10% WR). Active on Gold (+2.50R) and NQ London Open SHORT. |
+| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | Session high/low swept + 5M Breaker Block confirmed. | Breaker tolerance $\le 1.50\text{ pts}$ on Gold. **DECOMMISSIONED ON GBPUSD** (-$9.50R drag, PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading Judas highs: +5.36R, PF 1.60); Bullish Breaker decommissioned (-$6.02R drag, 10% WR). **On Gold, strictly restricted to Bearish Judas Breakers (SHORT only, fading Asian/London High sweeps: +16.00R, PF 2.60, 48.1% WR with TP 2.0R / BE 1.2R)**; Bullish Breakers decommissioned on Gold (-$4.00R drag, 18.8% WR, PF 0.79). |
 | **`SETUP-ARCH-002`** | Judas Sweep + Fair Value Gap | Session high/low swept + valid 5M FVG printed in reversal direction. | **DECOMMISSIONED ON GOLD** per empirical audit (15.0% WR, -$14.00R loss). Active on Forex (`GBPUSD` London Open / Continuation: +1.50R, PF 2.50). Decoupled from mandatory M5 swing MSS (FVG displacement validates entry off sweep). |
 | **`SETUP-ARCH-003`** | Clean MSS + Breaker Retest | Structural shift + retest of breaker block. | Vetoed if trapped in mid-range equilibrium. Active on Gold (+8.98R) and GBPUSD (+8.98R), totaling +17.96R portfolio-wide (PF 1.45). Core Tier-1 Flagship. |
 | **`SETUP-ARCH-004`** | Institutional Range Expansion | Breakout beyond session range with fresh directional FVG. | Vetoed on inside day compression. **DECOMMISSIONED ON GBPUSD** (-$6.05R drag; breakout expansion fails on Cable mean-reversion wicks) and **NQ** (-$1.51R drag). **On Gold, strictly gated to `PRO_EXPANSION` only** (+5.48R, PF 1.17). |
 | **`SETUP-ARCH-005`** | Intermarket SMT Mitigation | Metals SMT divergence + FVG/Breaker mitigation. | Only executed on Gold with Silver as non-executing radar. |
 | **`SETUP-ARCH-007`** | Intermarket SMT at Counter POI | SMT divergence confirming session high/low rejection. | Scaled entry per phase ratio. Only executed on Gold. |
 | **`SETUP-ARCH-009`** | Pro-Trend Session Retest | Retracement into 50% - 70.5% OTE of prior session expansion. | **PERMANENTLY DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** (-$77.41R uncalibrated loss, 11.6% WR, PF 0.55). |
-| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. | Structural stop outside sweep extreme + $1.50 buffer. Portfolio Tier-1 flagship: Active on Gold (+10.47R, PF 1.75) and GBPUSD (+5.00R), totaling +15.47R (PF 2.10, 33.3% WR). |
+| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. | **DECOMMISSIONED ON GOLD** per 1-year empirical audit (7.4% WR, -8.0R loss, PF 0.47 due to false breaks on minor internal 36-bar wicks in chop) and **NQ** (-15.17R drag). |
 | **`SETUP-ARCH-011`** | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Downtrend sweeps $L_1 \to L_2$, displaces above $H_1$ to $H_2$ (1st MSS), pulls back in $H_2 \to L_3 \to H_3 \to L_4$, displaces above $H_3$ to $H_4$ (2nd MSS). Entry on retest of $H_3$ / 5M FVG at $L_5$. | **DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** per 12-month empirical audit (-$3.99R drag, 0.0% win rate across 8 fills). |
 
 ---
@@ -139,7 +139,10 @@ Every trade strictly abides by institutional broker execution realism:
 
 1. **Order Type**: Strict **Limit Orders** (`BUY_LIMIT`, `SELL_LIMIT`). Zero market orders.
 2. **Base Position Sizing**: Fixed **`0.01` Base Lot** on all instruments.
-3. **Firm Stop-Loss Ceiling**: **Strict $12.00 maximum risk ceiling** per trade. If calculated structural risk exceeds $12.00, the trade risk is capped strictly at $12.00.
+3. **Firm Stop-Loss Ceiling (`max_risk_usd`)**: Configurable dollar risk cap per trade in canonical evaluator (`evaluate_council_decision(..., max_risk_usd=12.0)`):
+   - **Legacy Default ($12.00)**: Strict $12.00 maximum risk ceiling per trade for standard accounts. If calculated structural risk exceeds $12.00, the trade risk is capped strictly at $12.00.
+   - **$2,000 Tier ($20.00)**: In institutional $2,000 capital tier scans (`max_risk_usd=20.0`), enforces a $20.00 ceiling (1.0% account risk).
+   - **Uncapped Research / Human Discretionary (`None`)**: When `max_risk_usd=None`, dollar risk clamping is completely bypassed, preserving true structural stop risk and uncompressed realized R:R for Human setups.
 4. **Asset-Specific Structural Risk Bracketing & Physics**:
    - **Gold (`XAUUSD`)**: Minimum Stop Loss: **$3.50**, Maximum Stop Loss: **$8.00**. Invalidation Buffer: **+$1.50** spread buffer applied outside swing pivots. Point value = $1.00 per point at 0.01 lot.
    - **Bitcoin (`BTCUSD`)**: Contract Size = 1.0 BTC. Base Lot = 0.01 BTC. Point Value = **$0.01 per dollar** ($1.00 PnL per $100 price movement). Firm Stop Loss Ceiling: **$1,200.00 pts** ($12.00 max risk). Typical structural swing stop: **$200.00 – $450.00 pts** ($2.00 – $4.50 risk). Invalidation Buffer: **+$20.00 – $25.00 pts** ($0.20 – $0.25). Margin required: **$3.80** for 0.01 lot (1:200 leverage). Spread penalty: **$1.50** ($0.015 dollar penalty).
@@ -634,7 +637,23 @@ The entire master calibrated portfolio was exported into `orders_schedule.csv` a
 | **Max Equity Drawdown** | **8.39% ($934.53)** | **6.86% ($715.70)** | **< 8.5% Total Peak Drawdown** |
 | **Margin Safety Level**| **3,338.29%** | **586.55%** | **Zero Margin Call Risk** |
 
-### 15.4 Verification Artifacts & Reports
+### 15.5 Quantitative Strategy Suite MT5 Strategy Tester Verification ($2,000 Initial Deposit)
+
+The machine-discovered Symbolic Quantitative Suite (`hitl/quant_engine/`) was verified inside the native MetaTrader 5 Strategy Tester across the identical 9-month audit window (`2026.02.01` to `2026.11.05`) on a **$2,000.00 USD** capital base:
+
+| Asset Symbol | Asset Class | Fills | Win Rate | Gross Profit | Gross Loss | Net Profit ($) | Profit Factor | Max Drawdown | Commission Drag | Prop Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Bitcoin (`BTCUSD`)** | Crypto CFD | 650 (stopped out) | 34.00% | +$2,987.35 | -$1,693.30 | **-$2,000.06 (-100%)** | 0.60 | **100.00%** | -$3,268.75 (0.12% notional) | ❌ **FAILED (Blown)** |
+| **NASDAQ 100 (`NQ`)** | Equity Index | 159 | 55.35% | +$2,993.52 | -$1,757.67 | **+$1,235.85 (+61.8%)**| 1.70 | **13.99% ($386.12)** | -$340.20 | ❌ **FAILED (Breached DD)** |
+| **Cable (`GBPUSD_o`)** | Major Forex | 181 | 39.23% | +$1,069.58 | -$1,176.78 | **-$107.20 (-5.36%)** | 0.91 | **13.88% ($304.94)** | -$27.97 | ❌ **FAILED (Negative PnL)** |
+| **Gold (`XAUUSD_o`)** | Spot Metals | 270 | 38.52% | +$2,623.07 | -$1,632.99 | **+$990.08 (+49.50%)** | 1.61 | **8.45% ($184.26)** | -$12.65 | ✅ **PASSED (Under 10% DD)** |
+
+#### Crucial Quantitative Microstructure Findings:
+1. **The Crypto Commission Reality Shock**: On Bitcoin (`BTCUSD`), the raw price-action model yielded **+$1,294.05 USD** in positive market alpha. However, LiteFinance charges **0.12% turnover commission on notional contract value** ($1.88 to $3.78 per micro trade). Over 650 trades, commissions alone totaled **-$3,268.75 USD**, entirely wiping out the account. Fixed-fee backtests (e.g. $0.10/trade) produce a complete hallucination for Crypto CFDs unless executed on zero-fee or Tier-1 institutional crypto exchanges.
+2. **Gold Quant Robustness**: Gold Quant proved highly profitable (**+$990.08**, **1.61 PF**, **8.45% Max DD**) under real broker tick execution with negligible commission drag ($12.65 total), successfully passing prop firm limits.
+3. **Cable Quant Degradation**: While Cable SMC succeeded (**1.71 PF**, **6.69% DD**), Cable Quant underperformed (**0.91 PF**, **-$107.20**), proving that discretionary structural sweeps (SMC) provide superior edge on major FX pairs over pure mathematical autocorrelation rules.
+
+### 15.6 Verification Artifacts & Reports
 1. **XAUUSD Report**: `backtest_results/mt5_native_reports/TradingGuard_XAUUSD_o_Report.htm`
 2. **XAUUSD Graphs**: `TradingGuard_XAUUSD_o_Report.png` (Balance/Equity), `TradingGuard_XAUUSD_o_Report-hst.png` (Distribution).
 3. **GBPUSD Report**: `backtest_results/mt5_native_reports/TradingGuard_GBPUSD_o_Report.htm`
@@ -1433,7 +1452,7 @@ BTCUSD     Decommissioned    278     49     201  28       17.6%     -49.56R 0.76
 
 | Archetype ID | Archetype Name | Raw Baseline Fills | Raw Baseline Net R | Calibrated Status | Algorithmic Rationale & Action Taken |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | 87 | **-15.10R** (PF 0.76) | **ACTIVE ON GOLD & NQ SHORT** | Decommissioned on GBPUSD (-$9.50R drag, PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breaker (SHORT only, +5.36R, PF 1.60); Bullish Breaker decommissioned (-$6.02R drag, 10% WR). Active on Gold (+2.50R). Calibrated: 26 fills, +7.86R (PF 1.46). |
+| **`SETUP-ARCH-001`** | Judas Sweep + Breaker Block | 87 | **-15.10R** (PF 0.76) | **ACTIVE ON GOLD SHORT & NQ SHORT** | Decommissioned on GBPUSD (-$9.50R drag, PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breaker (SHORT only, +5.36R, PF 1.60); Bullish Breaker decommissioned (-$6.02R drag, 10% WR). On Gold, strictly restricted to Bearish Judas Breakers (SHORT only, fading Asian/London Highs) with calibrated TP 2.0R / BE 1.2R (27 fills, 13W - 10L - 4BE, 48.1% WR, **+16.00R Net Alpha, PF 2.60**); Bullish Breakers decommissioned on Gold (-$4.00R drag, 18.8% WR, PF 0.79). |
 | **`SETUP-ARCH-002`** | Judas Sweep + Fair Value Gap | 102 | **-10.00R** (PF 0.77) | **ACTIVE ON FOREX** | Highly ratified on GBPUSD London sessions (+1.50R, PF 2.50). Decommissioned on Gold (-$14.00R, PF 0.75). Calibrated: 3 fills, +1.50R (PF 2.50). |
 | **`SETUP-ARCH-003`** | Clean MSS Breaker Retest | 142 | **+11.92R** (PF 1.13) | **CORE FLAGSHIP** | Robust cross-asset statistical expectancy on Gold (+8.98R) and GBPUSD (+8.98R). Retained as primary setup. Calibrated: 70 fills, +17.96R (PF 1.45). |
 | **`SETUP-ARCH-004`** | Institutional Range Expansion | 203 | **-15.05R** (PF 0.89) | **DECOMMISSIONED ON PRODUCTION** | Breakout expansion setups suffer persistent fakeouts in real market microstructure. On Gold, generated 24.5% win rate (-9.98R drag in red months alone). Decommissioned across XAUUSD, GBPUSD, and NQ. Pruning it collapsed maximum drawdown from 11.99R to 8.00R (-33.3%) and boosted Profit Factor from 1.46 to 1.64. |
@@ -1975,6 +1994,105 @@ Signals are normalized into institutional records stored at `hitl/signals/active
 - **Keyboard Access**: Added `📡 Soli Signals` directly into `MAIN_KEYBOARD` of `hitl/bot.py`.
 - **Command Dispatcher**: Listens for `/signals`, `/soli`, and `📡 Soli Signals`.
 - **Rich Card Generation**: Formats HTML advisory cards with support/resistance ranges, analyst thesis, direct portal links, and the attached official chart image.
+
+---
+
+## 33. SMC Pre-Screener Fallthrough Diagnostic & Dynamic Seasonal Clock Synchronization (`fast_screener.py`)
+
+### 33.1 Diagnostic Fallthrough Refactoring
+- **Issue**: `hitl/backtest/fast_screener.py` formerly returned a hardcoded fallback string `Mid-range chop within {session_label} ({range_low} - {range_high})` whenever bars failed to qualify under any of the 10 ratified setup archetypes (Setup A through J). During aggressive directional expansions, this produced misleading telemetry in Telegram flashes and council review logs.
+- **Implementation**: The catch-all exit was replaced with an authentic descriptive string:
+  ```python
+  return {
+      "has_setup": False,
+      "reason": f"No ratified entry criteria met: Equilibrium consolidation at {current_price:{fmt}} within {session_label} ({range_low:{fmt}} - {range_high:{fmt}})",
+      "setup_type": "NONE",
+      "closed_bars_only": closed_bars_only,
+      "signal_bar_time": signal_bar_time
+  }
+  ```
+
+### 33.2 Dynamic Seasonal Session Clock Synchronization
+- **Issue**: The screener enforced `if "XAU" in symbol.upper() and session_hour in (12, 13): return BYPASSED_SESSION` to eliminate London Continuation friction on Gold based on summer time. In winter (when UK is GMT UTC+0 and Tehran is permanent UTC+3:30), London Open is 08:00–10:00 UTC (11:30–13:30 Tehran time). Consequently, hardcoding hours 12 and 13 vetoed the entire winter London Open on Gold.
+- **Implementation**: Integrated dynamic seasonal resolution via `get_session_times_for_date`:
+  ```python
+  sig_dt = datetime.datetime.fromtimestamp(int(signal_bar_time), tz=datetime.timezone.utc)
+  times = get_session_times_for_date(sig_dt.date())
+  lon_open_utc = times["london"]["utc_time"]
+  lon_cont_start_utc = lon_open_utc + datetime.timedelta(hours=2)
+  lon_end_utc = lon_open_utc + datetime.timedelta(hours=4)
+  if lon_cont_start_utc <= sig_dt < lon_end_utc:
+      return {
+          "has_setup": False,
+          "reason": "Veto: London Continuation window bypassed on Gold per 1-year empirical audit (London Open & NY Open only)",
+          "setup_type": "BYPASSED_SESSION", ...
+      }
+  ```
+  Bars between `lon_open_utc` and `lon_cont_start_utc` (08:00 to 10:00 UTC) are dynamically ratified as active London Open and evaluated without session veto.
+
+### 33.3 Dealing-Range Originating Swing MSS & Volatility Scaling
+- **Originating Swing Pivot Tracking**: In `detect_prominent_sweep_and_mss`, the algorithm previously evaluated only a 2-bar micro swing low (`micro_swing_low`). It has been upgraded to compute the true structural dealing-range swing low/high (`origin_swing_low` / `origin_swing_high`) that originated the sweep leg:
+  ```python
+  between_lows = [b['low'] for b in recent[prev_high_idx:sweep_bar_idx+1]]
+  origin_swing_low = min(between_lows) if between_lows else recent[sweep_bar_idx]['low']
+  ```
+- **Displacement Acceptance**: Confirms Bearish/Bullish MSS when price displaces below either `micro_swing_low` or `origin_swing_low` with a full candle body close in the displacement direction.
+- **Contract Volatility Scaling**: Raised the stop-loss distance cap (`dist`) on Gold from $7.50 up to $12.00 to align with $4,000+ Gold volatility regime (~0.30% price distance).
+
+### 33.4 Empirical Audit & Production Verification (Post-Decommissioning Clean Baseline)
+- **Incident Verification (Nov 11, 2026 Gold Judas High)**: Evaluated across real broker tick data. The pipeline successfully captures the Asian High sweep (`4066.87`) and 5M structural shift down to `4021` and `4000.67` (+3.50R ratified TP, +7.46R Max MFE).
+- **Broker Server UTC Offset Calibration**: Synchronized MT5 broker timestamps (EET = UTC+2 in winter) in `screen_ict_session` for seasonal session checks. The code dynamically converts `signal_bar_time` by subtracting `offset_sec` (7200s in winter) before evaluating London Open vs London Continuation, ensuring the 10:00 server time (08:00 UTC / 11:30 Tehran) correctly maps to the exact first minute of London Open.
+- **Structural Invalidation Alignment for SETUP-ARCH-001**: Calibrated the invalidation price `sl_p` to strictly anchor to the genuine Judas Sweep extreme: `sweep_high = max(recent_high, range_high); sl_p = sweep_high + sl_buf`. For the Nov 11, 2026 Gold setup, this set the entry at `4060.37` and Stop Loss at `4068.37` (Asian Sweep High 4066.87 + $1.50 buffer = 8.00 pts risk), replacing arbitrary distance padding.
+- **Single-Day Production Audit (Wednesday, Nov 11, 2026 - Gold)**:
+  - **Signal Bar**: `2026.11.11 10:00:00` (Closed at `10:05:00` Server / `12:05:00` Tehran / `08:05:00` UTC)
+  - **Archetype**: `SETUP-ARCH-001 (Judas Swing Liquidity Sweep & Breaker Block Reversal)`
+  - **Entry Anchor**: `SELL LIMIT @ 4060.37` (Bearish Breaker Block)
+  - **Stop Loss**: `4068.37` (Risk: $8.00 / 80 pips)
+  - **Take Profit**: `4032.37` (+3.50R / +$28.00 / +280 pips)
+  - **Execution Fill**: `10:17:00 Server` (Pullback High reached `4060.62` and `4060.83`)
+  - **Breakeven Ratchet**: Triggered at `+1.98R` excursion (SL shifted to `4060.17`)
+  - **Take Profit Exit**: Filled at `15:44:00 Server` at `4032.37` (+3.50R WIN)
+  - **Max Drop (MFE)**: `4000.67` (+7.46R / +59.70 pts excursion)
+  - **Visual Verification**: Rendered institutional dark-mode TradingView-styled chart saved to artifacts: `gold_today_backtest_chart.png`.
+- **Full-Year 2026 Comprehensive Factor Calibration (`XAUUSD_o` Across 305,293 M1 Bars / 700 Sessions)**:
+  Following the full-year audit of `SETUP-ARCH-001` across all 223 trading days of 2026, deep factor calibration revealed decisive structural asymmetry between bullish and bearish setups:
+  1. **Bullish Judas Low Sweeps Decommissioned**: Bullish sweeps of Asian/London Lows generated 32 fills with an unacceptable 18.8% Win Rate and **-$4.00R loss (PF 0.79)** due to pro-trend downward expansion on Gold. Bullish Breakers are officially decommissioned on Gold.
+  2. **Bearish Judas High Sweeps Ratified (SHORT ONLY)**: Fading session high sweeps (Asian High during London Open, London High during NY Open) with 5M Breaker confirmation produces robust institutional edge:
+     - **Total Fills**: **27 Fills**
+     - **Outcome**: **13 Wins – 10 Losses – 4 Breakevens**
+     - **Win Rate**: **48.1%** (at calibrated 2.0R Target)
+     - **Net Realized Alpha**: **+16.00 R**
+     - **Profit Factor**: **2.60**
+     - **Calibrated Mechanics**:
+       * Target: **2.0R** (opposing liquidity / session equilibrium)
+       * Breakeven Ratchet: **+1.2R** (preserves capital against aggressive mean-reversion)
+       * Max Risk Ceiling: Up to **$15.00 pts**
+     - **Seasonal Progression (SHORT ONLY Calibrated)**:
+       * Winter: 6 Fills | **+6.00 R Net** | PF **4.00** (4W – 2L – 0B)
+       * Spring: 9 Fills | -3.00 R Net | PF 0.40 (1W – 5L – 3B)
+       * Summer: 5 Fills | **+4.00 R Net** | PF **3.00** (3W – 2L – 0B)
+       * Autumn: 7 Fills | **+9.00 R Net** | PF **10.00** (5W – 1L – 1B)
+  3. **Operational Bottom Line**: With Bullish Breakers excised and targets calibrated to 2.0R / 1.2R BE, Gold achieves 3 profitable seasons out of 4, a 48.1% win rate, and +16.00R net alpha at Profit Factor 2.60.
+
+---
+
+## 34. Interactive Visual Backtest Replay & Chart Inspection Engine
+
+To eliminate abstract numerical ambiguity during strategy research and trade post-mortems, TradingGuard now provides a standalone **HTML5 Visual Backtest Replayer & Chart Inspector** (`hitl/backtest/export_visual_replay.py` & `hitl/backtest/inspect_day_visual.py`):
+
+1. **Architecture & Components**:
+   * **Compiler (`hitl/backtest/export_visual_replay.py`)**: Reads historical M1/M5 broker data (plus live MT5 append), resolves true seasonal UTC, MT5 Server (EET/EEST), and Tehran timestamps, enforces Killzone filtering (`London Open`, `NY Open`), executes `screen_ict_session` bar-by-bar, extracts intermediate SMC diagnostics (Asian bounds, sweeps, 5M Breaker Blocks, 5M FVGs, 1H MSS structure), and simulates forward M1 order execution.
+   * **Interactive Dashboard (`hitl/backtest/templates/visual_replayer_template.html`)**: Self-contained dark-mode TradingView-styled HTML5 Canvas viewer supporting:
+     * Dual timeframes (**M5** & **M1**) with zoom, pan, and crosshair OHLC inspection across all three clocks (Tehran, UTC, MT5).
+     * Toggleable ICT Overlays: Killzone bands (Asian, London Open, NY Open), Asian Range High/Low lines, Liquidity Sweep tags, and Order Entry/SL/TP/Fill/Exit zones.
+     * **Bar-by-Bar Replay Mode**: Step forward/backward candle-by-candle, scrub timeline, or auto-play (`1x`–`20x`) with zero lookahead.
+     * **"Screener Thoughts" Diagnostic Inspector**: Displays live algorithmic verdicts and veto explanations on each candle, plus a clickable Key Events Timeline.
+   * **Launcher CLI (`hitl/backtest/inspect_day_visual.py`)**: Compiles specified date ranges and opens the interactive viewer directly in the browser (`python hitl/backtest/inspect_day_visual.py --dates YYYY-MM-DD ...`).
+
+2. **Diagnostic Discovery on Nov 10 & Nov 11, 2026**:
+   * Running the visual diagnostics exposed a critical timezone double-counting issue in the live screener path: raw MT5 server epochs were passed into `tehran_hour_from_bar_time()` (which assumed UTC and added +3:30 onto EET UTC+2 server time), shifting NY Open (`13:10 UTC` / `16:40 Tehran` / `15:10 Server`) into `session_hour = 18`, triggering the hardcoded `Veto: Late NY PM / Silver Bullet window banned` at NY Open.
+   * On `2026-11-10`, the engine fired `SETUP-ARCH-014` (`H1 Bullish MSS Origin Retest` LONG @ `4099.30`, SL `4089.52`) at `12:35 Tehran` which stopped out `-1.00R`, and then vetoed NY Open starting `17:00 Tehran`.
+
 
 
 

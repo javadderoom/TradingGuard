@@ -197,7 +197,8 @@ def evaluate_council_decision(
     target_rr_cap: float = 3.5,
     commission_usd: Optional[float] = None,
     slippage_pts: float = 0.0,
-    ttl_minutes: int = CANONICAL_TTL_MINUTES
+    ttl_minutes: int = CANONICAL_TTL_MINUTES,
+    max_risk_usd: Optional[float] = 12.0
 ) -> Dict[str, Any]:
     """
     Canonical backtest simulator. Evaluates the CIO Council decision
@@ -208,6 +209,9 @@ def evaluate_council_decision(
     this); the first forward bar is the first minute of the next bar.
 
     Rules:
+    * Max Risk (max_risk_usd, default 12.0): caps the dollar stop-loss risk
+      at max_risk_usd ($12.00 legacy default; $20.00 for $2,000 tier; None
+      disables clamping for uncapped research / Human setups).
     * SL-first: if one M1 bar touches both SL and TP, the trade is a
       LOSS. M1 OHLC cannot tell which was touched first, so the
       conservative outcome is the only honest one; TP-first (the old
@@ -335,8 +339,9 @@ def evaluate_council_decision(
 
     # Risk Check (from the effective, slipped entry)
     price_risk_usd = abs(effective_entry - sl) * pip_val
-    if price_risk_usd > 12.0:
-        price_risk_usd = 12.0  # Hard ceiling enforcement ($12.00)
+    if max_risk_usd is not None and price_risk_usd > max_risk_usd:
+        price_risk_usd = float(max_risk_usd)
+    risk_desc = f"risk capped at ${max_risk_usd:.2f}" if max_risk_usd is not None else "risk uncapped"
 
     # Target R:R Realism Cap: Capping fantasy intraday targets (e.g. max 3.5 to 4.0 R:R)
     risk_pts = abs(effective_entry - sl)
@@ -445,7 +450,7 @@ def evaluate_council_decision(
                             "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Net PnL ${be_pnl:+.2f} (spread ${spread * pip_val:.2f} - commission ${commission_total:.2f})."
                         }
                     else:
-                        loss_amount = -min(12.0, price_risk_usd) - commission_total  # capped risk + commission
+                        loss_amount = -price_risk_usd - commission_total  # capped risk + commission
                         mfe_full = max(b['high'] for b in forward_m1_bars[fill_idx:idx+1])
                         max_fav_dist = max(0.0, mfe_full - entry)
                         max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
@@ -470,7 +475,7 @@ def evaluate_council_decision(
                             "exit_minute": idx,
                             "rr_realized": -1.0,
                             "target_optimization": target_opt,
-                            "notes": f"Hit Stop Loss at {sl_fmt}. Realized loss ${abs(loss_amount):.2f} (risk capped at $12.00 + commission ${commission_total:.2f}).{notes_extra}"
+                            "notes": f"Hit Stop Loss at {sl_fmt}. Realized loss ${abs(loss_amount):.2f} ({risk_desc} + commission ${commission_total:.2f}).{notes_extra}"
                         }
                 # 2. Check Take Profit Hit (checked second)
                 elif hit_tp:
@@ -545,7 +550,7 @@ def evaluate_council_decision(
                             "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Net PnL ${be_pnl:+.2f} (spread ${spread * pip_val:.2f} - commission ${commission_total:.2f})."
                         }
                     else:
-                        loss_amount = -min(12.0, price_risk_usd) - commission_total  # capped risk + commission
+                        loss_amount = -price_risk_usd - commission_total  # capped risk + commission
                         mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
                         max_fav_dist = max(0.0, entry - (mfe_full + spread))
                         max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
@@ -570,7 +575,7 @@ def evaluate_council_decision(
                             "exit_minute": idx,
                             "rr_realized": -1.0,
                             "target_optimization": target_opt,
-                            "notes": f"Hit Stop Loss (Ask {bar['high'] + spread:{val_fmt}} >= SL {sl_fmt}). Realized loss ${abs(loss_amount):.2f} (risk capped at $12.00 + commission ${commission_total:.2f}).{notes_extra}"
+                            "notes": f"Hit Stop Loss (Ask {bar['high'] + spread:{val_fmt}} >= SL {sl_fmt}). Realized loss ${abs(loss_amount):.2f} ({risk_desc} + commission ${commission_total:.2f}).{notes_extra}"
                         }
 
                 # 2. Check Take Profit Hit (checked second)
