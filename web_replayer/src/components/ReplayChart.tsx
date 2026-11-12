@@ -202,10 +202,9 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.contentRect && chartRef.current) {
-          chartRef.current.applyOptions({
-            width: Math.max(100, Math.floor(entry.contentRect.width)),
-            height: Math.max(100, Math.floor(entry.contentRect.height)),
-          });
+          const w = Math.max(100, Math.floor(entry.contentRect.width));
+          const h = Math.max(100, Math.floor(entry.contentRect.height));
+          chartRef.current.resize(w, h);
         }
       }
     });
@@ -546,8 +545,16 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${className}`}
-      style={{ touchAction: 'none' }}
+      className={className}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        minHeight: '300px',
+        overflow: 'hidden',
+        userSelect: 'none',
+        touchAction: 'none',
+      }}
     />
   );
 };

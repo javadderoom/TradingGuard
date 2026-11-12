@@ -1109,9 +1109,9 @@ export function App() {
       )}
 
       {/* Main Body: Chart on Left, Workbench on Right */}
-      <div style={{ display: 'flex', flex: 1, width: '100%', height: 'calc(100% - 105px)', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative', overflow: 'hidden' }}>
         {/* Main Chart Canvas */}
-        <main style={{ flex: 1, height: '100%', position: 'relative', overflow: 'hidden' }}>
+        <main style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
           <ReplayChart
             candles={candles}
             symbol={selectedSymbol}
@@ -1304,6 +1304,7 @@ Entry: ${t.entry}, SL: ${t.sl}, TP: ${t.tp}`,
       <footer
         style={{
           display: 'flex',
+          flexShrink: 0,
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '4px 14px',
