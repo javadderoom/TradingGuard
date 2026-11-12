@@ -111,6 +111,8 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   const dragHandleRef = useRef<'entry' | 'sl' | 'tp' | null>(null);
   const draftTradeRef = useRef<DraftTrade | null>(null);
   const onSelectTimeRef = useRef<((time: number | null, price?: number | null) => void) | undefined>(onSelectTime);
+  const lastScaledSymbolRef = useRef<string>(symbol);
+  const pendingSymbolFitRef = useRef<boolean>(true);
 
   // Keep draftTradeRef & onSelectTimeRef in sync without updating during render
   useEffect(() => {
@@ -257,7 +259,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     });
   }, [clockMode]);
 
-  // Update Candlestick Price Format on Digits Change
+  // Update Candlestick Price Format & Reset Price Scale Auto-Scale on Symbol/Digits Change
   useEffect(() => {
     if (!seriesRef.current) return;
     seriesRef.current.applyOptions({
@@ -267,7 +269,17 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         minMove: 1 / Math.pow(10, digits),
       },
     });
-  }, [digits]);
+    const rightScale = chartRef.current?.priceScale('right');
+    rightScale?.setAutoScale(true);
+    rightScale?.applyOptions({ autoScale: true });
+    seriesRef.current.priceScale().setAutoScale(true);
+    seriesRef.current.priceScale().applyOptions({ autoScale: true });
+
+    if (symbol !== lastScaledSymbolRef.current) {
+      lastScaledSymbolRef.current = symbol;
+      pendingSymbolFitRef.current = true;
+    }
+  }, [symbol, digits]);
 
   // Update Candlestick Data - ensures clearing when candles or filtered list is empty
   useEffect(() => {
@@ -291,6 +303,22 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
       seriesRef.current.setData([]);
     } else {
       seriesRef.current.setData(formatted);
+      if (pendingSymbolFitRef.current) {
+        const rightScale = chartRef.current?.priceScale('right');
+        rightScale?.setAutoScale(true);
+        rightScale?.applyOptions({ autoScale: true });
+        seriesRef.current.priceScale().setAutoScale(true);
+        seriesRef.current.priceScale().applyOptions({ autoScale: true });
+        if (formatted.length <= 160) {
+          chartRef.current?.timeScale().fitContent();
+        } else {
+          chartRef.current?.timeScale().setVisibleLogicalRange({
+            from: formatted.length - 160,
+            to: formatted.length + 5,
+          });
+        }
+        pendingSymbolFitRef.current = false;
+      }
     }
   }, [candles, replayTo]);
 

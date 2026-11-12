@@ -218,6 +218,14 @@ export function App() {
     setDraftTrade(null);
     setSimResult(null);
     setSyncNotice(null);
+    setCandles([]);
+    setKillzones([]);
+    setAsianRanges({});
+    setFvgs([]);
+    setBreakers([]);
+    setBotTrades([]);
+    setDiagnostics([]);
+    setBotEvents([]);
 
     const targetSym = catalog?.symbols.find((s) => s.symbol === nextSymbol);
     const resolved = resolveDateRangeForSymbol(targetSym, startDateStr, endDateStr, 3);
