@@ -1572,6 +1572,7 @@ flowchart TD
 3. **`hitl/trend/snap_trend_classifier.py`**:
    - Integrates `subq-snap-1.1` via typed REST schema (`state` + `questions`).
    - Evaluates session, daily, and weekly choices with associated confidence metrics.
+   - Computes direction-skewed session bounds (`_compute_session_expected_range`) shared by both SubQ Snap synthesis and the deterministic matrix: anchors directional extension from `current_price` and intraday extreme (`daily_low`/`daily_high`) using remaining ADR (`adr_14 - daily_range`, 65% projection bounded by asset buffers and `target_price`), caps counter-direction retracement headroom (`<= 60%` of projected directional room, max `0.20 * adr_14` within structural bounds), and encloses `current_price` for `RANGE_CHOP`.
    - Incorporates an authentic Deterministic Quantitative Institutional Matrix fallback ensuring 100% operational uptime if API key or network is unreachable.
 4. **`hitl/trend/trend_oracle.py`**:
    - Central orchestrator exposing `trend_oracle.get_forecast(symbol, force_refresh)`.

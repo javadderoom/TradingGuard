@@ -413,3 +413,125 @@ def test_trend_oracle_service_nq_card():
     assert "TP 3.0R" in card
 
 
+def test_session_expected_range_bearish_below_asian_low_and_at_asian_low():
+    """
+    Regression test for inverted session expected_range when price is already at or
+    below asian_low under a BEARISH forecast (2026-11-12 live XAUUSD bug).
+    Verifies both SubQ Snap synthesis and deterministic fallback paths.
+    """
+    import json
+    from unittest.mock import patch, MagicMock
+
+    def _make_state(curr_p: float, d_low: float, d_range: float, util: float):
+        return {
+            "symbol": "XAUUSD_o",
+            "current_price": curr_p,
+            "daily_structure": {
+                "pdh": 4066.87,
+                "pdl": 3982.60,
+                "pdc": 3987.74,
+                "daily_open": 3993.39,
+                "daily_high": 4000.34,
+                "daily_low": d_low,
+                "daily_range": d_range,
+                "adr_14": 89.46,
+                "adr_utilization_pct": util,
+                "has_swept_pdh": False,
+                "has_swept_pdl": True,
+            },
+            "weekly_structure": {
+                "pwh": 4146.82,
+                "pwl": 3890.91,
+                "cwo": 4063.24,
+                "relation_to_weekly_open": "BELOW_WEEKLY_OPEN",
+            },
+            "session_ranges": {
+                "asian_high": 4000.34,
+                "asian_low": 3968.70,
+                "asian_range": 31.64,
+            },
+            "draw_on_liquidity": {
+                "type": "SELL_SIDE_LIQUIDITY",
+                "target_price": d_low,
+                "distance_pts": round(curr_p - d_low, 2),
+            },
+            "htf_trend": {"h1_regime": "BEARISH_EXPANSION"},
+            "smt_divergence": {"has_smt": False, "type": "NONE"},
+        }
+
+    off_chart = {
+        "catalysts": {"session_risk": "MEDIUM", "day_risk": "LOW"},
+        "retail_sentiment": {"retail_long_pct": 75.0, "retail_short_pct": 25.0, "contrarian_bias": "BEARISH"},
+        "session_context": {"session_label": "Pre-London"},
+    }
+
+    # 1. SubQ Snap API path on exact 2026-11-12 state (price 3956.57 < asian_low 3968.70)
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.read.return_value = json.dumps({
+        "answers": {
+            "session_horizon": {"choice": "BEARISH_EXPANSION", "confidence": 0.88},
+            "day_horizon": {"choice": "BEARISH_DAY", "confidence": 0.85},
+            "weekly_profile": {"choice": "MID_WEEK_REVERSAL", "confidence": 0.55},
+        }
+    }).encode("utf-8")
+    mock_resp.__enter__ = lambda s: s
+    mock_resp.__exit__ = lambda s, *a: None
+
+    snap_clf = SnapTrendClassifier(api_key="test-key", api_url="https://example.test/snap")
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        snap_res = snap_clf.classify_trend(_make_state(3956.57, 3955.00, 45.34, 50.7), off_chart)
+
+    sess_snap = snap_res["horizons"]["session"]
+    rng_snap = sess_snap["expected_range"]
+    assert sess_snap["bias"] == "BEARISH"
+    assert rng_snap["low"] < 3956.57 < rng_snap["high"]
+    assert (3956.57 - rng_snap["low"]) > (rng_snap["high"] - 3956.57)
+    assert rng_snap["high"] < 4000.34
+
+    # 2. Deterministic fallback at Asian Low / London Open (3968.70)
+    det_clf = SnapTrendClassifier(api_key="", api_url="")
+    det_res = det_clf.classify_trend(_make_state(3968.70, 3968.70, 31.64, 35.4), off_chart)
+    sess_det = det_res["horizons"]["session"]
+    rng_det = sess_det["expected_range"]
+    assert sess_det["bias"] == "BEARISH"
+    assert rng_det["low"] < 3968.70 < rng_det["high"]
+    assert (3968.70 - rng_det["low"]) > (rng_det["high"] - 3968.70)
+
+
+def test_session_expected_range_bullish_breakout_above_asian_high():
+    """Verifies bullish expected_range stays upside-skewed when price breaks above asian_high."""
+    det_clf = SnapTrendClassifier(api_key="", api_url="")
+    state = {
+        "symbol": "XAUUSD_o",
+        "current_price": 4005.0,
+        "daily_structure": {
+            "pdh": 4050.0,
+            "pdl": 3960.0,
+            "pdc": 3985.0,
+            "daily_open": 3986.0,
+            "daily_high": 4006.0,
+            "daily_low": 3972.0,
+            "daily_range": 34.0,
+            "adr_14": 80.0,
+            "adr_utilization_pct": 42.5,
+            "has_swept_pdh": False,
+            "has_swept_pdl": False,
+        },
+        "weekly_structure": {"pwh": 4100.0, "pwl": 3900.0, "cwo": 3970.0},
+        "session_ranges": {"asian_high": 3995.0, "asian_low": 3972.0, "asian_range": 23.0},
+        "draw_on_liquidity": {"type": "BUY_SIDE_LIQUIDITY", "target_price": 4050.0, "distance_pts": 45.0},
+        "htf_trend": {"h1_regime": "BULLISH_EXPANSION"},
+        "smt_divergence": {"has_smt": True, "type": "BULLISH_SMT"},
+    }
+    off_chart = {"catalysts": {"session_risk": "LOW"}, "retail_sentiment": {"retail_long_pct": 25.0}}
+
+    res = det_clf.classify_trend(state, off_chart)
+    sess = res["horizons"]["session"]
+    rng = sess["expected_range"]
+    assert sess["bias"] == "BULLISH"
+    assert rng["low"] < 4005.0 < rng["high"]
+    assert (rng["high"] - 4005.0) > (4005.0 - rng["low"])
+
+
+

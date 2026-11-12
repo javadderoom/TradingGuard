@@ -10,7 +10,7 @@ import json
 import time
 import urllib.request
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 if str(BASE_DIR) not in sys.path:
@@ -154,16 +154,21 @@ class SnapTrendClassifier:
                 # Synthesize with numerical levels from on_chart
                 dol = on_chart.get("draw_on_liquidity", {})
                 daily_st = on_chart.get("daily_structure", {})
-                sess_rng = on_chart.get("session_ranges", {})
                 default_band = 0.0050 if is_forex else (150.0 if is_index else 15.0)
                 pdl = daily_st.get("pdl", on_chart["current_price"] - default_band)
                 pdh = daily_st.get("pdh", on_chart["current_price"] + default_band)
 
                 target_p = dol.get("target_price", pdl if day_bias == "BEARISH" else pdh)
                 inval_p = daily_st.get("daily_high", pdh) if day_bias == "BEARISH" else daily_st.get("daily_low", pdl)
-
-                sweep_buf = 0.00025 if is_forex else (25.0 if is_index else 2.5)
-                exp_buf = 0.0010 if is_forex else (80.0 if is_index else 10.0)
+                expected_range, key_trigger = self._compute_session_expected_range(
+                    on_chart=on_chart,
+                    sess_bias=sess_bias,
+                    sess_arch=sess_raw,
+                    target_p=target_p,
+                    is_forex=is_forex,
+                    is_index=is_index,
+                    decimals=decimals,
+                )
 
                 if is_forex:
                     tm_policy = {
@@ -191,11 +196,8 @@ class SnapTrendClassifier:
                             "bias": sess_bias,
                             "confidence": round(sess_conf, 2),
                             "session_archetype": sess_raw,
-                            "expected_range": {
-                                "high": round(sess_rng.get("asian_high", pdh) + (sweep_buf if sess_bias == "BEARISH" else exp_buf), decimals),
-                                "low": round(sess_rng.get("asian_low", pdl) - (exp_buf if sess_bias == "BEARISH" else sweep_buf), decimals)
-                            },
-                            "key_trigger": round(sess_rng.get("asian_high" if sess_bias == "BEARISH" else "asian_low", on_chart["current_price"]), decimals),
+                            "expected_range": expected_range,
+                            "key_trigger": key_trigger,
                             "catalyst_danger": off_chart["catalysts"]["session_risk"]
                         },
                         "day": {
@@ -246,6 +248,82 @@ class SnapTrendClassifier:
             "  },\n"
             '  "synthesis_rationale": str\n'
             "}"
+        )
+
+    def _compute_session_expected_range(
+        self,
+        on_chart: Dict[str, Any],
+        sess_bias: str,
+        sess_arch: str,
+        target_p: float,
+        is_forex: bool,
+        is_index: bool,
+        decimals: int
+    ) -> Tuple[Dict[str, float], float]:
+        """
+        Anchors session expected_range and key_trigger around current_price,
+        daily structure extremes, remaining ADR capacity, and session liquidity
+        so directional ranges stay skewed toward the predicted move rather than
+        anchoring blindly on stale Asian boundaries.
+        """
+        curr_p = float(on_chart.get("current_price", 0.0))
+        daily_st = on_chart.get("daily_structure", {})
+        sess_rng = on_chart.get("session_ranges", {})
+
+        default_band = 0.0050 if is_forex else (150.0 if is_index else 15.0)
+        default_adr = 0.0080 if is_forex else (300.0 if is_index else 25.0)
+        default_asian = 0.0030 if is_forex else (100.0 if is_index else 10.0)
+
+        pdh = float(daily_st.get("pdh", curr_p + default_band))
+        pdl = float(daily_st.get("pdl", curr_p - default_band))
+        asian_high = float(sess_rng.get("asian_high", pdh))
+        asian_low = float(sess_rng.get("asian_low", pdl))
+        asian_range = float(sess_rng.get("asian_range", max(0.0, asian_high - asian_low) or default_asian))
+
+        daily_high = float(daily_st.get("daily_high", max(curr_p, asian_high)))
+        daily_low = float(daily_st.get("daily_low", min(curr_p, asian_low)))
+        daily_range = float(daily_st.get("daily_range", max(0.0, daily_high - daily_low)))
+        adr_14 = float(daily_st.get("adr_14", default_adr))
+        remaining_adr = max(0.0, adr_14 - daily_range)
+
+        sweep_buf = 0.00025 if is_forex else (25.0 if is_index else 2.5)
+        exp_buf = 0.0010 if is_forex else (80.0 if is_index else 10.0)
+        pullback_floor = 0.0015 if is_forex else (60.0 if is_index else 6.0)
+        max_reach = max(exp_buf * 1.5, adr_14)
+
+        if sess_bias == "BEARISH":
+            down_step = max(exp_buf, 0.65 * remaining_adr)
+            raw_low = min(curr_p, daily_low) - down_step
+            if (curr_p - max_reach) <= target_p < curr_p:
+                raw_low = min(raw_low, target_p)
+            downside_room = max(exp_buf, curr_p - raw_low)
+            max_pullback = min(max(pullback_floor, 0.20 * adr_14), 0.60 * downside_room)
+            struct_ceiling = max(asian_high, daily_high, curr_p) + sweep_buf
+            raw_high = min(struct_ceiling, curr_p + max_pullback)
+            key_trig = asian_high if curr_p >= asian_low else min(raw_high, asian_low)
+        elif sess_bias == "BULLISH":
+            up_step = max(exp_buf, 0.65 * remaining_adr)
+            raw_high = max(curr_p, daily_high) + up_step
+            if curr_p < target_p <= (curr_p + max_reach):
+                raw_high = max(raw_high, target_p)
+            upside_room = max(exp_buf, raw_high - curr_p)
+            max_pullback = min(max(pullback_floor, 0.20 * adr_14), 0.60 * upside_room)
+            struct_floor = min(asian_low, daily_low, curr_p) - sweep_buf
+            raw_low = max(struct_floor, curr_p - max_pullback)
+            key_trig = asian_low if curr_p <= asian_high else max(raw_low, asian_high)
+        elif sess_arch == "CATALYST_WHIPSAW_RISK":
+            whip_band = max(pullback_floor, asian_range * 1.5)
+            raw_high = curr_p + whip_band
+            raw_low = curr_p - whip_band
+            key_trig = curr_p
+        else:
+            raw_high = max(asian_high, curr_p + sweep_buf)
+            raw_low = min(asian_low, curr_p - sweep_buf)
+            key_trig = (raw_high + raw_low) / 2.0
+
+        return (
+            {"high": round(raw_high, decimals), "low": round(raw_low, decimals)},
+            round(key_trig, decimals),
         )
 
     def _evaluate_deterministic_matrix(
@@ -370,42 +448,38 @@ class SnapTrendClassifier:
         # --- 2. SESSION HORIZON CALCULATION ---
         asian_high = sess.get("asian_high", pdh)
         asian_low = sess.get("asian_low", pdl)
-        asian_range = sess.get("asian_range", 0.0030 if is_forex else (100.0 if is_index else 10.0))
-
         judas_offset = 0.0002 if is_forex else (20.0 if is_index else 2.0)
-        sweep_buf = 0.00025 if is_forex else (25.0 if is_index else 2.5)
-        exp_buf = 0.0010 if is_forex else (80.0 if is_index else 8.0)
 
         if session_danger == "CRITICAL":
             sess_bias = "RANGE_CHOP"
             sess_conf = 0.55
             sess_arch = "CATALYST_WHIPSAW_RISK"
-            exp_high = round(curr_p + (asian_range * 1.5), decimals)
-            exp_low = round(curr_p - (asian_range * 1.5), decimals)
-            key_trig = round(curr_p, decimals)
         elif day_bias == "BULLISH":
             # If bullish, Judas swing sweeps Asian low then expands up
             sess_bias = "BULLISH"
             sess_conf = day_conf
             sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p <= asian_low + judas_offset else "UNILATERAL_EXPANSION"
-            exp_high = round(max(asian_high + exp_buf, target_p), decimals)
-            exp_low = round(asian_low - sweep_buf, decimals)
-            key_trig = round(asian_low, decimals)
         elif day_bias == "BEARISH":
             # If bearish, Judas swing sweeps Asian high then expands down
             sess_bias = "BEARISH"
             sess_conf = day_conf
             sess_arch = "JUDAS_SWEEP_EXPANSION" if curr_p >= asian_high - judas_offset else "UNILATERAL_EXPANSION"
-            exp_high = round(asian_high + sweep_buf, decimals)
-            exp_low = round(min(asian_low - exp_buf, target_p), decimals)
-            key_trig = round(asian_high, decimals)
         else:
             sess_bias = "RANGE_CHOP"
             sess_conf = 0.58
             sess_arch = "RANGE_BOUND_CONSOLIDATION"
-            exp_high = round(asian_high, decimals)
-            exp_low = round(asian_low, decimals)
-            key_trig = round((asian_high + asian_low) / 2, decimals)
+
+        expected_range, key_trig = self._compute_session_expected_range(
+            on_chart=on_chart,
+            sess_bias=sess_bias,
+            sess_arch=sess_arch,
+            target_p=target_p,
+            is_forex=is_forex,
+            is_index=is_index,
+            decimals=decimals,
+        )
+        exp_high = expected_range["high"]
+        exp_low = expected_range["low"]
 
         # --- 3. WEEKLY HORIZON CALCULATION ---
         if curr_p > cwo and day_bias == "BULLISH":
