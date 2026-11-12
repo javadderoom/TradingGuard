@@ -416,89 +416,41 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         ctx.restore();
       }
 
-      // 4. Sweep Flags & Badges
+      // 4. Sweeps (Dashed reference line only — zero box/text clutter)
       for (const sweep of sweeps) {
         const x = resolveTimeX(timeScale, sweep.time, candles);
-        const y = series.priceToCoordinate(sweep.price);
-        if (x === null || y === null) continue;
-        if (x < -20 || x > width + 20) continue;
+        if (x === null || x < -20 || x > width + 20) continue;
 
-        const isHighSweep = sweep.type === 'HIGH_SWEEP';
+        const targetLevel = sweep.level ?? sweep.price;
+        const yLvl = series.priceToCoordinate(targetLevel);
+        if (yLvl === null) continue;
+
         const isSelSweep =
           selectedElement?.kind === 'SWEEP' &&
           selectedElement.sweep?.time === sweep.time &&
           selectedElement.sweep?.type === sweep.type;
+
+        const xOrig =
+          sweep.origin_time !== undefined
+            ? resolveTimeX(timeScale, sweep.origin_time, candles)
+            : null;
+        const lineStart =
+          xOrig !== null ? Math.max(0, Math.min(x - 12, xOrig)) : Math.max(0, x - 36);
+        if (lineStart >= x) continue;
+
         ctx.save();
-
-        // Horizontal dashed reference line from swept pivot/Asian boundary to the sweep wick
-        if (sweep.level !== undefined) {
-          const yLvl = series.priceToCoordinate(sweep.level);
-          if (yLvl !== null) {
-            const xOrig =
-              sweep.origin_time !== undefined
-                ? resolveTimeX(timeScale, sweep.origin_time, candles)
-                : null;
-            const lineStart = xOrig !== null ? Math.max(0, Math.min(x - 12, xOrig)) : Math.max(0, x - 36);
-            if (lineStart < x) {
-              ctx.strokeStyle = 'rgba(255, 179, 0, 0.55)';
-              ctx.lineWidth = 1;
-              ctx.setLineDash([3, 3]);
-              ctx.beginPath();
-              ctx.moveTo(lineStart, Number(yLvl));
-              ctx.lineTo(x, Number(yLvl));
-              ctx.stroke();
-              ctx.setLineDash([]);
-            }
-          }
-        }
-
-        // Pin / arrow indicator at the exact wick
-        ctx.fillStyle = isHighSweep ? '#ffb300' : '#ffa726';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1;
-
+        ctx.strokeStyle = isSelSweep
+          ? '#f0b90b'
+          : sweep.type === 'HIGH_SWEEP'
+          ? 'rgba(239, 83, 80, 0.8)'
+          : 'rgba(38, 166, 154, 0.8)';
+        ctx.lineWidth = isSelSweep ? 2.25 : 1.25;
+        ctx.setLineDash([4, 3]);
         ctx.beginPath();
-        if (isHighSweep) {
-          ctx.moveTo(x, Number(y) - 2);
-          ctx.lineTo(x - 4, Number(y) - 8);
-          ctx.lineTo(x + 4, Number(y) - 8);
-        } else {
-          ctx.moveTo(x, Number(y) + 2);
-          ctx.lineTo(x - 4, Number(y) + 8);
-          ctx.lineTo(x + 4, Number(y) + 8);
-        }
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(lineStart, Number(yLvl));
+        ctx.lineTo(x, Number(yLvl));
         ctx.stroke();
-
-        // Badge label with collision avoidance
-        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        const labelText = `${isSelSweep ? '★ ' : ''}${isHighSweep ? 'BSL Sweep' : 'SSL Sweep'}`;
-        const badgeW = Math.ceil(ctx.measureText(labelText).width) + 10;
-        const badgeH = 15;
-        const badgeX = Math.max(2, Math.min(width - badgeW - 2, x - badgeW / 2));
-        let badgeY = isHighSweep ? Number(y) - 10 - badgeH : Number(y) + 10;
-        const step = isHighSweep ? -(badgeH + 3) : badgeH + 3;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          const candidate: LabelRect = {
-            x1: badgeX,
-            y1: badgeY,
-            x2: badgeX + badgeW,
-            y2: badgeY + badgeH,
-          };
-          if (!collides(candidate)) {
-            occupiedLabels.push(candidate);
-            ctx.fillStyle = isHighSweep ? 'rgba(255, 179, 0, 0.92)' : 'rgba(255, 167, 38, 0.92)';
-            ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-            ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
-
-            ctx.fillStyle = '#131722';
-            ctx.fillText(labelText, badgeX + 5, badgeY + 11);
-            break;
-          }
-          badgeY += step;
-        }
+        ctx.setLineDash([]);
         ctx.restore();
       }
 
