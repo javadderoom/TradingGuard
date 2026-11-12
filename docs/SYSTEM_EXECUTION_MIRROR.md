@@ -1011,6 +1011,10 @@ To optimize operator experience on mobile and eliminate screen clutter, the Tele
    - `[ 🔙 Back to Main Menu ]`
    - *Execution*: Dispatches non-blocking daemon background worker (`_backtest_worker`), runs authentic end-to-end Python engine, parses stdout, and delivers formatted markdown cards with Win Rate, Net Alpha, Profit Factor, and Net PnL.
 
+### 22.3 Morning Briefing & Deterministic Past-Day Analysis (`hitl/review_engine.py`)
+- **`run_morning_briefing()`**: Never recycles stale `>24h` counterfactual lessons. Dynamically executes `analyze_previous_trading_day()` over `_previous_trading_date()` across active portfolio assets (`XAUUSD`, `GBPUSD`, `NQ`), extracting verified MT5 PDH/PDL/Open/Close range stats, deterministic Killzone `screen_ict_session()` + `evaluate_council_decision(..., max_risk_usd=20.0)` outcomes, and exact yesterday-dated entries from `council_decisions_log.json`. Overnight Asian bounds (`00:00–07:00 UTC`) and upcoming session open clocks resolve dynamically via `server_epoch_to_zones()` and `get_session_times_for_date()`.
+- **`audit_past_decisions()`**: Audits strictly today's or the previous trading day's logged decisions (`_previous_trading_date()`) and writes factual per-symbol summaries without hardcoded counter-trend overrides.
+
 ---
 
 ## 23. Autonomous Machine-Discovered Quant Strategy Engine (`hitl/quant_engine/`)
