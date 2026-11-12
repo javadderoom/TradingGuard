@@ -2138,6 +2138,30 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
      * `POST /api/sync-mt5`: Synchronizes recent broker M1 bars from live MetaTrader 5 terminal, appending to cache Parquet and evicting symbol scan cache entries.
      * `Catch-All SPA Handler`: Resolves static assets from `web_replayer/dist/` with HTML5 pushState routing, providing a graceful informative HTTP 200 fallback status page when assets have not yet been built.
 
+5. **Interactive Visual Co-Backtester React Workbench (`web_replayer/`)**:
+   * **Multi-Panel Architecture (`web_replayer/src/App.tsx`)**:
+     * **Top Transport Bar**:
+       - Multi-Asset Switcher: Seamless switching across 6 instruments (`XAUUSD_o`, `GBPUSD_o`, `NQ`, `SPX`, `YM`, `BTCUSD`) with dynamic engine mode badges (`SMC Active`, `Uncalibrated Index`, `Manual Only (SMC decommissioned)`).
+       - Live Broker MT5 Sync: `[Sync MT5]` button triggers `/api/sync-mt5` in background, appending latest bars and evicting symbol scan cache.
+       - Date Range & Quick Jump Presets: Date inputs plus quick selectors (`Nov 10`, `Nov 11`, `Nov 10-12`) updating causal analysis windows.
+       - 6-Timeframe Switcher: Instant non-destructive switching between `1M`, `5M`, `15M`, `1H`, `4H`, `1D`.
+       - Multi-Clock Display Toggle: Live X-axis and tooltip timestamp formatting in `Tehran (+3:30)` (default, DST-free), `UTC`, or `MT5 Server (EET/EEST)`.
+       - Screener Engine Clock Toggle: Swappable execution between `true_tehran` (dynamic historical DST offset) and `live_legacy` (reproducing the live 16:40 NY PM double-counting veto bug).
+       - Overlay Visibility Toggles: Individual toggles for Killzones (`KZ`), Asian Range Bounds (`AR`), FVG & Breaker Boxes (`BOX`), Liquidity Sweeps (`SWEEP`), and Trade Markers (`TRADES`).
+       - Anti-Spoiler Blind Replay Transport: Toggleable blind mode with Play/Pause, Step -1 / +1 bars, adjustable speed (`1x`–`20x`), and interactive timeline scrubber. When active at cursor $T$, all bars, Asian bounds, diagnostics, events, sweeps, and trade outcomes beyond $T$ are strictly masked.
+     * **Interactive Co-Trading & Dragging Position Box**:
+       - `+ Long Setup` and `+ Short Setup` position drawing tools initializing interactive Entry, SL, and TP levels.
+       - Draggable Entry/SL/TP price handles with isolated hit testing (never intercepting mouse events inside the native right price scale).
+       - Live Uncapped R:R Calculation via `computeTradeRR` (`(tp - entry) / (entry - sl)` for long, inverse for short).
+       - Live System Risk Governance via `checkRiskLimitUSD`: calculates dollar risk at 0.01 lot and displays a warning badge (`⚠️ Exceeds $20.00 risk cap at 0.01 lot`) whenever risk exceeds `$20.00`.
+       - Canonical Order Simulation via `POST /api/simulate-trade`: forwards human setup through `evaluator.evaluate_council_decision` without artificial R:R caps.
+       - Shared Ledger Persistence via `POST /api/co-trades`: saves setups into `hitl/memory/visual_co_backtest_ledger.json` marked as `HUMAN_PROPOSED` or `HUMAN_EDITED_BOT`.
+     * **Synchronized Workbench Panels**:
+       - **Bot Brain Inspector (`BotBrainPanel.tsx`)**: Displays live algorithmic verdict on the selected/active candle, `archetype_id`, execution phase, session hour, Asian bounds, FVG/Breaker presence, and exact screener veto callouts. Includes a key events timeline with clickable bar jumps and a one-click `"Analyze Why Bot Vetoed"` action.
+       - **Co-Trade Scorecard & Ledger (`ScorecardPanel.tsx`)**: Dynamic comparative scorecard grouped into `ALL`, `BOT`, `HUMAN_PROPOSED`, and `HUMAN_EDITED_BOT` tabs (reporting Net PnL, Net R, Win Rate %, Profit Factor, Max Drawdown, and W/L/BE counts). Trade cards provide one-click `"Clone & Adjust"` (loading draggable handles onto chart), `"Delete"` (for human setups), `"Jump"`, and `"Feedback"`. In Blind Replay mode, open trades are anti-spoiler masked.
+       - **Agentify Feedback Bridge (`AgentifyFeedbackPanel.tsx`)**: Captures forensic feedback cases (`MISSED_SETUP`, `BOT_TRADE_EDIT`, `VETO_DISAGREEMENT`, `NOTE`), stores them to `hitl/memory/visual_feedback_cases.json`, and automatically copies a ready-to-paste Antigravity alignment prompt directly to the clipboard.
+
+
 
 
 

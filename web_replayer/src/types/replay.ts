@@ -205,4 +205,6 @@ export interface DraftTrade {
   tp: number;
   symbol?: string;
   signal_time?: number;
+  parent_bot_ref?: string | null;
+  notes?: string;
 }

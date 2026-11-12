@@ -22,9 +22,15 @@ import json
 import mimetypes
 import os
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional
 import urllib.parse
 import webbrowser
+
+# Ensure repository root is on sys.path for direct CLI execution (python hitl/replay_server.py)
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import tornado.ioloop
 import tornado.web

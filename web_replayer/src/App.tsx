@@ -1,130 +1,720 @@
-import { useState, useMemo } from 'react';
+/**
+ * TradingGuard HITL Visual Co-Backtester - Main Workbench Application (App.tsx)
+ * Features:
+ * - Asset Switcher (XAUUSD_o, GBPUSD_o, NQ, SPX, YM, BTCUSD) + [Sync MT5]
+ * - Date Range inputs & Jump-to-Date presets (Nov 10, Nov 11, Nov 12, Full)
+ * - 6 Timeframe switcher (1M | 5M | 15M | 1H | 4H | 1D)
+ * - Multi-clock display toggle (Tehran UTC+3:30 | UTC | MT5 Server)
+ * - Screener clock mode toggle (true_tehran | live_legacy)
+ * - Overlay visibility toggles (Killzones, Asian Bounds, FVG/Breaker boxes, Sweeps, Trades)
+ * - Anti-spoiler Blind Replay transport (Play/Pause, Step -1/+1, Speed 1x-20x, Timeline Scrubber)
+ * - Interactive Co-Trading: + Long / + Short, draggable Entry/SL/TP handles, live R:R, $20 risk compliance badge,
+ *   [Simulate Trade] with canonical M1 evaluator, and [Save to Ledger] persisting to shared ledger.
+ * - Right Workbench Drawer: Bot Brain Inspector, Co-Trade Scorecard & Ledger, and Agentify Feedback Bridge.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Award,
+  Bot,
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Eye,
+  EyeOff,
+  Layers,
+  Pause,
+  Play,
+  RefreshCw,
+  Save,
+  SkipBack,
+  SkipForward,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from 'lucide-react';
+
+import { replayApi } from './api/client';
+import { AgentifyFeedbackPanel } from './components/AgentifyFeedbackPanel';
+import { BotBrainPanel } from './components/BotBrainPanel';
 import { ReplayChart } from './components/ReplayChart';
+import { ScorecardPanel } from './components/ScorecardPanel';
 import type {
+  AsianRangeDay,
+  BreakerBox,
   Candle,
+  CatalogResponse,
+  CatalogSymbol,
   ClockMode,
   DraftTrade,
+  EngineClockMode,
+  FvgBox,
   Killzone,
   ReplayTrade,
+  SimulateTradeResponse,
+  SweepFlag,
+  Timeframe,
+  TradeDirection,
 } from './types/replay';
-import { Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import {
+  checkRiskLimitUSD,
+  computeTradeRR,
+  extractLiquiditySweeps,
+  formatClockTick,
+} from './utils/coTraderLogic';
 
-// Generates synthetic sample bars for initial standalone view
-function generateSampleCandles(): Candle[] {
-  const baseTime = 1768485600; // Jan 15, 2026 14:00 server
-  const candles: Candle[] = [];
-  let price = 2680.0;
-
-  for (let i = 0; i < 80; i++) {
-    const t = baseTime + i * 300; // 5M bars
-    const change = (Math.sin(i / 5) * 1.5 + (Math.random() - 0.48) * 2.0);
-    const open = Number(price.toFixed(2));
-    const close = Number((price + change).toFixed(2));
-    const high = Number((Math.max(open, close) + Math.random() * 1.2).toFixed(2));
-    const low = Number((Math.min(open, close) - Math.random() * 1.2).toFixed(2));
-    price = close;
-    candles.push({ time: t, open, high, low, close, volume: 100 + Math.floor(Math.random() * 50) });
-  }
-  return candles;
-}
+const DEFAULT_TIMEFRAMES: Timeframe[] = ['1M', '5M', '15M', '1H', '4H', '1D'];
+const SPEED_OPTIONS = [1, 2, 5, 10, 20];
 
 export function App() {
+  // Catalog & Symbol Selection
+  const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('XAUUSD_o');
+  const [isSyncingMt5, setIsSyncingMt5] = useState<boolean>(false);
+
+  // Timeframe & Clocks
+  const [timeframe, setTimeframe] = useState<Timeframe>('5M');
   const [clockMode, setClockMode] = useState<ClockMode>('tehran');
-  const [draftTrade, setDraftTrade] = useState<DraftTrade | null>({
-    direction: 'LONG',
-    entry: 2682.0,
-    sl: 2674.0,
-    tp: 2698.0,
-    symbol: 'XAUUSD_o',
-    signal_time: 1768488600,
-  });
+  const [engineClockMode, setEngineClockMode] = useState<EngineClockMode>('true_tehran');
 
-  const candles = useMemo(() => generateSampleCandles(), []);
+  // Date Range (Defaults to Nov 10 - Nov 12, 2026 where verified test data exists)
+  const [startDateStr, setStartDateStr] = useState<string>('2026-11-10');
+  const [endDateStr, setEndDateStr] = useState<string>('2026-11-12');
 
-  const sampleKillzones: Killzone[] = useMemo(() => [
-    {
-      name: 'London Open',
-      label: 'London Open (11:30)',
-      start_time: 1768485600,
-      end_time: 1768492800,
-      color: 'rgba(41, 98, 255, 0.12)',
-    },
-    {
-      name: 'NY Open',
-      label: 'NY Open (16:30)',
-      start_time: 1768496400,
-      end_time: 1768503600,
-      color: 'rgba(255, 109, 0, 0.12)',
-    },
-  ], []);
+  // Visibility Toggles
+  const [showKillzones, setShowKillzones] = useState<boolean>(true);
+  const [showAsianRange, setShowAsianRange] = useState<boolean>(true);
+  const [showBoxes, setShowBoxes] = useState<boolean>(true);
+  const [showSweeps, setShowSweeps] = useState<boolean>(true);
+  const [showTrades, setShowTrades] = useState<boolean>(true);
 
-  const sampleTrades: ReplayTrade[] = useMemo(() => [
-    {
-      trade_id: 'BOT-XAUUSD_o-01',
-      symbol: 'XAUUSD_o',
-      origin: 'BOT',
-      direction: 'LONG',
-      decision_time: 1768487400,
-      fill_time: 1768488000,
-      exit_time: 1768494000,
-      entry: 2679.5,
-      sl: 2674.0,
-      tp: 2696.0,
-      status: 'WIN',
-      realized_pnl_usd: 16.5,
-      rr_realized: 3.0,
-      risk_usd_001: 5.5,
-      exceeds_risk_cap: false,
-    },
-  ], []);
+  // Replay Transport & Blind Replay State
+  const [blindReplay, setBlindReplay] = useState<boolean>(false);
+  const [replayCursor, setReplayCursor] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(2);
+
+  // Inspected Bar & Workbench Tabs
+  const [inspectedTime, setInspectedTime] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'bot' | 'scorecard' | 'agentify'>('bot');
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+
+  // Co-Trading & Position Box State
+  const [draftTrade, setDraftTrade] = useState<DraftTrade | null>(null);
+  const [simResult, setSimResult] = useState<SimulateTradeResponse | null>(null);
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [isSavingTrade, setIsSavingTrade] = useState<boolean>(false);
+
+  // Data Collections
+  const [candles, setCandles] = useState<Candle[]>([]);
+  const [killzones, setKillzones] = useState<Killzone[]>([]);
+  const [asianRanges, setAsianRanges] = useState<Record<string, AsianRangeDay>>({});
+  const [fvgs, setFvgs] = useState<FvgBox[]>([]);
+  const [breakers, setBreakers] = useState<BreakerBox[]>([]);
+  const [botTrades, setBotTrades] = useState<ReplayTrade[]>([]);
+  const [coTrades, setCoTrades] = useState<ReplayTrade[]>([]);
+  const [diagnostics, setDiagnostics] = useState<any[]>([]);
+  const [botEvents, setBotEvents] = useState<any[]>([]);
+
+  // Agentify Feedback Prefill Context
+  const [feedbackPrefill, setFeedbackPrefill] = useState<{
+    title?: string;
+    category?: 'MISSED_SETUP' | 'BOT_TRADE_EDIT' | 'VETO_DISAGREEMENT' | 'NOTE';
+    rationale?: string;
+    archetype_id?: string;
+    timestamp?: number;
+  } | null>(null);
+
+  // Active Symbol metadata
+  const activeSymbolObj: CatalogSymbol | undefined = useMemo(() => {
+    return catalog?.symbols.find((s) => s.symbol === selectedSymbol);
+  }, [catalog, selectedSymbol]);
+
+  const digits = activeSymbolObj?.digits ?? (selectedSymbol.includes('GBP') ? 5 : 2);
+
+  // Convert Date strings to Server epochs (EET / UTC timestamps)
+  const { startEpoch, endEpoch } = useMemo(() => {
+    const parseDateToEpoch = (dStr: string, isEnd: boolean) => {
+      const parts = dStr.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        if (isEnd) {
+          return Math.floor(Date.UTC(y, m, d, 23, 59, 59) / 1000);
+        }
+        return Math.floor(Date.UTC(y, m, d, 0, 0, 0) / 1000);
+      }
+      return 0;
+    };
+    return {
+      startEpoch: parseDateToEpoch(startDateStr, false),
+      endEpoch: parseDateToEpoch(endDateStr, true),
+    };
+  }, [startDateStr, endDateStr]);
+
+  // Load Catalog on Mount
+  useEffect(() => {
+    replayApi.getCatalog().then((res) => {
+      setCatalog(res);
+      if (res.symbols && res.symbols.length > 0) {
+        const exists = res.symbols.some((s) => s.symbol === selectedSymbol);
+        if (!exists) {
+          setSelectedSymbol(res.symbols[0].symbol);
+        }
+      }
+    }).catch(() => {});
+  }, [selectedSymbol]);
+
+  // Fetch Candles
+  const loadCandles = useCallback(async () => {
+    if (!startEpoch || !endEpoch) return;
+    try {
+      const res = await replayApi.getCandles({
+        symbol: selectedSymbol,
+        tf: timeframe,
+        start: startEpoch,
+        end: endEpoch,
+      });
+      setCandles(res || []);
+      if (res && res.length > 0 && replayCursor === null) {
+        setReplayCursor(res[Math.min(res.length - 1, 15)].time);
+      }
+    } catch {
+      setCandles([]);
+    }
+  }, [selectedSymbol, timeframe, startEpoch, endEpoch, replayCursor]);
+
+  // Fetch Bot Scan & SMC Diagnostics
+  const loadBotScan = useCallback(async () => {
+    if (!startEpoch || !endEpoch) return;
+    try {
+      const res = await replayApi.getBotScan({
+        symbol: selectedSymbol,
+        start: startEpoch,
+        end: endEpoch,
+        clock_mode: engineClockMode,
+      });
+      setKillzones(res.killzones || []);
+      setAsianRanges(res.asian_ranges_by_day || {});
+      setDiagnostics(res.diagnostics || []);
+      setBotEvents(res.events || []);
+      setBotTrades(res.bot_trades || []);
+
+      const fvgList: FvgBox[] = [];
+      const brkList: BreakerBox[] = [];
+      for (const d of res.diagnostics || []) {
+        if (d.fvg_box) fvgList.push(d.fvg_box);
+        if (d.breaker_box) brkList.push(d.breaker_box);
+      }
+      setFvgs(fvgList);
+      setBreakers(brkList);
+    } catch {
+      setKillzones([]);
+      setAsianRanges({});
+      setDiagnostics([]);
+      setBotEvents([]);
+      setBotTrades([]);
+      setFvgs([]);
+      setBreakers([]);
+    }
+  }, [selectedSymbol, startEpoch, endEpoch, engineClockMode]);
+
+  // Fetch Shared Co-Trades Ledger
+  const loadCoTrades = useCallback(async () => {
+    try {
+      const res = await replayApi.getCoTrades(selectedSymbol);
+      setCoTrades(res.trades || []);
+    } catch {
+      setCoTrades([]);
+    }
+  }, [selectedSymbol]);
+
+  // Load data when symbol, range, or clock mode changes
+  useEffect(() => {
+    let active = true;
+    if (!startEpoch || !endEpoch) return;
+    replayApi.getCandles({
+      symbol: selectedSymbol,
+      tf: timeframe,
+      start: startEpoch,
+      end: endEpoch,
+    }).then((res) => {
+      if (active) {
+        setCandles(res || []);
+        if (res && res.length > 0 && replayCursor === null) {
+          setReplayCursor(res[Math.min(res.length - 1, 15)].time);
+        }
+      }
+    }).catch(() => {
+      if (active) setCandles([]);
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedSymbol, timeframe, startEpoch, endEpoch, replayCursor]);
+
+  useEffect(() => {
+    let active = true;
+    if (!startEpoch || !endEpoch) return;
+    replayApi.getBotScan({
+      symbol: selectedSymbol,
+      start: startEpoch,
+      end: endEpoch,
+      clock_mode: engineClockMode,
+    }).then((res) => {
+      if (!active) return;
+      setKillzones(res.killzones || []);
+      setAsianRanges(res.asian_ranges_by_day || {});
+      setDiagnostics(res.diagnostics || []);
+      setBotEvents(res.events || []);
+      setBotTrades(res.bot_trades || []);
+
+      const fvgList: FvgBox[] = [];
+      const brkList: BreakerBox[] = [];
+      for (const d of res.diagnostics || []) {
+        if (d.fvg_box) fvgList.push(d.fvg_box);
+        if (d.breaker_box) brkList.push(d.breaker_box);
+      }
+      setFvgs(fvgList);
+      setBreakers(brkList);
+    }).catch(() => {
+      if (!active) return;
+      setKillzones([]);
+      setAsianRanges({});
+      setDiagnostics([]);
+      setBotEvents([]);
+      setBotTrades([]);
+      setFvgs([]);
+      setBreakers([]);
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedSymbol, startEpoch, endEpoch, engineClockMode]);
+
+  useEffect(() => {
+    let active = true;
+    replayApi.getCoTrades(selectedSymbol).then((res) => {
+      if (active) setCoTrades(res.trades || []);
+    }).catch(() => {
+      if (active) setCoTrades([]);
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedSymbol]);
+
+  // Extract Causal Liquidity Sweeps
+  const sweeps: SweepFlag[] = useMemo(() => {
+    return extractLiquiditySweeps(candles, asianRanges, blindReplay ? replayCursor : null);
+  }, [candles, asianRanges, blindReplay, replayCursor]);
+
+  // Merge Bot Trades + Co-Trades for full chart & scorecard view
+  const allTrades: ReplayTrade[] = useMemo(() => {
+    const map = new Map<string, ReplayTrade>();
+    for (const t of botTrades) {
+      map.set(t.trade_id, t);
+    }
+    for (const t of coTrades) {
+      map.set(t.trade_id, t);
+    }
+    return Array.from(map.values()).sort((a, b) => a.decision_time - b.decision_time);
+  }, [botTrades, coTrades]);
+
+  // Active Bar for Bot Brain Inspector
+  const activeInspectionTime = useMemo(() => {
+    if (inspectedTime !== null) return inspectedTime;
+    if (blindReplay && replayCursor !== null) return replayCursor;
+    if (candles.length > 0) return candles[candles.length - 1].time;
+    return null;
+  }, [inspectedTime, blindReplay, replayCursor, candles]);
+
+  // Replay Transport Stepping Loop
+  useEffect(() => {
+    if (!isPlaying || !blindReplay || candles.length === 0) return;
+
+    const intervalMs = Math.max(50, Math.floor(1000 / playbackSpeed));
+    const timer = setInterval(() => {
+      setReplayCursor((prev) => {
+        if (prev === null) return candles[0].time;
+        let curIdx = candles.findIndex((c) => c.time >= prev);
+        if (curIdx === -1) curIdx = 0;
+        const nextIdx = curIdx + 1;
+        if (nextIdx >= candles.length) {
+          setIsPlaying(false);
+          return prev;
+        }
+        const nextTime = candles[nextIdx].time;
+        setInspectedTime(nextTime);
+        return nextTime;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, blindReplay, candles, playbackSpeed]);
+
+  // Step -1 / +1 helpers
+  const handleStepReplay = (delta: number) => {
+    if (candles.length === 0) return;
+    setReplayCursor((prev) => {
+      const cur = prev ?? candles[0].time;
+      let curIdx = candles.findIndex((c) => c.time >= cur);
+      if (curIdx === -1) curIdx = delta > 0 ? 0 : candles.length - 1;
+      const targetIdx = Math.max(0, Math.min(candles.length - 1, curIdx + delta));
+      const targetTime = candles[targetIdx].time;
+      setInspectedTime(targetTime);
+      return targetTime;
+    });
+  };
+
+  // MT5 Sync Handler
+  const handleSyncMt5 = async () => {
+    setIsSyncingMt5(true);
+    try {
+      await replayApi.syncMt5(selectedSymbol, 5);
+      await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
+    } catch {
+      // Handled
+    } finally {
+      setIsSyncingMt5(false);
+    }
+  };
+
+  // Co-Trading: Initiate Draft Setup
+  const handleCreateDraft = (dir: TradeDirection) => {
+    const anchorCandle =
+      candles.find((c) => (blindReplay && replayCursor !== null ? c.time === replayCursor : false)) ||
+      candles[candles.length - 1];
+
+    const currentPrice = anchorCandle ? anchorCandle.close : 2680.0;
+    const defaultPts = selectedSymbol.includes('GBP')
+      ? 0.003
+      : selectedSymbol.includes('XAU')
+      ? 5.0
+      : selectedSymbol.includes('BTC')
+      ? 250.0
+      : 25.0;
+
+    const isLong = dir === 'LONG';
+    const entry = Number(currentPrice.toFixed(digits));
+    const sl = Number((isLong ? entry - defaultPts : entry + defaultPts).toFixed(digits));
+    const tp = Number((isLong ? entry + defaultPts * 2 : entry - defaultPts * 2).toFixed(digits));
+
+    setDraftTrade({
+      direction: dir,
+      entry,
+      sl,
+      tp,
+      symbol: selectedSymbol,
+      signal_time: anchorCandle ? anchorCandle.time : Math.floor(Date.now() / 1000),
+    });
+    setSimResult(null);
+  };
+
+  // Co-Trading: Clone existing trade
+  const handleCloneTrade = (trade: ReplayTrade) => {
+    setDraftTrade({
+      direction: trade.direction,
+      entry: trade.entry,
+      sl: trade.sl,
+      tp: trade.tp,
+      symbol: trade.symbol,
+      signal_time: trade.decision_time,
+      parent_bot_ref: trade.origin === 'BOT' ? trade.trade_id : trade.parent_bot_ref,
+    });
+    setSimResult(null);
+  };
+
+  // Co-Trading: Simulate Draft Setup
+  const handleSimulateDraft = async () => {
+    if (!draftTrade) return;
+    setIsSimulating(true);
+    try {
+      const res = await replayApi.simulateTrade({
+        symbol: selectedSymbol,
+        direction: draftTrade.direction,
+        signal_time: draftTrade.signal_time ?? 0,
+        entry: draftTrade.entry,
+        sl: draftTrade.sl,
+        tp: draftTrade.tp,
+        horizon_end: endEpoch,
+      });
+      setSimResult(res);
+    } catch {
+      // Error
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  // Co-Trading: Save to Shared Ledger
+  const handleSaveDraftToLedger = async () => {
+    if (!draftTrade) return;
+    setIsSavingTrade(true);
+    try {
+      const isEdited = Boolean(draftTrade.parent_bot_ref);
+      const riskCheck = checkRiskLimitUSD(selectedSymbol, draftTrade.entry, draftTrade.sl, 0.01, 20.0);
+
+      await replayApi.createCoTrade({
+        symbol: selectedSymbol,
+        direction: draftTrade.direction,
+        decision_time: draftTrade.signal_time ?? Math.floor(Date.now() / 1000),
+        entry: draftTrade.entry,
+        sl: draftTrade.sl,
+        tp: draftTrade.tp,
+        origin: isEdited ? 'HUMAN_EDITED_BOT' : 'HUMAN_PROPOSED',
+        parent_bot_ref: draftTrade.parent_bot_ref ?? null,
+        status: simResult?.status ?? 'PENDING',
+        realized_pnl_usd: simResult?.realized_pnl_usd ?? null,
+        rr_realized: simResult?.rr_realized ?? null,
+        fill_time: simResult?.fill_time ?? null,
+        exit_time: simResult?.exit_time ?? null,
+        risk_usd_001: riskCheck.riskUsd,
+        exceeds_risk_cap: riskCheck.exceedsRiskCap,
+        notes: isEdited ? `Cloned from ${draftTrade.parent_bot_ref}` : 'Proposed in Replay',
+      });
+
+      await loadCoTrades();
+      setDraftTrade(null);
+      setSimResult(null);
+    } catch {
+      // Error
+    } finally {
+      setIsSavingTrade(false);
+    }
+  };
+
+  // Delete trade from ledger
+  const handleDeleteTrade = async (tradeId: string) => {
+    try {
+      await replayApi.deleteCoTrade(tradeId);
+      await loadCoTrades();
+    } catch {
+      // Error
+    }
+  };
+
+  // Trigger feedback prefill from Bot Brain or Scorecard
+  const handleTriggerFeedback = (ctx: {
+    title: string;
+    category: 'MISSED_SETUP' | 'BOT_TRADE_EDIT' | 'VETO_DISAGREEMENT' | 'NOTE';
+    rationale: string;
+    archetype_id?: string;
+    timestamp?: number;
+  }) => {
+    setFeedbackPrefill(ctx);
+    setActiveTab('agentify');
+    setIsDrawerOpen(true);
+  };
+
+  // Live Draft Risk & R:R Checks
+  const draftRiskCheck = useMemo(() => {
+    if (!draftTrade) return null;
+    return checkRiskLimitUSD(selectedSymbol, draftTrade.entry, draftTrade.sl, 0.01, 20.0);
+  }, [draftTrade, selectedSymbol]);
+
+  const draftRR = useMemo(() => {
+    if (!draftTrade) return 0;
+    return computeTradeRR(draftTrade.entry, draftTrade.sl, draftTrade.tp, draftTrade.direction);
+  }, [draftTrade]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', backgroundColor: '#131722' }}>
-      {/* Top Header Placeholder */}
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', backgroundColor: '#131722', color: '#d1d4dc', overflow: 'hidden' }}>
+      {/* Top Header - Level 1 */}
       <header
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
-          borderBottom: '1px solid #2b2b43',
+          padding: '6px 14px',
+          borderBottom: '1px solid #2a2e39',
           backgroundColor: '#1e222d',
           minHeight: '44px',
+          gap: '12px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontWeight: 700, fontSize: '14px', letterSpacing: '0.5px', color: '#f0b90b' }}>
-            TradingGuard
-          </span>
-          <span style={{ color: '#787b86', fontSize: '12px' }}>|</span>
-          <span style={{ fontWeight: 600, fontSize: '13px', color: '#e0e3eb' }}>
-            Visual Co-Backtester
-          </span>
-          <span
+        {/* Brand & Asset Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '0.5px', color: '#f0b90b' }}>
+              TradingGuard
+            </span>
+            <span style={{ color: '#565a65', fontSize: '12px' }}>|</span>
+            <span style={{ fontWeight: 600, fontSize: '13px', color: '#ffffff' }}>
+              Visual Co-Backtester
+            </span>
+          </div>
+
+          {/* Symbol Select */}
+          <select
+            value={selectedSymbol}
+            onChange={(e) => setSelectedSymbol(e.target.value)}
             style={{
-              fontSize: '11px',
-              padding: '2px 6px',
+              backgroundColor: '#131722',
+              border: '1px solid #2a2e39',
               borderRadius: '4px',
-              backgroundColor: 'rgba(38, 166, 154, 0.2)',
-              color: '#26a69a',
-              fontWeight: 500,
+              color: '#ffffff',
+              fontSize: '12px',
+              fontWeight: 700,
+              padding: '4px 8px',
+              outline: 'none',
+              cursor: 'pointer',
             }}
           >
-            SMC Active
-          </span>
+            {catalog?.symbols ? (
+              catalog.symbols.map((s) => (
+                <option key={s.symbol} value={s.symbol}>
+                  {s.display_name} ({s.symbol})
+                </option>
+              ))
+            ) : (
+              <option value="XAUUSD_o">Gold (XAUUSD_o)</option>
+            )}
+          </select>
+
+          {/* Engine Status Badge */}
+          {activeSymbolObj?.engine_mode === 'MANUAL_ONLY' || selectedSymbol === 'BTCUSD' ? (
+            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(171, 71, 188, 0.2)', color: '#ce93d8', fontWeight: 600 }}>
+              Manual Only (SMC decommissioned)
+            </span>
+          ) : activeSymbolObj?.uncalibrated ? (
+            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(255, 179, 0, 0.2)', color: '#ffd54f', fontWeight: 600 }}>
+              Uncalibrated Index
+            </span>
+          ) : (
+            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(38, 166, 154, 0.2)', color: '#26a69a', fontWeight: 600 }}>
+              SMC Active
+            </span>
+          )}
+
+          {/* MT5 Sync Button */}
+          <button
+            onClick={handleSyncMt5}
+            disabled={isSyncingMt5}
+            title="Fetch recent candles from live MT5 terminal"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#131722',
+              border: '1px solid #2a2e39',
+              borderRadius: '4px',
+              color: '#90caf9',
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: '3px 8px',
+              cursor: isSyncingMt5 ? 'not-allowed' : 'pointer',
+              opacity: isSyncingMt5 ? 0.6 : 1,
+            }}
+          >
+            <RefreshCw size={12} className={isSyncingMt5 ? 'animate-spin' : ''} />
+            {isSyncingMt5 ? 'Syncing...' : 'Sync MT5'}
+          </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Clock Mode Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2b2b43' }}>
-            <Clock size={14} style={{ color: '#787b86', marginLeft: '4px' }} />
+        {/* Date Range Inputs & Jump Presets */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 6px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            <Calendar size={13} style={{ color: '#787b86' }} />
+            <input
+              type="date"
+              value={startDateStr}
+              onChange={(e) => setStartDateStr(e.target.value)}
+              style={{ backgroundColor: 'transparent', border: 'none', color: '#d1d4dc', fontSize: '11px', outline: 'none' }}
+            />
+            <span style={{ color: '#787b86', fontSize: '11px' }}>→</span>
+            <input
+              type="date"
+              value={endDateStr}
+              onChange={(e) => setEndDateStr(e.target.value)}
+              style={{ backgroundColor: 'transparent', border: 'none', color: '#d1d4dc', fontSize: '11px', outline: 'none' }}
+            />
+          </div>
+
+          {/* Quick Date Presets */}
+          <div style={{ display: 'flex', gap: '3px' }}>
+            {[
+              ['Nov 10', '2026-11-10', '2026-11-10'],
+              ['Nov 11', '2026-11-11', '2026-11-11'],
+              ['Nov 10-12', '2026-11-10', '2026-11-12'],
+            ].map(([lbl, s, e]) => (
+              <button
+                key={lbl}
+                onClick={() => {
+                  setStartDateStr(s);
+                  setEndDateStr(e);
+                }}
+                style={{
+                  padding: '2px 6px',
+                  fontSize: '10px',
+                  fontWeight: startDateStr === s && endDateStr === e ? 700 : 500,
+                  backgroundColor: startDateStr === s && endDateStr === e ? '#2962ff' : '#131722',
+                  color: startDateStr === s && endDateStr === e ? '#ffffff' : '#b2b5be',
+                  border: '1px solid #2a2e39',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                }}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+
+          {/* Timeframe Switcher (6 Buttons) */}
+          <div style={{ display: 'flex', backgroundColor: '#131722', padding: '2px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            {DEFAULT_TIMEFRAMES.map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                style={{
+                  padding: '3px 7px',
+                  fontSize: '11px',
+                  fontWeight: timeframe === tf ? 700 : 500,
+                  backgroundColor: timeframe === tf ? '#2962ff' : 'transparent',
+                  color: timeframe === tf ? '#ffffff' : '#787b86',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                }}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Top Header - Level 2: Transport & Overlays & Position Tools */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '4px 14px',
+          borderBottom: '1px solid #2a2e39',
+          backgroundColor: '#181b24',
+          minHeight: '38px',
+          fontSize: '11px',
+          gap: '10px',
+        }}
+      >
+        {/* Clocks & Screener Engine Mode */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Display Clock */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            <Clock size={12} style={{ color: '#787b86', marginLeft: '2px' }} />
             {(['tehran', 'utc', 'server'] as ClockMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setClockMode(mode)}
                 style={{
-                  padding: '3px 8px',
-                  fontSize: '11px',
+                  padding: '2px 6px',
+                  fontSize: '10px',
                   fontWeight: clockMode === mode ? 600 : 400,
                   backgroundColor: clockMode === mode ? '#2962ff' : 'transparent',
                   color: clockMode === mode ? '#ffffff' : '#787b86',
@@ -139,25 +729,241 @@ export function App() {
             ))}
           </div>
 
-          {/* Position Tools */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Screener Engine Clock Mode Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            <span style={{ fontSize: '10px', color: '#787b86', fontWeight: 600 }}>Screener:</span>
+            {(['true_tehran', 'live_legacy'] as EngineClockMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setEngineClockMode(mode)}
+                title={mode === 'true_tehran' ? 'Dynamic historical DST offset' : 'Reproduce live 16:40 NY PM veto bug'}
+                style={{
+                  padding: '2px 5px',
+                  fontSize: '10px',
+                  fontWeight: engineClockMode === mode ? 600 : 400,
+                  backgroundColor: engineClockMode === mode ? (mode === 'true_tehran' ? '#26a69a' : '#ef5350') : 'transparent',
+                  color: engineClockMode === mode ? '#ffffff' : '#787b86',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                }}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+
+          {/* Overlay Visibility Toggles */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            <Layers size={12} style={{ color: '#787b86', marginLeft: '2px' }} />
             <button
-              onClick={() =>
-                setDraftTrade({
-                  direction: 'LONG',
-                  entry: 2682.0,
-                  sl: 2674.0,
-                  tp: 2698.0,
-                  symbol: 'XAUUSD_o',
-                })
+              onClick={() => setShowKillzones(!showKillzones)}
+              title="Toggle Killzones"
+              style={{
+                padding: '2px 5px',
+                fontSize: '10px',
+                fontWeight: showKillzones ? 600 : 400,
+                backgroundColor: showKillzones ? 'rgba(41, 98, 255, 0.2)' : 'transparent',
+                color: showKillzones ? '#90caf9' : '#565a65',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              KZ
+            </button>
+            <button
+              onClick={() => setShowAsianRange(!showAsianRange)}
+              title="Toggle Asian Range Bounds"
+              style={{
+                padding: '2px 5px',
+                fontSize: '10px',
+                fontWeight: showAsianRange ? 600 : 400,
+                backgroundColor: showAsianRange ? 'rgba(255, 179, 0, 0.2)' : 'transparent',
+                color: showAsianRange ? '#ffd54f' : '#565a65',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              AR
+            </button>
+            <button
+              onClick={() => setShowBoxes(!showBoxes)}
+              title="Toggle FVG & Breaker Boxes"
+              style={{
+                padding: '2px 5px',
+                fontSize: '10px',
+                fontWeight: showBoxes ? 600 : 400,
+                backgroundColor: showBoxes ? 'rgba(38, 166, 154, 0.2)' : 'transparent',
+                color: showBoxes ? '#80cbc4' : '#565a65',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              BOX
+            </button>
+            <button
+              onClick={() => setShowSweeps(!showSweeps)}
+              title="Toggle Sweep Flags"
+              style={{
+                padding: '2px 5px',
+                fontSize: '10px',
+                fontWeight: showSweeps ? 600 : 400,
+                backgroundColor: showSweeps ? 'rgba(0, 230, 118, 0.2)' : 'transparent',
+                color: showSweeps ? '#69f0ae' : '#565a65',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              SWEEP
+            </button>
+            <button
+              onClick={() => setShowTrades(!showTrades)}
+              title="Toggle Trade Markers"
+              style={{
+                padding: '2px 5px',
+                fontSize: '10px',
+                fontWeight: showTrades ? 600 : 400,
+                backgroundColor: showTrades ? 'rgba(239, 83, 80, 0.2)' : 'transparent',
+                color: showTrades ? '#ff8a80' : '#565a65',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              TRADES
+            </button>
+          </div>
+        </div>
+
+        {/* Blind Replay Transport Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Blind Replay Toggle Button */}
+          <button
+            onClick={() => {
+              const next = !blindReplay;
+              setBlindReplay(next);
+              if (next && replayCursor === null && candles.length > 0) {
+                setReplayCursor(candles[Math.min(candles.length - 1, 15)].time);
               }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 700,
+              backgroundColor: blindReplay ? 'rgba(255, 179, 0, 0.2)' : '#131722',
+              color: blindReplay ? '#ffd54f' : '#787b86',
+              border: `1px solid ${blindReplay ? '#ffd54f' : '#2a2e39'}`,
+              cursor: 'pointer',
+            }}
+          >
+            {blindReplay ? <EyeOff size={12} /> : <Eye size={12} />}
+            Blind Replay: {blindReplay ? 'ON' : 'OFF'}
+          </button>
+
+          {/* Transport Controls (when Blind Replay active) */}
+          {blindReplay && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 6px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+              {/* Step Back */}
+              <button
+                onClick={() => handleStepReplay(-1)}
+                title="Step -1 Bar"
+                style={{ background: 'transparent', border: 'none', color: '#d1d4dc', cursor: 'pointer', padding: '2px' }}
+              >
+                <SkipBack size={13} />
+              </button>
+
+              {/* Play / Pause */}
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                title={isPlaying ? 'Pause' : 'Play Replay'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isPlaying ? '#ef5350' : '#2962ff',
+                  border: 'none',
+                  borderRadius: '3px',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  padding: '3px 6px',
+                }}
+              >
+                {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+              </button>
+
+              {/* Step Forward */}
+              <button
+                onClick={() => handleStepReplay(1)}
+                title="Step +1 Bar"
+                style={{ background: 'transparent', border: 'none', color: '#d1d4dc', cursor: 'pointer', padding: '2px' }}
+              >
+                <SkipForward size={13} />
+              </button>
+
+              {/* Speed Selector */}
+              <select
+                value={playbackSpeed}
+                onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                style={{
+                  backgroundColor: '#1e222d',
+                  border: '1px solid #2a2e39',
+                  borderRadius: '3px',
+                  color: '#ffd54f',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  padding: '1px 3px',
+                  outline: 'none',
+                }}
+              >
+                {SPEED_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}x
+                  </option>
+                ))}
+              </select>
+
+              {/* Timeline Scrubber */}
+              {candles.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
+                  <input
+                    type="range"
+                    min={candles[0].time}
+                    max={candles[candles.length - 1].time}
+                    value={replayCursor ?? candles[candles.length - 1].time}
+                    onChange={(e) => {
+                      const t = Number(e.target.value);
+                      setReplayCursor(t);
+                      setInspectedTime(t);
+                    }}
+                    style={{ width: '90px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '10px', color: '#ffd54f', minWidth: '45px' }}>
+                    {replayCursor ? formatClockTick(replayCursor, clockMode, false) : ''}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Interactive Co-Trading Setup Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              onClick={() => handleCreateDraft('LONG')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
+                gap: '3px',
+                padding: '3px 8px',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 backgroundColor: 'rgba(38, 166, 154, 0.2)',
                 color: '#26a69a',
                 border: '1px solid rgba(38, 166, 154, 0.4)',
@@ -165,26 +971,18 @@ export function App() {
                 cursor: 'pointer',
               }}
             >
-              <TrendingUp size={13} />
-              + Long
+              <TrendingUp size={12} />
+              + Long Setup
             </button>
             <button
-              onClick={() =>
-                setDraftTrade({
-                  direction: 'SHORT',
-                  entry: 2682.0,
-                  sl: 2690.0,
-                  tp: 2666.0,
-                  symbol: 'XAUUSD_o',
-                })
-              }
+              onClick={() => handleCreateDraft('SHORT')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
+                gap: '3px',
+                padding: '3px 8px',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 backgroundColor: 'rgba(239, 83, 80, 0.2)',
                 color: '#ef5350',
                 border: '1px solid rgba(239, 83, 80, 0.4)',
@@ -192,26 +990,364 @@ export function App() {
                 cursor: 'pointer',
               }}
             >
-              <TrendingDown size={13} />
-              + Short
+              <TrendingDown size={12} />
+              + Short Setup
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Chart Area */}
-      <main style={{ flex: 1, position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-        <ReplayChart
-          candles={candles}
-          symbol="XAUUSD_o"
-          digits={2}
-          clockMode={clockMode}
-          killzones={sampleKillzones}
-          trades={sampleTrades}
-          draftTrade={draftTrade}
-          onDraftTradeChange={setDraftTrade}
-        />
-      </main>
+      {/* Active Draft Trade Control Banner */}
+      {draftTrade && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 14px',
+            backgroundColor: '#1e222d',
+            borderBottom: '1px solid #2962ff',
+            fontSize: '11px',
+            gap: '12px',
+          }}
+        >
+          {/* Position Parameters */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontWeight: 800,
+                padding: '2px 6px',
+                borderRadius: '3px',
+                backgroundColor: draftTrade.direction === 'LONG' ? 'rgba(38, 166, 154, 0.2)' : 'rgba(239, 83, 80, 0.2)',
+                color: draftTrade.direction === 'LONG' ? '#26a69a' : '#ef5350',
+              }}
+            >
+              {draftTrade.direction} POSITION BOX
+            </span>
+
+            {draftTrade.parent_bot_ref && (
+              <span style={{ fontSize: '10px', color: '#ffd54f', backgroundColor: 'rgba(255, 179, 0, 0.1)', padding: '1px 5px', borderRadius: '3px' }}>
+                Cloned from {draftTrade.parent_bot_ref}
+              </span>
+            )}
+
+            <span>Entry: <b style={{ color: '#ffffff' }}>{draftTrade.entry.toFixed(digits)}</b></span>
+            <span>SL: <b style={{ color: '#ef5350' }}>{draftTrade.sl.toFixed(digits)}</b></span>
+            <span>TP: <b style={{ color: '#26a69a' }}>{draftTrade.tp.toFixed(digits)}</b></span>
+            <span>R:R: <b style={{ color: '#ffd54f' }}>{draftRR.toFixed(2)}R</b></span>
+
+            {/* Risk & Compliance Warning Badge */}
+            {draftRiskCheck && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>Risk: <b>${draftRiskCheck.riskUsd.toFixed(2)}</b></span>
+                {draftRiskCheck.exceedsRiskCap && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: 'rgba(255, 179, 0, 0.2)', color: '#ffd54f', padding: '2px 6px', borderRadius: '3px', fontWeight: 600 }}>
+                    <AlertTriangle size={11} />
+                    ⚠️ Exceeds $20.00 risk cap at 0.01 lot
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons: Simulate, Save to Ledger, Cancel */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* Simulation Result Preview */}
+            {simResult && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '3px', backgroundColor: simResult.status === 'WIN' ? 'rgba(38, 166, 154, 0.2)' : 'rgba(239, 83, 80, 0.2)', color: simResult.status === 'WIN' ? '#26a69a' : '#ef5350', fontWeight: 700 }}>
+                {simResult.status === 'WIN' ? <CheckCircle2 size={12} /> : null}
+                <span>{simResult.status} ({simResult.rr_realized?.toFixed(2)}R, ${simResult.realized_pnl_usd.toFixed(2)})</span>
+              </div>
+            )}
+
+            {/* Simulate Button */}
+            <button
+              onClick={handleSimulateDraft}
+              disabled={isSimulating}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#2962ff',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '4px 10px',
+                fontWeight: 600,
+                cursor: isSimulating ? 'not-allowed' : 'pointer',
+                opacity: isSimulating ? 0.7 : 1,
+              }}
+            >
+              <Play size={11} />
+              {isSimulating ? 'Simulating...' : 'Run Simulation'}
+            </button>
+
+            {/* Save to Ledger Button */}
+            <button
+              onClick={handleSaveDraftToLedger}
+              disabled={isSavingTrade}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#00e676',
+                color: '#121418',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '4px 10px',
+                fontWeight: 700,
+                cursor: isSavingTrade ? 'not-allowed' : 'pointer',
+                opacity: isSavingTrade ? 0.7 : 1,
+              }}
+            >
+              <Save size={11} />
+              {isSavingTrade ? 'Saving...' : 'Save to Ledger'}
+            </button>
+
+            {/* Cancel Button */}
+            <button
+              onClick={() => {
+                setDraftTrade(null);
+                setSimResult(null);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'transparent',
+                border: '1px solid #565a65',
+                color: '#b2b5be',
+                borderRadius: '3px',
+                padding: '3px 6px',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Body: Chart on Left, Workbench on Right */}
+      <div style={{ display: 'flex', flex: 1, width: '100%', height: 'calc(100% - 105px)', position: 'relative', overflow: 'hidden' }}>
+        {/* Main Chart Canvas */}
+        <main style={{ flex: 1, height: '100%', position: 'relative', overflow: 'hidden' }}>
+          <ReplayChart
+            candles={candles}
+            symbol={selectedSymbol}
+            digits={digits}
+            clockMode={clockMode}
+            killzones={killzones}
+            asianRanges={asianRanges}
+            fvgs={fvgs}
+            breakers={breakers}
+            sweeps={sweeps}
+            trades={allTrades}
+            draftTrade={draftTrade}
+            onDraftTradeChange={setDraftTrade}
+            replayTo={blindReplay ? replayCursor : null}
+            showKillzones={showKillzones}
+            showAsianRange={showAsianRange}
+            showFvgs={showBoxes}
+            showBreakers={showBoxes}
+            showSweeps={showSweeps}
+            showTrades={showTrades}
+            onSelectTime={(t) => {
+              setInspectedTime(t);
+              if (!isDrawerOpen) setIsDrawerOpen(true);
+            }}
+          />
+        </main>
+
+        {/* Right Workbench Drawer */}
+        <aside
+          style={{
+            width: isDrawerOpen ? '380px' : '36px',
+            height: '100%',
+            backgroundColor: '#181b24',
+            borderLeft: '1px solid #2a2e39',
+            display: 'flex',
+            flexDirection: 'column',
+            transition: 'width 0.2s ease',
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
+          {/* Drawer Toggle Button */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isDrawerOpen ? 'space-between' : 'center',
+              padding: '6px 8px',
+              backgroundColor: '#1e222d',
+              borderBottom: '1px solid #2a2e39',
+              minHeight: '34px',
+            }}
+          >
+            {isDrawerOpen ? (
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => setActiveTab('bot')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: activeTab === 'bot' ? 700 : 500,
+                    backgroundColor: activeTab === 'bot' ? '#2962ff' : 'transparent',
+                    color: activeTab === 'bot' ? '#ffffff' : '#787b86',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Bot size={12} />
+                  Bot Brain
+                </button>
+                <button
+                  onClick={() => setActiveTab('scorecard')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: activeTab === 'scorecard' ? 700 : 500,
+                    backgroundColor: activeTab === 'scorecard' ? '#2962ff' : 'transparent',
+                    color: activeTab === 'scorecard' ? '#ffffff' : '#787b86',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Award size={12} />
+                  Scorecard
+                </button>
+                <button
+                  onClick={() => setActiveTab('agentify')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: activeTab === 'agentify' ? 700 : 500,
+                    backgroundColor: activeTab === 'agentify' ? '#00e676' : 'transparent',
+                    color: activeTab === 'agentify' ? '#121418' : '#787b86',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Sparkles size={12} />
+                  Agentify
+                </button>
+              </div>
+            ) : null}
+
+            <button
+              onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+              title={isDrawerOpen ? 'Collapse Drawer' : 'Expand Drawer'}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#787b86',
+                cursor: 'pointer',
+                padding: '4px',
+              }}
+            >
+              {isDrawerOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          </div>
+
+          {/* Drawer Content */}
+          {isDrawerOpen && (
+            <div style={{ flex: 1, height: 'calc(100% - 34px)', overflow: 'hidden' }}>
+              {activeTab === 'bot' && (
+                <BotBrainPanel
+                  symbol={selectedSymbol}
+                  currentTime={activeInspectionTime}
+                  diagnostics={diagnostics}
+                  events={botEvents}
+                  clockMode={clockMode}
+                  engineClockMode={engineClockMode}
+                  onSelectEventTime={(t) => {
+                    setInspectedTime(t);
+                    setReplayCursor(t);
+                  }}
+                  onTriggerFeedback={handleTriggerFeedback}
+                />
+              )}
+
+              {activeTab === 'scorecard' && (
+                <ScorecardPanel
+                  trades={allTrades}
+                  replayTo={blindReplay ? replayCursor : null}
+                  clockMode={clockMode}
+                  digits={digits}
+                  onCloneTrade={handleCloneTrade}
+                  onDeleteTrade={handleDeleteTrade}
+                  onSelectTrade={(t) => {
+                    setInspectedTime(t.decision_time);
+                    setReplayCursor(t.decision_time);
+                  }}
+                  onTriggerFeedback={(t) => {
+                    handleTriggerFeedback({
+                      title: `Trade Feedback: ${t.trade_id} (${t.origin}) on ${t.symbol}`,
+                      category: t.origin === 'BOT' ? 'BOT_TRADE_EDIT' : 'MISSED_SETUP',
+                      rationale: `Trade ${t.trade_id} (${t.direction} @ ${t.entry}):
+Realized: ${t.status} (${t.rr_realized}R / $${t.realized_pnl_usd})
+Entry: ${t.entry}, SL: ${t.sl}, TP: ${t.tp}`,
+                      archetype_id: t.archetype_id,
+                      timestamp: t.decision_time,
+                    });
+                  }}
+                />
+              )}
+
+              {activeTab === 'agentify' && (
+                <AgentifyFeedbackPanel
+                  symbol={selectedSymbol}
+                  currentTime={activeInspectionTime}
+                  clockMode={clockMode}
+                  prefillContext={feedbackPrefill}
+                />
+              )}
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Footer Status Bar */}
+      <footer
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '4px 14px',
+          borderTop: '1px solid #2a2e39',
+          backgroundColor: '#181b24',
+          height: '24px',
+          fontSize: '11px',
+          color: '#787b86',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span>Account: <b style={{ color: '#ffffff' }}>$2,000.00</b> (PROP_FIRM)</span>
+          <span>Max Bot Risk: <b style={{ color: '#26a69a' }}>$20.00</b> (1.0%)</span>
+          <span>Candles Loaded: <b style={{ color: '#d1d4dc' }}>{candles.length}</b> ({timeframe})</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span>
+            Active Bar: <b style={{ color: '#ffd54f' }}>{activeInspectionTime ? formatClockTick(activeInspectionTime, clockMode, true) : 'N/A'}</b>
+          </span>
+          <span style={{ color: '#26a69a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            ● Server Connected (127.0.0.1:8765)
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

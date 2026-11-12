@@ -14,6 +14,7 @@ import {
   type IChartApi,
   type ISeriesApi,
   type ISeriesMarkersPluginApi,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
@@ -53,6 +54,13 @@ export interface ReplayChartProps {
   onDraftTradeChangeComplete?: (draft: DraftTrade) => void;
   replayTo?: number | null;
   className?: string;
+  showKillzones?: boolean;
+  showAsianRange?: boolean;
+  showFvgs?: boolean;
+  showBreakers?: boolean;
+  showSweeps?: boolean;
+  showTrades?: boolean;
+  onSelectTime?: (time: number | null) => void;
 }
 
 export const ReplayChart: React.FC<ReplayChartProps> = ({
@@ -71,6 +79,13 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   onDraftTradeChangeComplete,
   replayTo = null,
   className = '',
+  showKillzones = true,
+  showAsianRange = true,
+  showFvgs = true,
+  showBreakers = true,
+  showSweeps = true,
+  showTrades = true,
+  onSelectTime,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -86,11 +101,16 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   const isDraggingRef = useRef<boolean>(false);
   const dragHandleRef = useRef<'entry' | 'sl' | 'tp' | null>(null);
   const draftTradeRef = useRef<DraftTrade | null>(null);
+  const onSelectTimeRef = useRef<((time: number | null) => void) | undefined>(onSelectTime);
 
-  // Keep draftTradeRef in sync without updating during render
+  // Keep draftTradeRef & onSelectTimeRef in sync without updating during render
   useEffect(() => {
     draftTradeRef.current = draftTrade;
   }, [draftTrade]);
+
+  useEffect(() => {
+    onSelectTimeRef.current = onSelectTime;
+  }, [onSelectTime]);
 
   // Keep options in sync on mount
   const initialClockModeRef = useRef<ClockMode>(clockMode);
@@ -170,6 +190,14 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     forensicPrimitiveRef.current = boxPrim;
     positionBoxPrimitiveRef.current = posPrim;
 
+    // Click handler for bar inspection
+    const clickHandler = (param: MouseEventParams<Time>) => {
+      if (param.time) {
+        onSelectTimeRef.current?.(Number(param.time));
+      }
+    };
+    chart.subscribeClick(clickHandler);
+
     // Resize Observer for responsive sizing
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -184,6 +212,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      chart.unsubscribeClick(clickHandler);
       resizeObserver.disconnect();
       if (seriesRef.current) {
         if (kzPrim) seriesRef.current.detachPrimitive(kzPrim);
@@ -225,9 +254,13 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     });
   }, [digits]);
 
-  // Update Candlestick Data
+  // Update Candlestick Data - ensures clearing when candles or filtered list is empty
   useEffect(() => {
-    if (!seriesRef.current || !candles.length) return;
+    if (!seriesRef.current) return;
+    if (!candles || candles.length === 0) {
+      seriesRef.current.setData([]);
+      return;
+    }
 
     const formatted = candles
       .filter((c) => (replayTo !== null ? c.time <= replayTo : true))
@@ -239,33 +272,35 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         close: c.close,
       }));
 
-    if (formatted.length > 0) {
+    if (formatted.length === 0) {
+      seriesRef.current.setData([]);
+    } else {
       seriesRef.current.setData(formatted);
     }
   }, [candles, replayTo]);
 
-  // Update Killzones
+  // Update Killzones with toggle support
   useEffect(() => {
     if (killzonePrimitiveRef.current) {
-      killzonePrimitiveRef.current.updateKillzones(killzones);
+      killzonePrimitiveRef.current.updateKillzones(showKillzones ? killzones : []);
     }
-  }, [killzones]);
+  }, [killzones, showKillzones]);
 
-  // Update Forensic Boxes (FVGs, Breakers, Asian Range, Sweeps)
+  // Update Forensic Boxes (FVGs, Breakers, Asian Range, Sweeps) with toggle support
   useEffect(() => {
     if (forensicPrimitiveRef.current) {
       const arList: AsianRangeDay[] = Array.isArray(asianRanges)
         ? asianRanges
         : Object.values(asianRanges);
       forensicPrimitiveRef.current.updateData({
-        fvgs,
-        breakers,
-        asianRanges: arList,
-        sweeps,
+        fvgs: showFvgs ? fvgs : [],
+        breakers: showBreakers ? breakers : [],
+        asianRanges: showAsianRange ? arList : [],
+        sweeps: showSweeps ? sweeps : [],
         candles,
       });
     }
-  }, [fvgs, breakers, asianRanges, sweeps, candles]);
+  }, [fvgs, breakers, asianRanges, sweeps, candles, showFvgs, showBreakers, showAsianRange, showSweeps]);
 
   // Update Position Box Draft Trade
   useEffect(() => {
@@ -274,9 +309,16 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     }
   }, [draftTrade, symbol, digits]);
 
-  // Update Trade Markers on Candlesticks
+  // Update Trade Markers on Candlesticks with toggle support
   useEffect(() => {
     if (!seriesRef.current) return;
+
+    if (!showTrades) {
+      if (markersPluginRef.current) {
+        markersPluginRef.current.setMarkers([]);
+      }
+      return;
+    }
 
     const markers: SeriesMarker<Time>[] = [];
     for (const t of trades) {
@@ -319,7 +361,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     } else {
       markersPluginRef.current.setMarkers(markers);
     }
-  }, [trades, replayTo, digits]);
+  }, [trades, replayTo, digits, showTrades]);
 
   // Mouse Interaction: Dragging Entry, SL, and TP handles
   useEffect(() => {
