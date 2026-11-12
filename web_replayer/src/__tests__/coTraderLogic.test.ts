@@ -679,4 +679,19 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     const smcHit = resolveChartClickTarget({ ...common, clickedTime: 1794471300, clickedPrice: 3979.5 });
     expect(smcHit.kind).toBe('SMC');
   });
+
+  it('detects 14:30 TEH style 1L/1R minor swing sweep with >=50% rejection wick cleanly', () => {
+    // Reproduces actual Nov 12 14:15..14:35 Tehran 5M sequence on XAUUSD_o:
+    // 14:20 formed 1L/1R peak at 3954.71; 14:30 spiked 3955.43 (61% upper wick) and closed at 3954.25 < 3954.71
+    const nov12Seq: Candle[] = [
+      { time: 1794480000, open: 3949.74, high: 3951.08, low: 3949.39, close: 3950.49 }, // 14:05
+      { time: 1794480300, open: 3950.63, high: 3952.77, low: 3950.53, close: 3952.46 }, // 14:10
+      { time: 1794480600, open: 3952.49, high: 3953.06, low: 3952.05, close: 3952.67 }, // 14:15
+      { time: 1794480900, open: 3952.63, high: 3954.71, low: 3952.23, close: 3954.25 }, // 14:20 (1L/1R pivot)
+      { time: 1794481200, open: 3954.23, high: 3954.25, low: 3952.65, close: 3953.91 }, // 14:25
+      { time: 1794481500, open: 3953.85, high: 3955.43, low: 3953.48, close: 3954.25 }, // 14:30 sweep
+    ];
+    const sw = extractLiquiditySweeps(nov12Seq, {}, null);
+    expect(sw.some((x) => x.time === 1794481500 && x.type === 'HIGH_SWEEP' && x.level === 3954.71)).toBe(true);
+  });
 });

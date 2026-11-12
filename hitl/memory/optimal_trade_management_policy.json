@@ -241,6 +241,14 @@
       "expected_pf": 1.4,
       "sample_size": 60,
       "status": "RATIFIED_ON_GOLD"
+    },
+    "SETUP-ARCH-015": {
+      "target_rr": 2.5,
+      "breakeven_rr": 1.5,
+      "win_rate_pct": 32.6,
+      "expected_pf": 1.55,
+      "sample_size": 89,
+      "status": "RATIFIED_ON_GOLD"
     }
   }
 }

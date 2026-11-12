@@ -749,6 +749,136 @@ def detect_reversal_origin_retest(
     return False, "NONE", 0.0, 0.0, ""
 
 
+def detect_ny_trend_continuation(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: Optional[List[Dict[str, Any]]],
+    symbol: str = "XAUUSD"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-015: NY Open One-Sided Trend Continuation Sweep on Gold.
+    Conditions (strictly causal on closed bars):
+      1. Symbol is XAUUSD and bar closes inside [NY Open .. NYSE Cash Open + 60m] via dynamic DST.
+      2. London made a clean one-sided expansion past Asian Range (>= $4.00) without sweeping
+         the opposite Asian boundary.
+      3. Closed H1 close is aligned with H1 EMA(50).
+      4. Pullback reached >= 45% of the post-London leg before/on the trigger bar.
+      5. Closed 5M trigger bar (range >= $2.00) sweeps prior 6-bar high/low with >= 25% wick
+         and closes in the outer 40% in the trend direction ($1.80 <= risk <= $20.00).
+    """
+    if "XAU" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+    if not bars_5m or len(bars_5m) < 12 or not bars_1h or len(bars_1h) < 50:
+        return False, "NONE", 0.0, 0.0, ""
+
+    offset_sec = 7200
+    try:
+        from hitl.backtest.chart_renderer import get_broker_utc_offset_seconds
+        offset_sec = get_broker_utc_offset_seconds()
+    except Exception:
+        pass
+
+    cur = bars_5m[-1]
+    sig_utc = int(cur['time']) - offset_sec
+    sig_dt = datetime.datetime.fromtimestamp(sig_utc, tz=datetime.timezone.utc)
+    stimes = get_session_times_for_date(sig_dt.date())
+    lon_utc = int(stimes["london"]["utc_time"].timestamp())
+    ny_utc = int(stimes["new_york"]["utc_time"].timestamp())
+    nyse_utc = int(stimes["nyse_open"]["utc_time"].timestamp())
+
+    if not (ny_utc <= sig_utc <= nyse_utc + 3600):
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Day rollover matches MT5 server 00:00 -> UTC epoch
+    day_srv_date = datetime.datetime.fromtimestamp(int(cur['time']), tz=datetime.timezone.utc).date()
+    day_start_utc = int(datetime.datetime(day_srv_date.year, day_srv_date.month, day_srv_date.day, 0, 0, tzinfo=datetime.timezone.utc).timestamp()) - offset_sec
+
+    m5_day = [b for b in bars_5m if (int(b['time']) - offset_sec) >= day_start_utc]
+    asia_bars = [b for b in m5_day if (int(b['time']) - offset_sec) < lon_utc]
+    post_lon = [b for b in m5_day if (int(b['time']) - offset_sec) >= lon_utc]
+
+    # If live caller only supplied a short M5 slice (e.g. 120 bars = 10h), backfill earlier today bounds from H1
+    if bars_5m and (int(bars_5m[0]['time']) - offset_sec) > day_start_utc:
+        h1_today = [b for b in bars_1h if day_start_utc <= (int(b['time']) - offset_sec) < sig_utc]
+        asia_h1 = [b for b in h1_today if (int(b['time']) - offset_sec) + 3600 <= lon_utc]
+        if len(asia_bars) < 6 and asia_h1:
+            asia_bars = asia_bars + asia_h1
+        earliest_m5_utc = int(bars_5m[0]['time']) - offset_sec
+        early_lon_h1 = [b for b in h1_today if lon_utc <= (int(b['time']) - offset_sec) < earliest_m5_utc]
+        if early_lon_h1:
+            post_lon = early_lon_h1 + post_lon
+
+    if not asia_bars or len(post_lon) < 10:
+        return False, "NONE", 0.0, 0.0, ""
+
+    asia_h = max(b['high'] for b in asia_bars)
+    asia_l = min(b['low'] for b in asia_bars)
+    if asia_h - asia_l < 4.0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    lon_h = max(b['high'] for b in post_lon)
+    lon_l = min(b['low'] for b in post_lon)
+    hit_ah = lon_h >= asia_h
+    hit_al = lon_l <= asia_l
+    one_bear = hit_al and (not hit_ah) and (asia_l - lon_l) >= 4.0
+    one_bull = hit_ah and (not hit_al) and (lon_h - asia_h) >= 4.0
+    if not (one_bear or one_bull):
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Causal H1 EMA(50) matching pandas ewm(span=50, adjust=False)
+    alpha = 2.0 / (50.0 + 1.0)
+    ema50 = float(bars_1h[0]['close'])
+    for hb in bars_1h[1:]:
+        ema50 = alpha * float(hb['close']) + (1.0 - alpha) * ema50
+    h1_close = float(bars_1h[-1]['close'])
+
+    cur_rng = cur['high'] - cur['low']
+    if cur_rng < 2.0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    pre6 = bars_5m[-7:-1]
+    pre6_h = max(b['high'] for b in pre6)
+    pre6_l = min(b['low'] for b in pre6)
+    leg = lon_h - lon_l
+    if leg <= 0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    if one_bear and h1_close < ema50 and cur['high'] < asia_h:
+        uw = cur['high'] - max(cur['open'], cur['close'])
+        ret = (cur['high'] - lon_l) / leg
+        if (
+            cur['high'] > pre6_h
+            and cur['close'] < cur['open']
+            and cur['close'] <= cur['low'] + 0.40 * cur_rng
+            and (uw / cur_rng) >= 0.25
+            and ret >= 0.45
+        ):
+            entry = round(cur['close'], 2)
+            sl = round(cur['high'] + 1.50, 2)
+            risk = sl - entry
+            if 1.80 <= risk <= 20.00:
+                desc = f"NY Open One-Sided Bearish Trend Continuation (Swept pre-NY ceiling {pre6_h:.2f}, ret {ret*100:.0f}%, H1<EMA50 {ema50:.2f})"
+                return True, "BEARISH", entry, sl, desc
+
+    if one_bull and h1_close > ema50 and cur['low'] > asia_l:
+        lw = min(cur['open'], cur['close']) - cur['low']
+        ret = (lon_h - cur['low']) / leg
+        if (
+            cur['low'] < pre6_l
+            and cur['close'] > cur['open']
+            and cur['close'] >= cur['high'] - 0.40 * cur_rng
+            and (lw / cur_rng) >= 0.25
+            and ret >= 0.45
+        ):
+            entry = round(cur['close'], 2)
+            sl = round(cur['low'] - 1.50, 2)
+            risk = entry - sl
+            if 1.80 <= risk <= 20.00:
+                desc = f"NY Open One-Sided Bullish Trend Continuation (Swept pre-NY floor {pre6_l:.2f}, ret {ret*100:.0f}%, H1>EMA50 {ema50:.2f})"
+                return True, "BULLISH", entry, sl, desc
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -858,6 +988,46 @@ def screen_ict_session(
         min_range = 6.0       # Scaled for $4,000 Gold volatility
         breaker_tol = 1.50    # Tightened from 5.0 to avoid false retests
 
+    def _build_setup_package(
+        mtf_ctx: Dict[str, Any],
+        arch_id: str,
+        setup_type: str,
+        entry_p: float,
+        sl_p: Optional[float],
+        reason_text: str,
+        direction: str,
+    ) -> Dict[str, Any]:
+        from hitl.backtest.mtf_structure import classify_setup_phase
+        p_info = classify_setup_phase(mtf_ctx, direction, symbol=symbol)
+        rec_target = p_info["recommended_target_rr"]
+        rec_be = p_info["recommended_be_rr"]
+        if arch_id == "SETUP-ARCH-001" and "XAU" in symbol.upper():
+            rec_target = 2.0  # Calibrated for Gold Judas High fade (48.1% WR, +16.00R, PF 2.60)
+            rec_be = 1.2      # Early breakeven ratchet to eliminate adverse mean-reversion
+        elif arch_id == "SETUP-ARCH-015" and "XAU" in symbol.upper():
+            rec_target = 2.5  # Calibrated across 17-month OOS+IS audit (89tr, +25.45R, PF 1.55)
+            rec_be = 1.5
+
+        return {
+            "has_setup": True,
+            "reason": f"[{arch_id}] {reason_text} | Scaled Entry: {entry_p:{fmt}} | Phase: {p_info['phase']}",
+            "setup_type": setup_type,
+            "archetype_id": arch_id,
+            "entry_ref": entry_p,
+            "sl_ref": sl_p,
+            "mtf_info": mtf_ctx,
+            "recommended_target_rr": rec_target,
+            "recommended_be_rr": rec_be,
+            "phase": p_info["phase"],
+            "poi_ratio": p_info["poi_ratio"],
+            "dol_target": p_info["dol_target"],
+            "phase_summary": p_info["summary"],
+            # Signal formed on the last closed bar; entry is a limit order
+            # to be filled on the next bar (see closed_bars_only above).
+            "closed_bars_only": closed_bars_only,
+            "signal_bar_time": signal_bar_time,
+        }
+
     # 1. Prior Session Liquidity Benchmark & Polarity
     if session_hour in (9, 10, 11, 12, 13):
         # Gold London Continuation produces -$7.49R empirical drag (PF 0.81); restricted to London Open
@@ -914,6 +1084,16 @@ def screen_ict_session(
         session_label = "London Range"
     elif session_hour in (17, 18, 19):
         # NY Silver Bullet / NYSE Cash Window (17:00 - 20:00 Tehran / 09:30 - 11:30 NY)
+        # Allow DST-validated SETUP-ARCH-015 during Winter NY Open..NYSE+1h before applying legacy session ban
+        if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-015"):
+            has_ny_cont, nyc_dir, nyc_entry, nyc_sl, nyc_desc = detect_ny_trend_continuation(
+                bars_5m, bars_1h, symbol=symbol
+            )
+            if has_ny_cont:
+                from hitl.backtest.mtf_structure import analyze_mtf_state
+                nyc_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
+                nyc_dir_label = "LONG" if nyc_dir == "BULLISH" else "SHORT"
+                return _build_setup_package(nyc_mtf, "SETUP-ARCH-015", f"{nyc_dir}_NY_TREND_CONT", nyc_entry, nyc_sl, nyc_desc, nyc_dir_label)
         if "XAU" in symbol.upper() or is_gbp or is_nq:
             # Banned on Gold (-33.01R), Cable (-6.54R), and NQ per 1-year empirical audit
             return {
@@ -988,34 +1168,7 @@ def screen_ict_session(
     is_inside_day = mtf_state.get("is_inside_day", False)
 
     def _package_setup(arch_id: str, setup_type: str, entry_p: float, sl_p: Optional[float], reason_text: str, direction: str) -> Dict[str, Any]:
-        p_info = classify_setup_phase(mtf_state, direction, symbol=symbol)
-        
-        # Asset-specific target & breakeven calibrations
-        rec_target = p_info["recommended_target_rr"]
-        rec_be = p_info["recommended_be_rr"]
-        if arch_id == "SETUP-ARCH-001" and "XAU" in symbol.upper():
-            rec_target = 2.0  # Calibrated for Gold Judas High fade (48.1% WR, +16.00R, PF 2.60)
-            rec_be = 1.2      # Early breakeven ratchet to eliminate adverse mean-reversion
-
-        return {
-            "has_setup": True,
-            "reason": f"[{arch_id}] {reason_text} | Scaled Entry: {entry_p:{fmt}} | Phase: {p_info['phase']}",
-            "setup_type": setup_type,
-            "archetype_id": arch_id,
-            "entry_ref": entry_p,
-            "sl_ref": sl_p,
-            "mtf_info": mtf_state,
-            "recommended_target_rr": rec_target,
-            "recommended_be_rr": rec_be,
-            "phase": p_info["phase"],
-            "poi_ratio": p_info["poi_ratio"],
-            "dol_target": p_info["dol_target"],
-            "phase_summary": p_info["summary"],
-            # Signal formed on the last closed bar; entry is a limit order
-            # to be filled on the next bar (see closed_bars_only above).
-            "closed_bars_only": closed_bars_only,
-            "signal_bar_time": signal_bar_time
-        }
+        return _build_setup_package(mtf_state, arch_id, setup_type, entry_p, sl_p, reason_text, direction)
 
     short_phase = classify_setup_phase(mtf_state, "SHORT", symbol)
     long_phase = classify_setup_phase(mtf_state, "LONG", symbol)
@@ -1183,6 +1336,15 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-014"
         direction = "LONG" if orig_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{orig_dir}_H1_REVERSAL_ORIGIN_RETEST", orig_entry, orig_sl, orig_desc, direction)
+
+    # Setup K: NY Open One-Sided Trend Continuation Sweep (SETUP-ARCH-015)
+    has_ny_cont, nyc_dir, nyc_entry, nyc_sl, nyc_desc = detect_ny_trend_continuation(
+        bars_5m, bars_1h, symbol=symbol
+    )
+    if has_ny_cont and setup_registry.is_archetype_ratified("SETUP-ARCH-015"):
+        arch_id = "SETUP-ARCH-015"
+        direction = "LONG" if nyc_dir == "BULLISH" else "SHORT"
+        return _package_setup(arch_id, f"{nyc_dir}_NY_TREND_CONT", nyc_entry, nyc_sl, nyc_desc, direction)
 
     # Price in equilibrium consolidation or no ratified archetype entry criteria met
     return {

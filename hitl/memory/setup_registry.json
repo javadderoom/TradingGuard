@@ -627,6 +627,26 @@
       },
       "auditor_notes": "Walk-forward verified on 7656 OOS bars with zero narrative bias.",
       "ratified_at": "2026-11-09T11:12:04.867091"
+    },
+    {
+      "id": "SETUP-ARCH-015",
+      "name": "NY Open One-Sided Trend Continuation Sweep (Gold)",
+      "category": "NY Session Trend Continuation",
+      "description": "Following a clean one-sided London expansion beyond Asian Range (without dual-sweep of the opposite Asian boundary) and H1 close aligned with H1 EMA(50), a counter-trend pullback >=45% of the London leg sets up a dynamic DST NY Open (08:00 NY to NYSE +1h) 5M stop-hunt rejection bar (>=25% wick, closing aggressively in trend direction).",
+      "entry_trigger": "Close of confirmed 5M NY stop-hunt continuation bar aligned with H1 EMA(50) and one-sided London trend.",
+      "invalidation_anchor": "Sweep wick extreme of the 5M NY continuation bar plus $1.50 structural buffer ($1.80-$20.00 risk bounds).",
+      "proposer": "Quantitative Alpha & Pattern Discovery Desk",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-12T19:40:00",
+      "ratified_at": "2026-11-12T19:40:00",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "NY Open One-Sided Trend Continuation Sweep (Gold)",
+        "category": "NY Session Trend Continuation",
+        "min_rr": "1:2.5",
+        "stop_buffer_rule": "5M NY continuation sweep extreme +/- $1.50 (clamped within $1.80-$20.00 risk at 0.01 lot)."
+      },
+      "auditor_notes": "Zero-lookahead 17-month validation on Gold (XAUUSD_o): 89 trades across 2026 M1 (57tr, +16.85R, PF 1.56) and 2025 H2 OOS (32tr, +8.60R, PF 1.54); combined +25.45R, 32.6% WR, PF 1.55, MaxDD 5.00R at 2.5R target / 1.5R BE. Remains profitable under $0.25 extra slippage (+24.71R, PF 1.54) and 30m limit order (+21.32R, PF 1.46)."
     }
   ]
 }

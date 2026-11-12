@@ -371,31 +371,75 @@ export function extractLiquiditySweeps(
     }
   }
 
-  // Track 2: Causal 3-left / 3-right Swing High & Swing Low liquidity grabs
+  // Track 2 & 3: Causal 3L/3R major swing pivots (>=35% wick) + 1L/1R minor swing pivots (>=50% wick, e.g. 14:30 TEH raid)
   const pivotSpan = 3;
   const activeSwingHighs: Array<{ time: number; price: number }> = [];
   const activeSwingLows: Array<{ time: number; price: number }> = [];
+  const activeMinorHighs: Array<{ time: number; price: number }> = [];
+  const activeMinorLows: Array<{ time: number; price: number }> = [];
 
-  for (let i = pivotSpan * 2; i < visibleCandles.length; i++) {
-    // Confirm pivot formed pivotSpan bars ago (zero future lookahead)
-    const pIdx = i - pivotSpan;
-    const pBar = visibleCandles[pIdx];
-    let isPivotHigh = true;
-    let isPivotLow = true;
-    let strictHigh = false;
-    let strictLow = false;
-    for (let k = pIdx - pivotSpan; k <= pIdx + pivotSpan; k++) {
-      if (k === pIdx) continue;
-      if (visibleCandles[k].high > pBar.high) isPivotHigh = false;
-      if (visibleCandles[k].high < pBar.high) strictHigh = true;
-      if (visibleCandles[k].low < pBar.low) isPivotLow = false;
-      if (visibleCandles[k].low > pBar.low) strictLow = true;
+  const consumeSweptHigh = (list: Array<{ time: number; price: number }>, bar: Candle) => {
+    let best: { time: number; price: number } | null = null;
+    for (let s = list.length - 1; s >= 0; s--) {
+      const sh = list[s];
+      if (bar.high > sh.price && bar.open <= sh.price && bar.close < sh.price) {
+        if (!best || sh.price > best.price) best = sh;
+        list.splice(s, 1);
+      } else if (bar.high > sh.price) {
+        list.splice(s, 1);
+      }
     }
-    if (isPivotHigh && strictHigh) {
-      activeSwingHighs.push({ time: pBar.time, price: pBar.high });
+    return best;
+  };
+
+  const consumeSweptLow = (list: Array<{ time: number; price: number }>, bar: Candle) => {
+    let best: { time: number; price: number } | null = null;
+    for (let s = list.length - 1; s >= 0; s--) {
+      const sl = list[s];
+      if (bar.low < sl.price && bar.open >= sl.price && bar.close > sl.price) {
+        if (!best || sl.price < best.price) best = sl;
+        list.splice(s, 1);
+      } else if (bar.low < sl.price) {
+        list.splice(s, 1);
+      }
     }
-    if (isPivotLow && strictLow) {
-      activeSwingLows.push({ time: pBar.time, price: pBar.low });
+    return best;
+  };
+
+  for (let i = 2; i < visibleCandles.length; i++) {
+    // Causal 1L/1R minor pivot confirmed at i-2 once bar i-1 closed
+    const mIdx = i - 2;
+    if (mIdx >= 1) {
+      const mBar = visibleCandles[mIdx];
+      if (mBar.high > visibleCandles[mIdx - 1].high && mBar.high >= visibleCandles[mIdx + 1].high) {
+        activeMinorHighs.push({ time: mBar.time, price: mBar.high });
+      }
+      if (mBar.low < visibleCandles[mIdx - 1].low && mBar.low <= visibleCandles[mIdx + 1].low) {
+        activeMinorLows.push({ time: mBar.time, price: mBar.low });
+      }
+    }
+
+    // Causal 3L/3R major pivot confirmed pivotSpan bars ago
+    if (i >= pivotSpan * 2) {
+      const pIdx = i - pivotSpan;
+      const pBar = visibleCandles[pIdx];
+      let isPivotHigh = true;
+      let isPivotLow = true;
+      let strictHigh = false;
+      let strictLow = false;
+      for (let k = pIdx - pivotSpan; k <= pIdx + pivotSpan; k++) {
+        if (k === pIdx) continue;
+        if (visibleCandles[k].high > pBar.high) isPivotHigh = false;
+        if (visibleCandles[k].high < pBar.high) strictHigh = true;
+        if (visibleCandles[k].low < pBar.low) isPivotLow = false;
+        if (visibleCandles[k].low > pBar.low) strictLow = true;
+      }
+      if (isPivotHigh && strictHigh) {
+        activeSwingHighs.push({ time: pBar.time, price: pBar.high });
+      }
+      if (isPivotLow && strictLow) {
+        activeSwingLows.push({ time: pBar.time, price: pBar.low });
+      }
     }
 
     const c = visibleCandles[i];
@@ -405,22 +449,11 @@ export function extractLiquiditySweeps(
     const upperWick = c.high - Math.max(c.open, c.close);
     const lowerWick = Math.min(c.open, c.close) - c.low;
 
-    // Check swept Swing Highs (comes from below/equal, pierces high, closes below with >=35% wick)
-    let sweptHighPivot: { time: number; price: number } | null = null;
-    for (let s = activeSwingHighs.length - 1; s >= 0; s--) {
-      const sh = activeSwingHighs[s];
-      if (c.high > sh.price && c.open <= sh.price && c.close < sh.price) {
-        if (!sweptHighPivot || sh.price > sweptHighPivot.price) {
-          sweptHighPivot = sh;
-        }
-        activeSwingHighs.splice(s, 1);
-      } else if (c.high > sh.price) {
-        // Broken through without immediate rejection: consume resting liquidity
-        activeSwingHighs.splice(s, 1);
-      }
-    }
+    const sweptMajorHigh = consumeSweptHigh(activeSwingHighs, c);
+    const sweptMinorHigh = consumeSweptHigh(activeMinorHighs, c);
+
     if (
-      sweptHighPivot &&
+      sweptMajorHigh &&
       upperWick >= 0.35 * barRange &&
       !emittedKeys.has(`HIGH:${c.time}`)
     ) {
@@ -428,30 +461,34 @@ export function extractLiquiditySweeps(
         time: c.time,
         price: c.high,
         type: 'HIGH_SWEEP',
-        label: `BSL Sweep (${sweptHighPivot.price})`,
-        level: sweptHighPivot.price,
-        origin_time: sweptHighPivot.time,
+        label: `BSL Sweep (${sweptMajorHigh.price})`,
+        level: sweptMajorHigh.price,
+        origin_time: sweptMajorHigh.time,
         session: 'Swing',
+      });
+      emittedKeys.add(`HIGH:${c.time}`);
+    } else if (
+      sweptMinorHigh &&
+      upperWick >= 0.50 * barRange &&
+      !emittedKeys.has(`HIGH:${c.time}`)
+    ) {
+      sweeps.push({
+        time: c.time,
+        price: c.high,
+        type: 'HIGH_SWEEP',
+        label: `Minor BSL Sweep (${sweptMinorHigh.price})`,
+        level: sweptMinorHigh.price,
+        origin_time: sweptMinorHigh.time,
+        session: 'MinorSwing',
       });
       emittedKeys.add(`HIGH:${c.time}`);
     }
 
-    // Check swept Swing Lows (comes from above/equal, pierces low, closes above with >=35% wick)
-    let sweptLowPivot: { time: number; price: number } | null = null;
-    for (let s = activeSwingLows.length - 1; s >= 0; s--) {
-      const sl = activeSwingLows[s];
-      if (c.low < sl.price && c.open >= sl.price && c.close > sl.price) {
-        if (!sweptLowPivot || sl.price < sweptLowPivot.price) {
-          sweptLowPivot = sl;
-        }
-        activeSwingLows.splice(s, 1);
-      } else if (c.low < sl.price) {
-        // Broken through without immediate rejection: consume resting liquidity
-        activeSwingLows.splice(s, 1);
-      }
-    }
+    const sweptMajorLow = consumeSweptLow(activeSwingLows, c);
+    const sweptMinorLow = consumeSweptLow(activeMinorLows, c);
+
     if (
-      sweptLowPivot &&
+      sweptMajorLow &&
       lowerWick >= 0.35 * barRange &&
       !emittedKeys.has(`LOW:${c.time}`)
     ) {
@@ -459,10 +496,25 @@ export function extractLiquiditySweeps(
         time: c.time,
         price: c.low,
         type: 'LOW_SWEEP',
-        label: `SSL Sweep (${sweptLowPivot.price})`,
-        level: sweptLowPivot.price,
-        origin_time: sweptLowPivot.time,
+        label: `SSL Sweep (${sweptMajorLow.price})`,
+        level: sweptMajorLow.price,
+        origin_time: sweptMajorLow.time,
         session: 'Swing',
+      });
+      emittedKeys.add(`LOW:${c.time}`);
+    } else if (
+      sweptMinorLow &&
+      lowerWick >= 0.50 * barRange &&
+      !emittedKeys.has(`LOW:${c.time}`)
+    ) {
+      sweeps.push({
+        time: c.time,
+        price: c.low,
+        type: 'LOW_SWEEP',
+        label: `Minor SSL Sweep (${sweptMinorLow.price})`,
+        level: sweptMinorLow.price,
+        origin_time: sweptMinorLow.time,
+        session: 'MinorSwing',
       });
       emittedKeys.add(`LOW:${c.time}`);
     }

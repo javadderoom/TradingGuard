@@ -2162,6 +2162,34 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
        - **Co-Trade Scorecard & Ledger (`ScorecardPanel.tsx`)**: Dynamic comparative scorecard grouped into `ALL`, `BOT`, `HUMAN_PROPOSED`, and `HUMAN_EDITED_BOT` tabs (reporting Net PnL, Net R, Win Rate %, Profit Factor, Max Drawdown, and W/L/BE counts). Trade cards provide one-click `"Clone & Adjust"` (loading draggable handles onto chart), `"Delete"` (for human setups), `"Jump"`, and `"Feedback"`. In Blind Replay mode, open trades are anti-spoiler masked.
        - **Agentify Feedback Bridge (`AgentifyFeedbackPanel.tsx`)**: Captures forensic feedback cases (`MISSED_SETUP`, `BOT_TRADE_EDIT`, `VETO_DISAGREEMENT`, `NOTE`), stores them to `hitl/memory/visual_feedback_cases.json`, and automatically copies a ready-to-paste Antigravity alignment prompt directly to the clipboard.
 
+## 20. `SETUP-ARCH-015` — Gold NY Open One-Sided Trend Continuation Sweep & Causal 1L/1R Sweep Extraction
+
+### 20.1 `SETUP-ARCH-015` Execution Architecture (`hitl/backtest/fast_screener.py`)
+Added `detect_ny_trend_continuation(bars_5m, bars_1h, symbol="XAUUSD")` (`SETUP-ARCH-015`, ratified in `hitl/memory/setup_registry.json` and `hitl/memory/optimal_trade_management_policy.json` with `target_rr = 2.5`, `breakeven_rr = 1.5`) to capture strong one-directional Gold trend days during the dynamic DST New York session without exposing legacy setups to Winter hour-17 chop:
+1. **Dynamic DST Session Window**: Uses `session_clock.get_session_times_for_date()` and `get_broker_utc_offset_seconds()` so the active window tracks `ny_open_utc <= sig_utc <= nyse_open_utc + 3600` (`16:30–19:00 Tehran` in Winter; `15:30–18:00 Tehran` in Summer). Executed before the legacy `session_hour in (17, 18, 19)` ban *exclusively* for `SETUP-ARCH-015` on Gold, while preserving the legacy `BANNED_SESSION` gate for `-001/-012/-014` (whose empirical inclusion in Winter hour `17` degraded 2026 Gold baseline from `+0.98R` PF `1.02` down to `-13.01R` PF `0.82`).
+2. **One-Sided London Trend Establishment**: Derives Asian Range `[asian_low, asian_high]` (`>= $4.00` range) from `00:00 server` to `London Open UTC` (supplementing short 5M slices with `bars_1h` when needed) and requires a clean one-sided break past one Asian extreme (`>= $4.00`) without touching the opposite Asian boundary.
+3. **H1 EMA(50) Macro Alignment**: Last closed H1 bar close must align with H1 `EMA(50)` (`close < ema50` for `SHORT`, `close > ema50` for `LONG`).
+4. **Pullback Depth Gate (`>= 45%`)**: Counter-trend pullback before/into the NY trigger bar must retrace at least `45%` of the post-London excursion (`lon_h - lon_l`), filtering weak dead-cat bounces.
+5. **NY Stop-Hunt Trigger Bar**: Closed 5M bar with `range >= $2.00` sweeps the prior 6-bar high/low, prints `>= 25%` rejection wick, and closes in the outer `40%` in trend direction; SL = sweep wick extreme `+/- $1.50` (`$1.80 <= risk <= $20.00`).
+
+### 20.2 Empirical Multi-Year Validation & Honest Negative Controls
+Audited zero-lookahead via `evaluate_council_decision` (`$0.22` spread, `$0.10` commission per 0.01 lot, SL-first, `$20.00` max risk):
+- **Next-Bar Market Open (`$0.05` slippage, `2.5R / 1.5BE`)**:
+  - **2026 M1 (Jan–Nov 2026)**: `57 fills | 19W-30L-8BE | 33.3% WR | +16.85R Net | PF 1.56 | MaxDD 5.00R`
+  - **2025 H2 OOS (Jun–Dec 2025, M5 forward)**: `32 fills | 10W-16L-6BE | 31.2% WR | +8.60R Net | PF 1.54 | MaxDD 4.02R`
+  - **17-Month Combined**: `89 fills | 29W-46L-14BE | 32.6% WR | +25.45R Net | PF 1.55 | MaxDD 5.00R | t = +1.73`
+  - **Friction Stress (`$0.25` slippage)**: `+24.71R | PF 1.54`.
+- **30m Limit Order (`cur['close']`, as in `fast_screener.py` -> `screen_ict_session`)**:
+  - Production `screen_ict_session` audit on 2026 M1 full-day history (`[ny_open_utc .. nyse_open_utc + 60m]`): `58 fills | 18W-30L-10BE | 31.0% WR | +14.89R Net | PF 1.50 | MaxDD 5.95R`.
+  - On `2026-11-12` (`run_bot_scan`), `SETUP-ARCH-015` fires cleanly at `16:40` (signal bar `16:35` Tehran, `Entry 3929.66, SL 3947.00, TP 3886.31`) for `+2.49R / +$43.25` WIN.
+- **Evaluated & Rejected Pro-Trend Alternatives**:
+  - **Blind 1-Directional FVG Continuation**: Failed severely across all seasons (`37 fills | 2W-28L-7BE | 5.4% WR | -22.95R | PF 0.18`).
+  - **Midday Re-Anchor Sweep (`14:30`-style standalone)**: Negative out-of-sample in 2025 (`49 fills | -14.65R | PF 0.54`); gating by strong London displacement (`>= 25% ADR`) narrowed to `23` combined trades over 17 months (`+4.28R | PF 1.33 | t = +0.57`, negative in Winter `-0.52R` and Spring `-0.54R`)—insufficient for autonomous production deployment.
+
+### 20.3 Visual Sweep Detection Enhancement (`web_replayer/src/utils/coTraderLogic.ts`)
+Upgraded `extractLiquiditySweeps` with causal `1L/1R` minor pivot sweep tracking alongside `3L/3R` major pivots (`>= 50%` rejection wick requirement on minor pivots vs `>= 35%` on major pivots), enabling immediate visual detection of rapid midday raids (such as `2026-11-12 14:30 Tehran` at `3955.43` sweeping the `14:20` high `3954.71` with a `61%` upper wick).
+
+
 
 
 
