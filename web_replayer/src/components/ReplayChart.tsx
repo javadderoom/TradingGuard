@@ -39,6 +39,7 @@ import {
 } from '../chart/primitives';
 import {
   buildClusteredTradeMarkers,
+  type ChartClickContext,
   formatClockTick,
   getClusterWindowSeconds,
 } from '../utils/coTraderLogic';
@@ -67,7 +68,7 @@ export interface ReplayChartProps {
   showBreakers?: boolean;
   showSweeps?: boolean;
   showTrades?: boolean;
-  onSelectTime?: (time: number | null, price?: number | null) => void;
+  onSelectTime?: (time: number | null, price?: number | null, context?: ChartClickContext) => void;
 }
 
 export const ReplayChart: React.FC<ReplayChartProps> = ({
@@ -110,7 +111,9 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   const isDraggingRef = useRef<boolean>(false);
   const dragHandleRef = useRef<'entry' | 'sl' | 'tp' | null>(null);
   const draftTradeRef = useRef<DraftTrade | null>(null);
-  const onSelectTimeRef = useRef<((time: number | null, price?: number | null) => void) | undefined>(onSelectTime);
+  const onSelectTimeRef = useRef<
+    ((time: number | null, price?: number | null, context?: ChartClickContext) => void) | undefined
+  >(onSelectTime);
   const lastScaledSymbolRef = useRef<string>(symbol);
   const pendingSymbolFitRef = useRef<boolean>(true);
 
@@ -201,18 +204,41 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     forensicPrimitiveRef.current = boxPrim;
     positionBoxPrimitiveRef.current = posPrim;
 
-    // Click handler for bar & SMC element inspection
+    // Click handler for strict geometric hit-testing (SMC elements, trade markers, candles; never empty space)
     const clickHandler = (param: MouseEventParams<Time>) => {
-      if (param.time) {
-        const clickedPrice =
-          param.point && seriesRef.current
-            ? seriesRef.current.coordinateToPrice(param.point.y)
-            : null;
-        onSelectTimeRef.current?.(
-          Number(param.time),
-          clickedPrice !== null && !Number.isNaN(Number(clickedPrice)) ? Number(clickedPrice) : null
-        );
+      if (!param.time || !param.point || !seriesRef.current || !chartRef.current) {
+        onSelectTimeRef.current?.(null, null, {
+          pricePerPx: null,
+          barSpacingPx: null,
+          onBarColumn: false,
+        });
+        return;
       }
+
+      const clickedPriceRaw = seriesRef.current.coordinateToPrice(param.point.y);
+      const clickedPrice =
+        clickedPriceRaw !== null && !Number.isNaN(Number(clickedPriceRaw))
+          ? Number(clickedPriceRaw)
+          : null;
+
+      const pAtYOffset = seriesRef.current.coordinateToPrice(param.point.y + 10);
+      const pricePerPx =
+        clickedPrice !== null && pAtYOffset !== null && !Number.isNaN(Number(pAtYOffset))
+          ? Math.abs(clickedPrice - Number(pAtYOffset)) / 10
+          : null;
+
+      const timeScale = chartRef.current.timeScale();
+      const barSpacingPx = timeScale.options().barSpacing ?? null;
+      const barX = timeScale.timeToCoordinate(param.time);
+      const maxColDistPx = Math.max(10, (barSpacingPx ?? 8) * 0.65);
+      const onBarColumn =
+        barX !== null && Math.abs(param.point.x - Number(barX)) <= maxColDistPx;
+
+      onSelectTimeRef.current?.(Number(param.time), clickedPrice, {
+        pricePerPx,
+        barSpacingPx,
+        onBarColumn,
+      });
     };
     chart.subscribeClick(clickHandler);
 

@@ -871,11 +871,12 @@ export function findMatchingSmcElementsAtPoint(
   if (overlays.showSweeps !== false) {
     for (const sw of overlays.sweeps) {
       if (replayTo !== null && sw.time > replayTo) continue;
-      if (Math.abs(clickedTime - sw.time) <= tTol) {
+      const lineStart = Math.min(sw.origin_time ?? sw.time, sw.time);
+      if (clickedTime >= lineStart - tTol && clickedTime <= sw.time + tTol) {
         const hitWick =
           clickedPrice === null ||
-          Math.abs(clickedPrice - sw.price) <= pTol ||
-          (sw.level !== undefined && Math.abs(clickedPrice - sw.level) <= pTol * 0.6);
+          (sw.level !== undefined && Math.abs(clickedPrice - sw.level) <= pTol * 0.85) ||
+          (Math.abs(clickedTime - sw.time) <= tTol && Math.abs(clickedPrice - sw.price) <= pTol);
         if (hitWick) {
           hits.push({
             id: `SWEEP:${sw.type}:${sw.time}:${sw.price}`,
@@ -896,8 +897,8 @@ export function findMatchingSmcElementsAtPoint(
     for (const ar of overlays.asianRanges) {
       if (replayTo !== null && ar.start_time > replayTo) continue;
       if (clickedTime >= ar.start_time - tTol && clickedTime <= ar.end_time + tTol) {
-        const nearHigh = clickedPrice !== null && Math.abs(clickedPrice - ar.high) <= pTol * 0.55;
-        const nearLow = clickedPrice !== null && Math.abs(clickedPrice - ar.low) <= pTol * 0.55;
+        const nearHigh = clickedPrice !== null && Math.abs(clickedPrice - ar.high) <= pTol * 0.85;
+        const nearLow = clickedPrice !== null && Math.abs(clickedPrice - ar.low) <= pTol * 0.85;
         if (nearHigh || nearLow) {
           hits.push({
             id: `AR:${ar.date}:${ar.start_time}`,
@@ -915,6 +916,198 @@ export function findMatchingSmcElementsAtPoint(
   }
 
   return hits;
+}
+
+export interface ChartClickContext {
+  pricePerPx?: number | null;
+  barSpacingPx?: number | null;
+  onBarColumn?: boolean;
+}
+
+export type ChartClickTarget =
+  | { kind: 'SMC'; hits: SelectedSmcElement[]; inspectTime: number }
+  | { kind: 'TRADE'; hits: ReplayTrade[]; inspectTime: number }
+  | { kind: 'CANDLE'; time: number }
+  | { kind: 'EMPTY' };
+
+function getBarIntervalSeconds(candles: Candle[]): number {
+  if (candles.length < 2) return 300;
+  const deltas: number[] = [];
+  const limit = Math.min(candles.length - 1, 20);
+  for (let i = 0; i < limit; i++) {
+    const d = candles[i + 1].time - candles[i].time;
+    if (d > 0) deltas.push(d);
+  }
+  if (deltas.length === 0) return 300;
+  deltas.sort((a, b) => a - b);
+  return deltas[Math.floor(deltas.length / 2)];
+}
+
+function findClosestVisibleCandle(candles: Candle[], targetTime: number, replayTo: number | null): Candle | null {
+  let best: Candle | null = null;
+  let bestDist = Infinity;
+  for (const c of candles) {
+    if (replayTo !== null && c.time > replayTo) continue;
+    const d = Math.abs(c.time - targetTime);
+    if (d < bestDist) {
+      bestDist = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/**
+ * Resolves a pointer click at (clickedTime, clickedPrice) against drawn chart geometry only.
+ * Empty background space returns { kind: 'EMPTY' } so it never snaps to the time-aligned candle.
+ */
+export function resolveChartClickTarget(params: {
+  clickedTime: number | null;
+  clickedPrice: number | null;
+  candles: Candle[];
+  overlays: {
+    fvgs: FvgBox[];
+    breakers: BreakerBox[];
+    sweeps: SweepFlag[];
+    asianRanges: AsianRangeDay[];
+    showBoxes?: boolean;
+    showSweeps?: boolean;
+    showAsianRange?: boolean;
+  };
+  trades: ReplayTrade[];
+  showTrades?: boolean;
+  selectedTradeId?: string | null;
+  clusterWindowSec: number;
+  replayTo: number | null;
+  digits: number;
+  context?: ChartClickContext;
+}): ChartClickTarget {
+  const {
+    clickedTime,
+    clickedPrice,
+    candles,
+    overlays,
+    trades,
+    showTrades = true,
+    selectedTradeId = null,
+    clusterWindowSec,
+    replayTo,
+    digits,
+    context,
+  } = params;
+
+  if (clickedTime === null || clickedPrice === null || !Number.isFinite(clickedPrice)) {
+    return { kind: 'EMPTY' };
+  }
+
+  const barSec = getBarIntervalSeconds(candles);
+  const halfBarSec = Math.max(30, Math.round(barSec * 0.55));
+  const minPriceStep = digits >= 4 ? 0.0001 : 0.1;
+
+  // Fallback price-per-pixel estimate when invoked without live canvas metrics
+  let pxY = context?.pricePerPx ?? null;
+  if (pxY === null || !Number.isFinite(pxY) || pxY <= 0) {
+    let minLow = Infinity;
+    let maxHigh = -Infinity;
+    for (const c of candles) {
+      if (replayTo !== null && c.time > replayTo) continue;
+      if (c.low < minLow) minLow = c.low;
+      if (c.high > maxHigh) maxHigh = c.high;
+    }
+    const span = Number.isFinite(maxHigh - minLow) && maxHigh > minLow ? maxHigh - minLow : 10;
+    pxY = Math.max(span / 500, minPriceStep * 0.25);
+  }
+
+  const linePriceTol = Math.max(9 * pxY, minPriceStep);
+  const candlePricePad = Math.max(6 * pxY, minPriceStep * 0.5);
+  const markerReachY = Math.max(46 * pxY, linePriceTol * 2);
+
+  const pxPerSec =
+    context?.barSpacingPx && context.barSpacingPx > 0 ? context.barSpacingPx / barSec : 8 / barSec;
+  const secPerPx = 1 / Math.max(pxPerSec, 1e-6);
+  const smcTimePadSec = Math.max(halfBarSec, Math.round(6 * secPerPx));
+  const markerTimeTolSec = Math.max(barSec * 1.5, Math.round(36 * secPerPx));
+
+  const targetCandle = findClosestVisibleCandle(candles, clickedTime, replayTo);
+  const candleAligned =
+    targetCandle !== null &&
+    Math.abs(targetCandle.time - clickedTime) <= halfBarSec &&
+    context?.onBarColumn !== false;
+
+  // 1. Direct hit on rendered SMC elements (Breaker, FVG, Sweep line, Asian High/Low line)
+  const smcHits = findMatchingSmcElementsAtPoint(
+    clickedTime,
+    clickedPrice,
+    overlays,
+    smcTimePadSec,
+    linePriceTol,
+    replayTo
+  );
+  if (smcHits.length > 0) {
+    return {
+      kind: 'SMC',
+      hits: smcHits,
+      inspectTime: candleAligned && targetCandle ? targetCandle.time : smcHits[0].time,
+    };
+  }
+
+  // 2. Direct hit on rendered Trade Markers (clustered aboveBar / belowBar pills)
+  if (showTrades && trades.length > 0 && context?.onBarColumn !== false) {
+    const markers = buildClusteredTradeMarkers(trades, replayTo, clusterWindowSec, selectedTradeId);
+    const tradeById = new Map<string, ReplayTrade>();
+    for (const t of trades) {
+      if (replayTo !== null && t.decision_time > replayTo) continue;
+      tradeById.set(t.trade_id, maskBlindReplayTrade(t, replayTo));
+    }
+
+    const markerEdgePad = Math.max(2 * pxY, minPriceStep * 0.25);
+    let bestMarker: { marker: ClusteredMarkerDescriptor; distSec: number } | null = null;
+    for (const m of markers) {
+      const distSec = Math.abs(clickedTime - m.time);
+      if (distSec > markerTimeTolSec) continue;
+
+      const anchorBar = findClosestVisibleCandle(candles, m.time, replayTo);
+      if (!anchorBar) continue;
+
+      const inVerticalBand =
+        m.position === 'aboveBar'
+          ? clickedPrice >= anchorBar.high - markerEdgePad && clickedPrice <= anchorBar.high + markerReachY
+          : clickedPrice <= anchorBar.low + markerEdgePad && clickedPrice >= anchorBar.low - markerReachY;
+
+      if (inVerticalBand && (!bestMarker || distSec < bestMarker.distSec)) {
+        bestMarker = { marker: m, distSec };
+      }
+    }
+
+    if (bestMarker) {
+      const hitTrades = bestMarker.marker.tradeIds
+        .map((id) => tradeById.get(id))
+        .filter((t): t is ReplayTrade => t !== undefined);
+      if (hitTrades.length > 0) {
+        return {
+          kind: 'TRADE',
+          hits: hitTrades,
+          inspectTime: bestMarker.marker.time,
+        };
+      }
+    }
+  }
+
+  // 3. Direct hit on Candlestick body / wick ([low, high] +/- small click pad)
+  if (
+    candleAligned &&
+    targetCandle &&
+    clickedPrice >= targetCandle.low - candlePricePad &&
+    clickedPrice <= targetCandle.high + candlePricePad
+  ) {
+    return {
+      kind: 'CANDLE',
+      time: targetCandle.time,
+    };
+  }
+
+  // 4. Empty space: do not snap to any candle
+  return { kind: 'EMPTY' };
 }
 
 export function getQuickQuestionsForSmcElement(kind: SmcElementKind | 'TRADE' | 'BAR'): string[] {

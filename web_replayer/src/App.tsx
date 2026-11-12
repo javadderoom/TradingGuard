@@ -62,18 +62,19 @@ import type {
   TradeDirection,
 } from './types/replay';
 import {
+  type ChartClickContext,
   checkRiskLimitUSD,
   computeTradeRR,
   dedupeBreakerBoxes,
   dedupeFvgBoxes,
   extractLiquiditySweeps,
-  findMatchingSmcElementsAtPoint,
   findMatchingTradesNearTime,
   formatClockTick,
   getClusterWindowSeconds,
   getLatestRangeForSymbol,
   loadWorkbenchPrefs,
   maskBlindReplayTrade,
+  resolveChartClickTarget,
   resolveDateRangeForSymbol,
   saveWorkbenchPrefs,
 } from './utils/coTraderLogic';
@@ -440,66 +441,73 @@ export function App() {
     if (!isDrawerOpen) setIsDrawerOpen(true);
   };
 
-  const handleSelectChartTime = (clickedTime: number | null, clickedPrice?: number | null) => {
-    if (clickedTime === null) return;
-    setInspectedTime(clickedTime);
-    if (!isDrawerOpen) setIsDrawerOpen(true);
-
-    // 1. Check direct (time, price) hit on SMC Elements (Breaker, FVG, Sweep, Asian Range)
-    let minLow = Infinity;
-    let maxHigh = -Infinity;
-    for (const c of candles) {
-      if (c.low < minLow) minLow = c.low;
-      if (c.high > maxHigh) maxHigh = c.high;
-    }
-    const priceSpan = Number.isFinite(maxHigh - minLow) && maxHigh > minLow ? maxHigh - minLow : 10;
-    const priceTol = Math.max(priceSpan * 0.045, digits >= 4 ? 0.0008 : 1.5);
+  const handleSelectChartTime = (
+    clickedTime: number | null,
+    clickedPrice?: number | null,
+    context?: ChartClickContext
+  ) => {
     const cutoff = blindReplay ? replayCursor : null;
+    const arList = Array.isArray(asianRanges) ? asianRanges : Object.values(asianRanges);
 
-    if (clickedPrice !== undefined && clickedPrice !== null) {
-      const arList = Array.isArray(asianRanges) ? asianRanges : Object.values(asianRanges);
-      const smcHits = findMatchingSmcElementsAtPoint(
-        clickedTime,
-        clickedPrice,
-        {
-          fvgs,
-          breakers,
-          sweeps,
-          asianRanges: arList,
-          showBoxes,
-          showSweeps,
-          showAsianRange,
-        },
-        Math.max(300, Math.floor(clusterWindowSec / 2)),
-        priceTol,
-        cutoff
-      );
-      if (smcHits.length > 0) {
-        const curIdx = selectedSmcElement
-          ? smcHits.findIndex((h) => h.id === selectedSmcElement.id)
-          : -1;
-        const nextEl = curIdx >= 0 ? smcHits[(curIdx + 1) % smcHits.length] : smcHits[0];
-        setSmcClusterCandidates(smcHits);
-        setSelectedSmcElement(nextEl);
-        setSelectedTradeId(null);
-        return;
-      }
+    const hit = resolveChartClickTarget({
+      clickedTime,
+      clickedPrice: clickedPrice ?? null,
+      candles,
+      overlays: {
+        fvgs,
+        breakers,
+        sweeps,
+        asianRanges: arList,
+        showBoxes,
+        showSweeps,
+        showAsianRange,
+      },
+      trades: allTrades,
+      showTrades,
+      selectedTradeId,
+      clusterWindowSec,
+      replayTo: cutoff,
+      digits,
+      context,
+    });
+
+    if (hit.kind === 'SMC') {
+      const curIdx = selectedSmcElement
+        ? hit.hits.findIndex((h) => h.id === selectedSmcElement.id)
+        : -1;
+      const nextEl = curIdx >= 0 ? hit.hits[(curIdx + 1) % hit.hits.length] : hit.hits[0];
+      setSmcClusterCandidates(hit.hits);
+      setSelectedSmcElement(nextEl);
+      setSelectedTradeId(null);
+      setInspectedTime(hit.inspectTime);
+      if (!isDrawerOpen) setIsDrawerOpen(true);
+      return;
     }
 
-    // 2. Otherwise check nearby Bot / Human Trades
-    const nearby = findMatchingTradesNearTime(
-      allTrades,
-      clickedTime,
-      Math.max(300, Math.floor(clusterWindowSec / 2)),
-      cutoff
-    );
-    if (nearby.length > 0) {
-      const curIdx = nearby.findIndex((t) => t.trade_id === selectedTradeId);
-      const next = curIdx >= 0 ? nearby[(curIdx + 1) % nearby.length] : nearby[0];
+    if (hit.kind === 'TRADE') {
+      const curIdx = hit.hits.findIndex((t) => t.trade_id === selectedTradeId);
+      const next = curIdx >= 0 ? hit.hits[(curIdx + 1) % hit.hits.length] : hit.hits[0];
       setSelectedTradeId(next.trade_id);
       setSelectedSmcElement(null);
       setSmcClusterCandidates([]);
+      setInspectedTime(hit.inspectTime);
+      if (!isDrawerOpen) setIsDrawerOpen(true);
+      return;
     }
+
+    if (hit.kind === 'CANDLE') {
+      setSelectedTradeId(null);
+      setSelectedSmcElement(null);
+      setSmcClusterCandidates([]);
+      setInspectedTime(hit.time);
+      if (!isDrawerOpen) setIsDrawerOpen(true);
+      return;
+    }
+
+    // Empty background click: clear active highlights without selecting a candle or opening the drawer
+    setSelectedTradeId(null);
+    setSelectedSmcElement(null);
+    setSmcClusterCandidates([]);
   };
 
   // Keep candles ref updated so playback interval does not thrash or reset when candles change

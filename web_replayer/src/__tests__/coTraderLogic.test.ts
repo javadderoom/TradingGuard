@@ -23,6 +23,7 @@ import {
   findMatchingSmcElementsAtPoint,
   getQuickQuestionsForSmcElement,
   buildSmcElementContextMarkdown,
+  resolveChartClickTarget,
 } from '../utils/coTraderLogic';
 import type { BreakerBox, Candle, CatalogSymbol, FvgBox, ReplayTrade, AsianRangeDay } from '../types/replay';
 
@@ -596,5 +597,86 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     expect(md).toContain('BEARISH_BREAKER');
     expect(md).toContain('3977.00 – 3982.00');
     expect(md).toContain(questions[0]);
+  });
+
+  it('ignores empty chart background clicks and only selects candles, markers, or SMC objects directly under the cursor', () => {
+    const testCandles: Candle[] = [
+      { time: 1794471000, open: 3950, high: 3955, low: 3948, close: 3953 },
+      { time: 1794471300, open: 3953, high: 3958, low: 3951, close: 3956 },
+      { time: 1794471600, open: 3956, high: 3960, low: 3952, close: 3954 },
+    ];
+    const brk: BreakerBox = {
+      top: 3982.0,
+      bottom: 3977.0,
+      t_start: 1794471000,
+      t_end: 1794471600,
+      type: 'BEARISH_BREAKER',
+    };
+    const tradeAtBar2: ReplayTrade = {
+      trade_id: 'BOT-T1',
+      symbol: 'XAUUSD_o',
+      origin: 'BOT',
+      direction: 'LONG',
+      decision_time: 1794471300,
+      fill_time: 1794471300,
+      exit_time: 1794471600,
+      entry: 3952.0,
+      sl: 3946.0,
+      tp: 3964.0,
+      status: 'WIN',
+      realized_pnl_usd: 12.0,
+      rr_realized: 2.0,
+    };
+
+    const common = {
+      candles: testCandles,
+      overlays: { fvgs: [], breakers: [brk], sweeps: [], asianRanges: [], showBoxes: true, showSweeps: true, showAsianRange: true },
+      trades: [tradeAtBar2],
+      showTrades: true,
+      selectedTradeId: null,
+      clusterWindowSec: 1800,
+      replayTo: null,
+      digits: 2,
+      context: { pricePerPx: 0.25, barSpacingPx: 10, onBarColumn: true },
+    };
+
+    // 1. Clicking empty space far ABOVE bar 1 (price 4010 vs bar high 3955, breaker 3977-3982) -> EMPTY
+    expect(
+      resolveChartClickTarget({ ...common, clickedTime: 1794471000, clickedPrice: 4010.0 })
+    ).toEqual({ kind: 'EMPTY' });
+
+    // 2. Clicking empty space far BELOW trade bar 2 (price 3920 vs belowBar marker region ~3939.5..3951) -> EMPTY (must NOT trigger trade or candle)
+    expect(
+      resolveChartClickTarget({ ...common, clickedTime: 1794471300, clickedPrice: 3920.0 })
+    ).toEqual({ kind: 'EMPTY' });
+
+    // 3. Clicking empty right-margin (clickedTime null) or off-column gap (onBarColumn false) -> EMPTY
+    expect(
+      resolveChartClickTarget({ ...common, clickedTime: null, clickedPrice: 3953.0 })
+    ).toEqual({ kind: 'EMPTY' });
+    expect(
+      resolveChartClickTarget({
+        ...common,
+        clickedTime: 1794471000,
+        clickedPrice: 3952.0,
+        context: { pricePerPx: 0.25, barSpacingPx: 10, onBarColumn: false },
+      })
+    ).toEqual({ kind: 'EMPTY' });
+
+    // 4. Clicking directly on candlestick 1 body/wick -> CANDLE
+    expect(
+      resolveChartClickTarget({ ...common, clickedTime: 1794471000, clickedPrice: 3952.5 })
+    ).toEqual({ kind: 'CANDLE', time: 1794471000 });
+
+    // 5. Clicking on belowBar trade marker pill just beneath bar 2 low (3951 - 6 = 3945) -> TRADE
+    const tradeHit = resolveChartClickTarget({ ...common, clickedTime: 1794471300, clickedPrice: 3945.0 });
+    expect(tradeHit.kind).toBe('TRADE');
+    if (tradeHit.kind === 'TRADE') {
+      expect(tradeHit.hits.map((t) => t.trade_id)).toEqual(['BOT-T1']);
+    }
+
+    // 6. Clicking directly inside the Breaker box at 3979.5 -> SMC
+    const smcHit = resolveChartClickTarget({ ...common, clickedTime: 1794471300, clickedPrice: 3979.5 });
+    expect(smcHit.kind).toBe('SMC');
   });
 });
