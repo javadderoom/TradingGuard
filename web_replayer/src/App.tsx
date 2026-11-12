@@ -63,11 +63,15 @@ import type {
 import {
   checkRiskLimitUSD,
   computeTradeRR,
+  dedupeBreakerBoxes,
+  dedupeFvgBoxes,
   extractLiquiditySweeps,
   formatClockTick,
   getLatestRangeForSymbol,
+  loadWorkbenchPrefs,
   maskBlindReplayTrade,
   resolveDateRangeForSymbol,
+  saveWorkbenchPrefs,
 } from './utils/coTraderLogic';
 
 const DEFAULT_TIMEFRAMES: Timeframe[] = ['1M', '5M', '15M', '1H', '4H', '1D'];
@@ -81,21 +85,23 @@ export function App() {
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [isLoadingCandles, setIsLoadingCandles] = useState<boolean>(false);
 
+  const [initialPrefs] = useState(() => loadWorkbenchPrefs());
+
   // Timeframe & Clocks
-  const [timeframe, setTimeframe] = useState<Timeframe>('5M');
-  const [clockMode, setClockMode] = useState<ClockMode>('tehran');
-  const [engineClockMode, setEngineClockMode] = useState<EngineClockMode>('true_tehran');
+  const [timeframe, setTimeframe] = useState<Timeframe>(initialPrefs.timeframe);
+  const [clockMode, setClockMode] = useState<ClockMode>(initialPrefs.clockMode);
+  const [engineClockMode, setEngineClockMode] = useState<EngineClockMode>(initialPrefs.engineClockMode);
 
   // Date Range (Defaults to Nov 10 - Nov 12, 2026 where verified test data exists)
   const [startDateStr, setStartDateStr] = useState<string>('2026-11-10');
   const [endDateStr, setEndDateStr] = useState<string>('2026-11-12');
 
   // Visibility Toggles
-  const [showKillzones, setShowKillzones] = useState<boolean>(true);
-  const [showAsianRange, setShowAsianRange] = useState<boolean>(true);
-  const [showBoxes, setShowBoxes] = useState<boolean>(true);
-  const [showSweeps, setShowSweeps] = useState<boolean>(true);
-  const [showTrades, setShowTrades] = useState<boolean>(true);
+  const [showKillzones, setShowKillzones] = useState<boolean>(initialPrefs.showKillzones);
+  const [showAsianRange, setShowAsianRange] = useState<boolean>(initialPrefs.showAsianRange);
+  const [showBoxes, setShowBoxes] = useState<boolean>(initialPrefs.showBoxes);
+  const [showSweeps, setShowSweeps] = useState<boolean>(initialPrefs.showSweeps);
+  const [showTrades, setShowTrades] = useState<boolean>(initialPrefs.showTrades);
 
   // Replay Transport & Blind Replay State
   const [blindReplay, setBlindReplay] = useState<boolean>(false);
@@ -106,7 +112,31 @@ export function App() {
   // Inspected Bar & Workbench Tabs
   const [inspectedTime, setInspectedTime] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'bot' | 'scorecard' | 'agentify'>('bot');
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(initialPrefs.isDrawerOpen);
+
+  useEffect(() => {
+    saveWorkbenchPrefs({
+      showKillzones,
+      showAsianRange,
+      showBoxes,
+      showSweeps,
+      showTrades,
+      clockMode,
+      engineClockMode,
+      timeframe,
+      isDrawerOpen,
+    });
+  }, [
+    showKillzones,
+    showAsianRange,
+    showBoxes,
+    showSweeps,
+    showTrades,
+    clockMode,
+    engineClockMode,
+    timeframe,
+    isDrawerOpen,
+  ]);
 
   // Co-Trading & Position Box State
   const [draftTrade, setDraftTrade] = useState<DraftTrade | null>(null);
@@ -235,8 +265,8 @@ export function App() {
         if (d.fvg_box) fvgList.push(d.fvg_box);
         if (d.breaker_box) brkList.push(d.breaker_box);
       }
-      setFvgs(fvgList);
-      setBreakers(brkList);
+      setFvgs(dedupeFvgBoxes(fvgList));
+      setBreakers(dedupeBreakerBoxes(brkList));
     } catch {
       if (isCancelled?.()) return;
       setKillzones([]);

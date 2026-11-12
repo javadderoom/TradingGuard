@@ -201,7 +201,45 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
       const timeScale = chart.timeScale();
       const ctx = scope.context;
-      const { width } = scope.mediaSize;
+      const { width, height } = scope.mediaSize;
+
+      interface LabelRect {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+      }
+      const occupiedLabels: LabelRect[] = [];
+
+      const collides = (r: LabelRect): boolean =>
+        occupiedLabels.some(
+          (o) => r.x1 < o.x2 + 2 && r.x2 + 2 > o.x1 && r.y1 < o.y2 + 2 && r.y2 + 2 > o.y1
+        );
+
+      const drawZonePill = (
+        text: string,
+        x: number,
+        y: number,
+        textColor: string,
+        borderColor: string
+      ): void => {
+        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        const pillW = Math.ceil(ctx.measureText(text).width) + 8;
+        const pillH = 13;
+        const pillX = Math.max(2, Math.min(width - pillW - 2, x));
+        const pillY = Math.max(2, Math.min(height - pillH - 2, y));
+        const rect: LabelRect = { x1: pillX, y1: pillY, x2: pillX + pillW, y2: pillY + pillH };
+        if (collides(rect)) return;
+        occupiedLabels.push(rect);
+
+        ctx.fillStyle = 'rgba(19, 23, 34, 0.88)';
+        ctx.fillRect(pillX, pillY, pillW, pillH);
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pillX, pillY, pillW, pillH);
+        ctx.fillStyle = textColor;
+        ctx.fillText(text, pillX + 4, pillY + 9.5);
+      };
 
       // 1. Asian Range High/Low lines
       for (const ar of asianRanges) {
@@ -278,20 +316,26 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         if (renderRight <= renderLeft) continue;
 
         const boxTop = Math.min(Number(yTop), Number(yBottom));
-        const boxHeight = Math.max(2, Math.abs(Number(yBottom) - Number(yTop)));
-        const boxWidth = Math.max(4, renderRight - renderLeft);
+        const boxHeight = Math.max(3, Math.abs(Number(yBottom) - Number(yTop)));
+        const boxWidth = Math.max(6, renderRight - renderLeft);
 
         const isBull = fvg.dir === 'BULLISH';
+        const strokeColor = isBull ? 'rgba(38, 166, 154, 0.72)' : 'rgba(239, 83, 80, 0.72)';
+        const textColor = isBull ? '#4dd0e1' : '#ff8a80';
+
         ctx.save();
-        ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.18)' : 'rgba(239, 83, 80, 0.18)';
-        ctx.strokeStyle = isBull ? 'rgba(38, 166, 154, 0.7)' : 'rgba(239, 83, 80, 0.7)';
+        ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.12)' : 'rgba(239, 83, 80, 0.12)';
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 1;
+        ctx.setLineDash([4, 3]);
         ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
         ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
+        ctx.setLineDash([]);
 
-        ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.95)' : 'rgba(239, 83, 80, 0.95)';
-        ctx.font = '9px sans-serif';
-        ctx.fillText(`FVG ${fvg.dir[0]}`, renderLeft + 4, boxTop + Math.min(boxHeight - 2, 11));
+        if (boxWidth >= 18) {
+          const labelY = boxTop >= 18 ? boxTop - 15 : boxTop + 2;
+          drawZonePill(isBull ? '+FVG' : '-FVG', renderLeft, labelY, textColor, strokeColor);
+        }
         ctx.restore();
       }
 
@@ -317,19 +361,23 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         if (renderRight <= renderLeft) continue;
 
         const boxTop = Math.min(Number(yTop), Number(yBottom));
-        const boxHeight = Math.max(2, Math.abs(Number(yBottom) - Number(yTop)));
-        const boxWidth = Math.max(4, renderRight - renderLeft);
+        const boxHeight = Math.max(3, Math.abs(Number(yBottom) - Number(yTop)));
+        const boxWidth = Math.max(6, renderRight - renderLeft);
+
+        const isBull = brk.type.toUpperCase().includes('BULLISH');
+        const brkStroke = 'rgba(206, 147, 216, 0.85)';
 
         ctx.save();
-        ctx.fillStyle = 'rgba(156, 39, 176, 0.18)';
-        ctx.strokeStyle = 'rgba(156, 39, 176, 0.75)';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = 'rgba(171, 71, 188, 0.14)';
+        ctx.strokeStyle = brkStroke;
+        ctx.lineWidth = 1.25;
         ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
         ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
 
-        ctx.fillStyle = 'rgba(206, 147, 216, 0.95)';
-        ctx.font = '9px sans-serif';
-        ctx.fillText('Breaker', renderLeft + 4, boxTop + Math.min(boxHeight - 2, 11));
+        if (boxWidth >= 18) {
+          const labelY = boxTop >= 18 ? boxTop - 15 : boxTop + 2;
+          drawZonePill(isBull ? '+BRK' : '-BRK', renderLeft, labelY, '#e1bee7', brkStroke);
+        }
         ctx.restore();
       }
 
@@ -362,21 +410,34 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         ctx.fill();
         ctx.stroke();
 
-        // Badge label
+        // Badge label with collision avoidance
         ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        const labelText = isHighSweep ? '🚩 High Sweep' : '🚩 Low Sweep';
-        const badgeW = ctx.measureText(labelText).width + 8;
+        const labelText = isHighSweep ? 'High Sweep' : 'Low Sweep';
+        const badgeW = Math.ceil(ctx.measureText(labelText).width) + 10;
         const badgeH = 15;
         const badgeX = Math.max(2, Math.min(width - badgeW - 2, x - badgeW / 2));
-        const badgeY = isHighSweep ? Number(y) - 10 - badgeH : Number(y) + 10;
+        let badgeY = isHighSweep ? Number(y) - 10 - badgeH : Number(y) + 10;
+        const step = isHighSweep ? -(badgeH + 3) : badgeH + 3;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const candidate: LabelRect = {
+            x1: badgeX,
+            y1: badgeY,
+            x2: badgeX + badgeW,
+            y2: badgeY + badgeH,
+          };
+          if (!collides(candidate)) {
+            occupiedLabels.push(candidate);
+            ctx.fillStyle = isHighSweep ? 'rgba(255, 179, 0, 0.92)' : 'rgba(255, 167, 38, 0.92)';
+            ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
 
-        ctx.fillStyle = isHighSweep ? 'rgba(255, 179, 0, 0.9)' : 'rgba(255, 167, 38, 0.9)';
-        ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
-
-        ctx.fillStyle = '#131722';
-        ctx.fillText(labelText, badgeX + 4, badgeY + 11);
+            ctx.fillStyle = '#131722';
+            ctx.fillText(labelText, badgeX + 5, badgeY + 11);
+            break;
+          }
+          badgeY += step;
+        }
         ctx.restore();
       }
     });

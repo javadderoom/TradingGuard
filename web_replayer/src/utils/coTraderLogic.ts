@@ -9,12 +9,16 @@
 
 import type {
   AsianRangeDay,
+  BreakerBox,
   Candle,
   CatalogSymbol,
   ClockMode,
+  EngineClockMode,
+  FvgBox,
   ReplayTrade,
   Scorecard,
   SweepFlag,
+  Timeframe,
   TradeDirection,
 } from '../types/replay';
 
@@ -381,4 +385,106 @@ export function resolveDateRangeForSymbol(
   return latest
     ? { start: latest.start, end: latest.end, adjusted: true }
     : { start: currentStart, end: currentEnd, adjusted: false };
+}
+
+export interface WorkbenchPrefs {
+  showKillzones: boolean;
+  showAsianRange: boolean;
+  showBoxes: boolean;
+  showSweeps: boolean;
+  showTrades: boolean;
+  clockMode: ClockMode;
+  engineClockMode: EngineClockMode;
+  timeframe: Timeframe;
+  isDrawerOpen: boolean;
+}
+
+export const WORKBENCH_PREFS_KEY = 'tradingguard_replayer_prefs_v1';
+
+export const DEFAULT_WORKBENCH_PREFS: WorkbenchPrefs = {
+  showKillzones: true,
+  showAsianRange: true,
+  showBoxes: true,
+  showSweeps: true,
+  showTrades: true,
+  clockMode: 'tehran',
+  engineClockMode: 'true_tehran',
+  timeframe: '5M',
+  isDrawerOpen: true,
+};
+
+export function loadWorkbenchPrefs(): WorkbenchPrefs {
+  try {
+    const raw =
+      typeof globalThis !== 'undefined' && 'localStorage' in globalThis
+        ? globalThis.localStorage.getItem(WORKBENCH_PREFS_KEY)
+        : null;
+    if (!raw) return { ...DEFAULT_WORKBENCH_PREFS };
+    const parsed = JSON.parse(raw) as Partial<WorkbenchPrefs>;
+    return {
+      showKillzones: typeof parsed.showKillzones === 'boolean' ? parsed.showKillzones : DEFAULT_WORKBENCH_PREFS.showKillzones,
+      showAsianRange: typeof parsed.showAsianRange === 'boolean' ? parsed.showAsianRange : DEFAULT_WORKBENCH_PREFS.showAsianRange,
+      showBoxes: typeof parsed.showBoxes === 'boolean' ? parsed.showBoxes : DEFAULT_WORKBENCH_PREFS.showBoxes,
+      showSweeps: typeof parsed.showSweeps === 'boolean' ? parsed.showSweeps : DEFAULT_WORKBENCH_PREFS.showSweeps,
+      showTrades: typeof parsed.showTrades === 'boolean' ? parsed.showTrades : DEFAULT_WORKBENCH_PREFS.showTrades,
+      clockMode:
+        parsed.clockMode === 'tehran' || parsed.clockMode === 'utc' || parsed.clockMode === 'server'
+          ? parsed.clockMode
+          : DEFAULT_WORKBENCH_PREFS.clockMode,
+      engineClockMode:
+        parsed.engineClockMode === 'true_tehran' || parsed.engineClockMode === 'live_legacy'
+          ? parsed.engineClockMode
+          : DEFAULT_WORKBENCH_PREFS.engineClockMode,
+      timeframe:
+        parsed.timeframe === '1M' ||
+        parsed.timeframe === '5M' ||
+        parsed.timeframe === '15M' ||
+        parsed.timeframe === '1H' ||
+        parsed.timeframe === '4H' ||
+        parsed.timeframe === '1D'
+          ? parsed.timeframe
+          : DEFAULT_WORKBENCH_PREFS.timeframe,
+      isDrawerOpen: typeof parsed.isDrawerOpen === 'boolean' ? parsed.isDrawerOpen : DEFAULT_WORKBENCH_PREFS.isDrawerOpen,
+    };
+  } catch {
+    return { ...DEFAULT_WORKBENCH_PREFS };
+  }
+}
+
+export function saveWorkbenchPrefs(prefs: WorkbenchPrefs): void {
+  try {
+    if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
+      globalThis.localStorage.setItem(WORKBENCH_PREFS_KEY, JSON.stringify(prefs));
+    }
+  } catch {
+    // Ignore storage quota / disabled storage errors
+  }
+}
+
+export function dedupeFvgBoxes(boxes: FvgBox[]): FvgBox[] {
+  const byKey = new Map<string, FvgBox>();
+  for (const box of boxes) {
+    const key = `${box.dir}:${box.top}:${box.bottom}:${box.t_start}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { ...box });
+    } else if (box.t_end > existing.t_end) {
+      existing.t_end = box.t_end;
+    }
+  }
+  return Array.from(byKey.values());
+}
+
+export function dedupeBreakerBoxes(boxes: BreakerBox[]): BreakerBox[] {
+  const byKey = new Map<string, BreakerBox>();
+  for (const box of boxes) {
+    const key = `${box.type}:${box.top}:${box.bottom}:${box.t_start}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { ...box });
+    } else if (box.t_end > existing.t_end) {
+      existing.t_end = box.t_end;
+    }
+  }
+  return Array.from(byKey.values());
 }

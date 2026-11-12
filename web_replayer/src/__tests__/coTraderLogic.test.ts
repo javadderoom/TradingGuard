@@ -12,8 +12,13 @@ import {
   extractLiquiditySweeps,
   getLatestRangeForSymbol,
   resolveDateRangeForSymbol,
+  DEFAULT_WORKBENCH_PREFS,
+  loadWorkbenchPrefs,
+  saveWorkbenchPrefs,
+  dedupeFvgBoxes,
+  dedupeBreakerBoxes,
 } from '../utils/coTraderLogic';
-import type { Candle, CatalogSymbol, ReplayTrade, AsianRangeDay } from '../types/replay';
+import type { BreakerBox, Candle, CatalogSymbol, FvgBox, ReplayTrade, AsianRangeDay } from '../types/replay';
 
 describe('coTraderLogic - Dynamic Seasonal Session Clock', () => {
   // Winter: Jan 15, 2026, 14:00:00 server time
@@ -379,5 +384,51 @@ describe('coTraderLogic - Symbol Cached Date Range Resolution', () => {
   it('clamps getLatestRangeForSymbol cleanly against min_date', () => {
     const shortSym: CatalogSymbol = { ...cableSym, min_date: '2026-11-03', max_date: '2026-11-04' };
     expect(getLatestRangeForSymbol(shortSym, 7)).toEqual({ start: '2026-11-03', end: '2026-11-04' });
+  });
+});
+
+describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('persists and restores overlay toggles via localStorage cleanly', () => {
+    const store: Record<string, string> = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store[k] ?? null,
+      setItem: (k: string, v: string) => {
+        store[k] = v;
+      },
+    });
+
+    const custom = {
+      ...DEFAULT_WORKBENCH_PREFS,
+      showKillzones: false,
+      showBoxes: false,
+      showSweeps: true,
+      clockMode: 'utc' as const,
+    };
+    saveWorkbenchPrefs(custom);
+    const loaded = loadWorkbenchPrefs();
+    expect(loaded).toEqual(custom);
+  });
+
+  it('deduplicates repeated per-bar FVG and Breaker zones while preserving max t_end', () => {
+    const fvgs: FvgBox[] = [
+      { top: 4000, bottom: 3995, t_start: 1000, t_end: 1300, dir: 'BEARISH' },
+      { top: 4000, bottom: 3995, t_start: 1000, t_end: 1600, dir: 'BEARISH' },
+      { top: 4000, bottom: 3995, t_start: 1000, t_end: 1900, dir: 'BEARISH' },
+    ];
+    const dedupedFvg = dedupeFvgBoxes(fvgs);
+    expect(dedupedFvg).toHaveLength(1);
+    expect(dedupedFvg[0].t_end).toBe(1900);
+
+    const brks: BreakerBox[] = [
+      { top: 3980, bottom: 3975, t_start: 2000, t_end: 2300, type: 'BEARISH_BREAKER' },
+      { top: 3980, bottom: 3975, t_start: 2000, t_end: 2600, type: 'BEARISH_BREAKER' },
+    ];
+    const dedupedBrk = dedupeBreakerBoxes(brks);
+    expect(dedupedBrk).toHaveLength(1);
+    expect(dedupedBrk[0].t_end).toBe(2600);
   });
 });
