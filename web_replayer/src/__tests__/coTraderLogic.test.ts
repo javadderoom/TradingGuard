@@ -8,8 +8,9 @@ import {
   checkRiskLimitUSD,
   maskBlindReplayTrade,
   computeReplayScorecard,
+  extractLiquiditySweeps,
 } from '../utils/coTraderLogic';
-import type { ReplayTrade } from '../types/replay';
+import type { Candle, ReplayTrade, AsianRangeDay } from '../types/replay';
 
 describe('coTraderLogic - Dynamic Seasonal Session Clock', () => {
   // Winter: Jan 15, 2026, 14:00:00 server time
@@ -196,5 +197,127 @@ describe('coTraderLogic - Anti-Spoiler Blind Replay Filter', () => {
     expect(cardAt2000.total_trades).toBe(2);
     expect(cardAt2000.wins).toBe(2);
     expect(cardAt2000.net_pnl_usd).toBe(45.0);
+  });
+
+  it('evaluates max drawdown strictly by cash exit_time sequence rather than entry order', () => {
+    // Trade A: entered at 1000, but held until 5000, WIN +$100
+    const tradeA: ReplayTrade = {
+      trade_id: 'TR-A',
+      symbol: 'XAUUSD_o',
+      origin: 'BOT',
+      direction: 'LONG',
+      decision_time: 1000,
+      fill_time: 1050,
+      exit_time: 5000,
+      entry: 2680.0,
+      sl: 2670.0,
+      tp: 2710.0,
+      status: 'WIN',
+      realized_pnl_usd: 100.0,
+      rr_realized: 3.0,
+    };
+
+    // Trade B: entered later at 2000, exited earlier at 2500, LOSS -$40
+    const tradeB: ReplayTrade = {
+      trade_id: 'TR-B',
+      symbol: 'XAUUSD_o',
+      origin: 'HUMAN_PROPOSED',
+      direction: 'SHORT',
+      decision_time: 2000,
+      fill_time: 2020,
+      exit_time: 2500,
+      entry: 2685.0,
+      sl: 2695.0,
+      tp: 2665.0,
+      status: 'LOSS',
+      realized_pnl_usd: -40.0,
+      rr_realized: -1.0,
+    };
+
+    // If sorted by exit_time:
+    // 1. Trade B exits at 2500: PnL -40. Peak = 0. Drawdown = 40.
+    // 2. Trade A exits at 5000: PnL +100. Net running = +60. Peak = 60. Drawdown = 0.
+    // Max Drawdown must be 40.00!
+    // If sorted incorrectly by decision_time: Trade A (+100) first -> running = 100, peak = 100.
+    // Then Trade B (-40) -> running = 60, DD = 40.
+    // Now consider when Trade C entered at 3000, exited at 3500 with -$25 loss:
+    const tradeC: ReplayTrade = {
+      trade_id: 'TR-C',
+      symbol: 'XAUUSD_o',
+      origin: 'BOT',
+      direction: 'LONG',
+      decision_time: 3000,
+      fill_time: 3050,
+      exit_time: 3500,
+      entry: 2680.0,
+      sl: 2670.0,
+      tp: 2700.0,
+      status: 'LOSS',
+      realized_pnl_usd: -25.0,
+      rr_realized: -1.0,
+    };
+
+    // Exit sequence:
+    // t=2500: B exits (-$40) -> running = -40, peak = 0, DD = $40
+    // t=3500: C exits (-$25) -> running = -65, peak = 0, DD = $65
+    // t=5000: A exits (+$100) -> running = +35, peak = 35, DD = 0
+    // True Max Drawdown in cash realization is $65.00!
+    // (If sorted by decision_time: A(+100)->100, then B(-40)->60 (DD 40), then C(-25)->35 (DD 65))
+    const scorecard = computeReplayScorecard([tradeA, tradeB, tradeC], null);
+    expect(scorecard.max_drawdown_usd).toBe(65.0);
+    expect(scorecard.net_pnl_usd).toBe(35.0);
+    expect(scorecard.total_trades).toBe(3);
+    expect(scorecard.wins).toBe(1);
+    expect(scorecard.losses).toBe(2);
+  });
+});
+
+describe('coTraderLogic - Causal Liquidity Sweep Extraction', () => {
+  const asianRanges: Record<string, AsianRangeDay> = {
+    '2026-01-15': {
+      date: '2026-01-15',
+      high: 2680.0,
+      low: 2660.0,
+      start_time: 1768442400, // 02:00
+      end_time: 1768467600,   // 09:00
+      bars_count: 84,
+    },
+  };
+
+  const candles: Candle[] = [
+    // Bar 1: inside Asian session
+    { time: 1768450000, open: 2665.0, high: 2675.0, low: 2662.0, close: 2670.0 },
+    // Bar 2: Post-Asian London candle sweeps Asian High (high 2683 > 2680, close 2678 < 2680)
+    { time: 1768470000, open: 2675.0, high: 2683.0, low: 2674.0, close: 2678.0 },
+    // Bar 3: Normal candle
+    { time: 1768470300, open: 2678.0, high: 2679.0, low: 2671.0, close: 2673.0 },
+    // Bar 4: Candle sweeps Asian Low (low 2657 < 2660, close 2663 > 2660)
+    { time: 1768470600, open: 2672.0, high: 2673.0, low: 2657.0, close: 2663.0 },
+    // Bar 5: Later candle outside active replay window
+    { time: 1768475000, open: 2663.0, high: 2685.0, low: 2662.0, close: 2675.0 },
+  ];
+
+  it('detects Asian High and Low liquidity sweeps cleanly', () => {
+    const sweeps = extractLiquiditySweeps(candles, asianRanges, null);
+    expect(sweeps.length).toBe(3); // bar 2 (high), bar 4 (low), bar 5 (high)
+
+    const highSweep = sweeps.find((s) => s.time === 1768470000);
+    expect(highSweep).toBeDefined();
+    expect(highSweep?.type).toBe('HIGH_SWEEP');
+    expect(highSweep?.level).toBe(2680.0);
+    expect(highSweep?.price).toBe(2683.0);
+
+    const lowSweep = sweeps.find((s) => s.time === 1768470600);
+    expect(lowSweep).toBeDefined();
+    expect(lowSweep?.type).toBe('LOW_SWEEP');
+    expect(lowSweep?.level).toBe(2660.0);
+    expect(lowSweep?.price).toBe(2657.0);
+  });
+
+  it('strictly respects replayTo anti-spoiler cursor', () => {
+    // When replayTo is 1768471000 (after bar 4, before bar 5)
+    const sweepsReplay = extractLiquiditySweeps(candles, asianRanges, 1768471000);
+    expect(sweepsReplay.length).toBe(2);
+    expect(sweepsReplay.some((s) => s.time === 1768475000)).toBe(false);
   });
 });

@@ -8,9 +8,12 @@
  */
 
 import type {
+  AsianRangeDay,
+  Candle,
   ClockMode,
   ReplayTrade,
   Scorecard,
+  SweepFlag,
   TradeDirection,
 } from '../types/replay';
 
@@ -256,7 +259,12 @@ export function computeReplayScorecard(
   let running = 0.0;
   let peak = 0.0;
   let maxDd = 0.0;
-  const sorted = [...closedTrades].sort((a, b) => a.decision_time - b.decision_time);
+  // Evaluate cash balance drawdown strictly by realization (exit_time) order
+  const sorted = [...closedTrades].sort((a, b) => {
+    const exitA = a.exit_time ?? a.decision_time;
+    const exitB = b.exit_time ?? b.decision_time;
+    return exitA - exitB;
+  });
   for (const t of sorted) {
     running += t.realized_pnl_usd ?? 0;
     if (running > peak) peak = running;
@@ -275,4 +283,61 @@ export function computeReplayScorecard(
     profit_factor: pf,
     max_drawdown_usd: Number(maxDd.toFixed(2)),
   };
+}
+
+/**
+ * Causal Liquidity Sweep Extraction (Zero-Lookahead)
+ * Identifies bars that pierce Asian High/Low levels and wick back.
+ */
+export function extractLiquiditySweeps(
+  candles: Candle[],
+  asianRanges: Record<string, AsianRangeDay> | AsianRangeDay[],
+  replayTo: number | null
+): SweepFlag[] {
+  const arList: AsianRangeDay[] = Array.isArray(asianRanges)
+    ? asianRanges
+    : Object.values(asianRanges);
+
+  if (arList.length === 0 || candles.length === 0) return [];
+
+  const visibleCandles =
+    replayTo !== null ? candles.filter((c) => c.time <= replayTo) : candles;
+
+  const sweeps: SweepFlag[] = [];
+
+  for (const ar of arList) {
+    // Check bars occurring after Asian session end
+    const sessionCandles = visibleCandles.filter(
+      (c) => c.time > ar.end_time && c.time < ar.end_time + 86400
+    );
+
+    for (const c of sessionCandles) {
+      // High Sweep: candle high > asian high, and closes back below or wicks
+      if (c.high > ar.high && c.close <= ar.high) {
+        sweeps.push({
+          time: c.time,
+          price: c.high,
+          type: 'HIGH_SWEEP',
+          label: `Asian High Sweep (${ar.high})`,
+          level: ar.high,
+          session: 'London/NY',
+        });
+      }
+
+      // Low Sweep: candle low < asian low, and closes back above or wicks
+      if (c.low < ar.low && c.close >= ar.low) {
+        sweeps.push({
+          time: c.time,
+          price: c.low,
+          type: 'LOW_SWEEP',
+          label: `Asian Low Sweep (${ar.low})`,
+          level: ar.low,
+          session: 'London/NY',
+        });
+      }
+    }
+  }
+
+  // Sort chronologically
+  return sweeps.sort((a, b) => a.time - b.time);
 }

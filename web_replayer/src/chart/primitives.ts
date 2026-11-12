@@ -2,7 +2,7 @@
  * TradingGuard HITL Visual Co-Backtester - Custom Series Primitives (lightweight-charts v5)
  * Implements:
  * 1. KillzonePrimitive: Vertical Session Killzone shading (Asian, London Open, NY Open)
- * 2. ForensicBoxPrimitive: Asian range bounds, FVG boxes, and Breaker Block rectangles
+ * 2. ForensicBoxPrimitive: Asian range bounds, FVG boxes, Breaker Block rectangles, and Sweep Flags
  * 3. PositionBoxPrimitive: Shaded Red/Green R:R zones with draggable Entry/SL/TP handles
  */
 
@@ -22,14 +22,57 @@ import type {
 import type {
   AsianRangeDay,
   BreakerBox,
+  Candle,
   DraftTrade,
   FvgBox,
   Killzone,
+  SweepFlag,
 } from '../types/replay';
 import {
   checkRiskLimitUSD,
   computeTradeRR,
 } from '../utils/coTraderLogic';
+
+/**
+ * Resolves a timestamp into an X pixel coordinate on the time scale.
+ * If the exact timestamp does not match a bar on the active timeframe (e.g. 5M marks on 15M/1H),
+ * it performs a binary search on the loaded candles to map to the enclosing visible bar.
+ */
+function resolveTimeX(
+  timeScale: ReturnType<IChartApiBase<Time>['timeScale']>,
+  timestamp: number,
+  candles?: Candle[]
+): number | null {
+  const direct = timeScale.timeToCoordinate(timestamp as UTCTimestamp);
+  if (direct !== null) return Number(direct);
+
+  if (candles && candles.length > 0) {
+    if (timestamp < candles[0].time) {
+      return null;
+    }
+    if (timestamp > candles[candles.length - 1].time) {
+      const lastX = timeScale.timeToCoordinate(candles[candles.length - 1].time as UTCTimestamp);
+      return lastX !== null ? Number(lastX) + 20 : null;
+    }
+
+    let low = 0;
+    let high = candles.length - 1;
+    let best = 0;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (candles[mid].time <= timestamp) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    const barCoord = timeScale.timeToCoordinate(candles[best].time as UTCTimestamp);
+    if (barCoord !== null) return Number(barCoord);
+  }
+
+  return null;
+}
 
 /* =========================================================================
    1. KILLZONE PRIMITIVE
@@ -131,7 +174,7 @@ export class KillzonePrimitive implements ISeriesPrimitive<Time> {
 }
 
 /* =========================================================================
-   2. FORENSIC BOX PRIMITIVE (FVG, Breakers, Asian Range Lines)
+   2. FORENSIC BOX PRIMITIVE (FVG, Breakers, Asian Range Lines, Sweep Flags)
    ========================================================================= */
 
 interface ForensicBoxParams {
@@ -140,6 +183,8 @@ interface ForensicBoxParams {
   fvgs: FvgBox[];
   breakers: BreakerBox[];
   asianRanges: AsianRangeDay[];
+  sweeps: SweepFlag[];
+  candles: Candle[];
 }
 
 class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
@@ -151,7 +196,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D): void {
     target.useMediaCoordinateSpace((scope) => {
-      const { chart, series, fvgs, breakers, asianRanges } = this._getParams();
+      const { chart, series, fvgs, breakers, asianRanges, sweeps, candles } = this._getParams();
       if (!chart || !series) return;
 
       const timeScale = chart.timeScale();
@@ -162,11 +207,21 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
       for (const ar of asianRanges) {
         const yHigh = series.priceToCoordinate(ar.high);
         const yLow = series.priceToCoordinate(ar.low);
-        const xStart = timeScale.timeToCoordinate(ar.start_time as UTCTimestamp);
-        const xEnd = timeScale.timeToCoordinate(ar.end_time as UTCTimestamp);
 
-        const left = xStart !== null ? Number(xStart) : 0;
-        const right = xEnd !== null ? Number(xEnd) : width;
+        const xStart = resolveTimeX(timeScale, ar.start_time, candles);
+        const xEnd = resolveTimeX(timeScale, ar.end_time, candles);
+
+        // Strict off-screen guard: skip if unmapped or out of visible viewport
+        if (xStart === null && xEnd === null) continue;
+
+        const left = xStart !== null ? xStart : 0;
+        const right = xEnd !== null ? xEnd : width;
+
+        if (right < 0 || left > width) continue;
+
+        const renderLeft = Math.max(0, left);
+        const renderRight = Math.min(width, right);
+        if (renderRight <= renderLeft) continue;
 
         if (yHigh !== null && yHigh >= 0) {
           ctx.save();
@@ -174,13 +229,13 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
           ctx.lineWidth = 1;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
-          ctx.moveTo(left, Number(yHigh));
-          ctx.lineTo(right, Number(yHigh));
+          ctx.moveTo(renderLeft, Number(yHigh));
+          ctx.lineTo(renderRight, Number(yHigh));
           ctx.stroke();
 
           ctx.fillStyle = 'rgba(240, 185, 11, 0.9)';
           ctx.font = '9px monospace';
-          ctx.fillText(`Asian High: ${ar.high}`, Math.min(width - 110, left + 4), Number(yHigh) - 3);
+          ctx.fillText(`Asian High: ${ar.high}`, Math.min(width - 110, renderLeft + 4), Number(yHigh) - 3);
           ctx.restore();
         }
 
@@ -190,13 +245,13 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
           ctx.lineWidth = 1;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
-          ctx.moveTo(left, Number(yLow));
-          ctx.lineTo(right, Number(yLow));
+          ctx.moveTo(renderLeft, Number(yLow));
+          ctx.lineTo(renderRight, Number(yLow));
           ctx.stroke();
 
           ctx.fillStyle = 'rgba(240, 185, 11, 0.9)';
           ctx.font = '9px monospace';
-          ctx.fillText(`Asian Low: ${ar.low}`, Math.min(width - 110, left + 4), Number(yLow) + 10);
+          ctx.fillText(`Asian Low: ${ar.low}`, Math.min(width - 110, renderLeft + 4), Number(yLow) + 10);
           ctx.restore();
         }
       }
@@ -205,27 +260,38 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
       for (const fvg of fvgs) {
         const yTop = series.priceToCoordinate(fvg.top);
         const yBottom = series.priceToCoordinate(fvg.bottom);
-        const xStart = timeScale.timeToCoordinate(fvg.t_start as UTCTimestamp);
-        const xEnd = timeScale.timeToCoordinate(fvg.t_end as UTCTimestamp);
-
         if (yTop === null || yBottom === null) continue;
-        const left = xStart !== null ? Number(xStart) : 0;
-        const right = xEnd !== null ? Number(xEnd) : width;
+
+        const xStart = resolveTimeX(timeScale, fvg.t_start, candles);
+        const xEnd = resolveTimeX(timeScale, fvg.t_end, candles);
+
+        // Strict off-screen guard
+        if (xStart === null && xEnd === null) continue;
+
+        const left = xStart !== null ? xStart : 0;
+        const right = xEnd !== null ? xEnd : width;
+
+        if (right < 0 || left > width) continue;
+
+        const renderLeft = Math.max(0, left);
+        const renderRight = Math.min(width, right);
+        if (renderRight <= renderLeft) continue;
+
         const boxTop = Math.min(Number(yTop), Number(yBottom));
         const boxHeight = Math.max(2, Math.abs(Number(yBottom) - Number(yTop)));
-        const boxWidth = Math.max(4, right - left);
+        const boxWidth = Math.max(4, renderRight - renderLeft);
 
         const isBull = fvg.dir === 'BULLISH';
         ctx.save();
         ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.18)' : 'rgba(239, 83, 80, 0.18)';
         ctx.strokeStyle = isBull ? 'rgba(38, 166, 154, 0.7)' : 'rgba(239, 83, 80, 0.7)';
         ctx.lineWidth = 1;
-        ctx.fillRect(left, boxTop, boxWidth, boxHeight);
-        ctx.strokeRect(left, boxTop, boxWidth, boxHeight);
+        ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
+        ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
 
         ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.95)' : 'rgba(239, 83, 80, 0.95)';
         ctx.font = '9px sans-serif';
-        ctx.fillText(`FVG ${fvg.dir[0]}`, left + 4, boxTop + Math.min(boxHeight - 2, 11));
+        ctx.fillText(`FVG ${fvg.dir[0]}`, renderLeft + 4, boxTop + Math.min(boxHeight - 2, 11));
         ctx.restore();
       }
 
@@ -233,26 +299,84 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
       for (const brk of breakers) {
         const yTop = series.priceToCoordinate(brk.top);
         const yBottom = series.priceToCoordinate(brk.bottom);
-        const xStart = timeScale.timeToCoordinate(brk.t_start as UTCTimestamp);
-        const xEnd = timeScale.timeToCoordinate(brk.t_end as UTCTimestamp);
-
         if (yTop === null || yBottom === null) continue;
-        const left = xStart !== null ? Number(xStart) : 0;
-        const right = xEnd !== null ? Number(xEnd) : width;
+
+        const xStart = resolveTimeX(timeScale, brk.t_start, candles);
+        const xEnd = resolveTimeX(timeScale, brk.t_end, candles);
+
+        // Strict off-screen guard
+        if (xStart === null && xEnd === null) continue;
+
+        const left = xStart !== null ? xStart : 0;
+        const right = xEnd !== null ? xEnd : width;
+
+        if (right < 0 || left > width) continue;
+
+        const renderLeft = Math.max(0, left);
+        const renderRight = Math.min(width, right);
+        if (renderRight <= renderLeft) continue;
+
         const boxTop = Math.min(Number(yTop), Number(yBottom));
         const boxHeight = Math.max(2, Math.abs(Number(yBottom) - Number(yTop)));
-        const boxWidth = Math.max(4, right - left);
+        const boxWidth = Math.max(4, renderRight - renderLeft);
 
         ctx.save();
         ctx.fillStyle = 'rgba(156, 39, 176, 0.18)';
         ctx.strokeStyle = 'rgba(156, 39, 176, 0.75)';
         ctx.lineWidth = 1;
-        ctx.fillRect(left, boxTop, boxWidth, boxHeight);
-        ctx.strokeRect(left, boxTop, boxWidth, boxHeight);
+        ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
+        ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
 
         ctx.fillStyle = 'rgba(206, 147, 216, 0.95)';
         ctx.font = '9px sans-serif';
-        ctx.fillText('Breaker', left + 4, boxTop + Math.min(boxHeight - 2, 11));
+        ctx.fillText('Breaker', renderLeft + 4, boxTop + Math.min(boxHeight - 2, 11));
+        ctx.restore();
+      }
+
+      // 4. Sweep Flags & Badges
+      for (const sweep of sweeps) {
+        const x = resolveTimeX(timeScale, sweep.time, candles);
+        const y = series.priceToCoordinate(sweep.price);
+        if (x === null || y === null) continue;
+        if (x < -20 || x > width + 20) continue;
+
+        const isHighSweep = sweep.type === 'HIGH_SWEEP';
+        ctx.save();
+
+        // Pin / arrow indicator at the exact wick
+        ctx.fillStyle = isHighSweep ? '#ffb300' : '#ffa726';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        if (isHighSweep) {
+          ctx.moveTo(x, Number(y) - 2);
+          ctx.lineTo(x - 4, Number(y) - 8);
+          ctx.lineTo(x + 4, Number(y) - 8);
+        } else {
+          ctx.moveTo(x, Number(y) + 2);
+          ctx.lineTo(x - 4, Number(y) + 8);
+          ctx.lineTo(x + 4, Number(y) + 8);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Badge label
+        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        const labelText = isHighSweep ? '🚩 High Sweep' : '🚩 Low Sweep';
+        const badgeW = ctx.measureText(labelText).width + 8;
+        const badgeH = 15;
+        const badgeX = Math.max(2, Math.min(width - badgeW - 2, x - badgeW / 2));
+        const badgeY = isHighSweep ? Number(y) - 10 - badgeH : Number(y) + 10;
+
+        ctx.fillStyle = isHighSweep ? 'rgba(255, 179, 0, 0.9)' : 'rgba(255, 167, 38, 0.9)';
+        ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+
+        ctx.fillStyle = '#131722';
+        ctx.fillText(labelText, badgeX + 4, badgeY + 11);
         ctx.restore();
       }
     });
@@ -266,6 +390,8 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
   private _fvgs: FvgBox[] = [];
   private _breakers: BreakerBox[] = [];
   private _asianRanges: AsianRangeDay[] = [];
+  private _sweeps: SweepFlag[] = [];
+  private _candles: Candle[] = [];
   private _paneView: IPrimitivePaneView;
 
   constructor() {
@@ -275,6 +401,8 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
       fvgs: this._fvgs,
       breakers: this._breakers,
       asianRanges: this._asianRanges,
+      sweeps: this._sweeps,
+      candles: this._candles,
     }));
 
     this._paneView = {
@@ -287,10 +415,14 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
     fvgs?: FvgBox[];
     breakers?: BreakerBox[];
     asianRanges?: AsianRangeDay[];
+    sweeps?: SweepFlag[];
+    candles?: Candle[];
   }): void {
     if (params.fvgs !== undefined) this._fvgs = params.fvgs;
     if (params.breakers !== undefined) this._breakers = params.breakers;
     if (params.asianRanges !== undefined) this._asianRanges = params.asianRanges;
+    if (params.sweeps !== undefined) this._sweeps = params.sweeps;
+    if (params.candles !== undefined) this._candles = params.candles;
     this._requestUpdate?.();
   }
 
@@ -357,7 +489,9 @@ class PositionBoxPaneRenderer implements IPrimitivePaneRenderer {
         : null;
 
       const left = Math.max(0, xSignal !== null ? Number(xSignal) : width * 0.4);
-      const right = width;
+      // Main chart width without price scale
+      const priceScaleWidth = Math.max(55, chart.priceScale('right')?.width() ?? 65);
+      const right = width - priceScaleWidth;
       const boxWidth = Math.max(60, right - left);
 
       const isLong = draftTrade.direction === 'LONG';
@@ -413,7 +547,7 @@ class PositionBoxPaneRenderer implements IPrimitivePaneRenderer {
         ctx.fill();
         ctx.stroke();
 
-        // Right Badge Pill
+        // Right Badge Pill (constrained to main canvas, inside chart area)
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
         const metrics = ctx.measureText(label);
         const badgeW = metrics.width + 12;

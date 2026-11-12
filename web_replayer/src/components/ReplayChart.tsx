@@ -1,7 +1,7 @@
 /**
  * TradingGuard HITL Visual Co-Backtester - Interactive Replay Chart Component
  * Built on lightweight-charts v5 with native TradingView independent X/Y axis scaling,
- * custom session killzones, forensic boxes, trade markers, and draggable R:R position handles.
+ * custom session killzones, forensic boxes, sweep flags, trade markers, and draggable R:R position handles.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -28,6 +28,7 @@ import type {
   FvgBox,
   Killzone,
   ReplayTrade,
+  SweepFlag,
 } from '../types/replay';
 import {
   ForensicBoxPrimitive,
@@ -45,6 +46,7 @@ export interface ReplayChartProps {
   asianRanges?: Record<string, AsianRangeDay> | AsianRangeDay[];
   fvgs?: FvgBox[];
   breakers?: BreakerBox[];
+  sweeps?: SweepFlag[];
   trades?: ReplayTrade[];
   draftTrade?: DraftTrade | null;
   onDraftTradeChange?: (draft: DraftTrade) => void;
@@ -62,6 +64,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   asianRanges = [],
   fvgs = [],
   breakers = [],
+  sweeps = [],
   trades = [],
   draftTrade = null,
   onDraftTradeChange,
@@ -210,6 +213,18 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     });
   }, [clockMode]);
 
+  // Update Candlestick Price Format on Digits Change
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    seriesRef.current.applyOptions({
+      priceFormat: {
+        type: 'price',
+        precision: digits,
+        minMove: 1 / Math.pow(10, digits),
+      },
+    });
+  }, [digits]);
+
   // Update Candlestick Data
   useEffect(() => {
     if (!seriesRef.current || !candles.length) return;
@@ -236,7 +251,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     }
   }, [killzones]);
 
-  // Update Forensic Boxes (FVGs, Breakers, Asian Range)
+  // Update Forensic Boxes (FVGs, Breakers, Asian Range, Sweeps)
   useEffect(() => {
     if (forensicPrimitiveRef.current) {
       const arList: AsianRangeDay[] = Array.isArray(asianRanges)
@@ -246,9 +261,11 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         fvgs,
         breakers,
         asianRanges: arList,
+        sweeps,
+        candles,
       });
     }
-  }, [fvgs, breakers, asianRanges]);
+  }, [fvgs, breakers, asianRanges, sweeps, candles]);
 
   // Update Position Box Draft Trade
   useEffect(() => {
@@ -320,6 +337,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
       }
 
       const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
       if (isDraggingRef.current && dragHandleRef.current) {
@@ -336,7 +354,30 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         return;
       }
 
-      // Hover Hit Detection (within 8px of price lines)
+      // Constrain hit testing: Never intercept mouse inside right price scale!
+      const priceScaleWidth = Math.max(55, chart.priceScale('right')?.width() ?? 65);
+      const rightBoundary = container.clientWidth - priceScaleWidth;
+      if (mouseX >= rightBoundary) {
+        container.style.cursor = 'default';
+        positionBoxPrimitiveRef.current?.setHoveredHandle(null);
+        return;
+      }
+
+      // Constrain hit testing horizontally to position box X-span: [boxLeft - 15, rightBoundary - 5]
+      const timeScale = chart.timeScale();
+      const xSignal = draft.signal_time
+        ? timeScale.timeToCoordinate(draft.signal_time as UTCTimestamp)
+        : null;
+      const boxLeft = Math.max(0, xSignal !== null ? Number(xSignal) : chart.timeScale().width() * 0.4);
+
+      const isWithinBoxX = mouseX >= Math.max(0, boxLeft - 15) && mouseX <= rightBoundary - 5;
+      if (!isWithinBoxX) {
+        container.style.cursor = 'default';
+        positionBoxPrimitiveRef.current?.setHoveredHandle(null);
+        return;
+      }
+
+      // Vertical Hover Hit Detection (within 8px of price lines)
       const entryY = series.priceToCoordinate(draft.entry);
       const slY = series.priceToCoordinate(draft.sl);
       const tpY = series.priceToCoordinate(draft.tp);
@@ -365,7 +406,23 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
       if (!series || !chart || !draft) return;
 
       const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
+
+      // Price scale boundary check: allow native price scale drag!
+      const priceScaleWidth = Math.max(55, chart.priceScale('right')?.width() ?? 65);
+      const rightBoundary = container.clientWidth - priceScaleWidth;
+      if (mouseX >= rightBoundary) return;
+
+      // Box horizontal boundary check: allow native chart pan!
+      const timeScale = chart.timeScale();
+      const xSignal = draft.signal_time
+        ? timeScale.timeToCoordinate(draft.signal_time as UTCTimestamp)
+        : null;
+      const boxLeft = Math.max(0, xSignal !== null ? Number(xSignal) : chart.timeScale().width() * 0.4);
+
+      const isWithinBoxX = mouseX >= Math.max(0, boxLeft - 15) && mouseX <= rightBoundary - 5;
+      if (!isWithinBoxX) return;
 
       const entryY = series.priceToCoordinate(draft.entry);
       const slY = series.priceToCoordinate(draft.sl);

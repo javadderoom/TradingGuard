@@ -76,6 +76,15 @@ export interface BreakerBox {
   type: string;
 }
 
+export interface SweepFlag {
+  time: number;
+  price: number;
+  type: 'HIGH_SWEEP' | 'LOW_SWEEP';
+  label: string;
+  level?: number;
+  session?: string;
+}
+
 export interface BotDiagnostic {
   time: number;
   session_hour: number;
