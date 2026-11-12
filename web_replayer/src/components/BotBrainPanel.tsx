@@ -103,47 +103,47 @@ Clock Mode: ${engineClockMode}`,
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', padding: '12px', gap: '14px', backgroundColor: '#181b24', color: '#d1d4dc', fontSize: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', padding: '12px', gap: '14px', backgroundColor: '#141414', color: '#cccccc', fontSize: '12px' }}>
       {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2a2e39', paddingBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #262626', paddingBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Bot size={16} style={{ color: '#2962ff' }} />
+          <Bot size={16} style={{ color: '#089981' }} />
           <span style={{ fontWeight: 700, fontSize: '13px', color: '#ffffff' }}>Bot Brain Inspector</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ padding: '2px 6px', borderRadius: '4px', backgroundColor: '#2a2e39', color: '#90caf9', fontSize: '10px', fontWeight: 600 }}>
+          <span style={{ padding: '2px 6px', borderRadius: '4px', backgroundColor: '#262626', color: '#9c9c9c', fontSize: '10px', fontWeight: 600 }}>
             {engineClockMode}
           </span>
-          <span style={{ padding: '2px 6px', borderRadius: '4px', backgroundColor: '#2a2e39', color: '#ffd54f', fontSize: '10px', fontWeight: 600 }}>
+          <span style={{ padding: '2px 6px', borderRadius: '4px', backgroundColor: '#262626', color: '#ffd54f', fontSize: '10px', fontWeight: 600 }}>
             {symbol}
           </span>
         </div>
       </div>
 
       {/* Active Bar Timestamp */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#1e222d', padding: '8px 10px', borderRadius: '6px', border: '1px solid #2a2e39' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#191919', padding: '8px 10px', borderRadius: '6px', border: '1px solid #262626' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Clock size={13} style={{ color: '#787b86' }} />
-          <span style={{ color: '#787b86' }}>Active Bar:</span>
+          <Clock size={13} style={{ color: '#737373' }} />
+          <span style={{ color: '#737373' }}>Active Bar:</span>
         </div>
-        <span style={{ fontWeight: 600, color: '#e0e3eb' }}>
+        <span style={{ fontWeight: 600, color: '#e5e5e5' }}>
           {currentTime !== null ? formatClockTick(currentTime, clockMode, true) : 'No Bar Selected'}
         </span>
       </div>
 
       {/* Diagnostic Verdict Card */}
       {activeDiag ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#1e222d', padding: '12px', borderRadius: '6px', border: `1px solid ${activeDiag.has_setup ? 'rgba(38, 166, 154, 0.4)' : '#2a2e39'}` }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#191919', padding: '12px', borderRadius: '6px', border: `1px solid ${activeDiag.has_setup ? 'rgba(8, 153, 129, 0.4)' : '#262626'}` }}>
           {/* Verdict Status */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: '#787b86', fontWeight: 500 }}>Verdict:</span>
+            <span style={{ color: '#737373', fontWeight: 500 }}>Verdict:</span>
             {activeDiag.has_setup ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(38, 166, 154, 0.2)', color: '#26a69a', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(8, 153, 129, 0.2)', color: '#089981', fontWeight: 700 }}>
                 <CheckCircle2 size={13} />
                 SETUP DETECTED
               </span>
             ) : (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 83, 80, 0.15)', color: '#ef5350', fontWeight: 600 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(207, 92, 96, 0.15)', color: '#cf5c60', fontWeight: 600 }}>
                 <AlertTriangle size={13} />
                 NO SETUP / VETOED
               </span>
@@ -151,29 +151,29 @@ Clock Mode: ${engineClockMode}`,
           </div>
 
           {/* Archetype & Phase */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px', borderTop: '1px solid #262b36' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px', borderTop: '1px solid #222222' }}>
             <div>
-              <div style={{ color: '#787b86', fontSize: '11px' }}>Archetype:</div>
-              <div style={{ fontWeight: 600, color: activeDiag.archetype_id ? '#90caf9' : '#d1d4dc' }}>
+              <div style={{ color: '#737373', fontSize: '11px' }}>Archetype:</div>
+              <div style={{ fontWeight: 600, color: activeDiag.archetype_id ? '#9c9c9c' : '#cccccc' }}>
                 {activeDiag.archetype_id || activeDiag.setup_type || 'None'}
               </div>
             </div>
             <div>
-              <div style={{ color: '#787b86', fontSize: '11px' }}>Phase:</div>
-              <div style={{ fontWeight: 600, color: '#d1d4dc' }}>
+              <div style={{ color: '#737373', fontSize: '11px' }}>Phase:</div>
+              <div style={{ fontWeight: 600, color: '#cccccc' }}>
                 {activeDiag.phase || 'IDLE'}
               </div>
             </div>
           </div>
 
           {/* Session Hour & Asian Levels */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px', borderTop: '1px solid #262b36' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px', borderTop: '1px solid #222222' }}>
             <div>
-              <div style={{ color: '#787b86', fontSize: '11px' }}>Session Hour:</div>
+              <div style={{ color: '#737373', fontSize: '11px' }}>Session Hour:</div>
               <div style={{ fontWeight: 500 }}>{activeDiag.session_hour}</div>
             </div>
             <div>
-              <div style={{ color: '#787b86', fontSize: '11px' }}>Asian Bounds:</div>
+              <div style={{ color: '#737373', fontSize: '11px' }}>Asian Bounds:</div>
               <div style={{ fontWeight: 500 }}>
                 {activeDiag.asian_high ? `${activeDiag.asian_high.toFixed(digits)} / ${activeDiag.asian_low?.toFixed(digits)}` : 'N/A'}
               </div>
@@ -182,8 +182,8 @@ Clock Mode: ${engineClockMode}`,
 
           {/* Structural Overlays (Clickable for Chart & Agentify Inspection) */}
           {(activeDiag.fvg_box || activeDiag.breaker_box) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingTop: '6px', borderTop: '1px solid #262b36' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#787b86', fontSize: '11px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingTop: '6px', borderTop: '1px solid #222222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#737373', fontSize: '11px' }}>
                 <Layers size={11} />
                 <span>Detected Zones (click to inspect / ask):</span>
               </div>
@@ -208,9 +208,9 @@ Clock Mode: ${engineClockMode}`,
                     fontSize: '11px',
                     padding: '4px 8px',
                     borderRadius: '4px',
-                    backgroundColor: '#131722',
-                    border: '1px solid rgba(38, 166, 154, 0.4)',
-                    color: activeDiag.fvg_box.dir === 'BULLISH' ? '#4dd0e1' : '#ff8a80',
+                    backgroundColor: '#0f0f0f',
+                    border: '1px solid rgba(8, 153, 129, 0.4)',
+                    color: activeDiag.fvg_box.dir === 'BULLISH' ? '#34d399' : '#e58589',
                     cursor: 'pointer',
                   }}
                 >
@@ -238,7 +238,7 @@ Clock Mode: ${engineClockMode}`,
                     fontSize: '11px',
                     padding: '4px 8px',
                     borderRadius: '4px',
-                    backgroundColor: '#131722',
+                    backgroundColor: '#0f0f0f',
                     border: '1px solid rgba(206, 147, 216, 0.45)',
                     color: '#e1bee7',
                     cursor: 'pointer',
@@ -252,12 +252,12 @@ Clock Mode: ${engineClockMode}`,
 
           {/* Veto Reason Callout */}
           {activeDiag.reason && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: 'rgba(239, 83, 80, 0.08)', border: '1px solid rgba(239, 83, 80, 0.25)', padding: '8px', borderRadius: '4px', marginTop: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef5350', fontWeight: 600, fontSize: '11px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: 'rgba(207, 92, 96, 0.08)', border: '1px solid rgba(207, 92, 96, 0.25)', padding: '8px', borderRadius: '4px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#cf5c60', fontWeight: 600, fontSize: '11px' }}>
                 <ShieldAlert size={12} />
                 <span>Veto / Rationale:</span>
               </div>
-              <div style={{ color: '#ffcdd2', fontSize: '11px', lineHeight: '1.4' }}>
+              <div style={{ color: '#f2b8ba', fontSize: '11px', lineHeight: '1.4' }}>
                 {activeDiag.reason}
               </div>
               <button
@@ -267,7 +267,7 @@ Clock Mode: ${engineClockMode}`,
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '5px',
-                  backgroundColor: '#2962ff',
+                  backgroundColor: '#089981',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '4px',
@@ -285,7 +285,7 @@ Clock Mode: ${engineClockMode}`,
           )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', textAlign: 'center', backgroundColor: '#1e222d', borderRadius: '6px', border: '1px dashed #2a2e39', color: '#787b86', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', textAlign: 'center', backgroundColor: '#191919', borderRadius: '6px', border: '1px dashed #262626', color: '#737373', gap: '6px' }}>
           <Bot size={24} style={{ opacity: 0.5 }} />
           <span>Click any candle on the chart or scrub replay cursor to inspect screener diagnostics.</span>
         </div>
@@ -311,20 +311,20 @@ Clock Mode: ${engineClockMode}`,
                   gap: '4px',
                   padding: '8px',
                   borderRadius: '6px',
-                  backgroundColor: isSel ? '#232837' : '#1e222d',
-                  border: isSel ? '1.5px solid #f0b90b' : '1px solid #2a2e39',
+                  backgroundColor: isSel ? '#1e1e1e' : '#191919',
+                  border: isSel ? '1.5px solid #f0b90b' : '1px solid #262626',
                   cursor: 'pointer',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, fontSize: '11px', color: t.direction === 'LONG' ? '#26a69a' : '#ef5350' }}>
+                  <span style={{ fontWeight: 700, fontSize: '11px', color: t.direction === 'LONG' ? '#089981' : '#cf5c60' }}>
                     {t.origin} · {t.direction} {t.archetype_id ? `(${t.archetype_id})` : ''}
                   </span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: t.status === 'WIN' ? '#26a69a' : t.status === 'LOSS' ? '#ef5350' : '#90caf9' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: t.status === 'WIN' ? '#089981' : t.status === 'LOSS' ? '#cf5c60' : '#9c9c9c' }}>
                     {t.status}{t.rr_realized != null ? ` ${t.rr_realized >= 0 ? '+' : ''}${t.rr_realized.toFixed(2)}R` : ''}
                   </span>
                 </div>
-                <div style={{ fontSize: '10px', color: '#b2b5be' }}>
+                <div style={{ fontSize: '10px', color: '#9c9c9c' }}>
                   E: {t.entry.toFixed(digits)} | SL: {t.sl.toFixed(digits)} | TP: {t.tp.toFixed(digits)}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
@@ -337,8 +337,8 @@ Clock Mode: ${engineClockMode}`,
                       padding: '2px 7px',
                       fontSize: '10px',
                       borderRadius: '3px',
-                      backgroundColor: isSel ? '#f0b90b' : '#2a2e39',
-                      color: isSel ? '#131722' : '#d1d4dc',
+                      backgroundColor: isSel ? '#f0b90b' : '#262626',
+                      color: isSel ? '#0f0f0f' : '#cccccc',
                       border: 'none',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -359,7 +359,7 @@ Clock Mode: ${engineClockMode}`,
                       padding: '2px 7px',
                       fontSize: '10px',
                       borderRadius: '3px',
-                      backgroundColor: '#2962ff',
+                      backgroundColor: '#089981',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 600,
@@ -379,10 +379,10 @@ Clock Mode: ${engineClockMode}`,
       {/* Key Events Timeline */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600, color: '#e0e3eb', fontSize: '12px' }}>
+          <span style={{ fontWeight: 600, color: '#e5e5e5', fontSize: '12px' }}>
             Key Events Timeline
           </span>
-          <span style={{ fontSize: '10px', backgroundColor: '#2a2e39', padding: '1px 6px', borderRadius: '10px', color: '#787b86' }}>
+          <span style={{ fontSize: '10px', backgroundColor: '#262626', padding: '1px 6px', borderRadius: '10px', color: '#737373' }}>
             {visibleEvents.length} events
           </span>
         </div>
@@ -398,36 +398,36 @@ Clock Mode: ${engineClockMode}`,
                   flexDirection: 'column',
                   gap: '3px',
                   padding: '7px 9px',
-                  backgroundColor: '#1e222d',
+                  backgroundColor: '#191919',
                   borderRadius: '4px',
-                  border: '1px solid #2a2e39',
+                  border: '1px solid #262626',
                   cursor: 'pointer',
                   transition: 'border-color 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#2962ff';
+                  e.currentTarget.style.borderColor = '#089981';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#2a2e39';
+                  e.currentTarget.style.borderColor = '#262626';
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#90caf9', fontWeight: 600, fontSize: '11px' }}>
+                  <span style={{ color: '#9c9c9c', fontWeight: 600, fontSize: '11px' }}>
                     {ev.type}
                   </span>
-                  <span style={{ color: '#787b86', fontSize: '10px' }}>
+                  <span style={{ color: '#737373', fontSize: '10px' }}>
                     {formatClockTick(ev.time, clockMode, false)}
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#d1d4dc', fontSize: '11px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#cccccc', fontSize: '11px' }}>
                   <span>{ev.description}</span>
-                  <ChevronRight size={12} style={{ color: '#787b86' }} />
+                  <ChevronRight size={12} style={{ color: '#737373' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div style={{ padding: '12px', textAlign: 'center', color: '#787b86', fontSize: '11px', backgroundColor: '#1e222d', borderRadius: '4px' }}>
+          <div style={{ padding: '12px', textAlign: 'center', color: '#737373', fontSize: '11px', backgroundColor: '#191919', borderRadius: '4px' }}>
             No events recorded up to current bar.
           </div>
         )}

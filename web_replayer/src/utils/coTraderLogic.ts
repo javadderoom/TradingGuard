@@ -736,12 +736,12 @@ export function buildClusteredTradeMarkers(
       const color = hasSelected
         ? '#f0b90b'
         : opens > 0 && wins === 0 && losses === 0 && bes === 0
-        ? '#2962ff'
+        ? '#9c9c9c'
         : wins > losses
-        ? '#26a69a'
+        ? '#089981'
         : losses > wins
-        ? '#ef5350'
-        : '#ffb300';
+        ? '#cf5c60'
+        : '#d4a84f';
 
       markers.push({
         time: anchorTime,
@@ -764,7 +764,7 @@ export function buildClusteredTradeMarkers(
         markers.push({
           time: Number(first.exit_time),
           position: isWin ? 'aboveBar' : 'belowBar',
-          color: hasSelected ? '#f0b90b' : isWin ? '#26a69a' : isLoss ? '#ef5350' : '#ffb300',
+          color: hasSelected ? '#f0b90b' : isWin ? '#089981' : isLoss ? '#cf5c60' : '#d4a84f',
           shape: 'circle',
           text: pnlStr,
           tradeIds,

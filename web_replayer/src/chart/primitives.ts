@@ -126,7 +126,7 @@ class KillzonePaneRenderer implements IPrimitivePaneRenderer {
         // Top Session Badge
         if (renderLeft < width - 60) {
           ctx.save();
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.fillStyle = 'rgba(156, 156, 156, 0.72)';
           ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
           ctx.fillText(kz.name, renderLeft + 6, 14);
           ctx.restore();
@@ -237,7 +237,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         if (collides(rect)) return;
         occupiedLabels.push(rect);
 
-        ctx.fillStyle = 'rgba(19, 23, 34, 0.88)';
+        ctx.fillStyle = 'rgba(15, 15, 15, 0.9)';
         ctx.fillRect(pillX, pillY, pillW, pillH);
         ctx.strokeStyle = borderColor;
         ctx.lineWidth = 1;
@@ -268,7 +268,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
         if (yHigh !== null && yHigh >= 0) {
           ctx.save();
-          ctx.strokeStyle = 'rgba(240, 185, 11, 0.7)';
+          ctx.strokeStyle = 'rgba(212, 168, 79, 0.65)';
           ctx.lineWidth = 1;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
@@ -276,7 +276,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
           ctx.lineTo(renderRight, Number(yHigh));
           ctx.stroke();
 
-          ctx.fillStyle = 'rgba(240, 185, 11, 0.9)';
+          ctx.fillStyle = 'rgba(212, 168, 79, 0.85)';
           ctx.font = '9px monospace';
           ctx.fillText(`Asian High: ${ar.high}`, Math.min(width - 110, renderLeft + 4), Number(yHigh) - 3);
           ctx.restore();
@@ -284,7 +284,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
         if (yLow !== null && yLow >= 0) {
           ctx.save();
-          ctx.strokeStyle = 'rgba(240, 185, 11, 0.7)';
+          ctx.strokeStyle = 'rgba(212, 168, 79, 0.65)';
           ctx.lineWidth = 1;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
@@ -292,7 +292,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
           ctx.lineTo(renderRight, Number(yLow));
           ctx.stroke();
 
-          ctx.fillStyle = 'rgba(240, 185, 11, 0.9)';
+          ctx.fillStyle = 'rgba(212, 168, 79, 0.85)';
           ctx.font = '9px monospace';
           ctx.fillText(`Asian Low: ${ar.low}`, Math.min(width - 110, renderLeft + 4), Number(yLow) + 10);
           ctx.restore();
@@ -333,16 +333,16 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         const strokeColor = isSelFvg
           ? '#f0b90b'
           : isBull
-          ? 'rgba(38, 166, 154, 0.72)'
-          : 'rgba(239, 83, 80, 0.72)';
-        const textColor = isSelFvg ? '#ffd54f' : isBull ? '#4dd0e1' : '#ff8a80';
+          ? 'rgba(8, 153, 129, 0.72)'
+          : 'rgba(156, 156, 156, 0.68)';
+        const textColor = isSelFvg ? '#ffd54f' : isBull ? '#34d399' : '#d4d4d4';
 
         ctx.save();
         ctx.fillStyle = isSelFvg
           ? 'rgba(240, 185, 11, 0.22)'
           : isBull
-          ? 'rgba(38, 166, 154, 0.12)'
-          : 'rgba(239, 83, 80, 0.12)';
+          ? 'rgba(8, 153, 129, 0.14)'
+          : 'rgba(156, 156, 156, 0.12)';
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = isSelFvg ? 2.5 : 1;
         if (!isSelFvg) ctx.setLineDash([4, 3]);
@@ -442,8 +442,8 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         ctx.strokeStyle = isSelSweep
           ? '#f0b90b'
           : sweep.type === 'HIGH_SWEEP'
-          ? 'rgba(239, 83, 80, 0.8)'
-          : 'rgba(38, 166, 154, 0.8)';
+          ? 'rgba(207, 92, 96, 0.85)'
+          : 'rgba(8, 153, 129, 0.85)';
         ctx.lineWidth = isSelSweep ? 2.25 : 1.25;
         ctx.setLineDash([4, 3]);
         ctx.beginPath();
@@ -488,13 +488,13 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
               // Reward shade (Entry -> TP)
               const tpTop = Math.min(entryY, tpY);
               const tpH = Math.max(2, Math.abs(tpY - entryY));
-              ctx.fillStyle = 'rgba(38, 166, 154, 0.14)';
+              ctx.fillStyle = 'rgba(8, 153, 129, 0.16)';
               ctx.fillRect(renderLeft, tpTop, boxW, tpH);
 
               // Risk shade (Entry -> SL)
               const slTop = Math.min(entryY, slY);
               const slH = Math.max(2, Math.abs(slY - entryY));
-              ctx.fillStyle = 'rgba(239, 83, 80, 0.14)';
+              ctx.fillStyle = 'rgba(207, 92, 96, 0.16)';
               ctx.fillRect(renderLeft, slTop, boxW, slH);
 
               // Outer highlight border
@@ -509,8 +509,8 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
               // Entry / SL / TP boundary lines & pills
               const lines = [
                 { y: entryY, color: '#f0b90b', label: `ENTRY ${selectedTrade.entry.toFixed(digits)}` },
-                { y: slY, color: '#ef5350', label: `SL ${selectedTrade.sl.toFixed(digits)}` },
-                { y: tpY, color: '#26a69a', label: `TP ${selectedTrade.tp.toFixed(digits)}` },
+                { y: slY, color: '#cf5c60', label: `SL ${selectedTrade.sl.toFixed(digits)}` },
+                { y: tpY, color: '#089981', label: `TP ${selectedTrade.tp.toFixed(digits)}` },
               ];
               for (const ln of lines) {
                 ctx.strokeStyle = ln.color;
@@ -659,23 +659,23 @@ class PositionBoxPaneRenderer implements IPrimitivePaneRenderer {
       const rewardPts = Math.abs(draftTrade.tp - draftTrade.entry);
       const rewardUsd = Number((rewardPts * riskCheck.pipVal).toFixed(2));
 
-      // 1. Shaded Risk Zone (Red)
+      // 1. Shaded Risk Zone
       const riskTop = Math.min(entryY, slY);
       const riskHeight = Math.max(1, Math.abs(entryY - slY));
       ctx.save();
-      ctx.fillStyle = 'rgba(239, 83, 80, 0.22)';
+      ctx.fillStyle = 'rgba(207, 92, 96, 0.22)';
       ctx.fillRect(left, riskTop, boxWidth, riskHeight);
-      ctx.strokeStyle = 'rgba(239, 83, 80, 0.6)';
+      ctx.strokeStyle = 'rgba(207, 92, 96, 0.65)';
       ctx.strokeRect(left, riskTop, boxWidth, riskHeight);
       ctx.restore();
 
-      // 2. Shaded Reward Zone (Green)
+      // 2. Shaded Reward Zone
       const rewardTop = Math.min(entryY, tpY);
       const rewardHeight = Math.max(1, Math.abs(entryY - tpY));
       ctx.save();
-      ctx.fillStyle = 'rgba(38, 166, 154, 0.22)';
+      ctx.fillStyle = 'rgba(8, 153, 129, 0.22)';
       ctx.fillRect(left, rewardTop, boxWidth, rewardHeight);
-      ctx.strokeStyle = 'rgba(38, 166, 154, 0.6)';
+      ctx.strokeStyle = 'rgba(8, 153, 129, 0.65)';
       ctx.strokeRect(left, rewardTop, boxWidth, rewardHeight);
       ctx.restore();
 
@@ -728,26 +728,26 @@ class PositionBoxPaneRenderer implements IPrimitivePaneRenderer {
       const dirTag = isLong ? 'LONG' : 'SHORT';
       drawPriceLine(
         entryY,
-        '#2962ff',
+        '#9c9c9c',
         `Entry (${dirTag}): ${draftTrade.entry.toFixed(digits)}`,
-        '#1a237e',
+        '#262626',
         'entry'
       );
 
       const slWarning = riskCheck.exceedsRiskCap ? ' ⚠️ >$20 Risk' : '';
       drawPriceLine(
         slY,
-        '#ef5350',
+        '#cf5c60',
         `SL: ${draftTrade.sl.toFixed(digits)} (-$${riskCheck.riskUsd.toFixed(2)})${slWarning}`,
-        '#b71c1c',
+        '#5c1d20',
         'sl'
       );
 
       drawPriceLine(
         tpY,
-        '#26a69a',
+        '#089981',
         `TP: ${draftTrade.tp.toFixed(digits)} (+$${rewardUsd.toFixed(2)} | ${rr.toFixed(2)}R)`,
-        '#004d40',
+        '#054d41',
         'tp'
       );
     });

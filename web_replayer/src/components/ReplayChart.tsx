@@ -139,22 +139,30 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
       width: containerRef.current.clientWidth || 800,
       height: containerRef.current.clientHeight || 500,
       layout: {
-        background: { type: ColorType.Solid, color: '#131722' },
-        textColor: '#d1d4dc',
+        background: { type: ColorType.Solid, color: '#0f0f0f' },
+        textColor: '#8c8c8c',
       },
       grid: {
-        vertLines: { color: '#1e222d' },
-        horzLines: { color: '#1e222d' },
+        vertLines: { color: '#161616' },
+        horzLines: { color: '#161616' },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
+        vertLine: {
+          color: '#363636',
+          labelBackgroundColor: '#242424',
+        },
+        horzLine: {
+          color: '#363636',
+          labelBackgroundColor: '#737373',
+        },
       },
       rightPriceScale: {
-        borderColor: '#2b2b43',
+        borderColor: '#222222',
         autoScale: true,
       },
       timeScale: {
-        borderColor: '#2b2b43',
+        borderColor: '#222222',
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => formatClockTick(Number(time), initialClockModeRef.current, false),
@@ -177,11 +185,12 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     });
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#26a69a',
-      downColor: '#ef5350',
+      upColor: '#089981',
+      downColor: '#9c9c9c',
       borderVisible: false,
-      wickUpColor: '#26a69a',
-      wickDownColor: '#ef5350',
+      wickUpColor: '#089981',
+      wickDownColor: '#9c9c9c',
+      priceLineColor: '#737373',
       priceFormat: {
         type: 'price',
         precision: initialDigitsRef.current,

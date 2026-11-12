@@ -724,7 +724,7 @@ export function App() {
   }, [draftTrade]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', backgroundColor: '#131722', color: '#d1d4dc', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', backgroundColor: '#0f0f0f', color: '#cccccc', overflow: 'hidden' }}>
       {/* Top Header - Level 1 */}
       <header
         style={{
@@ -732,8 +732,8 @@ export function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '6px 14px',
-          borderBottom: '1px solid #2a2e39',
-          backgroundColor: '#1e222d',
+          borderBottom: '1px solid #262626',
+          backgroundColor: '#191919',
           minHeight: '44px',
           gap: '12px',
         }}
@@ -744,7 +744,7 @@ export function App() {
             <span style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '0.5px', color: '#f0b90b' }}>
               TradingGuard
             </span>
-            <span style={{ color: '#565a65', fontSize: '12px' }}>|</span>
+            <span style={{ color: '#4a4a4a', fontSize: '12px' }}>|</span>
             <span style={{ fontWeight: 600, fontSize: '13px', color: '#ffffff' }}>
               Visual Co-Backtester
             </span>
@@ -755,8 +755,8 @@ export function App() {
             value={selectedSymbol}
             onChange={(e) => handleSelectSymbol(e.target.value)}
             style={{
-              backgroundColor: '#131722',
-              border: '1px solid #2a2e39',
+              backgroundColor: '#0f0f0f',
+              border: '1px solid #262626',
               borderRadius: '4px',
               color: '#ffffff',
               fontSize: '12px',
@@ -787,7 +787,7 @@ export function App() {
               Uncalibrated Index
             </span>
           ) : (
-            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(38, 166, 154, 0.2)', color: '#26a69a', fontWeight: 600 }}>
+            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(8, 153, 129, 0.2)', color: '#089981', fontWeight: 600 }}>
               SMC Active
             </span>
           )}
@@ -801,10 +801,10 @@ export function App() {
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: '#131722',
-              border: '1px solid #2a2e39',
+              backgroundColor: '#0f0f0f',
+              border: '1px solid #262626',
               borderRadius: '4px',
-              color: '#90caf9',
+              color: '#9c9c9c',
               fontSize: '11px',
               fontWeight: 600,
               padding: '3px 8px',
@@ -819,20 +819,20 @@ export function App() {
 
         {/* Date Range Inputs & Jump Presets */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 6px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
-            <Calendar size={13} style={{ color: '#787b86' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#0f0f0f', padding: '2px 6px', borderRadius: '4px', border: '1px solid #262626' }}>
+            <Calendar size={13} style={{ color: '#737373' }} />
             <input
               type="date"
               value={startDateStr}
               onChange={(e) => setStartDateStr(e.target.value)}
-              style={{ backgroundColor: 'transparent', border: 'none', color: '#d1d4dc', fontSize: '11px', outline: 'none' }}
+              style={{ backgroundColor: 'transparent', border: 'none', color: '#cccccc', fontSize: '11px', outline: 'none' }}
             />
-            <span style={{ color: '#787b86', fontSize: '11px' }}>→</span>
+            <span style={{ color: '#737373', fontSize: '11px' }}>→</span>
             <input
               type="date"
               value={endDateStr}
               onChange={(e) => setEndDateStr(e.target.value)}
-              style={{ backgroundColor: 'transparent', border: 'none', color: '#d1d4dc', fontSize: '11px', outline: 'none' }}
+              style={{ backgroundColor: 'transparent', border: 'none', color: '#cccccc', fontSize: '11px', outline: 'none' }}
             />
           </div>
 
@@ -859,9 +859,9 @@ export function App() {
                     padding: '2px 6px',
                     fontSize: '10px',
                     fontWeight: isActive ? 700 : 500,
-                    backgroundColor: isActive ? '#2962ff' : '#131722',
-                    color: isActive ? '#ffffff' : '#b2b5be',
-                    border: '1px solid #2a2e39',
+                    backgroundColor: isActive ? '#089981' : '#0f0f0f',
+                    color: isActive ? '#ffffff' : '#9c9c9c',
+                    border: '1px solid #262626',
                     borderRadius: '3px',
                     cursor: 'pointer',
                   }}
@@ -873,7 +873,7 @@ export function App() {
           </div>
 
           {/* Timeframe Switcher (6 Buttons) */}
-          <div style={{ display: 'flex', backgroundColor: '#131722', padding: '2px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+          <div style={{ display: 'flex', backgroundColor: '#0f0f0f', padding: '2px', borderRadius: '4px', border: '1px solid #262626' }}>
             {DEFAULT_TIMEFRAMES.map((tf) => (
               <button
                 key={tf}
@@ -882,8 +882,8 @@ export function App() {
                   padding: '3px 7px',
                   fontSize: '11px',
                   fontWeight: timeframe === tf ? 700 : 500,
-                  backgroundColor: timeframe === tf ? '#2962ff' : 'transparent',
-                  color: timeframe === tf ? '#ffffff' : '#787b86',
+                  backgroundColor: timeframe === tf ? '#089981' : 'transparent',
+                  color: timeframe === tf ? '#ffffff' : '#737373',
                   border: 'none',
                   borderRadius: '3px',
                   cursor: 'pointer',
@@ -903,8 +903,8 @@ export function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '4px 14px',
-          borderBottom: '1px solid #2a2e39',
-          backgroundColor: '#181b24',
+          borderBottom: '1px solid #262626',
+          backgroundColor: '#141414',
           minHeight: '38px',
           fontSize: '11px',
           gap: '10px',
@@ -913,8 +913,8 @@ export function App() {
         {/* Clocks & Screener Engine Mode */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Display Clock */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
-            <Clock size={12} style={{ color: '#787b86', marginLeft: '2px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#0f0f0f', padding: '2px 4px', borderRadius: '4px', border: '1px solid #262626' }}>
+            <Clock size={12} style={{ color: '#737373', marginLeft: '2px' }} />
             {(['tehran', 'utc', 'server'] as ClockMode[]).map((mode) => (
               <button
                 key={mode}
@@ -923,8 +923,8 @@ export function App() {
                   padding: '2px 6px',
                   fontSize: '10px',
                   fontWeight: clockMode === mode ? 600 : 400,
-                  backgroundColor: clockMode === mode ? '#2962ff' : 'transparent',
-                  color: clockMode === mode ? '#ffffff' : '#787b86',
+                  backgroundColor: clockMode === mode ? '#089981' : 'transparent',
+                  color: clockMode === mode ? '#ffffff' : '#737373',
                   border: 'none',
                   borderRadius: '3px',
                   cursor: 'pointer',
@@ -937,8 +937,8 @@ export function App() {
           </div>
 
           {/* Screener Engine Clock Mode Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
-            <span style={{ fontSize: '10px', color: '#787b86', fontWeight: 600 }}>Screener:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#0f0f0f', padding: '2px 4px', borderRadius: '4px', border: '1px solid #262626' }}>
+            <span style={{ fontSize: '10px', color: '#737373', fontWeight: 600 }}>Screener:</span>
             {(['true_tehran', 'live_legacy'] as EngineClockMode[]).map((mode) => (
               <button
                 key={mode}
@@ -948,8 +948,8 @@ export function App() {
                   padding: '2px 5px',
                   fontSize: '10px',
                   fontWeight: engineClockMode === mode ? 600 : 400,
-                  backgroundColor: engineClockMode === mode ? (mode === 'true_tehran' ? '#26a69a' : '#ef5350') : 'transparent',
-                  color: engineClockMode === mode ? '#ffffff' : '#787b86',
+                  backgroundColor: engineClockMode === mode ? (mode === 'true_tehran' ? '#089981' : '#cf5c60') : 'transparent',
+                  color: engineClockMode === mode ? '#ffffff' : '#737373',
                   border: 'none',
                   borderRadius: '3px',
                   cursor: 'pointer',
@@ -961,8 +961,8 @@ export function App() {
           </div>
 
           {/* Overlay Visibility Toggles */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '2px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
-            <Layers size={12} style={{ color: '#787b86', marginLeft: '2px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#0f0f0f', padding: '2px 4px', borderRadius: '4px', border: '1px solid #262626' }}>
+            <Layers size={12} style={{ color: '#737373', marginLeft: '2px' }} />
             <button
               onClick={() => setShowKillzones(!showKillzones)}
               title="Toggle Killzones"
@@ -970,8 +970,8 @@ export function App() {
                 padding: '2px 5px',
                 fontSize: '10px',
                 fontWeight: showKillzones ? 600 : 400,
-                backgroundColor: showKillzones ? 'rgba(41, 98, 255, 0.2)' : 'transparent',
-                color: showKillzones ? '#90caf9' : '#565a65',
+                backgroundColor: showKillzones ? 'rgba(8, 153, 129, 0.2)' : 'transparent',
+                color: showKillzones ? '#9c9c9c' : '#4a4a4a',
                 border: 'none',
                 borderRadius: '3px',
                 cursor: 'pointer',
@@ -987,7 +987,7 @@ export function App() {
                 fontSize: '10px',
                 fontWeight: showAsianRange ? 600 : 400,
                 backgroundColor: showAsianRange ? 'rgba(255, 179, 0, 0.2)' : 'transparent',
-                color: showAsianRange ? '#ffd54f' : '#565a65',
+                color: showAsianRange ? '#ffd54f' : '#4a4a4a',
                 border: 'none',
                 borderRadius: '3px',
                 cursor: 'pointer',
@@ -1002,8 +1002,8 @@ export function App() {
                 padding: '2px 5px',
                 fontSize: '10px',
                 fontWeight: showBoxes ? 600 : 400,
-                backgroundColor: showBoxes ? 'rgba(38, 166, 154, 0.2)' : 'transparent',
-                color: showBoxes ? '#80cbc4' : '#565a65',
+                backgroundColor: showBoxes ? 'rgba(8, 153, 129, 0.2)' : 'transparent',
+                color: showBoxes ? '#5eead4' : '#4a4a4a',
                 border: 'none',
                 borderRadius: '3px',
                 cursor: 'pointer',
@@ -1018,8 +1018,8 @@ export function App() {
                 padding: '2px 5px',
                 fontSize: '10px',
                 fontWeight: showSweeps ? 600 : 400,
-                backgroundColor: showSweeps ? 'rgba(0, 230, 118, 0.2)' : 'transparent',
-                color: showSweeps ? '#69f0ae' : '#565a65',
+                backgroundColor: showSweeps ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                color: showSweeps ? '#34d399' : '#4a4a4a',
                 border: 'none',
                 borderRadius: '3px',
                 cursor: 'pointer',
@@ -1034,8 +1034,8 @@ export function App() {
                 padding: '2px 5px',
                 fontSize: '10px',
                 fontWeight: showTrades ? 600 : 400,
-                backgroundColor: showTrades ? 'rgba(239, 83, 80, 0.2)' : 'transparent',
-                color: showTrades ? '#ff8a80' : '#565a65',
+                backgroundColor: showTrades ? 'rgba(207, 92, 96, 0.2)' : 'transparent',
+                color: showTrades ? '#e58589' : '#4a4a4a',
                 border: 'none',
                 borderRadius: '3px',
                 cursor: 'pointer',
@@ -1065,9 +1065,9 @@ export function App() {
               borderRadius: '4px',
               fontSize: '10px',
               fontWeight: 700,
-              backgroundColor: blindReplay ? 'rgba(255, 179, 0, 0.2)' : '#131722',
-              color: blindReplay ? '#ffd54f' : '#787b86',
-              border: `1px solid ${blindReplay ? '#ffd54f' : '#2a2e39'}`,
+              backgroundColor: blindReplay ? 'rgba(255, 179, 0, 0.2)' : '#0f0f0f',
+              color: blindReplay ? '#ffd54f' : '#737373',
+              border: `1px solid ${blindReplay ? '#ffd54f' : '#262626'}`,
               cursor: 'pointer',
             }}
           >
@@ -1077,12 +1077,12 @@ export function App() {
 
           {/* Transport Controls (when Blind Replay active) */}
           {blindReplay && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#131722', padding: '2px 6px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#0f0f0f', padding: '2px 6px', borderRadius: '4px', border: '1px solid #262626' }}>
               {/* Step Back */}
               <button
                 onClick={() => handleStepReplay(-1)}
                 title="Step -1 Bar"
-                style={{ background: 'transparent', border: 'none', color: '#d1d4dc', cursor: 'pointer', padding: '2px' }}
+                style={{ background: 'transparent', border: 'none', color: '#cccccc', cursor: 'pointer', padding: '2px' }}
               >
                 <SkipBack size={13} />
               </button>
@@ -1095,7 +1095,7 @@ export function App() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: isPlaying ? '#ef5350' : '#2962ff',
+                  background: isPlaying ? '#cf5c60' : '#089981',
                   border: 'none',
                   borderRadius: '3px',
                   color: '#ffffff',
@@ -1110,7 +1110,7 @@ export function App() {
               <button
                 onClick={() => handleStepReplay(1)}
                 title="Step +1 Bar"
-                style={{ background: 'transparent', border: 'none', color: '#d1d4dc', cursor: 'pointer', padding: '2px' }}
+                style={{ background: 'transparent', border: 'none', color: '#cccccc', cursor: 'pointer', padding: '2px' }}
               >
                 <SkipForward size={13} />
               </button>
@@ -1120,8 +1120,8 @@ export function App() {
                 value={playbackSpeed}
                 onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
                 style={{
-                  backgroundColor: '#1e222d',
-                  border: '1px solid #2a2e39',
+                  backgroundColor: '#191919',
+                  border: '1px solid #262626',
                   borderRadius: '3px',
                   color: '#ffd54f',
                   fontSize: '10px',
@@ -1171,9 +1171,9 @@ export function App() {
                 padding: '3px 8px',
                 fontSize: '11px',
                 fontWeight: 700,
-                backgroundColor: 'rgba(38, 166, 154, 0.2)',
-                color: '#26a69a',
-                border: '1px solid rgba(38, 166, 154, 0.4)',
+                backgroundColor: 'rgba(8, 153, 129, 0.2)',
+                color: '#089981',
+                border: '1px solid rgba(8, 153, 129, 0.4)',
                 borderRadius: '4px',
                 cursor: 'pointer',
               }}
@@ -1190,9 +1190,9 @@ export function App() {
                 padding: '3px 8px',
                 fontSize: '11px',
                 fontWeight: 700,
-                backgroundColor: 'rgba(239, 83, 80, 0.2)',
-                color: '#ef5350',
-                border: '1px solid rgba(239, 83, 80, 0.4)',
+                backgroundColor: 'rgba(207, 92, 96, 0.2)',
+                color: '#cf5c60',
+                border: '1px solid rgba(207, 92, 96, 0.4)',
                 borderRadius: '4px',
                 cursor: 'pointer',
               }}
@@ -1212,8 +1212,8 @@ export function App() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '6px 14px',
-            backgroundColor: '#1e222d',
-            borderBottom: '1px solid #2962ff',
+            backgroundColor: '#191919',
+            borderBottom: '1px solid #089981',
             fontSize: '11px',
             gap: '12px',
           }}
@@ -1225,8 +1225,8 @@ export function App() {
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '3px',
-                backgroundColor: draftTrade.direction === 'LONG' ? 'rgba(38, 166, 154, 0.2)' : 'rgba(239, 83, 80, 0.2)',
-                color: draftTrade.direction === 'LONG' ? '#26a69a' : '#ef5350',
+                backgroundColor: draftTrade.direction === 'LONG' ? 'rgba(8, 153, 129, 0.2)' : 'rgba(207, 92, 96, 0.2)',
+                color: draftTrade.direction === 'LONG' ? '#089981' : '#cf5c60',
               }}
             >
               {draftTrade.direction} POSITION BOX
@@ -1239,8 +1239,8 @@ export function App() {
             )}
 
             <span>Entry: <b style={{ color: '#ffffff' }}>{draftTrade.entry.toFixed(digits)}</b></span>
-            <span>SL: <b style={{ color: '#ef5350' }}>{draftTrade.sl.toFixed(digits)}</b></span>
-            <span>TP: <b style={{ color: '#26a69a' }}>{draftTrade.tp.toFixed(digits)}</b></span>
+            <span>SL: <b style={{ color: '#cf5c60' }}>{draftTrade.sl.toFixed(digits)}</b></span>
+            <span>TP: <b style={{ color: '#089981' }}>{draftTrade.tp.toFixed(digits)}</b></span>
             <span>R:R: <b style={{ color: '#ffd54f' }}>{draftRR.toFixed(2)}R</b></span>
 
             {/* Risk & Compliance Warning Badge */}
@@ -1261,7 +1261,7 @@ export function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {/* Simulation Result Preview */}
             {simResult && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '3px', backgroundColor: simResult.status === 'WIN' ? 'rgba(38, 166, 154, 0.2)' : 'rgba(239, 83, 80, 0.2)', color: simResult.status === 'WIN' ? '#26a69a' : '#ef5350', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '3px', backgroundColor: simResult.status === 'WIN' ? 'rgba(8, 153, 129, 0.2)' : 'rgba(207, 92, 96, 0.2)', color: simResult.status === 'WIN' ? '#089981' : '#cf5c60', fontWeight: 700 }}>
                 {simResult.status === 'WIN' ? <CheckCircle2 size={12} /> : null}
                 <span>{simResult.status} ({simResult.rr_realized?.toFixed(2)}R, ${simResult.realized_pnl_usd.toFixed(2)})</span>
               </div>
@@ -1275,7 +1275,7 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: '#2962ff',
+                backgroundColor: '#089981',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '3px',
@@ -1297,8 +1297,8 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: '#00e676',
-                color: '#121418',
+                backgroundColor: '#10b981',
+                color: '#0f0f0f',
                 border: 'none',
                 borderRadius: '3px',
                 padding: '4px 10px',
@@ -1321,8 +1321,8 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 background: 'transparent',
-                border: '1px solid #565a65',
-                color: '#b2b5be',
+                border: '1px solid #4a4a4a',
+                color: '#9c9c9c',
                 borderRadius: '3px',
                 padding: '3px 6px',
                 cursor: 'pointer',
@@ -1343,7 +1343,7 @@ export function App() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '5px 14px',
-            backgroundColor: '#1e222d',
+            backgroundColor: '#191919',
             borderBottom: '1px solid #f0b90b',
             fontSize: '11px',
             gap: '10px',
@@ -1365,17 +1365,17 @@ export function App() {
             </span>
 
             <span>Entry: <b style={{ color: '#f0b90b' }}>{selectedTrade.entry.toFixed(digits)}</b></span>
-            <span>SL: <b style={{ color: '#ef5350' }}>{selectedTrade.sl.toFixed(digits)}</b></span>
-            <span>TP: <b style={{ color: '#26a69a' }}>{selectedTrade.tp.toFixed(digits)}</b></span>
+            <span>SL: <b style={{ color: '#cf5c60' }}>{selectedTrade.sl.toFixed(digits)}</b></span>
+            <span>TP: <b style={{ color: '#089981' }}>{selectedTrade.tp.toFixed(digits)}</b></span>
             <span
               style={{
                 fontWeight: 700,
                 color:
                   selectedTrade.status === 'WIN'
-                    ? '#26a69a'
+                    ? '#089981'
                     : selectedTrade.status === 'LOSS'
-                    ? '#ef5350'
-                    : '#90caf9',
+                    ? '#cf5c60'
+                    : '#9c9c9c',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -1389,18 +1389,18 @@ export function App() {
               const curIdx = clusterCandidates.findIndex((c) => c.trade_id === selectedTrade.trade_id);
               const safeIdx = curIdx >= 0 ? curIdx : 0;
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '1px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#0f0f0f', padding: '1px 4px', borderRadius: '4px', border: '1px solid #262626' }}>
                   <button
                     onClick={() => {
                       const prev = clusterCandidates[(safeIdx - 1 + clusterCandidates.length) % clusterCandidates.length];
                       setSelectedTradeId(prev.trade_id);
                     }}
                     title="Previous trade in cluster"
-                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                    style={{ background: 'none', border: 'none', color: '#9c9c9c', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
                   >
                     ◀
                   </button>
-                  <span style={{ color: '#b2b5be', fontSize: '10px', fontWeight: 600 }}>
+                  <span style={{ color: '#9c9c9c', fontSize: '10px', fontWeight: 600 }}>
                     {safeIdx + 1}/{clusterCandidates.length}
                   </span>
                   <button
@@ -1409,7 +1409,7 @@ export function App() {
                       setSelectedTradeId(next.trade_id);
                     }}
                     title="Next trade in cluster"
-                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                    style={{ background: 'none', border: 'none', color: '#9c9c9c', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
                   >
                     ▶
                   </button>
@@ -1425,7 +1425,7 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: '#2962ff',
+                backgroundColor: '#089981',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '3px',
@@ -1443,9 +1443,9 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: '#131722',
-                color: '#90caf9',
-                border: '1px solid #2a2e39',
+                backgroundColor: '#0f0f0f',
+                color: '#9c9c9c',
+                border: '1px solid #262626',
                 borderRadius: '3px',
                 padding: '3px 8px',
                 fontWeight: 600,
@@ -1461,8 +1461,8 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 background: 'transparent',
-                border: '1px solid #565a65',
-                color: '#b2b5be',
+                border: '1px solid #4a4a4a',
+                color: '#9c9c9c',
                 borderRadius: '3px',
                 padding: '3px 6px',
                 cursor: 'pointer',
@@ -1483,8 +1483,8 @@ export function App() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '5px 14px',
-            backgroundColor: '#1e222d',
-            borderBottom: '1px solid #00e676',
+            backgroundColor: '#191919',
+            borderBottom: '1px solid #10b981',
             fontSize: '11px',
             gap: '10px',
           }}
@@ -1495,8 +1495,8 @@ export function App() {
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '3px',
-                backgroundColor: 'rgba(0, 230, 118, 0.16)',
-                color: '#00e676',
+                backgroundColor: 'rgba(16, 185, 129, 0.16)',
+                color: '#10b981',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -1514,7 +1514,7 @@ export function App() {
               </span>
             ) : null}
 
-            <span style={{ color: '#90caf9' }}>
+            <span style={{ color: '#9c9c9c' }}>
               {formatClockTick(selectedSmcElement.time, clockMode, true)}
             </span>
 
@@ -1522,18 +1522,18 @@ export function App() {
               const curIdx = smcClusterCandidates.findIndex((c) => c.id === selectedSmcElement.id);
               const safeIdx = curIdx >= 0 ? curIdx : 0;
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '1px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#0f0f0f', padding: '1px 4px', borderRadius: '4px', border: '1px solid #262626' }}>
                   <button
                     onClick={() => {
                       const prev = smcClusterCandidates[(safeIdx - 1 + smcClusterCandidates.length) % smcClusterCandidates.length];
                       setSelectedSmcElement(prev);
                     }}
                     title="Previous element at point"
-                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                    style={{ background: 'none', border: 'none', color: '#9c9c9c', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
                   >
                     ◀
                   </button>
-                  <span style={{ color: '#b2b5be', fontSize: '10px', fontWeight: 600 }}>
+                  <span style={{ color: '#9c9c9c', fontSize: '10px', fontWeight: 600 }}>
                     {safeIdx + 1}/{smcClusterCandidates.length}
                   </span>
                   <button
@@ -1542,7 +1542,7 @@ export function App() {
                       setSelectedSmcElement(next);
                     }}
                     title="Next element at point"
-                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                    style={{ background: 'none', border: 'none', color: '#9c9c9c', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
                   >
                     ▶
                   </button>
@@ -1561,8 +1561,8 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: '#00e676',
-                color: '#121418',
+                backgroundColor: '#10b981',
+                color: '#0f0f0f',
                 border: 'none',
                 borderRadius: '3px',
                 padding: '4px 10px',
@@ -1583,8 +1583,8 @@ export function App() {
                 display: 'flex',
                 alignItems: 'center',
                 background: 'transparent',
-                border: '1px solid #565a65',
-                color: '#b2b5be',
+                border: '1px solid #4a4a4a',
+                color: '#9c9c9c',
                 borderRadius: '3px',
                 padding: '3px 6px',
                 cursor: 'pointer',
@@ -1633,7 +1633,7 @@ export function App() {
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 20,
-                backgroundColor: '#1e222d',
+                backgroundColor: '#191919',
                 border: '1px solid #f0b90b',
                 color: '#ffd54f',
                 padding: '5px 12px',
@@ -1647,7 +1647,7 @@ export function App() {
               <span>{syncNotice}</span>
               <button
                 onClick={() => setSyncNotice(null)}
-                style={{ background: 'none', border: 'none', color: '#787b86', cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: '#737373', cursor: 'pointer', padding: 0 }}
               >
                 <X size={12} />
               </button>
@@ -1669,13 +1669,13 @@ export function App() {
               <div
                 style={{
                   pointerEvents: 'auto',
-                  backgroundColor: 'rgba(30, 34, 45, 0.94)',
-                  border: '1px solid #2a2e39',
+                  backgroundColor: 'rgba(25, 25, 25, 0.94)',
+                  border: '1px solid #262626',
                   borderRadius: '8px',
                   padding: '16px 20px',
                   maxWidth: '420px',
                   textAlign: 'center',
-                  color: '#d1d4dc',
+                  color: '#cccccc',
                   fontSize: '12px',
                 }}
               >
@@ -1683,7 +1683,7 @@ export function App() {
                   No cached {selectedSymbol} candles in {startDateStr} → {endDateStr}
                 </div>
                 {activeSymbolObj?.min_date && activeSymbolObj?.max_date && (
-                  <div style={{ color: '#90caf9', marginBottom: '12px', fontSize: '11px' }}>
+                  <div style={{ color: '#9c9c9c', marginBottom: '12px', fontSize: '11px' }}>
                     Local Parquet cache covers <b>{activeSymbolObj.min_date}</b> to <b>{activeSymbolObj.max_date}</b>.
                   </div>
                 )}
@@ -1698,7 +1698,7 @@ export function App() {
                         }
                       }}
                       style={{
-                        backgroundColor: '#2962ff',
+                        backgroundColor: '#089981',
                         border: 'none',
                         borderRadius: '4px',
                         color: '#ffffff',
@@ -1715,10 +1715,10 @@ export function App() {
                     onClick={handleSyncMt5}
                     disabled={isSyncingMt5}
                     style={{
-                      backgroundColor: '#131722',
-                      border: '1px solid #2a2e39',
+                      backgroundColor: '#0f0f0f',
+                      border: '1px solid #262626',
                       borderRadius: '4px',
-                      color: '#90caf9',
+                      color: '#9c9c9c',
                       fontSize: '11px',
                       fontWeight: 600,
                       padding: '5px 10px',
@@ -1738,8 +1738,8 @@ export function App() {
           style={{
             width: isDrawerOpen ? '380px' : '36px',
             height: '100%',
-            backgroundColor: '#181b24',
-            borderLeft: '1px solid #2a2e39',
+            backgroundColor: '#141414',
+            borderLeft: '1px solid #262626',
             display: 'flex',
             flexDirection: 'column',
             transition: 'width 0.2s ease',
@@ -1754,8 +1754,8 @@ export function App() {
               alignItems: 'center',
               justifyContent: isDrawerOpen ? 'space-between' : 'center',
               padding: '6px 8px',
-              backgroundColor: '#1e222d',
-              borderBottom: '1px solid #2a2e39',
+              backgroundColor: '#191919',
+              borderBottom: '1px solid #262626',
               minHeight: '34px',
             }}
           >
@@ -1770,8 +1770,8 @@ export function App() {
                     padding: '4px 8px',
                     fontSize: '11px',
                     fontWeight: activeTab === 'bot' ? 700 : 500,
-                    backgroundColor: activeTab === 'bot' ? '#2962ff' : 'transparent',
-                    color: activeTab === 'bot' ? '#ffffff' : '#787b86',
+                    backgroundColor: activeTab === 'bot' ? '#089981' : 'transparent',
+                    color: activeTab === 'bot' ? '#ffffff' : '#737373',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1789,8 +1789,8 @@ export function App() {
                     padding: '4px 8px',
                     fontSize: '11px',
                     fontWeight: activeTab === 'scorecard' ? 700 : 500,
-                    backgroundColor: activeTab === 'scorecard' ? '#2962ff' : 'transparent',
-                    color: activeTab === 'scorecard' ? '#ffffff' : '#787b86',
+                    backgroundColor: activeTab === 'scorecard' ? '#089981' : 'transparent',
+                    color: activeTab === 'scorecard' ? '#ffffff' : '#737373',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1808,8 +1808,8 @@ export function App() {
                     padding: '4px 8px',
                     fontSize: '11px',
                     fontWeight: activeTab === 'agentify' ? 700 : 500,
-                    backgroundColor: activeTab === 'agentify' ? '#00e676' : 'transparent',
-                    color: activeTab === 'agentify' ? '#121418' : '#787b86',
+                    backgroundColor: activeTab === 'agentify' ? '#10b981' : 'transparent',
+                    color: activeTab === 'agentify' ? '#0f0f0f' : '#737373',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1827,7 +1827,7 @@ export function App() {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#787b86',
+                color: '#737373',
                 cursor: 'pointer',
                 padding: '4px',
               }}
@@ -1926,24 +1926,24 @@ export function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '4px 14px',
-          borderTop: '1px solid #2a2e39',
-          backgroundColor: '#181b24',
+          borderTop: '1px solid #262626',
+          backgroundColor: '#141414',
           height: '24px',
           fontSize: '11px',
-          color: '#787b86',
+          color: '#737373',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span>Account: <b style={{ color: '#ffffff' }}>$2,000.00</b> (PROP_FIRM)</span>
-          <span>Max Bot Risk: <b style={{ color: '#26a69a' }}>$20.00</b> (1.0%)</span>
-          <span>Candles Loaded: <b style={{ color: '#d1d4dc' }}>{candles.length}</b> ({timeframe})</span>
+          <span>Max Bot Risk: <b style={{ color: '#089981' }}>$20.00</b> (1.0%)</span>
+          <span>Candles Loaded: <b style={{ color: '#cccccc' }}>{candles.length}</b> ({timeframe})</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span>
             Active Bar: <b style={{ color: '#ffd54f' }}>{activeInspectionTime ? formatClockTick(activeInspectionTime, clockMode, true) : 'N/A'}</b>
           </span>
-          <span style={{ color: '#26a69a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ color: '#089981', display: 'flex', alignItems: 'center', gap: '4px' }}>
             ● Server Connected (127.0.0.1:8765)
           </span>
         </div>
