@@ -31,6 +31,7 @@ if sys.stdout.encoding != 'utf-8':
 from hitl.backtest.fast_screener import screen_ict_session
 from hitl.backtest.evaluator import get_optimal_trade_management
 from hitl.setup_registry import setup_registry
+from hitl.screener_gate import tehran_hour_from_bar_time
 
 TZ_UTC = ZoneInfo("UTC")
 CACHE_DIR = Path("backtest_results/cache")
@@ -315,14 +316,16 @@ def run_master_production_portfolio_audit():
                 hist_h1 = [b for b in bars_h1 if b['time'] <= bars_m5[m5_idx]['time']]
                 hist_d1 = [b for b in bars_d1 if b['time'] <= bars_m5[m5_idx]['time']]
 
-                # Call production screener
+                # Call production screener with dynamic Tehran hour
+                th_hour = tehran_hour_from_bar_time(bars_m5[m5_idx]['time'])
                 res = screen_ict_session(
                     bars_5m=hist_m5,
                     bars_1h=hist_h1,
                     symbol=sym,
-                    session_hour=sess_hour,
+                    session_hour=th_hour,
                     bars_1m=None,
-                    bars_1d=hist_d1
+                    bars_1d=hist_d1,
+                    closed_bars_only=True
                 )
 
                 if res.get("has_setup") and res.get("setup_type") != "NONE":
@@ -332,13 +335,15 @@ def run_master_production_portfolio_audit():
                     if not setup_registry.is_archetype_ratified(arch_id):
                         continue
 
-                    # Asset bans
-                    if is_fx and arch_id in ("SETUP-ARCH-009", "SETUP-ARCH-012", "SETUP-ARCH-014"):
+                    # Asset bans per 1-year empirical audit
+                    if is_fx and arch_id in ("SETUP-ARCH-009", "SETUP-ARCH-010", "SETUP-ARCH-012", "SETUP-ARCH-014"):
                         continue
-                    if not is_fx and arch_id in ("SETUP-ARCH-002", "SETUP-ARCH-009", "SETUP-ARCH-013"):
+                    if not is_fx and arch_id in ("SETUP-ARCH-002", "SETUP-ARCH-009", "SETUP-ARCH-010", "SETUP-ARCH-013", "SETUP-ARCH-014"):
                         continue
                     if is_fx and sess_label in ("NY_Open", "NY_Post_Open", "NY_Pre_Open", "NY_Silver_Bullet"):
-                        continue  # Bypassed on GBPUSD
+                        continue  # Bypassed on GBPUSD per 1-year empirical audit
+                    if not is_fx and sess_label in ("NY_Silver_Bullet", "London_Pre_Open"):
+                        continue  # Bypassed on Gold per 1-year empirical audit
 
                     # Simulate trade execution forward
                     t_entry = bars_m5[m5_idx]['time']

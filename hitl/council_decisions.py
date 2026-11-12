@@ -131,8 +131,21 @@ def audit_decision_outcome(decision_record: Dict[str, Any], engine: MT5Engine) -
         }
 
     is_fx = "GBP" in symbol or "EUR" in symbol
-    pip_size = 0.00010 if is_fx else 0.10
-    unit = "pips" if is_fx else "pts"
+    is_index = "NQ" in symbol or "NAS" in symbol or "SPX" in symbol or "YM" in symbol
+    is_crypto = "BTC" in symbol
+
+    if is_fx:
+        pip_size = 0.00010
+        unit = "pips"
+    elif is_index:
+        pip_size = 1.0
+        unit = "pts"
+    elif is_crypto:
+        pip_size = 1.0
+        unit = "USD"
+    else:
+        pip_size = 0.10
+        unit = "pts"
 
     # Fetch 5M rates from decision time to now
     rates = mt5.copy_rates_from(res_sym, mt5.TIMEFRAME_M5, dec_time, 100)
@@ -163,10 +176,11 @@ def audit_decision_outcome(decision_record: Dict[str, Any], engine: MT5Engine) -
         # If it was a high sweep (Judas high / Asian High) that we stood aside on selling:
         if "high" in sweep_tgt or "pdh" in sweep_tgt or "bearish" in str(decision_record.get("reason", "")).lower():
             # If price subsequently dropped heavily:
-            if max_drop >= (15.0 if not is_fx else 20.0):
+            threshold = 20.0 if is_fx else (30.0 if is_index else 15.0)
+            if max_drop >= threshold:
                 verdict = "❌ MISSED WINNER (Flawed Veto)"
-                summary = f"Price dropped -{max_drop:.1f} {unit} to {min_low:.2f} after veto. Macro bias caused execution blindness on clean Judas high."
-            elif max_gain >= (15.0 if not is_fx else 20.0):
+                summary = f"Price dropped -{max_drop:.1f} {unit} to {min_low:.2f} after veto."
+            elif max_gain >= threshold:
                 verdict = "✅ PROTECTIVE VETO (Accurate Decision)"
                 summary = f"Price expanded +{max_gain:.1f} {unit} higher through the peak. Veto successfully prevented taking counter-trend heat."
             else:

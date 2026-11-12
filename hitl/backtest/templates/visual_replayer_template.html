@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TradingGuard — Visual Backtest Replayer & Chart Inspector</title>
+<style>
+  :root {
+    --bg: #131722;
+    --panel: #1e222d;
+    --panel-alt: #242836;
+    --border: #2a2e39;
+    --text: #d1d4dc;
+    --muted: #787b86;
+    --accent: #2962ff;
+    --bull: #089981;
+    --bear: #f23645;
+    --amber: #f0b90b;
+    --cyan: #00e5ff;
+    --purple: #ab47bc;
+    --green: #00e676;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Top Toolbar */
+  .topbar {
+    height: 46px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .brand {
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.3px;
+  }
+  .brand span.tag {
+    background: rgba(41, 98, 255, 0.2);
+    color: #5b8cff;
+    border: 1px solid rgba(41, 98, 255, 0.4);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .sep { width: 1px; height: 22px; background: var(--border); }
+
+  select, button {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  select:hover, button:hover { border-color: #4c525e; background: #2c3140; }
+  button.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  button.play-btn.playing {
+    background: #d97706;
+    border-color: #d97706;
+    color: #fff;
+  }
+
+  .tf-group { display: flex; gap: 2px; }
+  .tf-group button { border-radius: 3px; padding: 4px 8px; font-weight: 600; }
+
+  .overlays-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    font-size: 11px;
+  }
+  .overlays-bar label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .overlays-bar label:hover { color: var(--text); }
+  .overlays-bar input { accent-color: var(--accent); cursor: pointer; }
+
+  /* Main Workspace */
+  .workspace {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  /* Chart Area */
+  .chart-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  canvas#chartCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+
+  /* Floating OHLC HUD inside Chart */
+  .ohlc-hud {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(19, 23, 34, 0.78);
+    backdrop-filter: blur(4px);
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(42, 46, 57, 0.8);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+  }
+  .ohlc-row { display: flex; gap: 10px; align-items: center; }
+  .ohlc-row .sym { font-weight: 700; color: #fff; font-size: 12px; }
+  .ohlc-row .val { color: var(--text); }
+  .ohlc-row .lbl { color: var(--muted); margin-right: 2px; }
+
+  /* Bottom Replay Transport Bar */
+  .replay-bar {
+    height: 44px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .replay-controls { display: flex; align-items: center; gap: 5px; }
+  .replay-slider-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  input[type="range"]#replaySlider {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 5px;
+  }
+  .replay-clock {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    min-width: 190px;
+    text-align: right;
+  }
+
+  /* Right Sidebar: Screener Thoughts & Event Timeline */
+  .sidebar {
+    width: 360px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .side-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 12px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .side-section {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .verdict-box {
+    padding: 9px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.45;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .verdict-box.signal {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: rgba(0, 230, 118, 0.4);
+    color: #b9f6ca;
+  }
+  .verdict-box.veto {
+    background: rgba(242, 54, 69, 0.08);
+    border-color: rgba(242, 54, 69, 0.35);
+    color: #ffab91;
+  }
+  .verdict-box.wait {
+    background: rgba(120, 123, 134, 0.08);
+    border-color: rgba(120, 123, 134, 0.25);
+    color: #d1d4dc;
+  }
+  .diag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .diag-cell {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .diag-cell .k { color: var(--muted); font-size: 10px; margin-bottom: 2px; }
+  .diag-cell .v { font-weight: 600; font-family: ui-monospace, monospace; }
+  .v.yes { color: var(--green); }
+  .v.no { color: var(--muted); }
+  .v.warn { color: var(--amber); }
+
+  /* Key Events Timeline */
+  .events-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 10px;
+  }
+  .event-item {
+    padding: 7px 9px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  .event-item:hover { border-color: var(--accent); }
+  .event-item.active { border-color: var(--cyan); background: rgba(0, 229, 255, 0.06); }
+  .event-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 3px;
+  }
+  .event-time { font-family: ui-monospace, monospace; color: var(--amber); font-weight: 600; }
+  .event-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .badge-SWEEP { background: rgba(240, 185, 11, 0.2); color: var(--amber); }
+  .badge-SIGNAL { background: rgba(0, 229, 255, 0.2); color: var(--cyan); }
+  .badge-FILL { background: rgba(41, 98, 255, 0.25); color: #82b1ff; }
+  .badge-WIN { background: rgba(0, 230, 118, 0.2); color: var(--green); }
+  .badge-LOSS { background: rgba(242, 54, 69, 0.2); color: var(--bear); }
+  .badge-VETO { background: rgba(255, 138, 101, 0.2); color: #ffab91; }
+  .event-msg { font-size: 11px; color: var(--text); line-height: 1.35; }
+
+  /* Trade Summary Card */
+  .trade-card {
+    background: rgba(41, 98, 255, 0.08);
+    border: 1px solid rgba(41, 98, 255, 0.35);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .trade-card-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--panel); }
+  ::-webkit-scrollbar-thumb { background: #363a45; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span>TRADINGGUARD</span>
+    <span class="tag">VISUAL REPLAYER</span>
+  </div>
+  <div class="sep"></div>
+
+  <label style="font-size:12px;color:var(--muted);">Date:</label>
+  <select id="dateSelect"></select>
+
+  <div class="tf-group">
+    <button id="tfM5Btn" class="active" onclick="setTimeframe('M5')">M5</button>
+    <button id="tfM1Btn" onclick="setTimeframe('M1')">M1</button>
+  </div>
+
+  <button id="resetZoomBtn" onclick="resetZoom()">Fit View</button>
+
+  <div class="overlays-bar">
+    <label><input type="checkbox" id="chkSessions" checked onchange="draw()"> Killzones</label>
+    <label><input type="checkbox" id="chkAsian" checked onchange="draw()"> Asian Bounds</label>
+    <label><input type="checkbox" id="chkMss" checked onchange="draw()"> Breakers / Sweeps</label>
+    <label><input type="checkbox" id="chkTrades" checked onchange="draw()"> Orders / Trades</label>
+  </div>
+</div>
+
+<div class="workspace">
+  <div class="chart-wrap" id="chartWrap">
+    <canvas id="chartCanvas"></canvas>
+    <div class="ohlc-hud" id="ohlcHud">
+      <div class="ohlc-row">
+        <span class="sym" id="hudSym">XAUUSD_o · M5</span>
+        <span class="val" id="hudTime">—</span>
+      </div>
+      <div class="ohlc-row">
+        <span><span class="lbl">O</span><span id="hudO">—</span></span>
+        <span><span class="lbl">H</span><span id="hudH">—</span></span>
+        <span><span class="lbl">L</span><span id="hudL">—</span></span>
+        <span><span class="lbl">C</span><span id="hudC">—</span></span>
+        <span><span class="lbl">Rng</span><span id="hudRng">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="side-header">
+      <span>SCREENER THOUGHTS (BAR INSPECTOR)</span>
+      <span id="barCounter" style="color:var(--muted);font-family:monospace;">0 / 0</span>
+    </div>
+
+    <div class="side-section">
+      <div id="verdictBox" class="verdict-box wait">Select a bar or press Play to inspect screener logic...</div>
+      <div class="diag-grid" id="diagGrid">
+        <div class="diag-cell"><div class="k">Session</div><div class="v" id="dSess">—</div></div>
+        <div class="diag-cell"><div class="k">Asian Range</div><div class="v" id="dRange">—</div></div>
+        <div class="diag-cell"><div class="k">Pierced High / Low</div><div class="v" id="dPierce">—</div></div>
+        <div class="diag-cell"><div class="k">5M Breaker / FVG</div><div class="v" id="dBreaker">—</div></div>
+        <div class="diag-cell"><div class="k">1H HTF Structure</div><div class="v" id="dH1">—</div></div>
+        <div class="diag-cell"><div class="k">M5 Phase</div><div class="v" id="dPhase">—</div></div>
+      </div>
+    </div>
+
+    <div class="side-section" id="tradeSummarySection" style="display:none;">
+      <div class="trade-card" id="tradeCard"></div>
+    </div>
+
+    <div class="side-header" style="border-top:none;">
+      <span>KEY SESSION EVENTS & VETOES</span>
+      <span id="evtCount" style="color:var(--muted);font-size:11px;">0 events</span>
+    </div>
+    <div class="events-list" id="eventsList"></div>
+  </div>
+</div>
+
+<div class="replay-bar">
+  <div class="replay-controls">
+    <button onclick="jumpStart()" title="Start of Session">|&lt;</button>
+    <button onclick="stepBar(-1)" title="Step Back 1 Bar">&lt; -1</button>
+    <button id="playBtn" class="play-btn" onclick="togglePlay()">&#9654; Play</button>
+    <button onclick="stepBar(1)" title="Step Forward 1 Bar">+1 &gt;</button>
+    <button onclick="jumpEnd()" title="Show All Bars">&gt;| All</button>
+    <select id="speedSelect" onchange="updateSpeed()">
+      <option value="700">1x</option>
+      <option value="250" selected>3x</option>
+      <option value="80">8x</option>
+      <option value="25">20x</option>
+    </select>
+  </div>
+  <div class="replay-slider-wrap">
+    <input type="range" id="replaySlider" min="0" max="100" value="100" oninput="onScrub(this.value)" />
+  </div>
+  <div class="replay-clock" id="replayClock">LIVE FULL DAY</div>
+</div>
+
+<script>
+// INJECTED_REPLAY_DATA_PLACEHOLDER
+
+let currentDateKey = null;
+let currentTf = "M5";
+let replayIdx = 0;      // Index into active timeframe array representing current visible bar
+let isPlaying = false;
+let playTimer = null;
+let playDelay = 250;
+
+// View Transform
+let viewStart = 0;      // Floating bar index at left edge
+let viewCount = 90;     // Number of bars visible horizontally
+let pricePadding = 0.08;
+let manualYMin = null;
+let manualYMax = null;
+
+// Mouse interaction
+let isDragging = false;
+let dragStartX = 0;
+let dragStartView = 0;
+let hoverBarIdx = -1;
+let mouseX = -1;
+let mouseY = -1;
+
+const canvas = document.getElementById("chartCanvas");
+const ctx = canvas.getContext("2d");
+
+function init() {
+  if (!window.REPLAY_DATASET || Object.keys(window.REPLAY_DATASET).length === 0) {
+    document.getElementById("verdictBox").innerText = "Error: No replay dataset loaded.";
+    return;
+  }
+  const sel = document.getElementById("dateSelect");
+  const keys = Object.keys(window.REPLAY_DATASET).sort().reverse();
+  keys.forEach(k => {
+    const d = window.REPLAY_DATASET[k];
+    const opt = document.createElement("option");
+    opt.value = k;
+    const tradeBadge = d.trades && d.trades.length > 0
+      ? ` [${d.trades.map(t => t.outcome + " " + (t.net_r >= 0 ? "+" : "") + t.net_r + "R").join(", ")}]`
+      : " [No Trades]";
+    opt.text = `${k} (${d.weekday})${tradeBadge}`;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => loadDate(sel.value);
+  loadDate(keys[0]);
+
+  window.addEventListener("resize", resizeCanvas);
+  setupMouse();
+  resizeCanvas();
+}
+
+function getDayData() {
+  return window.REPLAY_DATASET[currentDateKey];
+}
+
+function getBars() {
+  const d = getDayData();
+  if (!d) return [];
+  return currentTf === "M5" ? d.bars_m5 : d.bars_m1;
+}
+
+function loadDate(dateKey) {
+  stopPlay();
+  currentDateKey = dateKey;
+  const bars = getBars();
+  replayIdx = Math.max(0, bars.length - 1);
+  resetZoom();
+  renderEventsList();
+  renderTradeCard();
+  updateReplayUI();
+  draw();
+}
+
+function setTimeframe(tf) {
+  stopPlay();
+  const prevBars = getBars();
+  const curEpoch = prevBars[replayIdx] ? prevBars[replayIdx].time : null;
+  currentTf = tf;
+  document.getElementById("tfM5Btn").classList.toggle("active", tf === "M5");
+  document.getElementById("tfM1Btn").classList.toggle("active", tf === "M1");
+
+  const newBars = getBars();
+  if (curEpoch !== null && newBars.length > 0) {
+    let best = newBars.length - 1;
+    for (let i = 0; i < newBars.length; i++) {
+      if (newBars[i].time >= curEpoch) { best = i; break; }
+    }
+    replayIdx = best;
+  } else {
+    replayIdx = Math.max(0, newBars.length - 1);
+  }
+  resetZoom();
+  updateReplayUI();
+  draw();
+}
+
+function resetZoom() {
+  const bars = getBars();
+  const visible = replayIdx + 1;
+  viewCount = currentTf === "M5" ? Math.min(130, Math.max(40, visible)) : Math.min(180, Math.max(60, visible));
+  viewStart = Math.max(0, visible - viewCount);
+  manualYMin = null;
+  manualYMax = null;
+  draw();
+}
+
+function resizeCanvas() {
+  const wrap = document.getElementById("chartWrap");
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+function setupMouse() {
+  canvas.addEventListener("mousedown", e => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartView = viewStart;
+  });
+  window.addEventListener("mouseup", () => { isDragging = false; });
+  window.addEventListener("mousemove", e => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+
+    if (isDragging) {
+      const dx = e.clientX - dragStartX;
+      const chartW = rect.width - 70;
+      const barsPerPx = viewCount / chartW;
+      viewStart = dragStartView - dx * barsPerPx;
+      const maxStart = Math.max(0, replayIdx - 5);
+      viewStart = Math.max(-10, Math.min(maxStart, viewStart));
+    }
+    draw();
+  });
+  canvas.addEventListener("mouseleave", () => {
+    mouseX = -1; mouseY = -1; hoverBarIdx = -1;
+    draw();
+  });
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const chartW = rect.width - 70;
+    const relX = Math.max(0, Math.min(1, (e.clientX - rect.left) / chartW));
+    const anchorIdx = viewStart + relX * viewCount;
+
+    const factor = e.deltaY > 0 ? 1.15 : 0.87;
+    viewCount = Math.max(15, Math.min(500, viewCount * factor));
+    viewStart = anchorIdx - relX * viewCount;
+    draw();
+  }, { passive: false });
+  canvas.addEventListener("dblclick", resetZoom);
+}
+
+// Replay Controls
+function togglePlay() {
+  if (isPlaying) stopPlay();
+  else startPlay();
+}
+function startPlay() {
+  const bars = getBars();
+  if (replayIdx >= bars.length - 1) {
+    // Restart near London Pre-Open if at end
+    replayIdx = Math.min(bars.length - 1, currentTf === "M5" ? 60 : 300);
+    viewStart = Math.max(0, replayIdx - viewCount + 15);
+  }
+  isPlaying = true;
+  document.getElementById("playBtn").innerHTML = "&#10074;&#10074; Pause";
+  document.getElementById("playBtn").classList.add("playing");
+  playTimer = setInterval(() => {
+    const bars = getBars();
+    if (replayIdx < bars.length - 1) {
+      replayIdx++;
+      if (replayIdx > viewStart + viewCount - 6) {
+        viewStart = replayIdx - viewCount + 12;
+      }
+      updateReplayUI();
+      draw();
+    } else {
+      stopPlay();
+    }
+  }, playDelay);
+}
+function stopPlay() {
+  isPlaying = false;
+  if (playTimer) clearInterval(playTimer);
+  playTimer = null;
+  document.getElementById("playBtn").innerHTML = "&#9654; Play";
+  document.getElementById("playBtn").classList.remove("playing");
+}
+function updateSpeed() {
+  playDelay = parseInt(document.getElementById("speedSelect").value);
+  if (isPlaying) { stopPlay(); startPlay(); }
+}
+function stepBar(delta) {
+  stopPlay();
+  const bars = getBars();
+  replayIdx = Math.max(0, Math.min(bars.length - 1, replayIdx + delta));
+  if (replayIdx > viewStart + viewCount - 5 || replayIdx < viewStart + 3) {
+    viewStart = Math.max(0, replayIdx - viewCount * 0.75);
+  }
+  updateReplayUI();
+  draw();
+}
+function jumpStart() {
+  stopPlay();
+  replayIdx = Math.min(getBars().length - 1, currentTf === "M5" ? 40 : 120);
+  viewStart = Math.max(0, replayIdx - 20);
+  updateReplayUI();
+  draw();
+}
+function jumpEnd() {
+  stopPlay();
+  replayIdx = Math.max(0, getBars().length - 1);
+  resetZoom();
+  updateReplayUI();
+  draw();
+}
+function onScrub(val) {
+  stopPlay();
+  const bars = getBars();
+  replayIdx = Math.max(0, Math.min(bars.length - 1, parseInt(val)));
+  if (replayIdx > viewStart + viewCount - 4 || replayIdx < viewStart + 2) {
+    viewStart = Math.max(0, replayIdx - viewCount * 0.7);
+  }
+  updateReplayUI();
+  draw();
+}
+function jumpToEpoch(epoch) {
+  stopPlay();
+  const bars = getBars();
+  let idx = 0;
+  for (let i = 0; i < bars.length; i++) {
+    if (bars[i].time >= epoch) { idx = i; break; }
+  }
+  replayIdx = idx;
+  viewStart = Math.max(0, replayIdx - viewCount * 0.65);
+  updateReplayUI();
+  draw();
+}
+
+function updateReplayUI() {
+  const bars = getBars();
+  const slider = document.getElementById("replaySlider");
+  slider.max = Math.max(0, bars.length - 1);
+  slider.value = replayIdx;
+  document.getElementById("barCounter").innerText = `${replayIdx + 1} / ${bars.length}`;
+
+  const curBar = bars[replayIdx];
+  if (curBar) {
+    document.getElementById("replayClock").innerText = `${curBar.tehran_str} Teh (${curBar.utc_str} UTC)`;
+    updateInspector(curBar);
+  }
+}
+
+function getDiagnosticForEpoch(epoch) {
+  const d = getDayData();
+  if (!d || !d.diagnostics) return null;
+  let best = null;
+  for (let i = 0; i < d.diagnostics.length; i++) {
+    if (d.diagnostics[i].time <= epoch) best = d.diagnostics[i];
+    else break;
+  }
+  return best;
+}
+
+function updateInspector(bar) {
+  const diag = getDiagnosticForEpoch(bar.time);
+  const vbox = document.getElementById("verdictBox");
+
+  if (!diag) {
+    vbox.className = "verdict-box wait";
+    vbox.innerText = `[${bar.tehran_str} Tehran] Pre-session / Asian range building...`;
+    document.getElementById("dSess").innerText = "ASIAN / PRE";
+    document.getElementById("dRange").innerText = "Building...";
+    document.getElementById("dPierce").innerText = "—";
+    document.getElementById("dBreaker").innerText = "—";
+    document.getElementById("dH1").innerText = "—";
+    document.getElementById("dPhase").innerText = "—";
+    return;
+  }
+
+  if (diag.has_setup) {
+    vbox.className = "verdict-box signal";
+    vbox.innerHTML = `<strong>🎯 SIGNAL TRIGGERED:</strong> ${diag.reason}`;
+  } else if (diag.reason && (diag.reason.includes("Veto") || diag.reason.includes("Dead") || diag.reason.includes("Decommissioned"))) {
+    vbox.className = "verdict-box veto";
+    vbox.innerHTML = `<strong>⛔ VETOED / SKIPPED:</strong> ${diag.reason}`;
+  } else {
+    vbox.className = "verdict-box wait";
+    vbox.innerHTML = `<strong>🔍 MONITORING:</strong> ${diag.reason || "No ICT structural trigger yet."}`;
+  }
+
+  document.getElementById("dSess").innerText = diag.session_label || "—";
+  document.getElementById("dRange").innerText = diag.range_high ? `${diag.range_low.toFixed(2)} - ${diag.range_high.toFixed(2)}` : "—";
+
+  const pText = (diag.pierced_high ? "HIGH " : "") + (diag.pierced_low ? "LOW" : "");
+  const pEl = document.getElementById("dPierce");
+  pEl.innerText = pText.trim() || "NONE";
+  pEl.className = "v " + (pText.trim() ? "warn" : "no");
+
+  const bEl = document.getElementById("dBreaker");
+  bEl.innerText = diag.breaker_type && diag.breaker_type !== "NONE" ? `${diag.breaker_type} (${diag.breaker_price.toFixed(2)})` : (diag.fvg_dir && diag.fvg_dir !== "NONE" ? `FVG ${diag.fvg_dir}` : "NONE");
+  bEl.className = "v " + (bEl.innerText !== "NONE" ? "yes" : "no");
+
+  document.getElementById("dH1").innerText = diag.h1_state || "NEUTRAL";
+  document.getElementById("dPhase").innerText = diag.phase || "—";
+}
+
+function renderTradeCard() {
+  const d = getDayData();
+  const sec = document.getElementById("tradeSummarySection");
+  const card = document.getElementById("tradeCard");
+  if (!d || !d.trades || d.trades.length === 0) {
+    sec.style.display = "none";
+    return;
+  }
+  sec.style.display = "block";
+  card.innerHTML = d.trades.map(t => `
+    <div style="font-weight:700;color:#fff;margin-bottom:4px;">${t.archetype} (${t.direction}) — <span style="color:${t.net_r > 0 ? 'var(--green)' : (t.net_r < 0 ? 'var(--bear)' : 'var(--amber)')}">${t.outcome} (${t.net_r >= 0 ? '+' : ''}${t.net_r}R)</span></div>
+    <div class="trade-card-row"><span>Entry: <b>${t.entry.toFixed(2)}</b></span><span>SL: <b style="color:var(--bear)">${t.sl.toFixed(2)}</b></span><span>TP: <b style="color:var(--green)">${t.tp.toFixed(2)}</b></span></div>
+    <div class="trade-card-row"><span>Risk: ${t.risk.toFixed(2)} pts</span><span>MFE: +${t.mfe_r.toFixed(2)}R</span><span>MAE: -${t.mae_r.toFixed(2)}R</span></div>
+  `).join('<hr style="border-color:var(--border);margin:6px 0;">');
+}
+
+function renderEventsList() {
+  const d = getDayData();
+  const list = document.getElementById("eventsList");
+  list.innerHTML = "";
+  if (!d || !d.events) return;
+  document.getElementById("evtCount").innerText = `${d.events.length} events`;
+
+  d.events.forEach(ev => {
+    const div = document.createElement("div");
+    div.className = "event-item";
+    div.onclick = () => jumpToEpoch(ev.time);
+    div.innerHTML = `
+      <div class="event-top">
+        <span class="event-time">${ev.tehran_str} Teh (${ev.utc_str} UTC)</span>
+        <span class="event-badge badge-${ev.kind}">${ev.kind}</span>
+      </div>
+      <div class="event-msg">${ev.msg}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// Canvas Drawing Engine
+function draw() {
+  const d = getDayData();
+  const bars = getBars();
+  if (!d || !bars || bars.length === 0) return;
+
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  const rightAxisW = 68;
+  const bottomAxisH = 26;
+  const chartW = W - rightAxisW;
+  const chartH = H - bottomAxisH;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#131722";
+  ctx.fillRect(0, 0, W, H);
+
+  const visibleLimit = replayIdx + 1;
+  const iStart = Math.max(0, Math.floor(viewStart));
+  const iEnd = Math.min(visibleLimit - 1, Math.ceil(viewStart + viewCount));
+
+  if (iEnd < iStart) return;
+
+  // Compute Y bounds
+  let yMin = Infinity, yMax = -Infinity;
+  for (let i = iStart; i <= iEnd; i++) {
+    if (bars[i].low < yMin) yMin = bars[i].low;
+    if (bars[i].high > yMax) yMax = bars[i].high;
+  }
+  if (document.getElementById("chkAsian").checked && d.asian_range) {
+    if (d.asian_range.high > yMax && d.asian_range.high - yMax < 40) yMax = d.asian_range.high;
+    if (d.asian_range.low < yMin && yMin - d.asian_range.low < 40) yMin = d.asian_range.low;
+  }
+  const pad = Math.max(2.0, (yMax - yMin) * 0.12);
+  yMin -= pad;
+  yMax += pad;
+
+  const pxPerBar = chartW / viewCount;
+  const xOf = idx => (idx - viewStart) * pxPerBar + pxPerBar * 0.5;
+  const yOf = price => chartH - ((price - yMin) / (yMax - yMin)) * chartH;
+
+  // 1. Killzone Vertical Bands
+  if (document.getElementById("chkSessions").checked && d.killzones) {
+    const kzColors = {
+      ASIAN: "rgba(240, 185, 11, 0.05)",
+      LONDON: "rgba(41, 98, 255, 0.08)",
+      NEW_YORK: "rgba(171, 71, 188, 0.08)"
+    };
+    const kzLabels = {
+      ASIAN: ["ASIAN RANGE", "rgba(240, 185, 11, 0.55)"],
+      LONDON: ["LONDON OPEN", "rgba(91, 140, 255, 0.7)"],
+      NEW_YORK: ["NY OPEN", "rgba(206, 147, 216, 0.7)"]
+    };
+    d.killzones.forEach(kz => {
+      let idx0 = null, idx1 = null;
+      for (let i = 0; i < visibleLimit; i++) {
+        if (bars[i].time >= kz.start && idx0 === null) idx0 = i;
+        if (bars[i].time <= kz.end) idx1 = i;
+      }
+      if (idx0 !== null && idx1 !== null && idx1 >= idx0) {
+        const x0 = Math.max(0, xOf(idx0) - pxPerBar * 0.5);
+        const x1 = Math.min(chartW, xOf(idx1) + pxPerBar * 0.5);
+        if (x1 > 0 && x0 < chartW) {
+          ctx.fillStyle = kzColors[kz.name] || "rgba(255,255,255,0.03)";
+          ctx.fillRect(x0, 0, x1 - x0, chartH);
+          const lbl = kzLabels[kz.name];
+          if (lbl && x1 - x0 > 35) {
+            ctx.fillStyle = lbl[1];
+            ctx.font = "bold 10px sans-serif";
+            ctx.fillText(lbl[0], Math.max(4, x0 + 6), 16);
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Subtle Horizontal Price Grid
+  const steps = 8;
+  const priceStep = (yMax - yMin) / steps;
+  ctx.strokeStyle = "rgba(42, 46, 57, 0.55)";
+  ctx.lineWidth = 1;
+  ctx.font = "11px ui-monospace, monospace";
+  ctx.fillStyle = "#787b86";
+
+  for (let s = 1; s < steps; s++) {
+    const p = yMin + s * priceStep;
+    const y = Math.round(yOf(p)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
+    ctx.fillText(p.toFixed(2), chartW + 6, y + 4);
+  }
+
+  // 3. Asian Range High / Low Horizontal Lines
+  if (document.getElementById("chkAsian").checked && d.asian_range) {
+    const drawHLine = (price, color, label) => {
+      const y = Math.round(yOf(price)) + 0.5;
+      if (y < 0 || y > chartH) return;
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartW, y); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = color;
+      ctx.font = "bold 10px monospace";
+      ctx.fillText(`${label}: ${price.toFixed(2)}`, 10, y - 4);
+    };
+    drawHLine(d.asian_range.high, "rgba(240, 185, 11, 0.85)", "ASIAN HIGH");
+    drawHLine(d.asian_range.low, "rgba(240, 185, 11, 0.65)", "ASIAN LOW");
+  }
+
+  // 4. Trades & Orders Overlay
+  if (document.getElementById("chkTrades").checked && d.trades) {
+    d.trades.forEach(tr => {
+      if (tr.signal_time > bars[replayIdx].time) return;
+      let sigIdx = bars.findIndex(b => b.time >= tr.signal_time);
+      if (sigIdx < 0) sigIdx = 0;
+      const xStart = Math.max(0, xOf(sigIdx));
+      let xEnd = chartW;
+      if (tr.exit_time && tr.exit_time <= bars[replayIdx].time) {
+        const ei = bars.findIndex(b => b.time >= tr.exit_time);
+        if (ei >= 0) xEnd = Math.min(chartW, xOf(ei));
+      }
+
+      const yE = yOf(tr.entry);
+      const ySL = yOf(tr.sl);
+      const yTP = yOf(tr.tp);
+
+      // Risk & Reward Zones
+      ctx.fillStyle = "rgba(242, 54, 69, 0.12)";
+      ctx.fillRect(xStart, Math.min(yE, ySL), Math.max(20, xEnd - xStart), Math.abs(ySL - yE));
+
+      ctx.fillStyle = "rgba(0, 230, 118, 0.10)";
+      ctx.fillRect(xStart, Math.min(yE, yTP), Math.max(20, xEnd - xStart), Math.abs(yTP - yE));
+
+      // Lines
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#00e5ff";
+      ctx.beginPath(); ctx.moveTo(xStart, yE); ctx.lineTo(xEnd, yE); ctx.stroke();
+
+      ctx.strokeStyle = "#f23645";
+      ctx.beginPath(); ctx.moveTo(xStart, ySL); ctx.lineTo(xEnd, ySL); ctx.stroke();
+
+      ctx.strokeStyle = "#00e676";
+      ctx.beginPath(); ctx.moveTo(xStart, yTP); ctx.lineTo(xEnd, yTP); ctx.stroke();
+
+      // Tag labels
+      ctx.font = "bold 10px monospace";
+      ctx.fillStyle = "#00e5ff"; ctx.fillText(`ENTRY ${tr.entry.toFixed(2)}`, xStart + 4, yE - 4);
+      ctx.fillStyle = "#f23645"; ctx.fillText(`SL ${tr.sl.toFixed(2)}`, xStart + 4, ySL - 4);
+      ctx.fillStyle = "#00e676"; ctx.fillText(`TP ${tr.tp.toFixed(2)}`, xStart + 4, yTP + 11);
+
+      // Fill Marker
+      if (tr.fill_time && tr.fill_time <= bars[replayIdx].time) {
+        const fi = bars.findIndex(b => b.time >= tr.fill_time);
+        if (fi >= iStart && fi <= iEnd) {
+          const xf = xOf(fi);
+          ctx.fillStyle = "#2962ff";
+          ctx.beginPath(); ctx.arc(xf, yE, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif";
+          ctx.fillText("FILL", xf - 12, yE - 9);
+        }
+      }
+
+      // Exit Marker
+      if (tr.exit_time && tr.exit_time <= bars[replayIdx].time) {
+        const ei = bars.findIndex(b => b.time >= tr.exit_time);
+        if (ei >= iStart && ei <= iEnd) {
+          const xe = xOf(ei);
+          const exitY = tr.net_r > 0 ? yTP : (tr.net_r < 0 ? ySL : yE);
+          const ec = tr.net_r > 0 ? "#00e676" : (tr.net_r < 0 ? "#f23645" : "#f0b90b");
+          ctx.fillStyle = ec;
+          ctx.beginPath(); ctx.arc(xe, exitY, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = ec; ctx.font = "bold 11px sans-serif";
+          ctx.fillText(`${tr.outcome} (${tr.net_r >= 0 ? "+" : ""}${tr.net_r}R)`, xe + 8, exitY + 4);
+        }
+      }
+    });
+  }
+
+  // 5. Candlesticks
+  const bodyW = Math.max(1.5, Math.min(18, pxPerBar * 0.68));
+  for (let i = iStart; i <= iEnd; i++) {
+    const b = bars[i];
+    const x = xOf(i);
+    if (x < -20 || x > chartW + 20) continue;
+
+    const isBull = b.close >= b.open;
+    const col = isBull ? "#089981" : "#f23645";
+    const yOpen = yOf(b.open);
+    const yClose = yOf(b.close);
+    const yHigh = yOf(b.high);
+    const yLow = yOf(b.low);
+
+    // Wick
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(x) + 0.5, yHigh);
+    ctx.lineTo(Math.round(x) + 0.5, yLow);
+    ctx.stroke();
+
+    // Body
+    const top = Math.min(yOpen, yClose);
+    const bH = Math.max(1.2, Math.abs(yClose - yOpen));
+    ctx.fillStyle = col;
+    ctx.fillRect(x - bodyW / 2, top, bodyW, bH);
+  }
+
+  // 6. Sweeps / Breaker Block Markers
+  if (document.getElementById("chkMss").checked && d.diagnostics) {
+    d.diagnostics.forEach(dg => {
+      if (dg.time > bars[replayIdx].time) return;
+      if (!dg.has_setup && !dg.swept_high && !dg.swept_low) return;
+      let idx = -1;
+      for (let i = iStart; i <= iEnd; i++) {
+        if (bars[i].time >= dg.time) { idx = i; break; }
+      }
+      if (idx < 0) return;
+      const x = xOf(idx);
+      if (dg.has_setup) {
+        const y = yOf(bars[idx].high) - 14;
+        ctx.fillStyle = "#00e5ff";
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillText("▼ SIGNAL", x - 20, y);
+      }
+    });
+  }
+
+  // 7. Time Axis Labels
+  ctx.fillStyle = "#1e222d";
+  ctx.fillRect(0, chartH, W, bottomAxisH);
+  ctx.strokeStyle = "#2a2e39";
+  ctx.beginPath(); ctx.moveTo(0, chartH + 0.5); ctx.lineTo(W, chartH + 0.5); ctx.stroke();
+
+  ctx.fillStyle = "#787b86";
+  ctx.font = "10px ui-monospace, monospace";
+  const labelEvery = Math.max(1, Math.floor(viewCount / 8));
+  for (let i = iStart; i <= iEnd; i += labelEvery) {
+    const x = xOf(i);
+    if (x > 25 && x < chartW - 30) {
+      ctx.fillText(bars[i].tehran_str, x - 14, chartH + 17);
+    }
+  }
+
+  // Right Axis Background
+  ctx.fillStyle = "#1e222d";
+  ctx.fillRect(chartW, 0, rightAxisW, chartH);
+  ctx.strokeStyle = "#2a2e39";
+  ctx.beginPath(); ctx.moveTo(chartW + 0.5, 0); ctx.lineTo(chartW + 0.5, chartH); ctx.stroke();
+
+  // Re-draw Price Axis Labels cleanly on top of background
+  ctx.fillStyle = "#9598a1";
+  ctx.font = "11px ui-monospace, monospace";
+  for (let s = 1; s < steps; s++) {
+    const p = yMin + s * priceStep;
+    const y = Math.round(yOf(p)) + 0.5;
+    ctx.fillText(p.toFixed(2), chartW + 6, y + 4);
+  }
+
+  // 8. Live Crosshair
+  if (mouseX >= 0 && mouseX < chartW && mouseY >= 0 && mouseY < chartH) {
+    const idxFloat = viewStart + mouseX / pxPerBar - 0.5;
+    const idx = Math.max(0, Math.min(visibleLimit - 1, Math.round(idxFloat)));
+    hoverBarIdx = idx;
+    const hx = xOf(idx);
+
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, mouseY); ctx.lineTo(chartW, mouseY); ctx.stroke();
+    ctx.restore();
+
+    // Hover Price Tag
+    const hoverP = yMin + ((chartH - mouseY) / chartH) * (yMax - yMin);
+    ctx.fillStyle = "#2962ff";
+    ctx.fillRect(chartW, mouseY - 9, rightAxisW, 18);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText(hoverP.toFixed(2), chartW + 6, mouseY + 4);
+
+    // Update OHLC HUD
+    const hb = bars[idx];
+    if (hb) {
+      document.getElementById("hudSym").innerText = `XAUUSD_o · ${currentTf}`;
+      document.getElementById("hudTime").innerText = `${hb.tehran_str} Teh | ${hb.utc_str} UTC | ${hb.srv_str} MT5`;
+      const isUp = hb.close >= hb.open;
+      const col = isUp ? "#089981" : "#f23645";
+      ["hudO", "hudH", "hudL", "hudC"].forEach(id => document.getElementById(id).style.color = col);
+      document.getElementById("hudO").innerText = hb.open.toFixed(2);
+      document.getElementById("hudH").innerText = hb.high.toFixed(2);
+      document.getElementById("hudL").innerText = hb.low.toFixed(2);
+      document.getElementById("hudC").innerText = hb.close.toFixed(2);
+      document.getElementById("hudRng").innerText = (hb.high - hb.low).toFixed(2);
+      if (!isPlaying) updateInspector(hb);
+    }
+  } else {
+    const cb = bars[replayIdx];
+    if (cb) {
+      document.getElementById("hudSym").innerText = `XAUUSD_o · ${currentTf}`;
+      document.getElementById("hudTime").innerText = `${cb.tehran_str} Teh | ${cb.utc_str} UTC | ${cb.srv_str} MT5`;
+      document.getElementById("hudO").innerText = cb.open.toFixed(2);
+      document.getElementById("hudH").innerText = cb.high.toFixed(2);
+      document.getElementById("hudL").innerText = cb.low.toFixed(2);
+      document.getElementById("hudC").innerText = cb.close.toFixed(2);
+      document.getElementById("hudRng").innerText = (cb.high - cb.low).toFixed(2);
+    }
+  }
+}
+
+window.onload = init;
+</script>
+</body>
+</html>

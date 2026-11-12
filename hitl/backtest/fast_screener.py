@@ -10,8 +10,10 @@ Returns True if an institutional SMC setup is present (triggering Tier-2 AI Coun
 or False if the session is dead mid-range consolidation (instant STAND_ASIDE).
 """
 
+import datetime
 from typing import List, Dict, Any, Tuple, Optional
 from hitl.setup_registry import setup_registry
+from hitl.backtest.session_clock import get_session_times_for_date
 
 
 def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = "XAUUSD") -> Tuple[bool, str, float, float]:
@@ -217,12 +219,17 @@ def detect_prominent_sweep_and_mss(
             prior_highs = [h for h in highs if h[0] < h_idx]
             if not prior_highs:
                 continue
-            prev_prominent_high = max(h[1] for h in prior_highs)
+            prev_high_item = max(prior_highs, key=lambda x: x[1])
+            prev_high_idx = prev_high_item[0]
+            prev_prominent_high = prev_high_item[1]
             
             # Did this peak sweep the prior prominent high?
             if h_val > prev_prominent_high and (h_val - prev_prominent_high) <= 25.0 * pip_size:
                 sweep_wick = h_val
                 sweep_bar_idx = h_idx
+                # Calculate originating swing low between prior high and the sweep high
+                between_lows = [b['low'] for b in recent[prev_high_idx:sweep_bar_idx+1]]
+                origin_swing_low = min(between_lows) if between_lows else recent[sweep_bar_idx]['low']
                 interim_lows = [b['low'] for b in recent[max(0, sweep_bar_idx-2):sweep_bar_idx+1]]
                 micro_swing_low = min(interim_lows) if interim_lows else recent[sweep_bar_idx]['low']
                 
@@ -236,7 +243,7 @@ def detect_prominent_sweep_and_mss(
                         sl = round(sweep_wick + sl_buffer, 5 if is_fx else 2)
                         if "XAU" in symbol.upper():
                             dist = abs(entry - sl)
-                            if dist > 7.50:
+                            if dist > 15.0:
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 4.50:
                                 sl = round(entry + 4.50, 2)
@@ -266,12 +273,14 @@ def detect_prominent_sweep_and_mss(
                                 sl = round(entry + 20.0, 1)
                         return True, "BEARISH", entry, sl, f"Prominent High swept at {sweep_wick:.5f} + M1 MSS displacement at {entry:.5f}"
                 
-                if curr_close < micro_swing_low and curr_bar['close'] < curr_bar['open']:
+                is_gold_sym = "XAU" in symbol.upper()
+                is_mss_bear = curr_close < micro_swing_low or (is_gold_sym and curr_close < origin_swing_low)
+                if is_mss_bear and curr_bar['close'] < curr_bar['open']:
                     entry = curr_close
                     sl = round(sweep_wick + sl_buffer, 5 if is_fx else (1 if is_index else 2))
                     if "XAU" in symbol.upper():
                         dist = abs(entry - sl)
-                        if dist > 7.50:
+                        if dist > 15.0:
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 4.50:
                             sl = round(entry + 4.50, 2)
@@ -299,7 +308,8 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 20.0:
                             sl = round(entry + 20.0, 1)
-                    return True, "BEARISH", entry, sl, f"Prominent High swept at {sweep_wick:.5f} + MSS displacement close below {micro_swing_low:.5f}"
+                    mss_ref = origin_swing_low if curr_close < origin_swing_low else micro_swing_low
+                    return True, "BEARISH", entry, sl, f"Prominent High swept at {sweep_wick:.5f} + MSS displacement close below {mss_ref:.5f}"
 
     # 2. Bullish Prominent Sweep (EQL / Prominent Low swept then MSS up)
     if len(lows) >= 2:
@@ -307,11 +317,16 @@ def detect_prominent_sweep_and_mss(
             prior_lows = [l for l in lows if l[0] < l_idx]
             if not prior_lows:
                 continue
-            prev_prominent_low = min(l[1] for l in prior_lows)
+            prev_low_item = min(prior_lows, key=lambda x: x[1])
+            prev_low_idx = prev_low_item[0]
+            prev_prominent_low = prev_low_item[1]
             
             if l_val < prev_prominent_low and (prev_prominent_low - l_val) <= 25.0 * pip_size:
                 sweep_wick = l_val
                 sweep_bar_idx = l_idx
+                # Calculate originating swing high between prior low and the sweep low
+                between_highs = [b['high'] for b in recent[prev_low_idx:sweep_bar_idx+1]]
+                origin_swing_high = max(between_highs) if between_highs else recent[sweep_bar_idx]['high']
                 interim_highs = [b['high'] for b in recent[max(0, sweep_bar_idx-2):sweep_bar_idx+1]]
                 micro_swing_high = max(interim_highs) if interim_highs else recent[sweep_bar_idx]['high']
                 
@@ -324,7 +339,7 @@ def detect_prominent_sweep_and_mss(
                         sl = round(sweep_wick - sl_buffer, 5 if is_fx else 2)
                         if "XAU" in symbol.upper():
                             dist = abs(entry - sl)
-                            if dist > 7.50:
+                            if dist > 15.0:
                                 return False, "NONE", 0.0, 0.0, ""
                             if dist < 4.50:
                                 sl = round(entry - 4.50, 2)
@@ -354,12 +369,14 @@ def detect_prominent_sweep_and_mss(
                                 sl = round(entry - 20.0, 1)
                         return True, "BULLISH", entry, sl, f"Prominent Low swept at {sweep_wick:.5f} + M1 MSS displacement at {entry:.5f}"
 
-                if curr_close > micro_swing_high and curr_bar['close'] > curr_bar['open']:
+                is_gold_sym = "XAU" in symbol.upper()
+                is_mss_bull = curr_close > micro_swing_high or (is_gold_sym and curr_close > origin_swing_high)
+                if is_mss_bull and curr_bar['close'] > curr_bar['open']:
                     entry = curr_close
                     sl = round(sweep_wick - sl_buffer, 5 if is_fx else (1 if is_index else 2))
                     if "XAU" in symbol.upper():
                         dist = abs(entry - sl)
-                        if dist > 7.50:
+                        if dist > 15.0:
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 4.50:
                             sl = round(entry - 4.50, 2)
@@ -387,7 +404,8 @@ def detect_prominent_sweep_and_mss(
                             return False, "NONE", 0.0, 0.0, ""
                         if dist < 20.0:
                             sl = round(entry - 20.0, 1)
-                    return True, "BULLISH", entry, sl, f"Prominent Low swept at {sweep_wick:.5f} + MSS displacement close above {micro_swing_high:.5f}"
+                    mss_ref = origin_swing_high if curr_close > origin_swing_high else micro_swing_high
+                    return True, "BULLISH", entry, sl, f"Prominent Low swept at {sweep_wick:.5f} + MSS displacement close above {mss_ref:.5f}"
 
     return False, "NONE", 0.0, 0.0, ""
 
@@ -842,15 +860,35 @@ def screen_ict_session(
 
     # 1. Prior Session Liquidity Benchmark & Polarity
     if session_hour in (9, 10, 11, 12, 13):
-        # Gold London Continuation (hours 12, 13) produces -$7.49R empirical drag (PF 0.81); restricted to London Open
-        if "XAU" in symbol.upper() and session_hour in (12, 13):
-            return {
-                "has_setup": False,
-                "reason": "Veto: London Continuation window bypassed on Gold per 1-year empirical audit (London Open & NY Open only)",
-                "setup_type": "BYPASSED_SESSION",
-                "closed_bars_only": closed_bars_only,
-                "signal_bar_time": signal_bar_time
-            }
+        # Gold London Continuation produces -$7.49R empirical drag (PF 0.81); restricted to London Open
+        if "XAU" in symbol.upper():
+            is_lon_continuation = False
+            if signal_bar_time:
+                # MT5 bar timestamps are broker server time (EET = UTC+2 in winter, UTC+3 in summer)
+                offset_sec = 7200
+                try:
+                    from hitl.backtest.chart_renderer import get_broker_utc_offset_seconds
+                    offset_sec = get_broker_utc_offset_seconds()
+                except Exception:
+                    pass
+                sig_dt = datetime.datetime.fromtimestamp(int(signal_bar_time) - offset_sec, tz=datetime.timezone.utc)
+                stimes = get_session_times_for_date(sig_dt.date())
+                lon_open_utc = stimes["london"]["utc_time"]
+                lon_cont_start_utc = lon_open_utc + datetime.timedelta(hours=2)
+                lon_end_utc = lon_open_utc + datetime.timedelta(hours=4)
+                if lon_cont_start_utc <= sig_dt < lon_end_utc:
+                    is_lon_continuation = True
+            elif session_hour in (14, 15):
+                is_lon_continuation = True
+
+            if is_lon_continuation:
+                return {
+                    "has_setup": False,
+                    "reason": "Veto: London Continuation window bypassed on Gold per 1-year empirical audit (London Open & NY Open only)",
+                    "setup_type": "BYPASSED_SESSION",
+                    "closed_bars_only": closed_bars_only,
+                    "signal_bar_time": signal_bar_time
+                }
         session_window = bars_5m[-84:-10] if len(bars_5m) >= 84 else bars_5m[:-10]
         session_label = "Asian Range"
     elif session_hour in (14, 15, 16):
@@ -951,6 +989,14 @@ def screen_ict_session(
 
     def _package_setup(arch_id: str, setup_type: str, entry_p: float, sl_p: Optional[float], reason_text: str, direction: str) -> Dict[str, Any]:
         p_info = classify_setup_phase(mtf_state, direction, symbol=symbol)
+        
+        # Asset-specific target & breakeven calibrations
+        rec_target = p_info["recommended_target_rr"]
+        rec_be = p_info["recommended_be_rr"]
+        if arch_id == "SETUP-ARCH-001" and "XAU" in symbol.upper():
+            rec_target = 2.0  # Calibrated for Gold Judas High fade (48.1% WR, +16.00R, PF 2.60)
+            rec_be = 1.2      # Early breakeven ratchet to eliminate adverse mean-reversion
+
         return {
             "has_setup": True,
             "reason": f"[{arch_id}] {reason_text} | Scaled Entry: {entry_p:{fmt}} | Phase: {p_info['phase']}",
@@ -959,8 +1005,8 @@ def screen_ict_session(
             "entry_ref": entry_p,
             "sl_ref": sl_p,
             "mtf_info": mtf_state,
-            "recommended_target_rr": p_info["recommended_target_rr"],
-            "recommended_be_rr": p_info["recommended_be_rr"],
+            "recommended_target_rr": rec_target,
+            "recommended_be_rr": rec_be,
             "phase": p_info["phase"],
             "poi_ratio": p_info["poi_ratio"],
             "dol_target": p_info["dol_target"],
@@ -1008,20 +1054,20 @@ def screen_ict_session(
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
         sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
-        sl_p = max(range_high + sl_buf, breaker_price + sl_dist)
-        return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({range_high:{fmt}}) + Bearish Breaker Block", "SHORT")
+        sweep_high = max(recent_high, range_high)
+        sl_p = sweep_high + sl_buf
+        return _package_setup(arch_id, "BEARISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} High ({sweep_high:{fmt}}) + Bearish Breaker Block", "SHORT")
 
-    # Bullish Breaker decommissioned on GBPUSD (-9.50R) and NQ (10% WR, -6.02R drag) per 1-year audit
-    if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER" and not is_gbp and not is_nq:
+    # Bullish Breaker decommissioned on GBPUSD (-9.50R), NQ (10% WR, -6.02R drag), and Gold (18.8% WR, -4.00R drag, PF 0.79) per 1-year audit
+    if swept_low and not is_bearish_breakdown and breaker_type == "BULLISH_BREAKER" and not is_gbp and not is_nq and "XAU" not in symbol.upper():
         arch_id = "SETUP-ARCH-001"
         if not setup_registry.is_archetype_ratified(arch_id):
             return {"has_setup": False, "reason": f"Veto: Archetype {arch_id} is UNRATIFIED", "setup_type": "UNRATIFIED", "closed_bars_only": closed_bars_only, "signal_bar_time": signal_bar_time}
-        sl_dist = 12.0 if is_spx else (60.0 if is_ym else (50.0 if is_nq else (350.0 if is_crypto else (6.0 if "XAU" in symbol.upper() else (0.25 if is_silver else 0.0015)))))
         sl_buf = 1.0 if is_spx else (6.0 if is_ym else (4.0 if is_nq else (25.0 if is_crypto else (1.50 if "XAU" in symbol.upper() else 0.0010))))
-        sl_p = min(range_low - sl_buf, breaker_price - sl_dist)
-        return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({range_low:{fmt}}) + Bullish Breaker Block", "LONG")
+        sweep_low = min(recent_low, range_low)
+        sl_p = sweep_low - sl_buf
+        return _package_setup(arch_id, "BULLISH_BREAKER_SWEEP", breaker_price, sl_p, f"Swept {session_label} Low ({sweep_low:{fmt}}) + Bullish Breaker Block", "LONG")
 
     # Setup B: Judas Swing + Fair Value Gap (SETUP-ARCH-002)
     # Decommissioned on Gold per 2-month empirical audit (-11.0R loss, 12.5% WR)
@@ -1089,8 +1135,8 @@ def screen_ict_session(
     # Deep OTE 50%-70.5% retracements consistently enter into adverse momentum continuations.
 
     # Setup F: Prominent Liquidity Sweep with Pro-Trend M1/5M MSS Displacement (SETUP-ARCH-010)
-    # Decommissioned on NQ per empirical audit (14.5% WR, severe pre-market drag)
-    if not is_nq:
+    # Decommissioned on NQ (14.5% WR) and Gold (7.4% WR, -8.0R drag, PF 0.47) per 1-year empirical audits
+    if not is_nq and "XAU" not in symbol.upper():
         has_prom_sweep, sweep_dir, sweep_entry, sweep_sl, sweep_desc = detect_prominent_sweep_and_mss(
             bars_5m, symbol, bars_1m=bars_1m
         )
@@ -1138,10 +1184,10 @@ def screen_ict_session(
         direction = "LONG" if orig_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{orig_dir}_H1_REVERSAL_ORIGIN_RETEST", orig_entry, orig_sl, orig_desc, direction)
 
-    # Price trapped in mid-range consolidation
+    # Price in equilibrium consolidation or no ratified archetype entry criteria met
     return {
         "has_setup": False,
-        "reason": f"Mid-range chop within {session_label} ({range_low:{fmt}} - {range_high:{fmt}})",
+        "reason": f"No ratified entry criteria met: Equilibrium consolidation at {current_price:{fmt}} within {session_label} ({range_low:{fmt}} - {range_high:{fmt}})",
         "setup_type": "NONE",
         "closed_bars_only": closed_bars_only,
         "signal_bar_time": signal_bar_time

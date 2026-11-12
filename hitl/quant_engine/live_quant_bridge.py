@@ -38,23 +38,16 @@ class LiveQuantBridge:
         self.rules_by_symbol: Dict[str, List[QuantRule]] = {}
         self.last_signal_times: Dict[Tuple[str, str], float] = {}
         self.last_signal_bars: Dict[Tuple[str, str], int] = {}
-        self.target_symbols = ["BTCUSD", "NQ", "GBPUSD", "XAUUSD"]
+        self.target_symbols = ["XAUUSD", "NQ"]
         self.load_ratified_rules()
 
     def load_ratified_rules(self) -> None:
-        """Loads verified annual multi-season ratified rules from discovery files."""
+        """Loads verified annual multi-season ratified rules from discovery files (Gold and NQ only)."""
         try:
-            # 1. BTCUSD (High Alpha Momentum Sellers)
-            btc_path = DISCOVERY_DIR / "annual_1year" / "btcusd" / "annual_ratified_strategies.json"
-            if btc_path.exists():
-                import json
-                with open(btc_path, "r", encoding="utf-8") as f:
-                    btc_data = json.load(f)
-                self.rules_by_symbol["BTCUSD"] = [
-                    QuantRule.from_dict(r["rule"]) for r in btc_data if r["rule"]["rule_id"] in ["R14_015", "R14_024", "R14_010"]
-                ]
+            # 1. BTCUSD: DECOMMISSIONED due to retail CFD turnover commission drag (-$3,268.75 on MT5).
+            # 2. GBPUSD: DECOMMISSIONED from Quant (traded strictly under SMC where PF is 1.71 vs 0.91 in Quant).
 
-            # 2. Nasdaq 100 (NQ - Mean Reversion & Volatility Breakout Buyers)
+            # 1. Nasdaq 100 (NQ - Mean Reversion & Volatility Breakout Buyers)
             nq_path = DISCOVERY_DIR / "annual_1year" / "nq" / "annual_ratified_strategies.json"
             if nq_path.exists():
                 import json
@@ -64,17 +57,7 @@ class LiveQuantBridge:
                     QuantRule.from_dict(r["rule"]) for r in nq_data if r["rule"]["rule_id"] in ["R14_011", "R14_025", "R14_009"]
                 ]
 
-            # 3. GBPUSD (Cable - Microstructure Volatility Squeeze Sellers)
-            gbp_path = DISCOVERY_DIR / "annual_1year" / "gbpusd" / "annual_ratified_strategies.json"
-            if gbp_path.exists():
-                import json
-                with open(gbp_path, "r", encoding="utf-8") as f:
-                    gbp_data = json.load(f)
-                self.rules_by_symbol["GBPUSD"] = [
-                    QuantRule.from_dict(r["rule"]) for r in gbp_data if r["rule"]["rule_id"] in ["R14_027", "R12_019"]
-                ]
-
-            # 4. XAUUSD (Gold - Dual-Direction Momentum & Orderflow)
+            # 2. XAUUSD (Gold - Dual-Direction Momentum & Orderflow)
             xau_path = DISCOVERY_DIR / "annual_1year" / "xauusd" / "annual_ratified_strategies.json"
             if xau_path.exists():
                 import json

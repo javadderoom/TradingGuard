@@ -1,227 +1,182 @@
 {
   "TOTAL_PORTFOLIO": {
-    "fills": 149,
-    "wins": 55,
-    "losses": 59,
-    "be": 35,
-    "wr": 36.9,
-    "net_r": 116.5,
-    "pf": 2.97,
+    "fills": 34,
+    "wins": 9,
+    "losses": 15,
+    "be": 10,
+    "wr": 26.5,
+    "net_r": 11.5,
+    "pf": 1.77,
     "seasons": {
       "Winter": {
-        "fills": 13,
-        "wins": 9,
-        "losses": 3,
-        "be": 1,
-        "wr": 69.2,
-        "net_r": 26.5,
-        "pf": 9.83
+        "fills": 8,
+        "wins": 4,
+        "losses": 2,
+        "be": 2,
+        "wr": 50.0,
+        "net_r": 11.0,
+        "pf": 6.5
       },
       "Spring": {
-        "fills": 50,
-        "wins": 20,
-        "losses": 19,
-        "be": 11,
-        "wr": 40.0,
-        "net_r": 42.0,
-        "pf": 3.21
+        "fills": 13,
+        "wins": 3,
+        "losses": 6,
+        "be": 4,
+        "wr": 23.1,
+        "net_r": 1.5,
+        "pf": 1.25
       },
       "Summer": {
-        "fills": 42,
-        "wins": 11,
-        "losses": 18,
-        "be": 13,
-        "wr": 26.2,
-        "net_r": 18.5,
-        "pf": 2.03
+        "fills": 5,
+        "wins": 1,
+        "losses": 1,
+        "be": 3,
+        "wr": 20.0,
+        "net_r": 2.5,
+        "pf": 3.5
       },
       "Autumn": {
-        "fills": 44,
-        "wins": 15,
-        "losses": 19,
-        "be": 10,
-        "wr": 34.1,
-        "net_r": 29.5,
-        "pf": 2.55
+        "fills": 8,
+        "wins": 1,
+        "losses": 6,
+        "be": 1,
+        "wr": 12.5,
+        "net_r": -3.5,
+        "pf": 0.42
       }
     }
   },
   "XAUUSD_o": {
-    "fills": 89,
-    "wins": 38,
-    "losses": 30,
-    "be": 21,
-    "wr": 42.7,
-    "net_r": 103.0,
-    "pf": 4.43,
+    "fills": 11,
+    "wins": 4,
+    "losses": 4,
+    "be": 3,
+    "wr": 36.4,
+    "net_r": 10.0,
+    "pf": 3.5,
     "seasons": {
       "Winter": {
-        "fills": 7,
-        "wins": 7,
+        "fills": 4,
+        "wins": 3,
         "losses": 0,
-        "be": 0,
-        "wr": 100.0,
-        "net_r": 24.5,
+        "be": 1,
+        "wr": 75.0,
+        "net_r": 10.5,
         "pf": 99.0
       },
       "Spring": {
-        "fills": 23,
-        "wins": 11,
-        "losses": 7,
-        "be": 5,
-        "wr": 47.8,
-        "net_r": 31.5,
-        "pf": 5.5
+        "fills": 3,
+        "wins": 0,
+        "losses": 2,
+        "be": 1,
+        "wr": 0.0,
+        "net_r": -2.0,
+        "pf": 0.0
       },
       "Summer": {
-        "fills": 29,
-        "wins": 9,
-        "losses": 11,
-        "be": 9,
-        "wr": 31.0,
-        "net_r": 20.5,
-        "pf": 2.86
+        "fills": 2,
+        "wins": 1,
+        "losses": 0,
+        "be": 1,
+        "wr": 50.0,
+        "net_r": 3.5,
+        "pf": 99.0
       },
       "Autumn": {
-        "fills": 30,
-        "wins": 11,
-        "losses": 12,
-        "be": 7,
-        "wr": 36.7,
-        "net_r": 26.5,
-        "pf": 3.21
+        "fills": 2,
+        "wins": 0,
+        "losses": 2,
+        "be": 0,
+        "wr": 0.0,
+        "net_r": -2.0,
+        "pf": 0.0
       }
     },
     "archetypes": {
       "SETUP-ARCH-001": {
-        "fills": 17,
-        "wins": 11,
+        "fills": 11,
+        "wins": 4,
         "losses": 4,
-        "be": 2,
-        "wr": 64.7,
-        "net_r": 34.5,
-        "pf": 9.62
-      },
-      "SETUP-ARCH-004": {
-        "fills": 24,
-        "wins": 13,
-        "losses": 2,
-        "be": 9,
-        "wr": 54.2,
-        "net_r": 43.5,
-        "pf": 22.75
-      },
-      "SETUP-ARCH-010": {
-        "fills": 6,
-        "wins": 0,
-        "losses": 5,
-        "be": 1,
-        "wr": 0.0,
-        "net_r": -5.0,
-        "pf": 0.0
-      },
-      "SETUP-ARCH-011": {
-        "fills": 14,
-        "wins": 5,
-        "losses": 4,
-        "be": 5,
-        "wr": 35.7,
-        "net_r": 13.5,
-        "pf": 4.38
-      },
-      "SETUP-ARCH-014": {
-        "fills": 28,
-        "wins": 9,
-        "losses": 15,
-        "be": 4,
-        "wr": 32.1,
-        "net_r": 16.5,
-        "pf": 2.1
+        "be": 3,
+        "wr": 36.4,
+        "net_r": 10.0,
+        "pf": 3.5
       }
     }
   },
   "GBPUSD_o": {
-    "fills": 60,
-    "wins": 17,
-    "losses": 29,
-    "be": 14,
-    "wr": 28.3,
-    "net_r": 13.5,
-    "pf": 1.47,
+    "fills": 23,
+    "wins": 5,
+    "losses": 11,
+    "be": 7,
+    "wr": 21.7,
+    "net_r": 1.5,
+    "pf": 1.14,
     "seasons": {
       "Winter": {
-        "fills": 6,
-        "wins": 2,
-        "losses": 3,
+        "fills": 4,
+        "wins": 1,
+        "losses": 2,
         "be": 1,
-        "wr": 33.3,
-        "net_r": 2.0,
-        "pf": 1.67
+        "wr": 25.0,
+        "net_r": 0.5,
+        "pf": 1.25
       },
       "Spring": {
-        "fills": 27,
-        "wins": 9,
-        "losses": 12,
-        "be": 6,
-        "wr": 33.3,
-        "net_r": 10.5,
+        "fills": 10,
+        "wins": 3,
+        "losses": 4,
+        "be": 3,
+        "wr": 30.0,
+        "net_r": 3.5,
         "pf": 1.88
       },
       "Summer": {
-        "fills": 13,
-        "wins": 2,
-        "losses": 7,
-        "be": 4,
-        "wr": 15.4,
-        "net_r": -2.0,
-        "pf": 0.71
+        "fills": 3,
+        "wins": 0,
+        "losses": 1,
+        "be": 2,
+        "wr": 0.0,
+        "net_r": -1.0,
+        "pf": 0.0
       },
       "Autumn": {
-        "fills": 14,
-        "wins": 4,
-        "losses": 7,
-        "be": 3,
-        "wr": 28.6,
-        "net_r": 3.0,
-        "pf": 1.43
+        "fills": 6,
+        "wins": 1,
+        "losses": 4,
+        "be": 1,
+        "wr": 16.7,
+        "net_r": -1.5,
+        "pf": 0.62
       }
     },
     "archetypes": {
       "SETUP-ARCH-002": {
         "fills": 16,
-        "wins": 3,
-        "losses": 7,
+        "wins": 4,
+        "losses": 6,
         "be": 6,
-        "wr": 18.8,
-        "net_r": 0.5,
-        "pf": 1.07
+        "wr": 25.0,
+        "net_r": 4.0,
+        "pf": 1.67
       },
       "SETUP-ARCH-003": {
         "fills": 3,
-        "wins": 2,
+        "wins": 1,
         "losses": 1,
-        "be": 0,
-        "wr": 66.7,
-        "net_r": 4.0,
-        "pf": 5.0
+        "be": 1,
+        "wr": 33.3,
+        "net_r": 1.5,
+        "pf": 2.5
       },
-      "SETUP-ARCH-004": {
-        "fills": 2,
-        "wins": 2,
-        "losses": 0,
+      "SETUP-ARCH-013": {
+        "fills": 4,
+        "wins": 0,
+        "losses": 4,
         "be": 0,
-        "wr": 100.0,
-        "net_r": 5.0,
-        "pf": 99.0
-      },
-      "SETUP-ARCH-010": {
-        "fills": 39,
-        "wins": 10,
-        "losses": 21,
-        "be": 8,
-        "wr": 25.6,
-        "net_r": 4.0,
-        "pf": 1.19
+        "wr": 0.0,
+        "net_r": -4.0,
+        "pf": 0.0
       }
     }
   }

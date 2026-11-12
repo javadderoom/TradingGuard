@@ -100,7 +100,11 @@ int OnInit()
       g_plans[idx].placed       = false;
 
       StringToUpper(o_type);
-      if(StringFind(o_type, "BUY") >= 0)
+      if(o_type == "BUY")
+         g_plans[idx].order_type = ORDER_TYPE_BUY;
+      else if(o_type == "SELL")
+         g_plans[idx].order_type = ORDER_TYPE_SELL;
+      else if(StringFind(o_type, "BUY") >= 0)
          g_plans[idx].order_type = ORDER_TYPE_BUY_LIMIT;
       else
          g_plans[idx].order_type = ORDER_TYPE_SELL_LIMIT;
@@ -187,7 +191,19 @@ void OnTick()
                      g_plans[i].id, tick.bid, tick.ask, (int)SymbolInfoInteger(sym, SYMBOL_SPREAD), (int)stops_level, entry, sl, tp);
 
          bool res = false;
-         if(g_plans[i].order_type == ORDER_TYPE_SELL_LIMIT)
+         if(g_plans[i].order_type == ORDER_TYPE_SELL)
+         {
+            PrintFormat("[TradingGuard_Executor] Executing MARKET SELL for %s @ Bid=%.5f (SL: %.5f, TP: %.5f)",
+                        g_plans[i].id, tick.bid, sl, tp);
+            res = g_trade.Sell(lot, sym, tick.bid, sl, tp, g_plans[i].id);
+         }
+         else if(g_plans[i].order_type == ORDER_TYPE_BUY)
+         {
+            PrintFormat("[TradingGuard_Executor] Executing MARKET BUY for %s @ Ask=%.5f (SL: %.5f, TP: %.5f)",
+                        g_plans[i].id, tick.ask, sl, tp);
+            res = g_trade.Buy(lot, sym, tick.ask, sl, tp, g_plans[i].id);
+         }
+         else if(g_plans[i].order_type == ORDER_TYPE_SELL_LIMIT)
          {
             // Structural pre-execution check: If market has already breached SL, trade idea is invalidated!
             if(tick.bid >= sl || (sl > 0 && tick.bid >= sl - min_dist))
@@ -306,17 +322,26 @@ void ManageActivePositions()
       double point = SymbolInfoDouble(sym, SYMBOL_POINT);
       double spread = SymbolInfoDouble(sym, SYMBOL_ASK) - SymbolInfoDouble(sym, SYMBOL_BID);
 
-      // A. Session Expiry Check (8 hours = 480 minutes)
-      if(now - open_time >= 480 * 60)
+      // A. Session Expiry Check (Dynamic TTL from plan or default 480 minutes)
+      int max_ttl = (g_plans[plan_idx].ttl_minutes > 0) ? g_plans[plan_idx].ttl_minutes : 480;
+      if(now - open_time >= max_ttl * 60)
       {
-         PrintFormat("[TradingGuard_Executor] Max held time exceeded (480 min) for ticket %d (%s). Closing at market.", ticket, comment);
+         PrintFormat("[TradingGuard_Executor] Max held time exceeded (%d min) for ticket %d (%s). Closing at market.", max_ttl, ticket, comment);
          g_trade.PositionClose(ticket);
          continue;
       }
 
       // B. Breakeven Ratchet Protocol
-      // Gold threshold: 1.8R, Forex threshold: 1.5R
-      double be_thresh = (StringFind(sym, "XAU") >= 0) ? 1.8 : 1.5;
+      // Index (NQ): 0.8R, Cable: 1.0R, Gold: 1.5R, BTC: 1.8R
+      double be_thresh = 1.0;
+      if(StringFind(sym, "NQ") >= 0 || StringFind(sym, "NAS") >= 0 || StringFind(sym, "USTEC") >= 0)
+         be_thresh = 0.8;
+      else if(StringFind(sym, "XAU") >= 0)
+         be_thresh = 1.5;
+      else if(StringFind(sym, "GBP") >= 0)
+         be_thresh = 1.0;
+      else if(StringFind(sym, "BTC") >= 0)
+         be_thresh = 1.8;
 
       MqlTick tick;
       if(!SymbolInfoTick(sym, tick))

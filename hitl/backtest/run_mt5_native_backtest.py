@@ -30,7 +30,8 @@ def create_tester_ini(
     to_date: str = "2026.11.04",
     report_name: str = "TradingGuard_Report",
     shutdown: int = 1,
-    model: int = 0
+    model: int = 0,
+    deposit: int = 2000
 ) -> Path:
     ini_content = f"""[Common]
 [Tester]
@@ -42,7 +43,7 @@ Model={model}
 FromDate={from_date}
 ToDate={to_date}
 ForwardMode=0
-Deposit=10000
+Deposit={deposit}
 Currency=USD
 ProfitInPips=0
 Leverage=100
@@ -120,13 +121,13 @@ def find_generated_report(report_name: str) -> Path:
     return None
 
 
-def run_full_audit_for_symbol(symbol: str):
+def run_full_audit_for_symbol(symbol: str, deposit: int = 2000):
     print("=" * 80)
-    print(f"🏛️ TRADINGGUARD HITL - NATIVE MT5 STRATEGY TESTER EXECUTION: {symbol}")
+    print(f"🏛️ TRADINGGUARD HITL - NATIVE MT5 STRATEGY TESTER EXECUTION: {symbol} (Deposit: ${deposit})")
     print("=" * 80)
 
     report_name = f"TradingGuard_{symbol}_Report"
-    create_tester_ini(symbol=symbol, report_name=report_name, shutdown=1)
+    create_tester_ini(symbol=symbol, report_name=report_name, shutdown=1, deposit=deposit)
     
     success = run_tester(timeout_sec=300)
     if not success:
