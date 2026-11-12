@@ -329,6 +329,94 @@ def test_shared_ledger_marks_origins_and_agentify_builds_prompt(tmp_path: Path):
     assert len(store.list_cases()) == 0
 
 
+def test_detect_fvg_boxes_detects_earliest_three_bar_sequence():
+    """
+    Verifies that a 3-bar Fair Value Gap located at index [0..2] is detected cleanly.
+    Prior to fixing the stop index from 2 to 1 in range(len(recent)-1, 1, -1),
+    range(2, 2, -1) was empty and returned None.
+    """
+    # 3 bars forming a bullish FVG on XAUUSD:
+    # Bar 0 high = 4000.0
+    # Bar 1 large bullish candle: open=4000.5, close=4005.0 (body = 4.5 >= min_body 1.5)
+    # Bar 2 low = 4002.5 > Bar 0 high 4000.0 (gap = 2.5 >= min_gap 1.0, body 4.5 > gap 2.5)
+    bars_3 = [
+        {"time": 1000, "open": 3995.0, "high": 4000.0, "low": 3994.0, "close": 3999.0},
+        {"time": 1300, "open": 4000.5, "high": 4006.0, "low": 4000.0, "close": 4005.0},
+        {"time": 1600, "open": 4003.0, "high": 4010.0, "low": 4002.5, "close": 4008.0},
+    ]
+    fvg = detect_fvg_boxes(bars_3, lookback=12, symbol="XAUUSD_o")
+    assert fvg is not None, "Expected 3-bar FVG at bars[0..2] to be detected!"
+    assert fvg["dir"] == "BULLISH"
+    assert fvg["bottom"] == 4000.0
+    assert fvg["top"] == 4002.5
+    assert fvg["t_start"] == 1000
+    assert fvg["t_end"] == 1600
+
+    # Also test bearish 3-bar FVG at [0..2]
+    bars_3_bear = [
+        {"time": 2000, "open": 4010.0, "high": 4011.0, "low": 4005.0, "close": 4006.0},
+        {"time": 2300, "open": 4004.5, "high": 4005.0, "low": 3999.0, "close": 4000.0},
+        {"time": 2600, "open": 3999.5, "high": 4002.0, "low": 3995.0, "close": 3996.0},
+    ]
+    fvg_bear = detect_fvg_boxes(bars_3_bear, lookback=12, symbol="XAUUSD_o")
+    assert fvg_bear is not None, "Expected 3-bar bearish FVG at bars[0..2] to be detected!"
+    assert fvg_bear["dir"] == "BEARISH"
+    assert fvg_bear["top"] == 4005.0
+    assert fvg_bear["bottom"] == 4002.0
+
+
+def test_drawdown_follows_cash_exit_time_on_overlapping_trades(tmp_path: Path):
+    """
+    Verifies that max drawdown calculation in both CoBacktestLedger.get_scorecard
+    and run_bot_scan bot_scorecard strictly orders trades by cash realization (exit_time),
+    not order entry/decision_time.
+    """
+    ledger_file = tmp_path / "co_backtest_ledger_dd.json"
+    ledger = CoBacktestLedger(file_path=ledger_file)
+
+    t1 = {
+        "origin": "HUMAN_PROPOSED",
+        "symbol": "XAUUSD_o",
+        "decision_time": 100,
+        "exit_time": 500,
+        "entry": 4000.0,
+        "sl": 3975.0,
+        "tp": 4050.0,
+        "status": "LOSS",
+        "realized_pnl_usd": -50.0,
+    }
+    t2 = {
+        "origin": "HUMAN_PROPOSED",
+        "symbol": "XAUUSD_o",
+        "decision_time": 200,
+        "exit_time": 250,
+        "entry": 4010.0,
+        "sl": 4000.0,
+        "tp": 4030.0,
+        "status": "WIN",
+        "realized_pnl_usd": 100.0,
+    }
+    t3 = {
+        "origin": "HUMAN_PROPOSED",
+        "symbol": "XAUUSD_o",
+        "decision_time": 210,
+        "exit_time": 260,
+        "entry": 4015.0,
+        "sl": 4025.0,
+        "tp": 3995.0,
+        "status": "LOSS",
+        "realized_pnl_usd": -80.0,
+    }
+    ledger.add_trade(t1)
+    ledger.add_trade(t2)
+    ledger.add_trade(t3)
+
+    sc = ledger.get_scorecard()
+    human_stats = sc["HUMAN_PROPOSED"]
+    assert human_stats["max_drawdown_usd"] == 130.0
+    assert sc["ALL"]["max_drawdown_usd"] == 130.0
+
+
 def test_agentify_prompt_handles_none_values_defensively(tmp_path: Path):
     """
     Regression test: Verifies AgentifyFeedbackStore and build_agentify_prompt

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+import pytest
 from hitl.backtest.evaluator import evaluate_council_decision
 
 
@@ -81,3 +81,24 @@ def test_sell_order_max_risk_cap_and_uncapped():
     )
     assert res_uncapped["status"] == "LOSS"
     assert res_uncapped["realized_pnl_usd"] == -25.0
+
+
+def test_non_positive_max_risk_usd_raises_value_error():
+    bars = [
+        {"time": 60, "open": 4000.0, "high": 4001.0, "low": 3999.0, "close": 4000.0},
+    ]
+    with pytest.raises(ValueError, match="max_risk_usd must be positive when specified"):
+        evaluate_council_decision(
+            {"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3975.0, "tp": 4050.0, "lot": 0.01},
+            bars,
+            symbol="XAUUSD_o",
+            max_risk_usd=0.0,
+        )
+
+    with pytest.raises(ValueError, match="max_risk_usd must be positive when specified"):
+        evaluate_council_decision(
+            {"decision": "BUY_LIMIT", "entry": 4000.0, "sl": 3975.0, "tp": 4050.0, "lot": 0.01},
+            bars,
+            symbol="XAUUSD_o",
+            max_risk_usd=-5.0,
+        )

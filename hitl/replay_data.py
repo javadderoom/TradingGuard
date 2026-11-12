@@ -130,7 +130,7 @@ class ReplayDataManager:
     def get_catalog(self) -> List[Dict[str, Any]]:
         """Returns catalog listing of all supported instruments with date bounds and execution mode."""
         if self._catalog_cache is not None:
-            return self._catalog_cache
+            return [dict(item) for item in self._catalog_cache]
 
         catalog_list: List[Dict[str, Any]] = []
         for symbol, meta in SYMBOL_CATALOG.items():
@@ -173,7 +173,7 @@ class ReplayDataManager:
             })
 
         self._catalog_cache = catalog_list
-        return catalog_list
+        return [dict(item) for item in catalog_list]
 
     def load_m1_df(self, symbol: str) -> pd.DataFrame:
         """
@@ -285,6 +285,9 @@ class ReplayDataManager:
             if bars_df.empty:
                 return {"bars": [], "truncated": False, "forming_bar": False}
 
+            if max_bars <= 0:
+                return {"bars": [], "truncated": True, "forming_bar": False}
+
             truncated = len(bars_df) > max_bars
             if truncated:
                 bars_df = bars_df.iloc[-max_bars:]
@@ -332,6 +335,9 @@ class ReplayDataManager:
             spread=("spread", "last"),
             real_volume=("real_volume", "sum"),
         ).rename(columns={"bucket": "time"})
+
+        if max_bars <= 0:
+            return {"bars": [], "truncated": True, "forming_bar": forming_bar}
 
         truncated = len(agg_df) > max_bars
         if truncated:

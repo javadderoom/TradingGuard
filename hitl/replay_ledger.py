@@ -192,11 +192,11 @@ class CoBacktestLedger:
             pf = round(gross_win / gross_loss, 2) if gross_loss > 0 else (99.0 if gross_win > 0 else 0.0)
             wr = round((len(wins) / total) * 100.0, 1)
 
-            # Max drawdown tracking
+            # Max drawdown tracking (strictly sorted by cash realization exit_time order)
             running = 0.0
             peak = 0.0
             max_dd = 0.0
-            for t in trade_list:
+            for t in sorted(trade_list, key=lambda x: (x.get("exit_time") or x.get("decision_time") or 0)):
                 running += float(t.get("realized_pnl_usd", 0.0))
                 if running > peak:
                     peak = running

@@ -60,6 +60,11 @@ def test_catalog_marks_btcusd_manual_only_and_loads_gbpusd_without_real_volume()
     assert "1M" in symbols["XAUUSD_o"]["timeframes"]
     assert "1D" in symbols["XAUUSD_o"]["timeframes"]
 
+    # Shallow copy safety: modifying returned dict must not mutate internal cache
+    cat[0]["custom_mutated"] = True
+    cat_fresh = mgr.get_catalog()
+    assert "custom_mutated" not in cat_fresh[0]
+
     # 3. GBPUSD_o parquet load: verify real_volume normalized to 0
     df_gbp = mgr.load_m1_df("GBPUSD_o")
     assert len(df_gbp) > 300000
@@ -241,6 +246,27 @@ def test_max_bars_cap_and_weekend_range_safe():
     assert res_sat["bars"] == []
     assert res_sat["truncated"] is False
     assert res_sat["forming_bar"] is False
+
+    # 3. Direct python calls with max_bars <= 0 return empty bars and truncated=True (not all rows via iloc[-0:])
+    res_zero = mgr.get_candles(
+        symbol="XAUUSD_o",
+        tf="1M",
+        start_epoch=start_ep,
+        end_epoch=end_ep,
+        max_bars=0,
+    )
+    assert res_zero["bars"] == []
+    assert res_zero["truncated"] is True
+
+    res_neg_agg = mgr.get_candles(
+        symbol="XAUUSD_o",
+        tf="5M",
+        start_epoch=start_ep,
+        end_epoch=end_ep,
+        max_bars=-1,
+    )
+    assert res_neg_agg["bars"] == []
+    assert res_neg_agg["truncated"] is True
 
 
 def test_lru_cache_eviction():

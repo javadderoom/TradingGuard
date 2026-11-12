@@ -258,6 +258,9 @@ def evaluate_council_decision(
         'notes': str
     }
     """
+    if max_risk_usd is not None and max_risk_usd <= 0:
+        raise ValueError("max_risk_usd must be positive when specified")
+
     decision = decision_dict.get("decision", "STAND_ASIDE")
     
     if decision == "STAND_ASIDE":

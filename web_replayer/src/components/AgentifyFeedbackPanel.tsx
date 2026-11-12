@@ -93,13 +93,13 @@ export const AgentifyFeedbackPanel: React.FC<AgentifyFeedbackPanelProps> = ({
   };
 
   const handleCopyText = async (text: string) => {
+    setCopiedPrompt(text);
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedPrompt(text);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch {
-      // Fallback
+      // Fallback: clipboard permission denied or insecure context, preview still active
     }
   };
 

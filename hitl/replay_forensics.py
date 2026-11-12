@@ -16,7 +16,7 @@ Provides:
 
 import collections
 import datetime
-from pathlib import Path
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 from hitl.replay_data import (
@@ -32,6 +32,9 @@ from hitl.backtest.fast_screener import screen_ict_session
 from hitl.backtest.evaluator import evaluate_council_decision
 from hitl.screener_gate import tehran_hour_from_bar_time
 import hitl.backtest.chart_renderer as chart_renderer
+
+# Module-level lock guarding global chart_renderer offset shimming during concurrent bot scans
+_SCREENER_OFFSET_LOCK = threading.Lock()
 
 
 def detect_fvg_boxes(
@@ -77,7 +80,7 @@ def detect_fvg_boxes(
         min_body = 0.0004
 
     recent = bars[-lookback:]
-    for i in range(len(recent) - 1, 2, -1):
+    for i in range(len(recent) - 1, 1, -1):
         c1 = recent[i - 2]
         c2 = recent[i - 1]
         c3 = recent[i]
@@ -340,8 +343,6 @@ def run_bot_scan(
     time_to_idx = {b["time"]: i for i, b in enumerate(all_5m)}
 
     # Chronological Walk
-    orig_offset_func = chart_renderer.get_broker_utc_offset_seconds
-
     for bar in scan_bars:
         t = bar["time"]
         idx = time_to_idx[t]
@@ -394,6 +395,11 @@ def run_bot_scan(
         fvg_box = detect_fvg_boxes(all_5m[: idx + 1], lookback=12, symbol=sym_clean)
         breaker_box = detect_breaker_boxes(all_5m[: idx + 1], lookback=24, symbol=sym_clean)
 
+        # Slices up to forming bar (closed_bars_only=True drops bar at idx)
+        bars_5m_slice = all_5m[: idx + 1]
+        bars_1h_slice = [h for h in all_1h if h["time"] <= t]
+        bars_1d_slice = [d for d in all_1d if d["time"] <= t]
+
         # Determine session hour and offset shimming
         if clock_mode == "true_tehran":
             sess_hour = z["teh_dt"].hour
@@ -402,17 +408,23 @@ def run_bot_scan(
             def _shimmed_offset() -> int:
                 return offset_sec
 
-            chart_renderer.get_broker_utc_offset_seconds = _shimmed_offset
+            with _SCREENER_OFFSET_LOCK:
+                orig_offset_func = chart_renderer.get_broker_utc_offset_seconds
+                chart_renderer.get_broker_utc_offset_seconds = _shimmed_offset
+                try:
+                    screener_res = screen_ict_session(
+                        bars_5m=bars_5m_slice,
+                        bars_1h=bars_1h_slice,
+                        symbol=sym_clean,
+                        session_hour=sess_hour,
+                        bars_1d=bars_1d_slice,
+                        closed_bars_only=True,
+                    )
+                finally:
+                    chart_renderer.get_broker_utc_offset_seconds = orig_offset_func
         else:
             # live_legacy: uncalibrated tehran_hour_from_bar_time
             sess_hour = tehran_hour_from_bar_time(t)
-
-        try:
-            # Slices up to forming bar (closed_bars_only=True drops bar at idx)
-            bars_5m_slice = all_5m[: idx + 1]
-            bars_1h_slice = [h for h in all_1h if h["time"] <= t]
-            bars_1d_slice = [d for d in all_1d if d["time"] <= t]
-
             screener_res = screen_ict_session(
                 bars_5m=bars_5m_slice,
                 bars_1h=bars_1h_slice,
@@ -421,9 +433,6 @@ def run_bot_scan(
                 bars_1d=bars_1d_slice,
                 closed_bars_only=True,
             )
-        finally:
-            if clock_mode == "true_tehran":
-                chart_renderer.get_broker_utc_offset_seconds = orig_offset_func
 
         has_setup = screener_res.get("has_setup", False)
         reason = screener_res.get("reason", "")
@@ -599,7 +608,7 @@ def run_bot_scan(
     running = 0.0
     peak = 0.0
     max_dd = 0.0
-    for t_item in sorted(all_trades, key=lambda x: x.get("decision_time", 0)):
+    for t_item in sorted(all_trades, key=lambda x: (x.get("exit_time") or x.get("decision_time") or 0)):
         running += float(t_item.get("realized_pnl_usd", 0.0))
         if running > peak:
             peak = running

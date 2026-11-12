@@ -143,6 +143,7 @@ Every trade strictly abides by institutional broker execution realism:
    - **Legacy Default ($12.00)**: Strict $12.00 maximum risk ceiling per trade for standard accounts. If calculated structural risk exceeds $12.00, the trade risk is capped strictly at $12.00.
    - **$2,000 Tier ($20.00)**: In institutional $2,000 capital tier scans (`max_risk_usd=20.0`), enforces a $20.00 ceiling (1.0% account risk).
    - **Uncapped Research / Human Discretionary (`None`)**: When `max_risk_usd=None`, dollar risk clamping is completely bypassed, preserving true structural stop risk and uncompressed realized R:R for Human setups.
+   - **Strict Parameter Validation**: If `max_risk_usd` is specified, it must be strictly positive (`max_risk_usd > 0`), raising `ValueError("max_risk_usd must be positive when specified")` if `<= 0`.
 4. **Asset-Specific Structural Risk Bracketing & Physics**:
    - **Gold (`XAUUSD`)**: Minimum Stop Loss: **$3.50**, Maximum Stop Loss: **$8.00**. Invalidation Buffer: **+$1.50** spread buffer applied outside swing pivots. Point value = $1.00 per point at 0.01 lot.
    - **Bitcoin (`BTCUSD`)**: Contract Size = 1.0 BTC. Base Lot = 0.01 BTC. Point Value = **$0.01 per dollar** ($1.00 PnL per $100 price movement). Firm Stop Loss Ceiling: **$1,200.00 pts** ($12.00 max risk). Typical structural swing stop: **$200.00 – $450.00 pts** ($2.00 – $4.50 risk). Invalidation Buffer: **+$20.00 – $25.00 pts** ($0.20 – $0.25). Margin required: **$3.80** for 0.01 lot (1:200 leverage). Spread penalty: **$1.50** ($0.015 dollar penalty).
@@ -2102,9 +2103,9 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
    * **Chronological SMC Session Scanner (`run_bot_scan`)**:
      * Walks 5M candlesticks sequentially with causal MTF slicing (`closed_bars_only=True` drops the forming bar `bars_5m[:-1]` to evaluate `signal_bar_time = bars_5m[-1]['time']`).
      * Forward M1 order execution begins strictly after the signal bar closes (`m1['time'] >= signal_bar_time + 300`).
-     * **Dynamic Session Clock Resolution**: Supports `clock_mode="true_tehran"` (safely shimming `chart_renderer.get_broker_utc_offset_seconds` via `try/finally` to return that bar's historical `Europe/Athens` offset and setting true UTC `dt` objects) vs `clock_mode="live_legacy"` (which faithfully reproduces the live timezone double-counting bug where 16:40 Tehran / 15:10 Server gets shifted to `session_hour=18`, triggering the NY PM Silver Bullet veto).
+     * **Dynamic Session Clock Resolution**: Supports `clock_mode="true_tehran"` (safely shimming `chart_renderer.get_broker_utc_offset_seconds` under module-level `_SCREENER_OFFSET_LOCK = threading.Lock()` via `try/finally` to prevent race conditions across concurrent `/api/bot-scan` worker threads while setting true UTC `dt` objects) vs `clock_mode="live_legacy"` (which faithfully reproduces the live timezone double-counting bug where 16:40 Tehran / 15:10 Server gets shifted to `session_hour=18`, triggering the NY PM Silver Bullet veto).
      * **Anti-Spoiler Incremental Asian Range**: Asian High/Low accumulates incrementally over elapsed candles up to cursor $T$ without leaking prior to formation or before the Asian session closes at 07:00 UTC.
-     * **2D Box Geometries**: `detect_fvg_boxes` computes `{top, bottom, t_start, t_end, dir}` and `detect_breaker_boxes` computes `{top, bottom, t_start, t_end, type}` for direct chart shading.
+     * **2D Box Geometries**: `detect_fvg_boxes` computes `{top, bottom, t_start, t_end, dir}` across all 3-bar windows down to index `[0..2]` and `detect_breaker_boxes` computes `{top, bottom, t_start, t_end, type}` for direct chart shading.
      * **System-Wide Risk Governance (`PROP_FIRM` Rules)**:
        * Reference Capital: `$2,000.00`.
        * Max Trade Risk Cap: `$20.00` per trade (`max_risk_usd=20.0`).
@@ -2120,7 +2121,7 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
    * **Shared Marked Co-Trade Ledger (`CoBacktestLedger`)**:
      * Atomic JSON persistence (`.tmp` write + `replace()`) over `hitl/memory/visual_co_backtest_ledger.json`.
      * Records strictly carry `origin`: `"BOT" | "HUMAN_PROPOSED" | "HUMAN_EDITED_BOT"`, `parent_bot_ref`, `risk_usd_001`, and `exceeds_risk_cap`.
-     * Generates side-by-side performance scorecard grouped by origin.
+     * Generates side-by-side performance scorecard grouped by origin, with max drawdown computed strictly on cash realization exit_time order (matching frontend coTraderLogic.ts).
    * **Agentify Alignment Feedback Store (`AgentifyFeedbackStore`)**:
      * Atomic JSON storage over `hitl/memory/visual_feedback_cases.json`.
      * `build_agentify_prompt`: Defensive prompt builder converting chart context, human vs bot geometry comparison, screener diagnostic flags, and user rationale into a copy-ready Markdown prompt for Antigravity alignment without crashing on `None` values.

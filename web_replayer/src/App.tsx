@@ -172,7 +172,7 @@ export function App() {
   }, [selectedSymbol]);
 
   // Fetch Candles
-  const loadCandles = useCallback(async () => {
+  const loadCandles = useCallback(async (isCancelled?: () => boolean) => {
     if (!startEpoch || !endEpoch) return;
     try {
       const res = await replayApi.getCandles({
@@ -181,15 +181,18 @@ export function App() {
         start: startEpoch,
         end: endEpoch,
       });
+      if (isCancelled?.()) return;
       setCandles(res || []);
       setReplayCursor((prev) => (prev === null && res && res.length > 0 ? res[Math.min(res.length - 1, 15)].time : prev));
     } catch {
-      setCandles([]);
+      if (!isCancelled?.()) {
+        setCandles([]);
+      }
     }
   }, [selectedSymbol, timeframe, startEpoch, endEpoch]);
 
   // Fetch Bot Scan & SMC Diagnostics
-  const loadBotScan = useCallback(async () => {
+  const loadBotScan = useCallback(async (isCancelled?: () => boolean) => {
     if (!startEpoch || !endEpoch) return;
     try {
       const res = await replayApi.getBotScan({
@@ -198,6 +201,7 @@ export function App() {
         end: endEpoch,
         clock_mode: engineClockMode,
       });
+      if (isCancelled?.()) return;
       setKillzones(res.killzones || []);
       setAsianRanges(res.asian_ranges_by_day || {});
       setDiagnostics(res.diagnostics || []);
@@ -213,6 +217,7 @@ export function App() {
       setFvgs(fvgList);
       setBreakers(brkList);
     } catch {
+      if (isCancelled?.()) return;
       setKillzones([]);
       setAsianRanges({});
       setDiagnostics([]);
@@ -224,87 +229,48 @@ export function App() {
   }, [selectedSymbol, startEpoch, endEpoch, engineClockMode]);
 
   // Fetch Shared Co-Trades Ledger
-  const loadCoTrades = useCallback(async () => {
+  const loadCoTrades = useCallback(async (isCancelled?: () => boolean) => {
     try {
       const res = await replayApi.getCoTrades(selectedSymbol);
+      if (isCancelled?.()) return;
       setCoTrades(res.trades || []);
     } catch {
-      setCoTrades([]);
+      if (!isCancelled?.()) {
+        setCoTrades([]);
+      }
     }
   }, [selectedSymbol]);
 
-  // Load data when symbol, range, or clock mode changes
+  // Load data when symbol, range, or clock mode changes (reusing loadCandles, loadBotScan, loadCoTrades)
   useEffect(() => {
     let active = true;
-    if (!startEpoch || !endEpoch) return;
-    replayApi.getCandles({
-      symbol: selectedSymbol,
-      tf: timeframe,
-      start: startEpoch,
-      end: endEpoch,
-    }).then((res) => {
-      if (active) {
-        setCandles(res || []);
-        setReplayCursor((prev) => (prev === null && res && res.length > 0 ? res[Math.min(res.length - 1, 15)].time : prev));
-      }
-    }).catch(() => {
-      if (active) setCandles([]);
+    Promise.resolve().then(() => {
+      if (active) void loadCandles(() => !active);
     });
     return () => {
       active = false;
     };
-  }, [selectedSymbol, timeframe, startEpoch, endEpoch]);
+  }, [loadCandles]);
 
   useEffect(() => {
     let active = true;
-    if (!startEpoch || !endEpoch) return;
-    replayApi.getBotScan({
-      symbol: selectedSymbol,
-      start: startEpoch,
-      end: endEpoch,
-      clock_mode: engineClockMode,
-    }).then((res) => {
-      if (!active) return;
-      setKillzones(res.killzones || []);
-      setAsianRanges(res.asian_ranges_by_day || {});
-      setDiagnostics(res.diagnostics || []);
-      setBotEvents(res.events || []);
-      setBotTrades(res.bot_trades || []);
-
-      const fvgList: FvgBox[] = [];
-      const brkList: BreakerBox[] = [];
-      for (const d of res.diagnostics || []) {
-        if (d.fvg_box) fvgList.push(d.fvg_box);
-        if (d.breaker_box) brkList.push(d.breaker_box);
-      }
-      setFvgs(fvgList);
-      setBreakers(brkList);
-    }).catch(() => {
-      if (!active) return;
-      setKillzones([]);
-      setAsianRanges({});
-      setDiagnostics([]);
-      setBotEvents([]);
-      setBotTrades([]);
-      setFvgs([]);
-      setBreakers([]);
+    Promise.resolve().then(() => {
+      if (active) void loadBotScan(() => !active);
     });
     return () => {
       active = false;
     };
-  }, [selectedSymbol, startEpoch, endEpoch, engineClockMode]);
+  }, [loadBotScan]);
 
   useEffect(() => {
     let active = true;
-    replayApi.getCoTrades(selectedSymbol).then((res) => {
-      if (active) setCoTrades(res.trades || []);
-    }).catch(() => {
-      if (active) setCoTrades([]);
+    Promise.resolve().then(() => {
+      if (active) void loadCoTrades(() => !active);
     });
     return () => {
       active = false;
     };
-  }, [selectedSymbol]);
+  }, [loadCoTrades]);
 
   // Extract Causal Liquidity Sweeps
   const sweeps: SweepFlag[] = useMemo(() => {
