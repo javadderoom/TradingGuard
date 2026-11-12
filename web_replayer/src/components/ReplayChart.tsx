@@ -324,19 +324,34 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     for (const t of trades) {
       if (replayTo !== null && t.decision_time > replayTo) continue;
 
-      // Fill Marker
+      const isOpenOrPending =
+        t.status === 'OPEN' ||
+        t.status === 'PENDING' ||
+        (replayTo !== null && (!t.exit_time || t.exit_time > replayTo));
+
+      const prefix = t.origin === 'BOT' ? '🤖' : '👤';
+
+      // Fill / Entry Marker - strictly guarded against leaking future win/loss outcome while open
       if (t.fill_time && (replayTo === null || t.fill_time <= replayTo)) {
         markers.push({
           time: t.fill_time as UTCTimestamp,
           position: t.direction === 'LONG' ? 'belowBar' : 'aboveBar',
-          color: t.origin === 'BOT' ? '#2962ff' : '#00e676',
+          color: isOpenOrPending
+            ? '#2962ff'
+            : t.status === 'WIN'
+            ? '#26a69a'
+            : t.status === 'LOSS'
+            ? '#ef5350'
+            : '#2962ff',
           shape: t.direction === 'LONG' ? 'arrowUp' : 'arrowDown',
-          text: `${t.origin === 'BOT' ? '🤖' : '👤'} ${t.direction} @ ${t.entry.toFixed(digits)}`,
+          text: isOpenOrPending
+            ? `${prefix} ${t.direction} (Open)`
+            : `${prefix} ${t.direction} @ ${t.entry.toFixed(digits)}`,
         });
       }
 
-      // Exit Marker
-      if (t.exit_time && (replayTo === null || t.exit_time <= replayTo)) {
+      // Exit Marker - strictly gated so open/pending trades NEVER show exit markers
+      if (!isOpenOrPending && t.exit_time && (replayTo === null || t.exit_time <= replayTo)) {
         const isWin = t.status === 'WIN';
         const isLoss = t.status === 'LOSS';
         const pnlStr =

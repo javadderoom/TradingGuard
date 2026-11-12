@@ -13,7 +13,7 @@
  * - Right Workbench Drawer: Bot Brain Inspector, Co-Trade Scorecard & Ledger, and Agentify Feedback Bridge.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Award,
@@ -65,6 +65,7 @@ import {
   computeTradeRR,
   extractLiquiditySweeps,
   formatClockTick,
+  maskBlindReplayTrade,
 } from './utils/coTraderLogic';
 
 const DEFAULT_TIMEFRAMES: Timeframe[] = ['1M', '5M', '15M', '1H', '4H', '1D'];
@@ -181,13 +182,11 @@ export function App() {
         end: endEpoch,
       });
       setCandles(res || []);
-      if (res && res.length > 0 && replayCursor === null) {
-        setReplayCursor(res[Math.min(res.length - 1, 15)].time);
-      }
+      setReplayCursor((prev) => (prev === null && res && res.length > 0 ? res[Math.min(res.length - 1, 15)].time : prev));
     } catch {
       setCandles([]);
     }
-  }, [selectedSymbol, timeframe, startEpoch, endEpoch, replayCursor]);
+  }, [selectedSymbol, timeframe, startEpoch, endEpoch]);
 
   // Fetch Bot Scan & SMC Diagnostics
   const loadBotScan = useCallback(async () => {
@@ -246,9 +245,7 @@ export function App() {
     }).then((res) => {
       if (active) {
         setCandles(res || []);
-        if (res && res.length > 0 && replayCursor === null) {
-          setReplayCursor(res[Math.min(res.length - 1, 15)].time);
-        }
+        setReplayCursor((prev) => (prev === null && res && res.length > 0 ? res[Math.min(res.length - 1, 15)].time : prev));
       }
     }).catch(() => {
       if (active) setCandles([]);
@@ -256,7 +253,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedSymbol, timeframe, startEpoch, endEpoch, replayCursor]);
+  }, [selectedSymbol, timeframe, startEpoch, endEpoch]);
 
   useEffect(() => {
     let active = true;
@@ -326,6 +323,14 @@ export function App() {
     return Array.from(map.values()).sort((a, b) => a.decision_time - b.decision_time);
   }, [botTrades, coTrades]);
 
+  // Masked trades passed to ReplayChart (strict anti-spoiler)
+  const chartTrades: ReplayTrade[] = useMemo(() => {
+    if (!blindReplay || replayCursor === null) {
+      return allTrades;
+    }
+    return allTrades.map((t) => maskBlindReplayTrade(t, replayCursor));
+  }, [allTrades, blindReplay, replayCursor]);
+
   // Active Bar for Bot Brain Inspector
   const activeInspectionTime = useMemo(() => {
     if (inspectedTime !== null) return inspectedTime;
@@ -334,39 +339,49 @@ export function App() {
     return null;
   }, [inspectedTime, blindReplay, replayCursor, candles]);
 
-  // Replay Transport Stepping Loop
+  // Keep candles ref updated so playback interval does not thrash or reset when candles change
+  const candlesRef = useRef(candles);
   useEffect(() => {
-    if (!isPlaying || !blindReplay || candles.length === 0) return;
+    candlesRef.current = candles;
+  }, [candles]);
+
+  // Replay Transport Stepping Loop (stable interval using candlesRef without thrashing on ticks)
+  useEffect(() => {
+    if (!isPlaying || !blindReplay) return;
 
     const intervalMs = Math.max(50, Math.floor(1000 / playbackSpeed));
     const timer = setInterval(() => {
+      const currentCandles = candlesRef.current;
+      if (currentCandles.length === 0) return;
+
       setReplayCursor((prev) => {
-        if (prev === null) return candles[0].time;
-        let curIdx = candles.findIndex((c) => c.time >= prev);
+        if (prev === null) return currentCandles[0].time;
+        let curIdx = currentCandles.findIndex((c) => c.time >= prev);
         if (curIdx === -1) curIdx = 0;
         const nextIdx = curIdx + 1;
-        if (nextIdx >= candles.length) {
+        if (nextIdx >= currentCandles.length) {
           setIsPlaying(false);
           return prev;
         }
-        const nextTime = candles[nextIdx].time;
+        const nextTime = currentCandles[nextIdx].time;
         setInspectedTime(nextTime);
         return nextTime;
       });
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [isPlaying, blindReplay, candles, playbackSpeed]);
+  }, [isPlaying, blindReplay, playbackSpeed]);
 
   // Step -1 / +1 helpers
   const handleStepReplay = (delta: number) => {
-    if (candles.length === 0) return;
+    const currentCandles = candlesRef.current;
+    if (currentCandles.length === 0) return;
     setReplayCursor((prev) => {
-      const cur = prev ?? candles[0].time;
-      let curIdx = candles.findIndex((c) => c.time >= cur);
-      if (curIdx === -1) curIdx = delta > 0 ? 0 : candles.length - 1;
-      const targetIdx = Math.max(0, Math.min(candles.length - 1, curIdx + delta));
-      const targetTime = candles[targetIdx].time;
+      const cur = prev ?? currentCandles[0].time;
+      let curIdx = currentCandles.findIndex((c) => c.time >= cur);
+      if (curIdx === -1) curIdx = delta > 0 ? 0 : currentCandles.length - 1;
+      const targetIdx = Math.max(0, Math.min(currentCandles.length - 1, curIdx + delta));
+      const targetTime = currentCandles[targetIdx].time;
       setInspectedTime(targetTime);
       return targetTime;
     });
@@ -1141,7 +1156,7 @@ export function App() {
             fvgs={fvgs}
             breakers={breakers}
             sweeps={sweeps}
-            trades={allTrades}
+            trades={chartTrades}
             draftTrade={draftTrade}
             onDraftTradeChange={setDraftTrade}
             replayTo={blindReplay ? replayCursor : null}
