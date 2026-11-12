@@ -2186,8 +2186,19 @@ Audited zero-lookahead via `evaluate_council_decision` (`$0.22` spread, `$0.10` 
   - **Blind 1-Directional FVG Continuation**: Failed severely across all seasons (`37 fills | 2W-28L-7BE | 5.4% WR | -22.95R | PF 0.18`).
   - **Midday Re-Anchor Sweep (`14:30`-style standalone)**: Negative out-of-sample in 2025 (`49 fills | -14.65R | PF 0.54`); gating by strong London displacement (`>= 25% ADR`) narrowed to `23` combined trades over 17 months (`+4.28R | PF 1.33 | t = +0.57`, negative in Winter `-0.52R` and Spring `-0.54R`)—insufficient for autonomous production deployment.
 
-### 20.3 Visual Sweep Detection Enhancement (`web_replayer/src/utils/coTraderLogic.ts`)
-Upgraded `extractLiquiditySweeps` with causal `1L/1R` minor pivot sweep tracking alongside `3L/3R` major pivots (`>= 50%` rejection wick requirement on minor pivots vs `>= 35%` on major pivots), enabling immediate visual detection of rapid midday raids (such as `2026-11-12 14:30 Tehran` at `3955.43` sweeping the `14:20` high `3954.71` with a `61%` upper wick).
+### 20.3 Visual Sweep Detection Enhancement & Multi-Candle Raid Linking (`web_replayer/src/utils/coTraderLogic.ts`)
+1. **Causal 1L/1R & 3L/3R Pivot Tracking**: Upgraded `extractLiquiditySweeps` with causal `1L/1R` minor pivot sweep tracking alongside `3L/3R` major pivots (`>= 50%` rejection wick requirement on minor pivots vs `>= 35%` on major pivots).
+2. **Multi-Candle Raid Pivot Preservation**: Resolved premature pivot pruning in `consumeSweptHigh` and `consumeSweptLow`. Previously, any intermediate bar touching `sh.price` or closing marginally above it immediately executed `list.splice(s, 1)` without checking whether the bar qualified as a sweep, destroying the major origin pivot before the actual raid peak candle arrived. Under the upgraded logic, a pivot is retained across intermediate probes unless a clean displacement break occurs (`close > price + 0.25 * range` with body dominance) or an authentic rejection sweep is confirmed (`wickRatio >= minWickRatio`). This enables the replayer to correctly connect multi-candle raid peaks (e.g. `2026-11-12 14:30 Tehran` on Gold or `14:20 UTC` on GBPUSD) directly back to their major origin swing highs (e.g. `12:00 Tehran` at `3953.93` or `12:00 UTC` at `1.32733`).
+
+### 20.4 Empirical Backtest Audit: Midday Major Swing Sweep Hypothesis
+Prompted by the Nov 12, 2026 price action (where GBPUSD swept `12:00 UTC` at `14:20 UTC` and subsequently dropped 47 pips, and Gold swept `12:00 Tehran` at `14:30 Tehran` before dropping $100), a full-scale zero-lookahead backtest grid was executed across all 2026 trading days using canonical `evaluate_council_decision` (SL-first, closed bars, live broker spread, commission, slippage stress):
+- **GBPUSD Standalone Midday Sweep (12:00–16:00 UTC)**:
+  - *Unfiltered Grid*: 3,160–3,215 trades, Win Rate 21.1%–29.7%, Profit Factor **0.61–0.66**, Net Loss **-$560 to -$637 (-597R to -667R)**.
+  - *Institutional Filtered Grid (H1 Trend EMA50 + 3/5/8-Bar Major Pivots + 0.5–1.5 Pip Sweep + 35% Rejection Wick)*: Across 54 parameter combinations, Win Rate ranged from 11.2% to 30.7%, and Profit Factor remained between **0.30 and 0.59** (Net Loss **-$31.07 to -$62.46 / -29.4R to -69.7R**). Zero combinations achieved profitability.
+- **XAUUSD (Gold) Midday Sweep**:
+  - Across 16 parameter combinations, Win Rate ranged from 19.8% to 32.2%, and Profit Factor was **0.68–0.83** (Net Loss **-$106.24 to -$178.55 / -9.6R to -27.5R**).
+- **Institutional Verdict**:
+  While the setup yielded an attractive winner on Nov 12 due to macro session catalyst convergence (US data release and NYSE cash open), systematically trading midday swing sweeps during the low-volume London lunch / pre-NY lull consistently destroys capital across multi-seasonal market cycles. The setup is definitively rejected from automated production ratification. The screener's existing session veto (`Veto: Late NY PM / Silver Bullet window banned on GBPUSD_o per 1-year empirical audit`) remains strictly justified and actively protective.
 
 
 

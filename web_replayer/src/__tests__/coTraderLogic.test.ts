@@ -694,4 +694,31 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     const sw = extractLiquiditySweeps(nov12Seq, {}, null);
     expect(sw.some((x) => x.time === 1794481500 && x.type === 'HIGH_SWEEP' && x.level === 3954.71)).toBe(true);
   });
+
+  it('correctly links multi-candle raid at 14:30 back to 12:00 major swing high across marginal intermediate probes', () => {
+    // 3L/3R major pivot at 12:00 (3953.93)
+    const seqWith1200: Candle[] = [
+      { time: 1794470100, open: 3946, high: 3948, low: 3945, close: 3947 }, // 11:45
+      { time: 1794470400, open: 3947, high: 3950, low: 3946, close: 3949 }, // 11:50
+      { time: 1794470700, open: 3949, high: 3952, low: 3948, close: 3951 }, // 11:55
+      { time: 1794471000, open: 3951, high: 3953.93, low: 3949, close: 3952.40 }, // 12:00 (Major 3L/3R High)
+      { time: 1794471300, open: 3952.4, high: 3952.5, low: 3944, close: 3945 }, // 12:05
+      { time: 1794471600, open: 3945, high: 3947, low: 3940, close: 3942 }, // 12:10
+      { time: 1794471900, open: 3942, high: 3944, low: 3938, close: 3940 }, // 12:15
+      // Hours of lower prices down to 3925...
+      { time: 1794479700, open: 3935, high: 3945, low: 3934, close: 3944 },
+      // Retracement approaching 12:00 level:
+      { time: 1794480000, open: 3949.74, high: 3951.08, low: 3949.39, close: 3950.49 }, // 14:05
+      { time: 1794480300, open: 3950.63, high: 3952.77, low: 3950.53, close: 3952.46 }, // 14:10
+      { time: 1794480600, open: 3952.49, high: 3953.06, low: 3952.05, close: 3952.67 }, // 14:15
+      { time: 1794480900, open: 3952.63, high: 3954.71, low: 3952.23, close: 3954.25 }, // 14:20 (marginal probe)
+      { time: 1794481200, open: 3954.23, high: 3954.25, low: 3952.65, close: 3953.91 }, // 14:25 (closed back below)
+      { time: 1794481500, open: 3953.85, high: 3955.43, low: 3953.48, close: 3954.25 }, // 14:30 (Raid peak, 61% upper wick)
+    ];
+    const sw = extractLiquiditySweeps(seqWith1200, {}, null);
+    // Must contain sweep connecting to the major 12:00 swing high (3953.93)
+    const swept1200 = sw.find((x) => x.level === 3953.93);
+    expect(swept1200).toBeDefined();
+    expect(swept1200?.origin_time).toBe(1794471000);
+  });
 });

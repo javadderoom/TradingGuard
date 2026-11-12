@@ -378,29 +378,60 @@ export function extractLiquiditySweeps(
   const activeMinorHighs: Array<{ time: number; price: number }> = [];
   const activeMinorLows: Array<{ time: number; price: number }> = [];
 
-  const consumeSweptHigh = (list: Array<{ time: number; price: number }>, bar: Candle) => {
+  const consumeSweptHigh = (
+    list: Array<{ time: number; price: number }>,
+    bar: Candle,
+    minWickRatio: number = 0.35
+  ) => {
     let best: { time: number; price: number } | null = null;
+    const barRng = bar.high - bar.low;
+    const upperWick = bar.high - Math.max(bar.open, bar.close);
+    const wickRatio = barRng > 0 ? upperWick / barRng : 0;
+
     for (let s = list.length - 1; s >= 0; s--) {
       const sh = list[s];
-      if (bar.high > sh.price && bar.open <= sh.price && bar.close < sh.price) {
-        if (!best || sh.price > best.price) best = sh;
-        list.splice(s, 1);
-      } else if (bar.high > sh.price) {
-        list.splice(s, 1);
+      if (bar.high > sh.price) {
+        // True sweep rejection: bar penetrated pivot, rejected with prominent upper wick,
+        // and closed in the lower half of the bar (or below the pivot).
+        if (
+          wickRatio >= minWickRatio &&
+          (bar.close < sh.price || bar.close <= bar.low + barRng * 0.50)
+        ) {
+          if (!best || sh.price > best.price) best = sh;
+          list.splice(s, 1);
+        } else if (bar.close > sh.price + barRng * 0.25 && wickRatio < 0.35) {
+          // Clean bullish displacement body closed clearly above pivot -> structural break, invalidate pivot
+          list.splice(s, 1);
+        }
+        // Otherwise: bar touched or probed pivot without clean displacement and without rejection wick.
+        // Retain pivot so subsequent raid bars with actual rejection wicks can sweep it.
       }
     }
     return best;
   };
 
-  const consumeSweptLow = (list: Array<{ time: number; price: number }>, bar: Candle) => {
+  const consumeSweptLow = (
+    list: Array<{ time: number; price: number }>,
+    bar: Candle,
+    minWickRatio: number = 0.35
+  ) => {
     let best: { time: number; price: number } | null = null;
+    const barRng = bar.high - bar.low;
+    const lowerWick = Math.min(bar.open, bar.close) - bar.low;
+    const wickRatio = barRng > 0 ? lowerWick / barRng : 0;
+
     for (let s = list.length - 1; s >= 0; s--) {
       const sl = list[s];
-      if (bar.low < sl.price && bar.open >= sl.price && bar.close > sl.price) {
-        if (!best || sl.price < best.price) best = sl;
-        list.splice(s, 1);
-      } else if (bar.low < sl.price) {
-        list.splice(s, 1);
+      if (bar.low < sl.price) {
+        if (
+          wickRatio >= minWickRatio &&
+          (bar.close > sl.price || bar.close >= bar.high - barRng * 0.50)
+        ) {
+          if (!best || sl.price < best.price) best = sl;
+          list.splice(s, 1);
+        } else if (bar.close < sl.price - barRng * 0.25 && wickRatio < 0.35) {
+          list.splice(s, 1);
+        }
       }
     }
     return best;
@@ -449,12 +480,11 @@ export function extractLiquiditySweeps(
     const upperWick = c.high - Math.max(c.open, c.close);
     const lowerWick = Math.min(c.open, c.close) - c.low;
 
-    const sweptMajorHigh = consumeSweptHigh(activeSwingHighs, c);
-    const sweptMinorHigh = consumeSweptHigh(activeMinorHighs, c);
+    const sweptMajorHigh = consumeSweptHigh(activeSwingHighs, c, 0.35);
+    const sweptMinorHigh = consumeSweptHigh(activeMinorHighs, c, 0.50);
 
     if (
       sweptMajorHigh &&
-      upperWick >= 0.35 * barRange &&
       !emittedKeys.has(`HIGH:${c.time}`)
     ) {
       sweeps.push({
@@ -484,12 +514,11 @@ export function extractLiquiditySweeps(
       emittedKeys.add(`HIGH:${c.time}`);
     }
 
-    const sweptMajorLow = consumeSweptLow(activeSwingLows, c);
-    const sweptMinorLow = consumeSweptLow(activeMinorLows, c);
+    const sweptMajorLow = consumeSweptLow(activeSwingLows, c, 0.35);
+    const sweptMinorLow = consumeSweptLow(activeMinorLows, c, 0.50);
 
     if (
       sweptMajorLow &&
-      lowerWick >= 0.35 * barRange &&
       !emittedKeys.has(`LOW:${c.time}`)
     ) {
       sweeps.push({
