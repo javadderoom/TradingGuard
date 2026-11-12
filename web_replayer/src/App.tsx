@@ -66,7 +66,9 @@ import {
   dedupeBreakerBoxes,
   dedupeFvgBoxes,
   extractLiquiditySweeps,
+  findMatchingTradesNearTime,
   formatClockTick,
+  getClusterWindowSeconds,
   getLatestRangeForSymbol,
   loadWorkbenchPrefs,
   maskBlindReplayTrade,
@@ -139,6 +141,7 @@ export function App() {
   ]);
 
   // Co-Trading & Position Box State
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [draftTrade, setDraftTrade] = useState<DraftTrade | null>(null);
   const [simResult, setSimResult] = useState<SimulateTradeResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -205,6 +208,7 @@ export function App() {
     setInspectedTime(null);
     setReplayCursor(null);
     setIsPlaying(false);
+    setSelectedTradeId(null);
     setDraftTrade(null);
     setSimResult(null);
     setSyncNotice(null);
@@ -355,6 +359,82 @@ export function App() {
     if (candles.length > 0) return candles[candles.length - 1].time;
     return null;
   }, [inspectedTime, blindReplay, replayCursor, candles]);
+
+  // Selected Trade (anti-spoiler masked when Blind Replay is active)
+  const selectedTrade: ReplayTrade | null = useMemo(() => {
+    if (!selectedTradeId) return null;
+    const raw = allTrades.find((t) => t.trade_id === selectedTradeId);
+    if (!raw) return null;
+    const cutoff = blindReplay ? replayCursor : null;
+    if (cutoff !== null && raw.decision_time > cutoff) return null;
+    return maskBlindReplayTrade(raw, cutoff);
+  }, [selectedTradeId, allTrades, blindReplay, replayCursor]);
+
+  const clusterWindowSec = useMemo(() => getClusterWindowSeconds(candles), [candles]);
+
+  const clusterCandidates: ReplayTrade[] = useMemo(() => {
+    if (!selectedTrade) return [];
+    const anchor = selectedTrade.fill_time ?? selectedTrade.decision_time;
+    return findMatchingTradesNearTime(
+      allTrades,
+      anchor,
+      clusterWindowSec,
+      blindReplay ? replayCursor : null
+    );
+  }, [selectedTrade, allTrades, clusterWindowSec, blindReplay, replayCursor]);
+
+  const tradesNearActiveBar: ReplayTrade[] = useMemo(() => {
+    if (activeInspectionTime === null) return [];
+    return findMatchingTradesNearTime(
+      allTrades,
+      activeInspectionTime,
+      Math.max(300, Math.floor(clusterWindowSec / 2)),
+      blindReplay ? replayCursor : null
+    );
+  }, [allTrades, activeInspectionTime, clusterWindowSec, blindReplay, replayCursor]);
+
+  const openFeedbackForTrade = (t: ReplayTrade) => {
+    const timeStr = formatClockTick(t.decision_time, clockMode, true);
+    const outcomeText =
+      t.status === 'OPEN' || t.status === 'PENDING'
+        ? `${t.status} (in progress)`
+        : `${t.status} (${t.rr_realized ?? 0}R / $${t.realized_pnl_usd ?? 0})`;
+    handleTriggerFeedback({
+      title: `Trade Feedback: ${t.trade_id} (${t.origin}) on ${t.symbol}`,
+      category: t.origin === 'BOT' ? 'BOT_TRADE_EDIT' : 'MISSED_SETUP',
+      rationale: [
+        `Trade: ${t.trade_id} (${t.origin} · ${t.direction}${t.archetype_id ? ` · ${t.archetype_id}` : ''})`,
+        `Time (${clockMode.toUpperCase()}): ${timeStr}`,
+        `Levels: Entry ${t.entry.toFixed(digits)} | SL ${t.sl.toFixed(digits)} | TP ${t.tp.toFixed(digits)}`,
+        `Result: ${outcomeText}`,
+        t.notes ? `Notes: ${t.notes}` : '',
+        '',
+        'Question / Comment:',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      archetype_id: t.archetype_id,
+      timestamp: t.decision_time,
+    });
+  };
+
+  const handleSelectChartTime = (clickedTime: number | null) => {
+    if (clickedTime === null) return;
+    setInspectedTime(clickedTime);
+    if (!isDrawerOpen) setIsDrawerOpen(true);
+
+    const nearby = findMatchingTradesNearTime(
+      allTrades,
+      clickedTime,
+      Math.max(300, Math.floor(clusterWindowSec / 2)),
+      blindReplay ? replayCursor : null
+    );
+    if (nearby.length > 0) {
+      const curIdx = nearby.findIndex((t) => t.trade_id === selectedTradeId);
+      const next = curIdx >= 0 ? nearby[(curIdx + 1) % nearby.length] : nearby[0];
+      setSelectedTradeId(next.trade_id);
+    }
+  };
 
   // Keep candles ref updated so playback interval does not thrash or reset when candles change
   const candlesRef = useRef(candles);
@@ -1180,6 +1260,146 @@ export function App() {
         </div>
       )}
 
+      {/* Selected Trade Inspector Banner (Active when user selects any Bot/Human trade) */}
+      {selectedTrade && !draftTrade && (
+        <div
+          style={{
+            display: 'flex',
+            flexShrink: 0,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '5px 14px',
+            backgroundColor: '#1e222d',
+            borderBottom: '1px solid #f0b90b',
+            fontSize: '11px',
+            gap: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <span
+              style={{
+                fontWeight: 800,
+                padding: '2px 6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(240, 185, 11, 0.16)',
+                color: '#ffd54f',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {selectedTrade.origin} · {selectedTrade.direction}
+              {selectedTrade.archetype_id ? ` (${selectedTrade.archetype_id})` : ''}
+            </span>
+
+            <span>Entry: <b style={{ color: '#f0b90b' }}>{selectedTrade.entry.toFixed(digits)}</b></span>
+            <span>SL: <b style={{ color: '#ef5350' }}>{selectedTrade.sl.toFixed(digits)}</b></span>
+            <span>TP: <b style={{ color: '#26a69a' }}>{selectedTrade.tp.toFixed(digits)}</b></span>
+            <span
+              style={{
+                fontWeight: 700,
+                color:
+                  selectedTrade.status === 'WIN'
+                    ? '#26a69a'
+                    : selectedTrade.status === 'LOSS'
+                    ? '#ef5350'
+                    : '#90caf9',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {selectedTrade.status}
+              {selectedTrade.rr_realized != null
+                ? ` (${selectedTrade.rr_realized >= 0 ? '+' : ''}${selectedTrade.rr_realized.toFixed(2)}R / $${selectedTrade.realized_pnl_usd?.toFixed(2) ?? '0.00'})`
+                : ''}
+            </span>
+
+            {clusterCandidates.length > 1 && (() => {
+              const curIdx = clusterCandidates.findIndex((c) => c.trade_id === selectedTrade.trade_id);
+              const safeIdx = curIdx >= 0 ? curIdx : 0;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '1px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+                  <button
+                    onClick={() => {
+                      const prev = clusterCandidates[(safeIdx - 1 + clusterCandidates.length) % clusterCandidates.length];
+                      setSelectedTradeId(prev.trade_id);
+                    }}
+                    title="Previous trade in cluster"
+                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                  >
+                    ◀
+                  </button>
+                  <span style={{ color: '#b2b5be', fontSize: '10px', fontWeight: 600 }}>
+                    {safeIdx + 1}/{clusterCandidates.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const next = clusterCandidates[(safeIdx + 1) % clusterCandidates.length];
+                      setSelectedTradeId(next.trade_id);
+                    }}
+                    title="Next trade in cluster"
+                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <button
+              onClick={() => openFeedbackForTrade(selectedTrade)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#2962ff',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '4px 10px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Sparkles size={11} />
+              Ask / Feedback
+            </button>
+            <button
+              onClick={() => handleCloneTrade(selectedTrade)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#131722',
+                color: '#90caf9',
+                border: '1px solid #2a2e39',
+                borderRadius: '3px',
+                padding: '3px 8px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Clone & Adjust
+            </button>
+            <button
+              onClick={() => setSelectedTradeId(null)}
+              title="Clear selected trade"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'transparent',
+                border: '1px solid #565a65',
+                color: '#b2b5be',
+                borderRadius: '3px',
+                padding: '3px 6px',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Body: Chart on Left, Workbench on Right */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative', overflow: 'hidden' }}>
         {/* Main Chart Canvas */}
@@ -1195,6 +1415,7 @@ export function App() {
             breakers={breakers}
             sweeps={sweeps}
             trades={chartTrades}
+            selectedTrade={selectedTrade}
             draftTrade={draftTrade}
             onDraftTradeChange={setDraftTrade}
             replayTo={blindReplay ? replayCursor : null}
@@ -1204,10 +1425,7 @@ export function App() {
             showBreakers={showBoxes}
             showSweeps={showSweeps}
             showTrades={showTrades}
-            onSelectTime={(t) => {
-              setInspectedTime(t);
-              if (!isDrawerOpen) setIsDrawerOpen(true);
-            }}
+            onSelectTime={handleSelectChartTime}
           />
 
           {syncNotice && (
@@ -1432,11 +1650,28 @@ export function App() {
                   events={botEvents}
                   clockMode={clockMode}
                   engineClockMode={engineClockMode}
+                  digits={digits}
+                  tradesNearBar={tradesNearActiveBar}
+                  selectedTradeId={selectedTradeId}
+                  onSelectTrade={(t) => {
+                    setSelectedTradeId(t.trade_id);
+                    setInspectedTime(t.fill_time ?? t.decision_time);
+                  }}
                   onSelectEventTime={(t) => {
                     setInspectedTime(t);
                     setReplayCursor(t);
+                    const match = findMatchingTradesNearTime(
+                      allTrades,
+                      t,
+                      Math.max(300, Math.floor(clusterWindowSec / 2)),
+                      blindReplay ? replayCursor : null
+                    );
+                    if (match.length > 0) {
+                      setSelectedTradeId(match[0].trade_id);
+                    }
                   }}
                   onTriggerFeedback={handleTriggerFeedback}
+                  onTriggerTradeFeedback={openFeedbackForTrade}
                 />
               )}
 
@@ -1446,23 +1681,15 @@ export function App() {
                   replayTo={blindReplay ? replayCursor : null}
                   clockMode={clockMode}
                   digits={digits}
+                  selectedTradeId={selectedTradeId}
                   onCloneTrade={handleCloneTrade}
                   onDeleteTrade={handleDeleteTrade}
                   onSelectTrade={(t) => {
-                    setInspectedTime(t.decision_time);
+                    setSelectedTradeId(t.trade_id);
+                    setInspectedTime(t.fill_time ?? t.decision_time);
                     setReplayCursor(t.decision_time);
                   }}
-                  onTriggerFeedback={(t) => {
-                    handleTriggerFeedback({
-                      title: `Trade Feedback: ${t.trade_id} (${t.origin}) on ${t.symbol}`,
-                      category: t.origin === 'BOT' ? 'BOT_TRADE_EDIT' : 'MISSED_SETUP',
-                      rationale: `Trade ${t.trade_id} (${t.direction} @ ${t.entry}):
-Realized: ${t.status} (${t.rr_realized}R / $${t.realized_pnl_usd})
-Entry: ${t.entry}, SL: ${t.sl}, TP: ${t.tp}`,
-                      archetype_id: t.archetype_id,
-                      timestamp: t.decision_time,
-                    });
-                  }}
+                  onTriggerFeedback={openFeedbackForTrade}
                 />
               )}
 

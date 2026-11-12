@@ -50,11 +50,11 @@ export const AgentifyFeedbackPanel: React.FC<AgentifyFeedbackPanelProps> = ({
   prefillContext = null,
   onCaseCreated,
 }) => {
-  const [category, setCategory] = useState<FeedbackCategory>('MISSED_SETUP');
-  const [title, setTitle] = useState<string>('');
-  const [rationale, setRationale] = useState<string>('');
-  const [archetypeId, setArchetypeId] = useState<string>('');
-  const [timestamp, setTimestamp] = useState<number | null>(currentTime);
+  const [category, setCategory] = useState<FeedbackCategory>(prefillContext?.category ?? 'MISSED_SETUP');
+  const [title, setTitle] = useState<string>(prefillContext?.title ?? '');
+  const [rationale, setRationale] = useState<string>(prefillContext?.rationale ?? '');
+  const [archetypeId, setArchetypeId] = useState<string>(prefillContext?.archetype_id ?? '');
+  const [timestamp, setTimestamp] = useState<number | null>(prefillContext?.timestamp ?? currentTime);
 
   const [savedCases, setSavedCases] = useState<FeedbackCase[]>([]);
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);

@@ -17,6 +17,9 @@ import {
   saveWorkbenchPrefs,
   dedupeFvgBoxes,
   dedupeBreakerBoxes,
+  buildClusteredTradeMarkers,
+  findMatchingTradesNearTime,
+  getClusterWindowSeconds,
 } from '../utils/coTraderLogic';
 import type { BreakerBox, Candle, CatalogSymbol, FvgBox, ReplayTrade, AsianRangeDay } from '../types/replay';
 
@@ -430,5 +433,79 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     const dedupedBrk = dedupeBreakerBoxes(brks);
     expect(dedupedBrk).toHaveLength(1);
     expect(dedupedBrk[0].t_end).toBe(2600);
+  });
+
+  it('clusters nearby same-direction bot trades cleanly and respects blind replay masking', () => {
+    const closeTrades: ReplayTrade[] = [
+      {
+        trade_id: 'BOT-1',
+        symbol: 'GBPUSD_o',
+        origin: 'BOT',
+        direction: 'SHORT',
+        decision_time: 10000,
+        fill_time: 10000,
+        exit_time: 10900,
+        entry: 1.347,
+        sl: 1.348,
+        tp: 1.345,
+        status: 'LOSS',
+        realized_pnl_usd: -10.0,
+        rr_realized: -1.0,
+      },
+      {
+        trade_id: 'BOT-2',
+        symbol: 'GBPUSD_o',
+        origin: 'BOT',
+        direction: 'SHORT',
+        decision_time: 10300,
+        fill_time: 10300,
+        exit_time: 11200,
+        entry: 1.3468,
+        sl: 1.3478,
+        tp: 1.3448,
+        status: 'WIN',
+        realized_pnl_usd: 20.0,
+        rr_realized: 2.0,
+      },
+      {
+        trade_id: 'BOT-3',
+        symbol: 'GBPUSD_o',
+        origin: 'BOT',
+        direction: 'SHORT',
+        decision_time: 10600,
+        fill_time: 10600,
+        exit_time: 13000,
+        entry: 1.3465,
+        sl: 1.3475,
+        tp: 1.3445,
+        status: 'LOSS',
+        realized_pnl_usd: -10.0,
+        rr_realized: -1.0,
+      },
+    ];
+
+    // All 3 fall inside 1800s window -> 1 clustered entry marker + 0 exit clutter
+    const clustered = buildClusteredTradeMarkers(closeTrades, null, 1800, null);
+    expect(clustered).toHaveLength(1);
+    expect(clustered[0].isCluster).toBe(true);
+    expect(clustered[0].text).toContain('3×S (1W/2L)');
+    expect(clustered[0].tradeIds).toEqual(['BOT-1', 'BOT-2', 'BOT-3']);
+
+    // Selecting BOT-2 highlights cluster gold and shows BOT-2 exit marker
+    const withSel = buildClusteredTradeMarkers(closeTrades, null, 1800, 'BOT-2');
+    expect(withSel).toHaveLength(2);
+    expect(withSel[0].color).toBe('#f0b90b');
+    expect(withSel[1].time).toBe(11200);
+    expect(withSel[1].text).toContain('+$20.0');
+
+    // Blind replay at t=11000 masks BOT-2 & BOT-3 as open (1L/2O)
+    const masked = buildClusteredTradeMarkers(closeTrades, 11000, 1800, null);
+    expect(masked).toHaveLength(1);
+    expect(masked[0].text).toContain('3×S (1L/2O)');
+
+    // Interactive lookup finds nearby trades cleanly
+    const hits = findMatchingTradesNearTime(closeTrades, 10300, 1800, null);
+    expect(hits.map((h) => h.trade_id)).toEqual(['BOT-2', 'BOT-1', 'BOT-3']);
+    expect(getClusterWindowSeconds([{ time: 1000, open: 1, high: 1, low: 1, close: 1 }, { time: 1300, open: 1, high: 1, low: 1, close: 1 }])).toBe(1800);
   });
 });

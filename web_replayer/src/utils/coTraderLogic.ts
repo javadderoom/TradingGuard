@@ -488,3 +488,192 @@ export function dedupeBreakerBoxes(boxes: BreakerBox[]): BreakerBox[] {
   }
   return Array.from(byKey.values());
 }
+
+export interface ClusteredMarkerDescriptor {
+  time: number;
+  position: 'aboveBar' | 'belowBar';
+  color: string;
+  shape: 'arrowUp' | 'arrowDown' | 'circle';
+  text: string;
+  tradeIds: string[];
+  isCluster: boolean;
+}
+
+export function getClusterWindowSeconds(candles: Candle[]): number {
+  if (candles.length < 2) return 1800; // default 30m
+  const deltas: number[] = [];
+  const limit = Math.min(candles.length - 1, 20);
+  for (let i = 0; i < limit; i++) {
+    const d = candles[i + 1].time - candles[i].time;
+    if (d > 0) deltas.push(d);
+  }
+  if (deltas.length === 0) return 1800;
+  deltas.sort((a, b) => a - b);
+  const barSec = deltas[Math.floor(deltas.length / 2)];
+  return Math.max(barSec * 6, 1800);
+}
+
+export function findMatchingTradesNearTime(
+  trades: ReplayTrade[],
+  clickedTime: number,
+  toleranceSeconds: number,
+  replayTo: number | null
+): ReplayTrade[] {
+  const matches: Array<{ trade: ReplayTrade; dist: number }> = [];
+  for (const t of trades) {
+    if (replayTo !== null && t.decision_time > replayTo) continue;
+    const masked = maskBlindReplayTrade(t, replayTo);
+    const times: number[] = [masked.decision_time];
+    if (masked.fill_time != null) times.push(masked.fill_time);
+    if (masked.exit_time != null && masked.status !== 'OPEN' && masked.status !== 'PENDING') {
+      times.push(masked.exit_time);
+    }
+    const minDist = Math.min(...times.map((x) => Math.abs(x - clickedTime)));
+    if (minDist <= toleranceSeconds) {
+      matches.push({ trade: masked, dist: minDist });
+    }
+  }
+  matches.sort((a, b) => a.dist - b.dist || a.trade.decision_time - b.trade.decision_time);
+  return matches.map((m) => m.trade);
+}
+
+export function buildClusteredTradeMarkers(
+  trades: ReplayTrade[],
+  replayTo: number | null,
+  clusterWindowSeconds: number,
+  selectedTradeId: string | null = null
+): ClusteredMarkerDescriptor[] {
+  const windowSec = Math.max(60, clusterWindowSeconds);
+  const visible = trades
+    .filter((t) => (replayTo !== null ? t.decision_time <= replayTo : true))
+    .map((t) => ({
+      raw: t,
+      masked: maskBlindReplayTrade(t, replayTo),
+    }))
+    .filter(
+      ({ raw }) => raw.fill_time != null && (replayTo === null || raw.fill_time <= replayTo)
+    )
+    .sort((a, b) => Number(a.raw.fill_time) - Number(b.raw.fill_time));
+
+  const markers: ClusteredMarkerDescriptor[] = [];
+
+  for (const dir of ['LONG', 'SHORT'] as const) {
+    const dirTrades = visible.filter((item) => item.masked.direction === dir);
+    let idx = 0;
+    while (idx < dirTrades.length) {
+      const anchorTime = Number(dirTrades[idx].raw.fill_time);
+      const group = [dirTrades[idx]];
+      let j = idx + 1;
+      while (j < dirTrades.length && Number(dirTrades[j].raw.fill_time) - anchorTime <= windowSec) {
+        group.push(dirTrades[j]);
+        j++;
+      }
+
+      const tradeIds = group.map((g) => g.masked.trade_id);
+      const hasSelected = selectedTradeId !== null && tradeIds.includes(selectedTradeId);
+
+      let wins = 0;
+      let losses = 0;
+      let bes = 0;
+      let opens = 0;
+      for (const { masked } of group) {
+        if (masked.status === 'WIN') wins++;
+        else if (masked.status === 'LOSS') losses++;
+        else if (masked.status === 'BREAKEVEN') bes++;
+        else opens++;
+      }
+
+      const first = group[0].masked;
+      const prefix = first.origin === 'BOT' ? '🤖' : '👤';
+      const dirChar = dir === 'LONG' ? 'L' : 'S';
+
+      let text: string;
+      if (group.length === 1) {
+        const statusTag =
+          opens > 0
+            ? 'Open'
+            : wins > 0 && first.rr_realized != null
+            ? `+${first.rr_realized.toFixed(1)}R`
+            : losses > 0
+            ? '-1R'
+            : bes > 0
+            ? 'BE'
+            : '';
+        text = `${hasSelected ? '★ ' : ''}${prefix} ${dirChar}${statusTag ? ` ${statusTag}` : ''}`;
+      } else {
+        const parts: string[] = [];
+        if (wins > 0) parts.push(`${wins}W`);
+        if (losses > 0) parts.push(`${losses}L`);
+        if (bes > 0) parts.push(`${bes}BE`);
+        if (opens > 0) parts.push(`${opens}O`);
+        text = `${hasSelected ? '★ ' : ''}${prefix} ${group.length}×${dirChar} (${parts.join('/')})`;
+      }
+
+      const color = hasSelected
+        ? '#f0b90b'
+        : opens > 0 && wins === 0 && losses === 0 && bes === 0
+        ? '#2962ff'
+        : wins > losses
+        ? '#26a69a'
+        : losses > wins
+        ? '#ef5350'
+        : '#ffb300';
+
+      markers.push({
+        time: anchorTime,
+        position: dir === 'LONG' ? 'belowBar' : 'aboveBar',
+        color,
+        shape: dir === 'LONG' ? 'arrowUp' : 'arrowDown',
+        text,
+        tradeIds,
+        isCluster: group.length > 1,
+      });
+
+      // Only emit standalone exit marker if selected OR unclustered single trade
+      if (group.length === 1 && opens === 0 && first.exit_time && (replayTo === null || first.exit_time <= replayTo)) {
+        const isWin = first.status === 'WIN';
+        const isLoss = first.status === 'LOSS';
+        const pnlStr =
+          first.realized_pnl_usd !== null && first.realized_pnl_usd !== undefined
+            ? `${first.realized_pnl_usd >= 0 ? '+' : ''}$${first.realized_pnl_usd.toFixed(1)}`
+            : first.status;
+        markers.push({
+          time: Number(first.exit_time),
+          position: isWin ? 'aboveBar' : 'belowBar',
+          color: hasSelected ? '#f0b90b' : isWin ? '#26a69a' : isLoss ? '#ef5350' : '#ffb300',
+          shape: 'circle',
+          text: pnlStr,
+          tradeIds,
+          isCluster: false,
+        });
+      } else if (hasSelected) {
+        const sel = group.find((g) => g.masked.trade_id === selectedTradeId)?.masked;
+        if (
+          sel &&
+          sel.status !== 'OPEN' &&
+          sel.status !== 'PENDING' &&
+          sel.exit_time &&
+          (replayTo === null || sel.exit_time <= replayTo)
+        ) {
+          const pnlStr =
+            sel.realized_pnl_usd !== null && sel.realized_pnl_usd !== undefined
+              ? `${sel.realized_pnl_usd >= 0 ? '+' : ''}$${sel.realized_pnl_usd.toFixed(1)}`
+              : sel.status;
+          markers.push({
+            time: Number(sel.exit_time),
+            position: sel.status === 'WIN' ? 'aboveBar' : 'belowBar',
+            color: '#f0b90b',
+            shape: 'circle',
+            text: `★ ${pnlStr}`,
+            tradeIds: [sel.trade_id],
+            isCluster: false,
+          });
+        }
+      }
+
+      idx = j;
+    }
+  }
+
+  return markers.sort((a, b) => a.time - b.time);
+}

@@ -26,6 +26,7 @@ import type {
   DraftTrade,
   FvgBox,
   Killzone,
+  ReplayTrade,
   SweepFlag,
 } from '../types/replay';
 import {
@@ -185,6 +186,8 @@ interface ForensicBoxParams {
   asianRanges: AsianRangeDay[];
   sweeps: SweepFlag[];
   candles: Candle[];
+  selectedTrade: ReplayTrade | null;
+  digits: number;
 }
 
 class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
@@ -196,7 +199,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D): void {
     target.useMediaCoordinateSpace((scope) => {
-      const { chart, series, fvgs, breakers, asianRanges, sweeps, candles } = this._getParams();
+      const { chart, series, fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, digits } = this._getParams();
       if (!chart || !series) return;
 
       const timeScale = chart.timeScale();
@@ -440,6 +443,79 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         }
         ctx.restore();
       }
+
+      // 5. Selected Trade Read-Only Inspection Box (Entry / SL / TP)
+      if (selectedTrade) {
+        const yEntry = series.priceToCoordinate(selectedTrade.entry);
+        const ySl = series.priceToCoordinate(selectedTrade.sl);
+        const yTp = series.priceToCoordinate(selectedTrade.tp);
+        if (yEntry !== null && ySl !== null && yTp !== null) {
+          const tStart = selectedTrade.fill_time ?? selectedTrade.decision_time;
+          const fallbackEnd =
+            candles.length > 0 ? candles[candles.length - 1].time : tStart + 3600;
+          const tEnd =
+            selectedTrade.exit_time &&
+            selectedTrade.status !== 'OPEN' &&
+            selectedTrade.status !== 'PENDING'
+              ? selectedTrade.exit_time
+              : Math.max(fallbackEnd, tStart + 1800);
+
+          const xStart = resolveTimeX(timeScale, tStart, candles);
+          const xEnd = resolveTimeX(timeScale, tEnd, candles);
+          if (xStart !== null || xEnd !== null) {
+            const left = xStart !== null ? xStart : 0;
+            const right = xEnd !== null ? xEnd : width;
+            if (right >= 0 && left <= width) {
+              const renderLeft = Math.max(0, left);
+              const renderRight = Math.min(width, Math.max(left + 32, right));
+              const boxW = Math.max(24, renderRight - renderLeft);
+
+              const entryY = Number(yEntry);
+              const slY = Number(ySl);
+              const tpY = Number(yTp);
+
+              ctx.save();
+              // Reward shade (Entry -> TP)
+              const tpTop = Math.min(entryY, tpY);
+              const tpH = Math.max(2, Math.abs(tpY - entryY));
+              ctx.fillStyle = 'rgba(38, 166, 154, 0.14)';
+              ctx.fillRect(renderLeft, tpTop, boxW, tpH);
+
+              // Risk shade (Entry -> SL)
+              const slTop = Math.min(entryY, slY);
+              const slH = Math.max(2, Math.abs(slY - entryY));
+              ctx.fillStyle = 'rgba(239, 83, 80, 0.14)';
+              ctx.fillRect(renderLeft, slTop, boxW, slH);
+
+              // Outer highlight border
+              const outerTop = Math.min(entryY, slY, tpY);
+              const outerBottom = Math.max(entryY, slY, tpY);
+              ctx.strokeStyle = 'rgba(240, 185, 11, 0.85)';
+              ctx.lineWidth = 1.5;
+              ctx.setLineDash([5, 3]);
+              ctx.strokeRect(renderLeft, outerTop, boxW, Math.max(4, outerBottom - outerTop));
+              ctx.setLineDash([]);
+
+              // Entry / SL / TP boundary lines & pills
+              const lines = [
+                { y: entryY, color: '#f0b90b', label: `ENTRY ${selectedTrade.entry.toFixed(digits)}` },
+                { y: slY, color: '#ef5350', label: `SL ${selectedTrade.sl.toFixed(digits)}` },
+                { y: tpY, color: '#26a69a', label: `TP ${selectedTrade.tp.toFixed(digits)}` },
+              ];
+              for (const ln of lines) {
+                ctx.strokeStyle = ln.color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(renderLeft, ln.y);
+                ctx.lineTo(renderLeft + boxW, ln.y);
+                ctx.stroke();
+                drawZonePill(ln.label, renderLeft + 4, ln.y - 14, ln.color, ln.color);
+              }
+              ctx.restore();
+            }
+          }
+        }
+      }
     });
   }
 }
@@ -453,6 +529,8 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
   private _asianRanges: AsianRangeDay[] = [];
   private _sweeps: SweepFlag[] = [];
   private _candles: Candle[] = [];
+  private _selectedTrade: ReplayTrade | null = null;
+  private _digits: number = 2;
   private _paneView: IPrimitivePaneView;
 
   constructor() {
@@ -464,6 +542,8 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
       asianRanges: this._asianRanges,
       sweeps: this._sweeps,
       candles: this._candles,
+      selectedTrade: this._selectedTrade,
+      digits: this._digits,
     }));
 
     this._paneView = {
@@ -478,12 +558,16 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
     asianRanges?: AsianRangeDay[];
     sweeps?: SweepFlag[];
     candles?: Candle[];
+    selectedTrade?: ReplayTrade | null;
+    digits?: number;
   }): void {
     if (params.fvgs !== undefined) this._fvgs = params.fvgs;
     if (params.breakers !== undefined) this._breakers = params.breakers;
     if (params.asianRanges !== undefined) this._asianRanges = params.asianRanges;
     if (params.sweeps !== undefined) this._sweeps = params.sweeps;
     if (params.candles !== undefined) this._candles = params.candles;
+    if (params.selectedTrade !== undefined) this._selectedTrade = params.selectedTrade;
+    if (params.digits !== undefined) this._digits = params.digits;
     this._requestUpdate?.();
   }
 

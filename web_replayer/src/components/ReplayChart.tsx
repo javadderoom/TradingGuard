@@ -36,7 +36,11 @@ import {
   KillzonePrimitive,
   PositionBoxPrimitive,
 } from '../chart/primitives';
-import { formatClockTick } from '../utils/coTraderLogic';
+import {
+  buildClusteredTradeMarkers,
+  formatClockTick,
+  getClusterWindowSeconds,
+} from '../utils/coTraderLogic';
 
 export interface ReplayChartProps {
   candles: Candle[];
@@ -49,6 +53,7 @@ export interface ReplayChartProps {
   breakers?: BreakerBox[];
   sweeps?: SweepFlag[];
   trades?: ReplayTrade[];
+  selectedTrade?: ReplayTrade | null;
   draftTrade?: DraftTrade | null;
   onDraftTradeChange?: (draft: DraftTrade) => void;
   onDraftTradeChangeComplete?: (draft: DraftTrade) => void;
@@ -74,6 +79,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   breakers = [],
   sweeps = [],
   trades = [],
+  selectedTrade = null,
   draftTrade = null,
   onDraftTradeChange,
   onDraftTradeChangeComplete,
@@ -297,9 +303,37 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         asianRanges: showAsianRange ? arList : [],
         sweeps: showSweeps ? sweeps : [],
         candles,
+        selectedTrade,
+        digits,
       });
     }
-  }, [fvgs, breakers, asianRanges, sweeps, candles, showFvgs, showBreakers, showAsianRange, showSweeps]);
+  }, [fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, digits, showFvgs, showBreakers, showAsianRange, showSweeps]);
+
+  // Auto-pan chart if a newly selected trade lies outside the visible horizontal range
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !selectedTrade || candles.length === 0) return;
+    try {
+      const timeScale = chart.timeScale();
+      const vis = timeScale.getVisibleRange();
+      const t = selectedTrade.fill_time ?? selectedTrade.decision_time;
+      if (vis) {
+        const from = Number(vis.from);
+        const to = Number(vis.to);
+        if (t < from || t > to) {
+          const halfSpan = Math.max(1800, Math.floor((to - from) / 2));
+          const minBound = candles[0].time;
+          const maxBound = candles[candles.length - 1].time;
+          timeScale.setVisibleRange({
+            from: Math.max(minBound, t - halfSpan) as UTCTimestamp,
+            to: Math.min(maxBound, t + halfSpan) as UTCTimestamp,
+          });
+        }
+      }
+    } catch {
+      // Ignore if chart has insufficient data for visible range
+    }
+  }, [selectedTrade, candles]);
 
   // Update Position Box Draft Trade
   useEffect(() => {
@@ -319,63 +353,28 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
       return;
     }
 
-    const markers: SeriesMarker<Time>[] = [];
-    for (const t of trades) {
-      if (replayTo !== null && t.decision_time > replayTo) continue;
+    const clusterWindowSec = getClusterWindowSeconds(candles);
+    const clustered = buildClusteredTradeMarkers(
+      trades,
+      replayTo,
+      clusterWindowSec,
+      selectedTrade?.trade_id ?? null
+    );
 
-      const isOpenOrPending =
-        t.status === 'OPEN' ||
-        t.status === 'PENDING' ||
-        (replayTo !== null && (!t.exit_time || t.exit_time > replayTo));
-
-      const prefix = t.origin === 'BOT' ? '🤖' : '👤';
-
-      // Fill / Entry Marker - strictly guarded against leaking future win/loss outcome while open
-      if (t.fill_time && (replayTo === null || t.fill_time <= replayTo)) {
-        markers.push({
-          time: t.fill_time as UTCTimestamp,
-          position: t.direction === 'LONG' ? 'belowBar' : 'aboveBar',
-          color: isOpenOrPending
-            ? '#2962ff'
-            : t.status === 'WIN'
-            ? '#26a69a'
-            : t.status === 'LOSS'
-            ? '#ef5350'
-            : '#2962ff',
-          shape: t.direction === 'LONG' ? 'arrowUp' : 'arrowDown',
-          text: isOpenOrPending
-            ? `${prefix} ${t.direction} (Open)`
-            : `${prefix} ${t.direction} @ ${t.entry.toFixed(digits)}`,
-        });
-      }
-
-      // Exit Marker - strictly gated so open/pending trades NEVER show exit markers
-      if (!isOpenOrPending && t.exit_time && (replayTo === null || t.exit_time <= replayTo)) {
-        const isWin = t.status === 'WIN';
-        const isLoss = t.status === 'LOSS';
-        const pnlStr =
-          t.realized_pnl_usd !== null && t.realized_pnl_usd !== undefined
-            ? `${t.realized_pnl_usd >= 0 ? '+' : ''}$${t.realized_pnl_usd.toFixed(2)}`
-            : '';
-        markers.push({
-          time: t.exit_time as UTCTimestamp,
-          position: isWin ? 'aboveBar' : 'belowBar',
-          color: isWin ? '#26a69a' : isLoss ? '#ef5350' : '#ffb300',
-          shape: 'circle',
-          text: `${t.status} ${pnlStr}`,
-        });
-      }
-    }
-
-    // Must be sorted strictly ascending by time
-    markers.sort((a, b) => Number(a.time) - Number(b.time));
+    const markers: SeriesMarker<Time>[] = clustered.map((m) => ({
+      time: m.time as UTCTimestamp,
+      position: m.position,
+      color: m.color,
+      shape: m.shape,
+      text: m.text,
+    }));
 
     if (!markersPluginRef.current) {
       markersPluginRef.current = createSeriesMarkers(seriesRef.current, markers);
     } else {
       markersPluginRef.current.setMarkers(markers);
     }
-  }, [trades, replayTo, digits, showTrades]);
+  }, [trades, candles, replayTo, showTrades, selectedTrade?.trade_id]);
 
   // Mouse Interaction: Dragging Entry, SL, and TP handles
   useEffect(() => {

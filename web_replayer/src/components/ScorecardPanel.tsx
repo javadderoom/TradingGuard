@@ -37,6 +37,7 @@ export interface ScorecardPanelProps {
   replayTo: number | null;
   clockMode: ClockMode;
   digits?: number;
+  selectedTradeId?: string | null;
   onCloneTrade?: (trade: ReplayTrade) => void;
   onDeleteTrade?: (tradeId: string) => void;
   onSelectTrade?: (trade: ReplayTrade) => void;
@@ -50,6 +51,7 @@ export const ScorecardPanel: React.FC<ScorecardPanelProps> = ({
   replayTo = null,
   clockMode,
   digits = 2,
+  selectedTradeId = null,
   onCloneTrade,
   onDeleteTrade,
   onSelectTrade,
@@ -207,17 +209,21 @@ export const ScorecardPanel: React.FC<ScorecardPanelProps> = ({
               const isOpen = t.status === 'OPEN';
               const isPending = t.status === 'PENDING';
 
+              const isSelected = selectedTradeId === t.trade_id;
+
               return (
                 <div
                   key={t.trade_id}
+                  onClick={() => onSelectTrade?.(t)}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px',
                     padding: '8px 10px',
-                    backgroundColor: '#1e222d',
+                    backgroundColor: isSelected ? '#232837' : '#1e222d',
                     borderRadius: '6px',
-                    border: '1px solid #2a2e39',
+                    border: isSelected ? '1.5px solid #f0b90b' : '1px solid #2a2e39',
+                    cursor: 'pointer',
                   }}
                 >
                   {/* Top row: Badges & Realized Status */}
@@ -322,30 +328,36 @@ export const ScorecardPanel: React.FC<ScorecardPanelProps> = ({
 
                   {/* Actions Bar */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', paddingTop: '4px', borderTop: '1px solid #262b36' }}>
-                    {/* Jump */}
+                    {/* Jump / Inspect */}
                     <button
-                      onClick={() => onSelectTrade?.(t)}
-                      title="Jump to Trade"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTrade?.(t);
+                      }}
+                      title="Select & Inspect Trade on Chart"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '3px',
-                        background: 'transparent',
-                        border: '1px solid #2a2e39',
+                        background: isSelected ? 'rgba(240, 185, 11, 0.16)' : 'transparent',
+                        border: isSelected ? '1px solid #f0b90b' : '1px solid #2a2e39',
                         borderRadius: '3px',
-                        color: '#787b86',
+                        color: isSelected ? '#ffd54f' : '#b2b5be',
                         padding: '2px 6px',
                         fontSize: '10px',
                         cursor: 'pointer',
                       }}
                     >
                       <ExternalLink size={10} />
-                      Jump
+                      {isSelected ? 'Selected' : 'Inspect'}
                     </button>
 
                     {/* Clone & Adjust */}
                     <button
-                      onClick={() => onCloneTrade?.(t)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCloneTrade?.(t);
+                      }}
                       title="Clone & Adjust Trade"
                       style={{
                         display: 'flex',
@@ -365,10 +377,14 @@ export const ScorecardPanel: React.FC<ScorecardPanelProps> = ({
                       Clone & Adjust
                     </button>
 
-                    {/* Feedback */}
+                    {/* Ask / Feedback */}
                     <button
-                      onClick={() => onTriggerFeedback?.(t)}
-                      title="Capture as Agentify Feedback"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTrade?.(t);
+                        onTriggerFeedback?.(t);
+                      }}
+                      title="Ask a question or give feedback on this trade"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -383,12 +399,16 @@ export const ScorecardPanel: React.FC<ScorecardPanelProps> = ({
                       }}
                     >
                       <MessageSquarePlus size={10} />
+                      Ask
                     </button>
 
                     {/* Delete for human trades */}
                     {t.origin !== 'BOT' && (
                       <button
-                        onClick={() => onDeleteTrade?.(t.trade_id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteTrade?.(t.trade_id);
+                        }}
                         title="Delete Trade from Ledger"
                         style={{
                           display: 'flex',

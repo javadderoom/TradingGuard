@@ -24,6 +24,7 @@ import type {
   BotEvent,
   ClockMode,
   EngineClockMode,
+  ReplayTrade,
 } from '../types/replay';
 import { formatClockTick } from '../utils/coTraderLogic';
 
@@ -34,6 +35,10 @@ export interface BotBrainPanelProps {
   events: BotEvent[];
   clockMode: ClockMode;
   engineClockMode: EngineClockMode;
+  digits?: number;
+  tradesNearBar?: ReplayTrade[];
+  selectedTradeId?: string | null;
+  onSelectTrade?: (trade: ReplayTrade) => void;
   onSelectEventTime?: (time: number) => void;
   onTriggerFeedback?: (context: {
     title: string;
@@ -42,6 +47,7 @@ export interface BotBrainPanelProps {
     archetype_id?: string;
     timestamp?: number;
   }) => void;
+  onTriggerTradeFeedback?: (trade: ReplayTrade) => void;
 }
 
 export const BotBrainPanel: React.FC<BotBrainPanelProps> = ({
@@ -51,8 +57,13 @@ export const BotBrainPanel: React.FC<BotBrainPanelProps> = ({
   events = [],
   clockMode,
   engineClockMode,
+  digits = 2,
+  tradesNearBar = [],
+  selectedTradeId = null,
+  onSelectTrade,
   onSelectEventTime,
   onTriggerFeedback,
+  onTriggerTradeFeedback,
 }) => {
   // Find diagnostic at currentTime or closest prior diagnostic
   const activeDiag = useMemo(() => {
@@ -224,6 +235,91 @@ Clock Mode: ${engineClockMode}`,
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', textAlign: 'center', backgroundColor: '#1e222d', borderRadius: '6px', border: '1px dashed #2a2e39', color: '#787b86', gap: '6px' }}>
           <Bot size={24} style={{ opacity: 0.5 }} />
           <span>Click any candle on the chart or scrub replay cursor to inspect screener diagnostics.</span>
+        </div>
+      )}
+
+      {/* Key Events Timeline */}
+      {tradesNearBar.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 600, color: '#ffd54f', fontSize: '12px' }}>
+              Trades Near Active Bar ({tradesNearBar.length})
+            </span>
+          </div>
+          {tradesNearBar.map((t) => {
+            const isSel = selectedTradeId === t.trade_id;
+            return (
+              <div
+                key={t.trade_id}
+                onClick={() => onSelectTrade?.(t)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  backgroundColor: isSel ? '#232837' : '#1e222d',
+                  border: isSel ? '1.5px solid #f0b90b' : '1px solid #2a2e39',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, fontSize: '11px', color: t.direction === 'LONG' ? '#26a69a' : '#ef5350' }}>
+                    {t.origin} · {t.direction} {t.archetype_id ? `(${t.archetype_id})` : ''}
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: t.status === 'WIN' ? '#26a69a' : t.status === 'LOSS' ? '#ef5350' : '#90caf9' }}>
+                    {t.status}{t.rr_realized != null ? ` ${t.rr_realized >= 0 ? '+' : ''}${t.rr_realized.toFixed(2)}R` : ''}
+                  </span>
+                </div>
+                <div style={{ fontSize: '10px', color: '#b2b5be' }}>
+                  E: {t.entry.toFixed(digits)} | SL: {t.sl.toFixed(digits)} | TP: {t.tp.toFixed(digits)}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectTrade?.(t);
+                    }}
+                    style={{
+                      padding: '2px 7px',
+                      fontSize: '10px',
+                      borderRadius: '3px',
+                      backgroundColor: isSel ? '#f0b90b' : '#2a2e39',
+                      color: isSel ? '#131722' : '#d1d4dc',
+                      border: 'none',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {isSel ? 'Selected' : 'Select'}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectTrade?.(t);
+                      onTriggerTradeFeedback?.(t);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      padding: '2px 7px',
+                      fontSize: '10px',
+                      borderRadius: '3px',
+                      backgroundColor: '#2962ff',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <MessageSquarePlus size={10} />
+                    Ask / Feedback
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
