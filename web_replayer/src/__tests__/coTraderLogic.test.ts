@@ -10,8 +10,10 @@ import {
   maskBlindReplayTrade,
   computeReplayScorecard,
   extractLiquiditySweeps,
+  getLatestRangeForSymbol,
+  resolveDateRangeForSymbol,
 } from '../utils/coTraderLogic';
-import type { Candle, ReplayTrade, AsianRangeDay } from '../types/replay';
+import type { Candle, CatalogSymbol, ReplayTrade, AsianRangeDay } from '../types/replay';
 
 describe('coTraderLogic - Dynamic Seasonal Session Clock', () => {
   // Winter: Jan 15, 2026, 14:00:00 server time
@@ -349,5 +351,33 @@ describe('replayApi - Payload Normalization', () => {
 
     expect(Array.isArray(result)).toBe(true);
     expect(result).toEqual(mockBars);
+  });
+});
+
+describe('coTraderLogic - Symbol Cached Date Range Resolution', () => {
+  const cableSym: CatalogSymbol = {
+    symbol: 'GBPUSD_o',
+    display_name: 'British Pound / USD',
+    engine_mode: 'SMC',
+    uncalibrated: false,
+    spread_pts: 0.00015,
+    digits: 5,
+    min_date: '2026-01-02',
+    max_date: '2026-11-04',
+  };
+
+  it('auto-snaps to latest cached 3-day window when active range is outside symbol cache', () => {
+    const res = resolveDateRangeForSymbol(cableSym, '2026-11-10', '2026-11-12', 3);
+    expect(res).toEqual({ start: '2026-11-02', end: '2026-11-04', adjusted: true });
+  });
+
+  it('preserves active range when there is valid date overlap', () => {
+    const res = resolveDateRangeForSymbol(cableSym, '2026-11-01', '2026-11-05', 3);
+    expect(res).toEqual({ start: '2026-11-01', end: '2026-11-05', adjusted: false });
+  });
+
+  it('clamps getLatestRangeForSymbol cleanly against min_date', () => {
+    const shortSym: CatalogSymbol = { ...cableSym, min_date: '2026-11-03', max_date: '2026-11-04' };
+    expect(getLatestRangeForSymbol(shortSym, 7)).toEqual({ start: '2026-11-03', end: '2026-11-04' });
   });
 });

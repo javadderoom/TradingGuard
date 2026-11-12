@@ -10,6 +10,7 @@
 import type {
   AsianRangeDay,
   Candle,
+  CatalogSymbol,
   ClockMode,
   ReplayTrade,
   Scorecard,
@@ -340,4 +341,44 @@ export function extractLiquiditySweeps(
 
   // Sort chronologically
   return sweeps.sort((a, b) => a.time - b.time);
+}
+
+export function shiftIsoDateDays(dateStr: string, deltaDays: number): string {
+  const parts = dateStr.split('-').map((p) => parseInt(p, 10));
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return dateStr;
+  const dt = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + deltaDays));
+  return dt.toISOString().slice(0, 10);
+}
+
+export function getLatestRangeForSymbol(
+  symInfo: CatalogSymbol | undefined,
+  windowDays: number = 3
+): { start: string; end: string } | null {
+  if (!symInfo?.max_date) return null;
+  const end = symInfo.max_date;
+  const shiftedStart = shiftIsoDateDays(end, -(Math.max(1, windowDays) - 1));
+  const start =
+    symInfo.min_date && shiftedStart < symInfo.min_date ? symInfo.min_date : shiftedStart;
+  return { start, end };
+}
+
+export function resolveDateRangeForSymbol(
+  symInfo: CatalogSymbol | undefined,
+  currentStart: string,
+  currentEnd: string,
+  windowDays: number = 3
+): { start: string; end: string; adjusted: boolean } {
+  if (!symInfo?.max_date) {
+    return { start: currentStart, end: currentEnd, adjusted: false };
+  }
+  const minDate = symInfo.min_date ?? symInfo.max_date;
+  const maxDate = symInfo.max_date;
+  const hasOverlap = !(currentEnd < minDate || currentStart > maxDate);
+  if (hasOverlap) {
+    return { start: currentStart, end: currentEnd, adjusted: false };
+  }
+  const latest = getLatestRangeForSymbol(symInfo, windowDays);
+  return latest
+    ? { start: latest.start, end: latest.end, adjusted: true }
+    : { start: currentStart, end: currentEnd, adjusted: false };
 }

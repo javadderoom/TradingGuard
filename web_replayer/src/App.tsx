@@ -65,7 +65,9 @@ import {
   computeTradeRR,
   extractLiquiditySweeps,
   formatClockTick,
+  getLatestRangeForSymbol,
   maskBlindReplayTrade,
+  resolveDateRangeForSymbol,
 } from './utils/coTraderLogic';
 
 const DEFAULT_TIMEFRAMES: Timeframe[] = ['1M', '5M', '15M', '1H', '4H', '1D'];
@@ -76,6 +78,8 @@ export function App() {
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('XAUUSD_o');
   const [isSyncingMt5, setIsSyncingMt5] = useState<boolean>(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [isLoadingCandles, setIsLoadingCandles] = useState<boolean>(false);
 
   // Timeframe & Clocks
   const [timeframe, setTimeframe] = useState<Timeframe>('5M');
@@ -162,18 +166,31 @@ export function App() {
   useEffect(() => {
     replayApi.getCatalog().then((res) => {
       setCatalog(res);
-      if (res.symbols && res.symbols.length > 0) {
-        const exists = res.symbols.some((s) => s.symbol === selectedSymbol);
-        if (!exists) {
-          setSelectedSymbol(res.symbols[0].symbol);
-        }
-      }
     }).catch(() => {});
-  }, [selectedSymbol]);
+  }, []);
+
+  // Switch Symbol & auto-adjust date range when active window is outside symbol cache
+  const handleSelectSymbol = (nextSymbol: string) => {
+    setSelectedSymbol(nextSymbol);
+    setInspectedTime(null);
+    setReplayCursor(null);
+    setIsPlaying(false);
+    setDraftTrade(null);
+    setSimResult(null);
+    setSyncNotice(null);
+
+    const targetSym = catalog?.symbols.find((s) => s.symbol === nextSymbol);
+    const resolved = resolveDateRangeForSymbol(targetSym, startDateStr, endDateStr, 3);
+    if (resolved.adjusted) {
+      setStartDateStr(resolved.start);
+      setEndDateStr(resolved.end);
+    }
+  };
 
   // Fetch Candles
   const loadCandles = useCallback(async (isCancelled?: () => boolean) => {
     if (!startEpoch || !endEpoch) return;
+    setIsLoadingCandles(true);
     try {
       const res = await replayApi.getCandles({
         symbol: selectedSymbol,
@@ -187,6 +204,10 @@ export function App() {
     } catch {
       if (!isCancelled?.()) {
         setCandles([]);
+      }
+    } finally {
+      if (!isCancelled?.()) {
+        setIsLoadingCandles(false);
       }
     }
   }, [selectedSymbol, timeframe, startEpoch, endEpoch]);
@@ -356,11 +377,25 @@ export function App() {
   // MT5 Sync Handler
   const handleSyncMt5 = async () => {
     setIsSyncingMt5(true);
+    setSyncNotice(null);
     try {
-      await replayApi.syncMt5(selectedSymbol, 5);
+      const syncRes = await replayApi.syncMt5(selectedSymbol, 5);
+      const freshCatalog = await replayApi.getCatalog().catch(() => null);
+      if (freshCatalog) {
+        setCatalog(freshCatalog);
+        const syncedSym = freshCatalog.symbols.find((s) => s.symbol === selectedSymbol);
+        const latest = getLatestRangeForSymbol(syncedSym, 3);
+        if (syncRes.success && latest && latest.end > endDateStr) {
+          setStartDateStr(latest.start);
+          setEndDateStr(latest.end);
+        }
+      }
+      if (syncRes.success === false && typeof syncRes.message === 'string') {
+        setSyncNotice(syncRes.message);
+      }
       await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
-    } catch {
-      // Handled
+    } catch (err) {
+      setSyncNotice(err instanceof Error ? err.message : 'MT5 sync failed');
     } finally {
       setIsSyncingMt5(false);
     }
@@ -534,7 +569,7 @@ export function App() {
           {/* Symbol Select */}
           <select
             value={selectedSymbol}
-            onChange={(e) => setSelectedSymbol(e.target.value)}
+            onChange={(e) => handleSelectSymbol(e.target.value)}
             style={{
               backgroundColor: '#131722',
               border: '1px solid #2a2e39',
@@ -617,33 +652,40 @@ export function App() {
             />
           </div>
 
-          {/* Quick Date Presets */}
+          {/* Quick Date Presets (Dynamic per symbol's cached max_date) */}
           <div style={{ display: 'flex', gap: '3px' }}>
-            {[
-              ['Nov 10', '2026-11-10', '2026-11-10'],
-              ['Nov 11', '2026-11-11', '2026-11-11'],
-              ['Nov 10-12', '2026-11-10', '2026-11-12'],
-            ].map(([lbl, s, e]) => (
-              <button
-                key={lbl}
-                onClick={() => {
-                  setStartDateStr(s);
-                  setEndDateStr(e);
-                }}
-                style={{
-                  padding: '2px 6px',
-                  fontSize: '10px',
-                  fontWeight: startDateStr === s && endDateStr === e ? 700 : 500,
-                  backgroundColor: startDateStr === s && endDateStr === e ? '#2962ff' : '#131722',
-                  color: startDateStr === s && endDateStr === e ? '#ffffff' : '#b2b5be',
-                  border: '1px solid #2a2e39',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                }}
-              >
-                {lbl}
-              </button>
-            ))}
+            {([
+              ['Last Day', 1],
+              ['Latest 3D', 3],
+              ['Latest 7D', 7],
+            ] as const).map(([lbl, days]) => {
+              const range = getLatestRangeForSymbol(activeSymbolObj, days);
+              const s = range ? range.start : (days === 1 ? '2026-11-12' : days === 3 ? '2026-11-10' : '2026-11-06');
+              const e = range ? range.end : '2026-11-12';
+              const isActive = startDateStr === s && endDateStr === e;
+              return (
+                <button
+                  key={lbl}
+                  onClick={() => {
+                    setStartDateStr(s);
+                    setEndDateStr(e);
+                  }}
+                  title={range ? `${s} → ${e}` : undefined}
+                  style={{
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    fontWeight: isActive ? 700 : 500,
+                    backgroundColor: isActive ? '#2962ff' : '#131722',
+                    color: isActive ? '#ffffff' : '#b2b5be',
+                    border: '1px solid #2a2e39',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {lbl}
+                </button>
+              );
+            })}
           </div>
 
           {/* Timeframe Switcher (6 Buttons) */}
@@ -1137,6 +1179,113 @@ export function App() {
               if (!isDrawerOpen) setIsDrawerOpen(true);
             }}
           />
+
+          {syncNotice && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 20,
+                backgroundColor: '#1e222d',
+                border: '1px solid #f0b90b',
+                color: '#ffd54f',
+                padding: '5px 12px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>{syncNotice}</span>
+              <button
+                onClick={() => setSyncNotice(null)}
+                style={{ background: 'none', border: 'none', color: '#787b86', cursor: 'pointer', padding: 0 }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
+          {!isLoadingCandles && candles.length === 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 15,
+              }}
+            >
+              <div
+                style={{
+                  pointerEvents: 'auto',
+                  backgroundColor: 'rgba(30, 34, 45, 0.94)',
+                  border: '1px solid #2a2e39',
+                  borderRadius: '8px',
+                  padding: '16px 20px',
+                  maxWidth: '420px',
+                  textAlign: 'center',
+                  color: '#d1d4dc',
+                  fontSize: '12px',
+                }}
+              >
+                <div style={{ fontWeight: 700, color: '#ffffff', marginBottom: '6px' }}>
+                  No cached {selectedSymbol} candles in {startDateStr} → {endDateStr}
+                </div>
+                {activeSymbolObj?.min_date && activeSymbolObj?.max_date && (
+                  <div style={{ color: '#90caf9', marginBottom: '12px', fontSize: '11px' }}>
+                    Local Parquet cache covers <b>{activeSymbolObj.min_date}</b> to <b>{activeSymbolObj.max_date}</b>.
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  {activeSymbolObj?.max_date && (
+                    <button
+                      onClick={() => {
+                        const latest = getLatestRangeForSymbol(activeSymbolObj, 3);
+                        if (latest) {
+                          setStartDateStr(latest.start);
+                          setEndDateStr(latest.end);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: '#2962ff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        padding: '5px 10px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Load Latest Cached ({activeSymbolObj.max_date})
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSyncMt5}
+                    disabled={isSyncingMt5}
+                    style={{
+                      backgroundColor: '#131722',
+                      border: '1px solid #2a2e39',
+                      borderRadius: '4px',
+                      color: '#90caf9',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '5px 10px',
+                      cursor: isSyncingMt5 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isSyncingMt5 ? 'Syncing MT5...' : 'Sync MT5'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
 
         {/* Right Workbench Drawer */}
