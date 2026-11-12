@@ -68,7 +68,8 @@ export const replayApi = {
       q.set('max_bars', String(params.max_bars));
     }
     const res = await fetch(`${BASE_URL}/api/candles?${q.toString()}`);
-    return handleResponse<Candle[]>(res);
+    const data = await handleResponse<{ bars?: Candle[] } | Candle[]>(res);
+    return Array.isArray(data) ? data : (data.bars ?? []);
   },
 
   /**

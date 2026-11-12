@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { replayApi } from '../api/client';
 import {
   formatClockTick,
   convertServerEpochToZones,
@@ -319,5 +320,34 @@ describe('coTraderLogic - Causal Liquidity Sweep Extraction', () => {
     const sweepsReplay = extractLiquiditySweeps(candles, asianRanges, 1768471000);
     expect(sweepsReplay.length).toBe(2);
     expect(sweepsReplay.some((s) => s.time === 1768475000)).toBe(false);
+  });
+});
+
+describe('replayApi - Payload Normalization', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('unwraps /api/candles object responses { bars, truncated, forming_bar } into Candle[]', async () => {
+    const mockBars: Candle[] = [
+      { time: 1794272400, open: 4136.36, high: 4138.35, low: 4133.82, close: 4135.46 },
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ bars: mockBars, truncated: false, forming_bar: false }),
+      }),
+    );
+
+    const result = await replayApi.getCandles({
+      symbol: 'XAUUSD_o',
+      tf: '5M',
+      start: 1794268800,
+      end: 1794527999,
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual(mockBars);
   });
 });
