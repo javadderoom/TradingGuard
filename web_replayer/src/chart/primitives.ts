@@ -394,6 +394,28 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         const isHighSweep = sweep.type === 'HIGH_SWEEP';
         ctx.save();
 
+        // Horizontal dashed reference line from swept pivot/Asian boundary to the sweep wick
+        if (sweep.level !== undefined) {
+          const yLvl = series.priceToCoordinate(sweep.level);
+          if (yLvl !== null) {
+            const xOrig =
+              sweep.origin_time !== undefined
+                ? resolveTimeX(timeScale, sweep.origin_time, candles)
+                : null;
+            const lineStart = xOrig !== null ? Math.max(0, Math.min(x - 12, xOrig)) : Math.max(0, x - 36);
+            if (lineStart < x) {
+              ctx.strokeStyle = 'rgba(255, 179, 0, 0.55)';
+              ctx.lineWidth = 1;
+              ctx.setLineDash([3, 3]);
+              ctx.beginPath();
+              ctx.moveTo(lineStart, Number(yLvl));
+              ctx.lineTo(x, Number(yLvl));
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+        }
+
         // Pin / arrow indicator at the exact wick
         ctx.fillStyle = isHighSweep ? '#ffb300' : '#ffa726';
         ctx.strokeStyle = '#000000';
@@ -415,7 +437,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
         // Badge label with collision avoidance
         ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        const labelText = isHighSweep ? 'High Sweep' : 'Low Sweep';
+        const labelText = isHighSweep ? 'BSL Sweep' : 'SSL Sweep';
         const badgeW = Math.ceil(ctx.measureText(labelText).width) + 10;
         const badgeH = 15;
         const badgeX = Math.max(2, Math.min(width - badgeW - 2, x - badgeW / 2));

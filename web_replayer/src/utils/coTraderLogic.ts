@@ -292,58 +292,179 @@ export function computeReplayScorecard(
 
 /**
  * Causal Liquidity Sweep Extraction (Zero-Lookahead)
- * Identifies bars that pierce Asian High/Low levels and wick back.
+ * Detects genuine Liquidity Sweeps (SFP / Turtle Soup):
+ * 1. First unbroken Asian High/Low raid where price pushes out from inside and closes back inside.
+ * 2. Confirmed causal Swing High/Low (3L/3R) liquidity grabs with >= 35% rejection wick & inside close.
+ * Never re-fires on already-broken levels or choppy bounces below broken support / above broken resistance.
  */
 export function extractLiquiditySweeps(
   candles: Candle[],
   asianRanges: Record<string, AsianRangeDay> | AsianRangeDay[],
   replayTo: number | null
 ): SweepFlag[] {
-  const arList: AsianRangeDay[] = Array.isArray(asianRanges)
-    ? asianRanges
-    : Object.values(asianRanges);
-
-  if (arList.length === 0 || candles.length === 0) return [];
-
   const visibleCandles =
     replayTo !== null ? candles.filter((c) => c.time <= replayTo) : candles;
+  if (visibleCandles.length === 0) return [];
+
+  const arList: AsianRangeDay[] = (
+    Array.isArray(asianRanges) ? asianRanges : Object.values(asianRanges)
+  )
+    .slice()
+    .sort((a, b) => a.start_time - b.start_time);
 
   const sweeps: SweepFlag[] = [];
+  const emittedKeys = new Set<string>();
 
-  for (const ar of arList) {
-    // Check bars occurring after Asian session end
+  // Track 1: First unbroken raid of Asian High / Asian Low per session day
+  for (let aIdx = 0; aIdx < arList.length; aIdx++) {
+    const ar = arList[aIdx];
+    const nextStart = aIdx + 1 < arList.length ? arList[aIdx + 1].start_time : ar.end_time + 57600;
+    const cutoffEnd = Math.min(nextStart, ar.end_time + 57600);
     const sessionCandles = visibleCandles.filter(
-      (c) => c.time > ar.end_time && c.time < ar.end_time + 86400
+      (c) => c.time > ar.end_time && c.time < cutoffEnd
     );
 
+    let highExhausted = false;
+    let lowExhausted = false;
+
     for (const c of sessionCandles) {
-      // High Sweep: candle high > asian high, and closes back below or wicks
-      if (c.high > ar.high && c.close <= ar.high) {
-        sweeps.push({
-          time: c.time,
-          price: c.high,
-          type: 'HIGH_SWEEP',
-          label: `Asian High Sweep (${ar.high})`,
-          level: ar.high,
-          session: 'London/NY',
-        });
+      if (!highExhausted) {
+        if (c.open <= ar.high && c.high > ar.high && c.close < ar.high) {
+          sweeps.push({
+            time: c.time,
+            price: c.high,
+            type: 'HIGH_SWEEP',
+            label: `Asian BSL Sweep (${ar.high})`,
+            level: ar.high,
+            origin_time: ar.end_time,
+            session: 'Asian',
+          });
+          emittedKeys.add(`HIGH:${c.time}`);
+          highExhausted = true;
+        } else if (c.close > ar.high) {
+          highExhausted = true;
+        }
       }
 
-      // Low Sweep: candle low < asian low, and closes back above or wicks
-      if (c.low < ar.low && c.close >= ar.low) {
-        sweeps.push({
-          time: c.time,
-          price: c.low,
-          type: 'LOW_SWEEP',
-          label: `Asian Low Sweep (${ar.low})`,
-          level: ar.low,
-          session: 'London/NY',
-        });
+      if (!lowExhausted) {
+        if (c.open >= ar.low && c.low < ar.low && c.close > ar.low) {
+          sweeps.push({
+            time: c.time,
+            price: c.low,
+            type: 'LOW_SWEEP',
+            label: `Asian SSL Sweep (${ar.low})`,
+            level: ar.low,
+            origin_time: ar.end_time,
+            session: 'Asian',
+          });
+          emittedKeys.add(`LOW:${c.time}`);
+          lowExhausted = true;
+        } else if (c.close < ar.low) {
+          lowExhausted = true;
+        }
       }
+
+      if (highExhausted && lowExhausted) break;
     }
   }
 
-  // Sort chronologically
+  // Track 2: Causal 3-left / 3-right Swing High & Swing Low liquidity grabs
+  const pivotSpan = 3;
+  const activeSwingHighs: Array<{ time: number; price: number }> = [];
+  const activeSwingLows: Array<{ time: number; price: number }> = [];
+
+  for (let i = pivotSpan * 2; i < visibleCandles.length; i++) {
+    // Confirm pivot formed pivotSpan bars ago (zero future lookahead)
+    const pIdx = i - pivotSpan;
+    const pBar = visibleCandles[pIdx];
+    let isPivotHigh = true;
+    let isPivotLow = true;
+    let strictHigh = false;
+    let strictLow = false;
+    for (let k = pIdx - pivotSpan; k <= pIdx + pivotSpan; k++) {
+      if (k === pIdx) continue;
+      if (visibleCandles[k].high > pBar.high) isPivotHigh = false;
+      if (visibleCandles[k].high < pBar.high) strictHigh = true;
+      if (visibleCandles[k].low < pBar.low) isPivotLow = false;
+      if (visibleCandles[k].low > pBar.low) strictLow = true;
+    }
+    if (isPivotHigh && strictHigh) {
+      activeSwingHighs.push({ time: pBar.time, price: pBar.high });
+    }
+    if (isPivotLow && strictLow) {
+      activeSwingLows.push({ time: pBar.time, price: pBar.low });
+    }
+
+    const c = visibleCandles[i];
+    const barRange = c.high - c.low;
+    if (barRange <= 0) continue;
+
+    const upperWick = c.high - Math.max(c.open, c.close);
+    const lowerWick = Math.min(c.open, c.close) - c.low;
+
+    // Check swept Swing Highs (comes from below/equal, pierces high, closes below with >=35% wick)
+    let sweptHighPivot: { time: number; price: number } | null = null;
+    for (let s = activeSwingHighs.length - 1; s >= 0; s--) {
+      const sh = activeSwingHighs[s];
+      if (c.high > sh.price && c.open <= sh.price && c.close < sh.price) {
+        if (!sweptHighPivot || sh.price > sweptHighPivot.price) {
+          sweptHighPivot = sh;
+        }
+        activeSwingHighs.splice(s, 1);
+      } else if (c.high > sh.price) {
+        // Broken through without immediate rejection: consume resting liquidity
+        activeSwingHighs.splice(s, 1);
+      }
+    }
+    if (
+      sweptHighPivot &&
+      upperWick >= 0.35 * barRange &&
+      !emittedKeys.has(`HIGH:${c.time}`)
+    ) {
+      sweeps.push({
+        time: c.time,
+        price: c.high,
+        type: 'HIGH_SWEEP',
+        label: `BSL Sweep (${sweptHighPivot.price})`,
+        level: sweptHighPivot.price,
+        origin_time: sweptHighPivot.time,
+        session: 'Swing',
+      });
+      emittedKeys.add(`HIGH:${c.time}`);
+    }
+
+    // Check swept Swing Lows (comes from above/equal, pierces low, closes above with >=35% wick)
+    let sweptLowPivot: { time: number; price: number } | null = null;
+    for (let s = activeSwingLows.length - 1; s >= 0; s--) {
+      const sl = activeSwingLows[s];
+      if (c.low < sl.price && c.open >= sl.price && c.close > sl.price) {
+        if (!sweptLowPivot || sl.price < sweptLowPivot.price) {
+          sweptLowPivot = sl;
+        }
+        activeSwingLows.splice(s, 1);
+      } else if (c.low < sl.price) {
+        // Broken through without immediate rejection: consume resting liquidity
+        activeSwingLows.splice(s, 1);
+      }
+    }
+    if (
+      sweptLowPivot &&
+      lowerWick >= 0.35 * barRange &&
+      !emittedKeys.has(`LOW:${c.time}`)
+    ) {
+      sweeps.push({
+        time: c.time,
+        price: c.low,
+        type: 'LOW_SWEEP',
+        label: `SSL Sweep (${sweptLowPivot.price})`,
+        level: sweptLowPivot.price,
+        origin_time: sweptLowPivot.time,
+        session: 'Swing',
+      });
+      emittedKeys.add(`LOW:${c.time}`);
+    }
+  }
+
   return sweeps.sort((a, b) => a.time - b.time);
 }
 

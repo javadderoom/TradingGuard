@@ -298,19 +298,19 @@ describe('coTraderLogic - Causal Liquidity Sweep Extraction', () => {
   const candles: Candle[] = [
     // Bar 1: inside Asian session
     { time: 1768450000, open: 2665.0, high: 2675.0, low: 2662.0, close: 2670.0 },
-    // Bar 2: Post-Asian London candle sweeps Asian High (high 2683 > 2680, close 2678 < 2680)
+    // Bar 2: First unbroken raid above Asian High (open 2675 <= 2680, high 2683 > 2680, close 2678 < 2680)
     { time: 1768470000, open: 2675.0, high: 2683.0, low: 2674.0, close: 2678.0 },
     // Bar 3: Normal candle
     { time: 1768470300, open: 2678.0, high: 2679.0, low: 2671.0, close: 2673.0 },
-    // Bar 4: Candle sweeps Asian Low (low 2657 < 2660, close 2663 > 2660)
+    // Bar 4: First unbroken raid below Asian Low (open 2672 >= 2660, low 2657 < 2660, close 2663 > 2660)
     { time: 1768470600, open: 2672.0, high: 2673.0, low: 2657.0, close: 2663.0 },
-    // Bar 5: Later candle outside active replay window
+    // Bar 5: Duplicate push over already-swept Asian High (must NOT re-fire bogus sweep)
     { time: 1768475000, open: 2663.0, high: 2685.0, low: 2662.0, close: 2675.0 },
   ];
 
-  it('detects Asian High and Low liquidity sweeps cleanly', () => {
+  it('detects authentic unbroken Asian High and Low liquidity sweeps without repeating', () => {
     const sweeps = extractLiquiditySweeps(candles, asianRanges, null);
-    expect(sweeps.length).toBe(3); // bar 2 (high), bar 4 (low), bar 5 (high)
+    expect(sweeps.length).toBe(2); // bar 2 (BSL), bar 4 (SSL); bar 5 ignored
 
     const highSweep = sweeps.find((s) => s.time === 1768470000);
     expect(highSweep).toBeDefined();
@@ -325,11 +325,50 @@ describe('coTraderLogic - Causal Liquidity Sweep Extraction', () => {
     expect(lowSweep?.price).toBe(2657.0);
   });
 
-  it('strictly respects replayTo anti-spoiler cursor', () => {
-    // When replayTo is 1768471000 (after bar 4, before bar 5)
-    const sweepsReplay = extractLiquiditySweeps(candles, asianRanges, 1768471000);
-    expect(sweepsReplay.length).toBe(2);
-    expect(sweepsReplay.some((s) => s.time === 1768475000)).toBe(false);
+  it('ignores choppy bounces below already-broken Asian Low (Nov 12 false sweep bug)', () => {
+    const nov12Range: Record<string, AsianRangeDay> = {
+      '2026-11-12': {
+        date: '2026-11-12',
+        high: 4000.34,
+        low: 3962.51,
+        start_time: 1794448800,
+        end_time: 1794473700,
+        bars_count: 84,
+      },
+    };
+    const brokenBars: Candle[] = [
+      // Closes cleanly BELOW Asian Low (breaks 3962.51)
+      { time: 1794474600, open: 3964.11, high: 3965.0, low: 3959.16, close: 3960.82 },
+      // Bounce that opens BELOW 3962.51 and closes above it -> NOT a downward sweep!
+      { time: 1794474900, open: 3960.8, high: 3966.99, low: 3959.54, close: 3964.65 },
+      // Another bounce opening below 3962.51 -> NOT a sweep!
+      { time: 1794477000, open: 3960.53, high: 3964.63, low: 3960.16, close: 3964.56 },
+    ];
+    expect(extractLiquiditySweeps(brokenBars, nov12Range, null)).toEqual([]);
+  });
+
+  it('detects causal 3-bar swing pivot liquidity grabs and respects replayTo anti-spoiler cursor', () => {
+    // When replayTo excludes bar 4 (1768470600), only bar 2 sweep is visible
+    const sweepsReplay = extractLiquiditySweeps(candles, asianRanges, 1768470400);
+    expect(sweepsReplay.length).toBe(1);
+    expect(sweepsReplay[0].time).toBe(1768470000);
+
+    // Causal Swing High at bar 3 (price 100), swept with >=35% rejection wick at bar 7
+    const swingBars: Candle[] = [
+      { time: 100, open: 95, high: 96, low: 94, close: 95.5 },
+      { time: 200, open: 95.5, high: 97, low: 95, close: 96.5 },
+      { time: 300, open: 96.5, high: 98, low: 96, close: 97.5 },
+      { time: 400, open: 97.5, high: 100, low: 97, close: 98 }, // Swing High = 100
+      { time: 500, open: 98, high: 99, low: 96, close: 97 },
+      { time: 600, open: 97, high: 98, low: 95, close: 96 },
+      { time: 700, open: 96, high: 97, low: 94, close: 96.5 }, // Pivot confirmed here
+      { time: 800, open: 97, high: 102, low: 96.5, close: 97.2 }, // Sweeps 100 -> 102, closes 97.2 (wick 4.8 / 5.5 = 87%)
+    ];
+    const swingSweeps = extractLiquiditySweeps(swingBars, {}, null);
+    expect(swingSweeps).toHaveLength(1);
+    expect(swingSweeps[0].type).toBe('HIGH_SWEEP');
+    expect(swingSweeps[0].level).toBe(100);
+    expect(swingSweeps[0].origin_time).toBe(400);
   });
 });
 

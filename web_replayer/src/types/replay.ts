@@ -82,6 +82,7 @@ export interface SweepFlag {
   type: 'HIGH_SWEEP' | 'LOW_SWEEP';
   label: string;
   level?: number;
+  origin_time?: number;
   session?: string;
 }
 
