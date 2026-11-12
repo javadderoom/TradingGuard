@@ -2120,6 +2120,20 @@ To eliminate abstract numerical ambiguity during strategy research and trade pos
      * Atomic JSON storage over `hitl/memory/visual_feedback_cases.json`.
      * `build_agentify_prompt`: Defensive prompt builder converting chart context, human vs bot geometry comparison, screener diagnostic flags, and user rationale into a copy-ready Markdown prompt for Antigravity alignment without crashing on `None` values.
 
+4. **Tornado HTTP API & Static Replay Server (`hitl/replay_server.py`)**:
+   * **Architecture & Security**: Non-blocking asynchronous Tornado 6.5 server binding strictly to `127.0.0.1:8765` (`DEFAULT_HOST = "127.0.0.1"`, `DEFAULT_PORT = 8765`). Restricts CORS origin access cleanly to `localhost` and `127.0.0.1` origins, fully supporting Vite React HMR development (`http://localhost:5173`).
+   * **Thread Offloading & LRU Caching**: Offloads all heavy Parquet loading, resampling, SMC session scanning, and M1 forward trade simulation via `asyncio.to_thread` to preserve sub-millisecond event loop responsiveness. Maintains an in-memory LRU cache (`MAX_BOT_SCAN_CACHE = 64`) for `run_bot_scan` results, automatically invalidating cached keys for any symbol synchronized via MT5.
+   * **REST API Surface**:
+     * `GET /api/catalog`: Returns registered multi-asset catalog (`XAUUSD_o`, `GBPUSD_o`, `NQ`, `SPX`, `YM`, `BTCUSD`), engine modes (`SMC` vs `MANUAL_ONLY`), cached date ranges, broker spreads, digits, and system risk limits (`$2,000` capital, `$20` max trade risk).
+     * `GET /api/candles`: Serves resampled OHLCV bars (`1M`, `5M`, `15M`, `1H`, `4H`, `1D`) with zero-lookahead partial bar synthesis up to `replay_to`, clamped cleanly (`1 <= max_bars <= 15000`).
+     * `GET /api/bot-scan`: Executes chronological SMC session scan across 5M bars, returning Killzones, incremental Asian range boundaries, 2D FVG/Breaker geometries, per-bar diagnostics, and marked `BOT` trades.
+     * `POST /api/simulate-trade`: Fast M1 forward simulation for human-proposed and human-edited setups with uncapped R:R, returning realized PnL and true `$20` risk compliance badge.
+     * `GET/POST/PATCH/DELETE /api/co-trades`: Full atomic CRUD over `hitl/memory/visual_co_backtest_ledger.json` with origin tagging (`BOT`, `HUMAN_PROPOSED`, `HUMAN_EDITED_BOT`) and grouped comparative scorecard.
+     * `GET/POST/DELETE /api/feedback`: Full atomic CRUD over `hitl/memory/visual_feedback_cases.json`, capturing full chart state snapshots and generating clipboard-ready Markdown prompts for Antigravity.
+     * `POST /api/sync-mt5`: Synchronizes recent broker M1 bars from live MetaTrader 5 terminal, appending to cache Parquet and evicting symbol scan cache entries.
+     * `Catch-All SPA Handler`: Resolves static assets from `web_replayer/dist/` with HTML5 pushState routing, providing a graceful informative HTTP 200 fallback status page when assets have not yet been built.
+
+
 
 
 
