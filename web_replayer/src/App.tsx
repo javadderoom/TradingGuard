@@ -55,6 +55,7 @@ import type {
   FvgBox,
   Killzone,
   ReplayTrade,
+  SelectedSmcElement,
   SimulateTradeResponse,
   SweepFlag,
   Timeframe,
@@ -66,6 +67,7 @@ import {
   dedupeBreakerBoxes,
   dedupeFvgBoxes,
   extractLiquiditySweeps,
+  findMatchingSmcElementsAtPoint,
   findMatchingTradesNearTime,
   formatClockTick,
   getClusterWindowSeconds,
@@ -140,8 +142,10 @@ export function App() {
     isDrawerOpen,
   ]);
 
-  // Co-Trading & Position Box State
+  // Co-Trading & Selection State
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [selectedSmcElement, setSelectedSmcElement] = useState<SelectedSmcElement | null>(null);
+  const [smcClusterCandidates, setSmcClusterCandidates] = useState<SelectedSmcElement[]>([]);
   const [draftTrade, setDraftTrade] = useState<DraftTrade | null>(null);
   const [simResult, setSimResult] = useState<SimulateTradeResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -209,6 +213,8 @@ export function App() {
     setReplayCursor(null);
     setIsPlaying(false);
     setSelectedTradeId(null);
+    setSelectedSmcElement(null);
+    setSmcClusterCandidates([]);
     setDraftTrade(null);
     setSimResult(null);
     setSyncNotice(null);
@@ -418,21 +424,73 @@ export function App() {
     });
   };
 
-  const handleSelectChartTime = (clickedTime: number | null) => {
+  const handleSelectSmcElement = (el: SelectedSmcElement) => {
+    setSelectedTradeId(null);
+    setSelectedSmcElement(el);
+    setSmcClusterCandidates([el]);
+    setInspectedTime(el.time);
+    if (!isDrawerOpen) setIsDrawerOpen(true);
+  };
+
+  const handleSelectChartTime = (clickedTime: number | null, clickedPrice?: number | null) => {
     if (clickedTime === null) return;
     setInspectedTime(clickedTime);
     if (!isDrawerOpen) setIsDrawerOpen(true);
 
+    // 1. Check direct (time, price) hit on SMC Elements (Breaker, FVG, Sweep, Asian Range)
+    let minLow = Infinity;
+    let maxHigh = -Infinity;
+    for (const c of candles) {
+      if (c.low < minLow) minLow = c.low;
+      if (c.high > maxHigh) maxHigh = c.high;
+    }
+    const priceSpan = Number.isFinite(maxHigh - minLow) && maxHigh > minLow ? maxHigh - minLow : 10;
+    const priceTol = Math.max(priceSpan * 0.045, digits >= 4 ? 0.0008 : 1.5);
+    const cutoff = blindReplay ? replayCursor : null;
+
+    if (clickedPrice !== undefined && clickedPrice !== null) {
+      const arList = Array.isArray(asianRanges) ? asianRanges : Object.values(asianRanges);
+      const smcHits = findMatchingSmcElementsAtPoint(
+        clickedTime,
+        clickedPrice,
+        {
+          fvgs,
+          breakers,
+          sweeps,
+          asianRanges: arList,
+          showBoxes,
+          showSweeps,
+          showAsianRange,
+        },
+        Math.max(300, Math.floor(clusterWindowSec / 2)),
+        priceTol,
+        cutoff
+      );
+      if (smcHits.length > 0) {
+        const curIdx = selectedSmcElement
+          ? smcHits.findIndex((h) => h.id === selectedSmcElement.id)
+          : -1;
+        const nextEl = curIdx >= 0 ? smcHits[(curIdx + 1) % smcHits.length] : smcHits[0];
+        setSmcClusterCandidates(smcHits);
+        setSelectedSmcElement(nextEl);
+        setSelectedTradeId(null);
+        return;
+      }
+    }
+
+    // 2. Otherwise check nearby Bot / Human Trades
     const nearby = findMatchingTradesNearTime(
       allTrades,
       clickedTime,
       Math.max(300, Math.floor(clusterWindowSec / 2)),
-      blindReplay ? replayCursor : null
+      cutoff
     );
     if (nearby.length > 0) {
       const curIdx = nearby.findIndex((t) => t.trade_id === selectedTradeId);
       const next = curIdx >= 0 ? nearby[(curIdx + 1) % nearby.length] : nearby[0];
       setSelectedTradeId(next.trade_id);
+      setSelectedSmcElement(null);
+      setSmcClusterCandidates([]);
     }
   };
 
@@ -1400,6 +1458,128 @@ export function App() {
         </div>
       )}
 
+      {/* Selected SMC Element Inspector Banner (Breaker / FVG / Sweep / Asian Range) */}
+      {selectedSmcElement && !selectedTrade && !draftTrade && (
+        <div
+          style={{
+            display: 'flex',
+            flexShrink: 0,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '5px 14px',
+            backgroundColor: '#1e222d',
+            borderBottom: '1px solid #00e676',
+            fontSize: '11px',
+            gap: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <span
+              style={{
+                fontWeight: 800,
+                padding: '2px 6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(0, 230, 118, 0.16)',
+                color: '#00e676',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {selectedSmcElement.kind} · {selectedSmcElement.label}
+            </span>
+
+            {selectedSmcElement.top !== undefined && selectedSmcElement.bottom !== undefined ? (
+              <span>
+                Bounds: <b style={{ color: '#ffd54f' }}>{selectedSmcElement.bottom.toFixed(digits)} – {selectedSmcElement.top.toFixed(digits)}</b>
+              </span>
+            ) : selectedSmcElement.price !== undefined ? (
+              <span>
+                Price: <b style={{ color: '#ffd54f' }}>{selectedSmcElement.price.toFixed(digits)}</b>
+                {selectedSmcElement.top !== undefined ? ` (Swept: ${selectedSmcElement.top.toFixed(digits)})` : ''}
+              </span>
+            ) : null}
+
+            <span style={{ color: '#90caf9' }}>
+              {formatClockTick(selectedSmcElement.time, clockMode, true)}
+            </span>
+
+            {smcClusterCandidates.length > 1 && (() => {
+              const curIdx = smcClusterCandidates.findIndex((c) => c.id === selectedSmcElement.id);
+              const safeIdx = curIdx >= 0 ? curIdx : 0;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#131722', padding: '1px 4px', borderRadius: '4px', border: '1px solid #2a2e39' }}>
+                  <button
+                    onClick={() => {
+                      const prev = smcClusterCandidates[(safeIdx - 1 + smcClusterCandidates.length) % smcClusterCandidates.length];
+                      setSelectedSmcElement(prev);
+                    }}
+                    title="Previous element at point"
+                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                  >
+                    ◀
+                  </button>
+                  <span style={{ color: '#b2b5be', fontSize: '10px', fontWeight: 600 }}>
+                    {safeIdx + 1}/{smcClusterCandidates.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const next = smcClusterCandidates[(safeIdx + 1) % smcClusterCandidates.length];
+                      setSelectedSmcElement(next);
+                    }}
+                    title="Next element at point"
+                    style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', padding: '0 3px', fontSize: '11px' }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <button
+              onClick={() => {
+                setActiveTab('agentify');
+                setIsDrawerOpen(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#00e676',
+                color: '#121418',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '4px 10px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <Sparkles size={11} />
+              Ask Agentify (1-Click)
+            </button>
+            <button
+              onClick={() => {
+                setSelectedSmcElement(null);
+                setSmcClusterCandidates([]);
+              }}
+              title="Clear selected SMC element"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'transparent',
+                border: '1px solid #565a65',
+                color: '#b2b5be',
+                borderRadius: '3px',
+                padding: '3px 6px',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Body: Chart on Left, Workbench on Right */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', position: 'relative', overflow: 'hidden' }}>
         {/* Main Chart Canvas */}
@@ -1416,6 +1596,7 @@ export function App() {
             sweeps={sweeps}
             trades={chartTrades}
             selectedTrade={selectedTrade}
+            selectedElement={selectedSmcElement}
             draftTrade={draftTrade}
             onDraftTradeChange={setDraftTrade}
             replayTo={blindReplay ? replayCursor : null}
@@ -1655,7 +1836,11 @@ export function App() {
                   selectedTradeId={selectedTradeId}
                   onSelectTrade={(t) => {
                     setSelectedTradeId(t.trade_id);
+                    setSelectedSmcElement(null);
                     setInspectedTime(t.fill_time ?? t.decision_time);
+                  }}
+                  onSelectElement={(el) => {
+                    handleSelectSmcElement(el);
                   }}
                   onSelectEventTime={(t) => {
                     setInspectedTime(t);
@@ -1686,6 +1871,7 @@ export function App() {
                   onDeleteTrade={handleDeleteTrade}
                   onSelectTrade={(t) => {
                     setSelectedTradeId(t.trade_id);
+                    setSelectedSmcElement(null);
                     setInspectedTime(t.fill_time ?? t.decision_time);
                     setReplayCursor(t.decision_time);
                   }}
@@ -1698,6 +1884,16 @@ export function App() {
                   symbol={selectedSymbol}
                   currentTime={activeInspectionTime}
                   clockMode={clockMode}
+                  timeframe={timeframe}
+                  digits={digits}
+                  candles={candles}
+                  diagnostics={diagnostics}
+                  boundElement={selectedSmcElement}
+                  selectedTrade={selectedTrade}
+                  onClearBoundElement={() => {
+                    setSelectedSmcElement(null);
+                    setSmcClusterCandidates([]);
+                  }}
                   prefillContext={feedbackPrefill}
                 />
               )}

@@ -25,6 +25,7 @@ import type {
   ClockMode,
   EngineClockMode,
   ReplayTrade,
+  SelectedSmcElement,
 } from '../types/replay';
 import { formatClockTick } from '../utils/coTraderLogic';
 
@@ -39,6 +40,7 @@ export interface BotBrainPanelProps {
   tradesNearBar?: ReplayTrade[];
   selectedTradeId?: string | null;
   onSelectTrade?: (trade: ReplayTrade) => void;
+  onSelectElement?: (element: SelectedSmcElement) => void;
   onSelectEventTime?: (time: number) => void;
   onTriggerFeedback?: (context: {
     title: string;
@@ -61,6 +63,7 @@ export const BotBrainPanel: React.FC<BotBrainPanelProps> = ({
   tradesNearBar = [],
   selectedTradeId = null,
   onSelectTrade,
+  onSelectElement,
   onSelectEventTime,
   onTriggerFeedback,
   onTriggerTradeFeedback,
@@ -172,27 +175,77 @@ Clock Mode: ${engineClockMode}`,
             <div>
               <div style={{ color: '#787b86', fontSize: '11px' }}>Asian Bounds:</div>
               <div style={{ fontWeight: 500 }}>
-                {activeDiag.asian_high ? `${activeDiag.asian_high.toFixed(2)} / ${activeDiag.asian_low?.toFixed(2)}` : 'N/A'}
+                {activeDiag.asian_high ? `${activeDiag.asian_high.toFixed(digits)} / ${activeDiag.asian_low?.toFixed(digits)}` : 'N/A'}
               </div>
             </div>
           </div>
 
-          {/* Structural Overlays */}
+          {/* Structural Overlays (Clickable for Chart & Agentify Inspection) */}
           {(activeDiag.fvg_box || activeDiag.breaker_box) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '6px', borderTop: '1px solid #262b36' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingTop: '6px', borderTop: '1px solid #262b36' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#787b86', fontSize: '11px' }}>
                 <Layers size={11} />
-                <span>Detected Zones:</span>
+                <span>Detected Zones (click to inspect / ask):</span>
               </div>
               {activeDiag.fvg_box && (
-                <div style={{ fontSize: '11px', color: activeDiag.fvg_box.dir === 'BULLISH' ? '#26a69a' : '#ef5350' }}>
-                  • FVG {activeDiag.fvg_box.dir} [{activeDiag.fvg_box.top.toFixed(2)} - {activeDiag.fvg_box.bottom.toFixed(2)}]
-                </div>
+                <button
+                  onClick={() => {
+                    const fvg = activeDiag.fvg_box!;
+                    onSelectElement?.({
+                      id: `FVG:${fvg.dir}:${fvg.t_start}:${fvg.top}:${fvg.bottom}`,
+                      kind: 'FVG',
+                      label: `${fvg.dir} FVG`,
+                      time: fvg.t_start,
+                      endTime: fvg.t_end,
+                      top: fvg.top,
+                      bottom: fvg.bottom,
+                      direction: fvg.dir,
+                      fvg,
+                    });
+                  }}
+                  style={{
+                    textAlign: 'left',
+                    fontSize: '11px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#131722',
+                    border: '1px solid rgba(38, 166, 154, 0.4)',
+                    color: activeDiag.fvg_box.dir === 'BULLISH' ? '#4dd0e1' : '#ff8a80',
+                    cursor: 'pointer',
+                  }}
+                >
+                  • FVG {activeDiag.fvg_box.dir} [{activeDiag.fvg_box.bottom.toFixed(digits)} – {activeDiag.fvg_box.top.toFixed(digits)}]
+                </button>
               )}
               {activeDiag.breaker_box && (
-                <div style={{ fontSize: '11px', color: '#ffb300' }}>
-                  • Breaker {activeDiag.breaker_box.type} [{activeDiag.breaker_box.top.toFixed(2)} - {activeDiag.breaker_box.bottom.toFixed(2)}]
-                </div>
+                <button
+                  onClick={() => {
+                    const brk = activeDiag.breaker_box!;
+                    onSelectElement?.({
+                      id: `BRK:${brk.type}:${brk.t_start}:${brk.top}:${brk.bottom}`,
+                      kind: 'BREAKER',
+                      label: brk.type,
+                      time: brk.t_start,
+                      endTime: brk.t_end,
+                      top: brk.top,
+                      bottom: brk.bottom,
+                      direction: brk.type.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH',
+                      breaker: brk,
+                    });
+                  }}
+                  style={{
+                    textAlign: 'left',
+                    fontSize: '11px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#131722',
+                    border: '1px solid rgba(206, 147, 216, 0.45)',
+                    color: '#e1bee7',
+                    cursor: 'pointer',
+                  }}
+                >
+                  • Breaker {activeDiag.breaker_box.type} [{activeDiag.breaker_box.bottom.toFixed(digits)} – {activeDiag.breaker_box.top.toFixed(digits)}]
+                </button>
               )}
             </div>
           )}

@@ -29,6 +29,7 @@ import type {
   FvgBox,
   Killzone,
   ReplayTrade,
+  SelectedSmcElement,
   SweepFlag,
 } from '../types/replay';
 import {
@@ -54,6 +55,7 @@ export interface ReplayChartProps {
   sweeps?: SweepFlag[];
   trades?: ReplayTrade[];
   selectedTrade?: ReplayTrade | null;
+  selectedElement?: SelectedSmcElement | null;
   draftTrade?: DraftTrade | null;
   onDraftTradeChange?: (draft: DraftTrade) => void;
   onDraftTradeChangeComplete?: (draft: DraftTrade) => void;
@@ -65,7 +67,7 @@ export interface ReplayChartProps {
   showBreakers?: boolean;
   showSweeps?: boolean;
   showTrades?: boolean;
-  onSelectTime?: (time: number | null) => void;
+  onSelectTime?: (time: number | null, price?: number | null) => void;
 }
 
 export const ReplayChart: React.FC<ReplayChartProps> = ({
@@ -80,6 +82,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   sweeps = [],
   trades = [],
   selectedTrade = null,
+  selectedElement = null,
   draftTrade = null,
   onDraftTradeChange,
   onDraftTradeChangeComplete,
@@ -107,7 +110,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
   const isDraggingRef = useRef<boolean>(false);
   const dragHandleRef = useRef<'entry' | 'sl' | 'tp' | null>(null);
   const draftTradeRef = useRef<DraftTrade | null>(null);
-  const onSelectTimeRef = useRef<((time: number | null) => void) | undefined>(onSelectTime);
+  const onSelectTimeRef = useRef<((time: number | null, price?: number | null) => void) | undefined>(onSelectTime);
 
   // Keep draftTradeRef & onSelectTimeRef in sync without updating during render
   useEffect(() => {
@@ -196,10 +199,17 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     forensicPrimitiveRef.current = boxPrim;
     positionBoxPrimitiveRef.current = posPrim;
 
-    // Click handler for bar inspection
+    // Click handler for bar & SMC element inspection
     const clickHandler = (param: MouseEventParams<Time>) => {
       if (param.time) {
-        onSelectTimeRef.current?.(Number(param.time));
+        const clickedPrice =
+          param.point && seriesRef.current
+            ? seriesRef.current.coordinateToPrice(param.point.y)
+            : null;
+        onSelectTimeRef.current?.(
+          Number(param.time),
+          clickedPrice !== null && !Number.isNaN(Number(clickedPrice)) ? Number(clickedPrice) : null
+        );
       }
     };
     chart.subscribeClick(clickHandler);
@@ -304,10 +314,11 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
         sweeps: showSweeps ? sweeps : [],
         candles,
         selectedTrade,
+        selectedElement,
         digits,
       });
     }
-  }, [fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, digits, showFvgs, showBreakers, showAsianRange, showSweeps]);
+  }, [fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, selectedElement, digits, showFvgs, showBreakers, showAsianRange, showSweeps]);
 
   // Auto-pan chart if a newly selected trade lies outside the visible horizontal range
   useEffect(() => {

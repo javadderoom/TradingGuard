@@ -9,6 +9,7 @@
 
 import type {
   AsianRangeDay,
+  BotDiagnostic,
   BreakerBox,
   Candle,
   CatalogSymbol,
@@ -17,6 +18,8 @@ import type {
   FvgBox,
   ReplayTrade,
   Scorecard,
+  SelectedSmcElement,
+  SmcElementKind,
   SweepFlag,
   Timeframe,
   TradeDirection,
@@ -797,4 +800,230 @@ export function buildClusteredTradeMarkers(
   }
 
   return markers.sort((a, b) => a.time - b.time);
+}
+
+export function findMatchingSmcElementsAtPoint(
+  clickedTime: number,
+  clickedPrice: number | null,
+  overlays: {
+    fvgs: FvgBox[];
+    breakers: BreakerBox[];
+    sweeps: SweepFlag[];
+    asianRanges: AsianRangeDay[];
+    showBoxes?: boolean;
+    showSweeps?: boolean;
+    showAsianRange?: boolean;
+  },
+  timeToleranceSec: number,
+  priceTolerance: number,
+  replayTo: number | null
+): SelectedSmcElement[] {
+  const hits: SelectedSmcElement[] = [];
+  const tTol = Math.max(60, timeToleranceSec);
+  const pTol = Math.max(0, priceTolerance);
+  const priceHitsBand = (top: number, bottom: number, extra: number): boolean => {
+    if (clickedPrice === null) return true;
+    const hi = Math.max(top, bottom) + extra;
+    const lo = Math.min(top, bottom) - extra;
+    return clickedPrice >= lo && clickedPrice <= hi;
+  };
+
+  if (overlays.showBoxes !== false) {
+    for (const brk of overlays.breakers) {
+      if (replayTo !== null && brk.t_start > replayTo) continue;
+      if (clickedTime >= brk.t_start - tTol && clickedTime <= brk.t_end + tTol) {
+        if (priceHitsBand(brk.top, brk.bottom, pTol * 0.45)) {
+          hits.push({
+            id: `BRK:${brk.type}:${brk.t_start}:${brk.top}:${brk.bottom}`,
+            kind: 'BREAKER',
+            label: brk.type,
+            time: brk.t_start,
+            endTime: brk.t_end,
+            top: brk.top,
+            bottom: brk.bottom,
+            direction: brk.type.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH',
+            breaker: brk,
+          });
+        }
+      }
+    }
+
+    for (const fvg of overlays.fvgs) {
+      if (replayTo !== null && fvg.t_start > replayTo) continue;
+      if (clickedTime >= fvg.t_start - tTol && clickedTime <= fvg.t_end + tTol) {
+        if (priceHitsBand(fvg.top, fvg.bottom, pTol * 0.45)) {
+          hits.push({
+            id: `FVG:${fvg.dir}:${fvg.t_start}:${fvg.top}:${fvg.bottom}`,
+            kind: 'FVG',
+            label: `${fvg.dir} FVG`,
+            time: fvg.t_start,
+            endTime: fvg.t_end,
+            top: fvg.top,
+            bottom: fvg.bottom,
+            direction: fvg.dir,
+            fvg,
+          });
+        }
+      }
+    }
+  }
+
+  if (overlays.showSweeps !== false) {
+    for (const sw of overlays.sweeps) {
+      if (replayTo !== null && sw.time > replayTo) continue;
+      if (Math.abs(clickedTime - sw.time) <= tTol) {
+        const hitWick =
+          clickedPrice === null ||
+          Math.abs(clickedPrice - sw.price) <= pTol ||
+          (sw.level !== undefined && Math.abs(clickedPrice - sw.level) <= pTol * 0.6);
+        if (hitWick) {
+          hits.push({
+            id: `SWEEP:${sw.type}:${sw.time}:${sw.price}`,
+            kind: 'SWEEP',
+            label: sw.label,
+            time: sw.time,
+            price: sw.price,
+            top: sw.level ?? sw.price,
+            direction: sw.type === 'HIGH_SWEEP' ? 'BEARISH_RAID' : 'BULLISH_RAID',
+            sweep: sw,
+          });
+        }
+      }
+    }
+  }
+
+  if (overlays.showAsianRange !== false) {
+    for (const ar of overlays.asianRanges) {
+      if (replayTo !== null && ar.start_time > replayTo) continue;
+      if (clickedTime >= ar.start_time - tTol && clickedTime <= ar.end_time + tTol) {
+        const nearHigh = clickedPrice !== null && Math.abs(clickedPrice - ar.high) <= pTol * 0.55;
+        const nearLow = clickedPrice !== null && Math.abs(clickedPrice - ar.low) <= pTol * 0.55;
+        if (nearHigh || nearLow) {
+          hits.push({
+            id: `AR:${ar.date}:${ar.start_time}`,
+            kind: 'ASIAN_RANGE',
+            label: `Asian Range (${ar.date})`,
+            time: ar.start_time,
+            endTime: ar.end_time,
+            top: ar.high,
+            bottom: ar.low,
+            asianRange: ar,
+          });
+        }
+      }
+    }
+  }
+
+  return hits;
+}
+
+export function getQuickQuestionsForSmcElement(kind: SmcElementKind | 'TRADE' | 'BAR'): string[] {
+  if (kind === 'BREAKER') {
+    return [
+      "Why didn't the bot take a setup at this Breaker?",
+      'Is this Breaker block valid per ICT MSS rules?',
+      'Zone calibration issue: false or mistimed Breaker',
+    ];
+  }
+  if (kind === 'FVG') {
+    return [
+      "Why didn't the bot enter on this FVG retracement?",
+      'Is this FVG fresh/valid or already mitigated?',
+      'Zone calibration issue: noise / false FVG',
+    ];
+  }
+  if (kind === 'SWEEP') {
+    return [
+      'Why did no MSS entry trigger after this Sweep?',
+      'Is this Sweep genuine liquidity or noise?',
+      'Analyze direction & SL placement relative to this Sweep',
+    ];
+  }
+  if (kind === 'ASIAN_RANGE') {
+    return [
+      'Audit Asian Range breakout vs Judas sweep logic here',
+      'Check Tehran / session clock alignment for this Asian session',
+      'Why was this session extreme filtered or skipped?',
+    ];
+  }
+  if (kind === 'TRADE') {
+    return [
+      'Review this trade entry, SL, and TP placement',
+      'Why did the bot fire here instead of waiting for confirmation?',
+      'How can we improve target/BE management on this setup?',
+    ];
+  }
+  return [
+    'Why did the bot veto / skip this candle?',
+    'Evaluate missed setup opportunity at this bar',
+    'Explain current market structure & active session state',
+  ];
+}
+
+export function buildSmcElementContextMarkdown(params: {
+  symbol: string;
+  timeframe: Timeframe;
+  clockMode: ClockMode;
+  digits: number;
+  element: SelectedSmcElement;
+  candles: Candle[];
+  diagnostic?: BotDiagnostic | null;
+  question: string;
+}): string {
+  const { symbol, timeframe, clockMode, digits, element, candles, diagnostic, question } = params;
+  const zones = convertServerEpochToZones(element.time);
+
+  const lines: string[] = [
+    `### Agentify Chart Inquiry — ${symbol} (${timeframe})`,
+    `- **Question:** ${question}`,
+    `- **Selected Element:** \`${element.kind}\` — ${element.label}`,
+    `- **Timestamp:** \`${zones.tehran_str} Tehran\` | \`${zones.srv_str} MT5 Server\` (\`epoch=${element.time}\`)`,
+  ];
+
+  if (element.top !== undefined && element.bottom !== undefined) {
+    lines.push(
+      `- **Zone Bounds:** \`${element.bottom.toFixed(digits)} – ${element.top.toFixed(digits)}\`${element.endTime ? ` (to \`${formatClockTick(element.endTime, clockMode, true)}\`)` : ''}`
+    );
+  } else if (element.price !== undefined) {
+    lines.push(
+      `- **Price Level:** \`${element.price.toFixed(digits)}\`${element.top !== undefined ? ` (Swept Level: \`${element.top.toFixed(digits)}\`)` : ''}`
+    );
+  }
+
+  if (diagnostic) {
+    lines.push(
+      `- **Screener State @ Bar:** Verdict=\`${diagnostic.has_setup ? 'SETUP' : 'NO_SETUP'}\` | Archetype=\`${diagnostic.archetype_id ?? 'NONE'}\` | Phase=\`${diagnostic.phase}\` | SessionHour=\`${diagnostic.session_hour}\``
+    );
+    lines.push(`- **Screener Reason / Veto:** ${diagnostic.reason || 'None'}`);
+    if (diagnostic.asian_high !== undefined && diagnostic.asian_low !== undefined) {
+      lines.push(
+        `- **Asian Bounds @ Bar:** High \`${diagnostic.asian_high.toFixed(digits)}\` / Low \`${diagnostic.asian_low.toFixed(digits)}\``
+      );
+    }
+  }
+
+  // Extract 5 surrounding OHLC bars around element.time
+  if (candles.length > 0) {
+    let closestIdx = 0;
+    let bestDiff = Infinity;
+    for (let i = 0; i < candles.length; i++) {
+      const diff = Math.abs(candles[i].time - element.time);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        closestIdx = i;
+      }
+    }
+    const startIdx = Math.max(0, closestIdx - 2);
+    const endIdx = Math.min(candles.length - 1, closestIdx + 2);
+    lines.push('', '**Surrounding Candles:**');
+    for (let i = startIdx; i <= endIdx; i++) {
+      const b = candles[i];
+      const mark = i === closestIdx ? ' ◀' : '';
+      lines.push(
+        `- \`${formatClockTick(b.time, clockMode, true)}\`: O=${b.open.toFixed(digits)} H=${b.high.toFixed(digits)} L=${b.low.toFixed(digits)} C=${b.close.toFixed(digits)}${mark}`
+      );
+    }
+  }
+
+  return lines.join('\n');
 }

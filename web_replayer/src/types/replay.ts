@@ -86,6 +86,24 @@ export interface SweepFlag {
   session?: string;
 }
 
+export type SmcElementKind = 'FVG' | 'BREAKER' | 'SWEEP' | 'ASIAN_RANGE';
+
+export interface SelectedSmcElement {
+  id: string;
+  kind: SmcElementKind;
+  label: string;
+  time: number;
+  endTime?: number;
+  top?: number;
+  bottom?: number;
+  price?: number;
+  direction?: string;
+  fvg?: FvgBox;
+  breaker?: BreakerBox;
+  sweep?: SweepFlag;
+  asianRange?: AsianRangeDay;
+}
+
 export interface BotDiagnostic {
   time: number;
   session_hour: number;

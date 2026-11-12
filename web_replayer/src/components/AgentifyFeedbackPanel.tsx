@@ -22,15 +22,31 @@ import {
 
 import { replayApi } from '../api/client';
 import type {
+  BotDiagnostic,
+  Candle,
   ClockMode,
   FeedbackCase,
+  ReplayTrade,
+  SelectedSmcElement,
+  Timeframe,
 } from '../types/replay';
-import { formatClockTick } from '../utils/coTraderLogic';
+import {
+  buildSmcElementContextMarkdown,
+  formatClockTick,
+  getQuickQuestionsForSmcElement,
+} from '../utils/coTraderLogic';
 
 export interface AgentifyFeedbackPanelProps {
   symbol: string;
   currentTime: number | null;
   clockMode: ClockMode;
+  timeframe?: Timeframe;
+  digits?: number;
+  candles?: Candle[];
+  diagnostics?: BotDiagnostic[];
+  boundElement?: SelectedSmcElement | null;
+  selectedTrade?: ReplayTrade | null;
+  onClearBoundElement?: () => void;
   prefillContext?: {
     title?: string;
     category?: 'MISSED_SETUP' | 'BOT_TRADE_EDIT' | 'VETO_DISAGREEMENT' | 'NOTE';
@@ -47,6 +63,13 @@ export const AgentifyFeedbackPanel: React.FC<AgentifyFeedbackPanelProps> = ({
   symbol,
   currentTime,
   clockMode,
+  timeframe = '5M',
+  digits = 2,
+  candles = [],
+  diagnostics = [],
+  boundElement = null,
+  selectedTrade = null,
+  onClearBoundElement,
   prefillContext = null,
   onCaseCreated,
 }) => {
@@ -103,21 +126,103 @@ export const AgentifyFeedbackPanel: React.FC<AgentifyFeedbackPanelProps> = ({
     }
   };
 
+  const resolveDiagAt = (t: number | null): BotDiagnostic | null => {
+    if (t === null || diagnostics.length === 0) return null;
+    const exact = diagnostics.find((d) => d.time === t);
+    if (exact) return exact;
+    const prior = diagnostics.filter((d) => d.time <= t);
+    return prior.length > 0 ? prior[prior.length - 1] : null;
+  };
+
+  const handleQuickQuestionClick = async (question: string) => {
+    setErrorMsg(null);
+    if (boundElement) {
+      const diag = resolveDiagAt(boundElement.time);
+      const md = buildSmcElementContextMarkdown({
+        symbol,
+        timeframe,
+        clockMode,
+        digits,
+        element: boundElement,
+        candles,
+        diagnostic: diag,
+        question,
+      });
+      setCategory('VETO_DISAGREEMENT');
+      setTitle(`${boundElement.kind}: ${boundElement.label} — ${question}`);
+      setRationale(md);
+      setTimestamp(boundElement.time);
+      if (diag?.archetype_id) setArchetypeId(diag.archetype_id);
+      await handleCopyText(md);
+      return;
+    }
+
+    if (selectedTrade) {
+      const timeStr = formatClockTick(selectedTrade.decision_time, clockMode, true);
+      const md = [
+        `### Agentify Trade Inquiry — ${symbol} (${timeframe})`,
+        `- **Question:** ${question}`,
+        `- **Trade:** \`${selectedTrade.trade_id}\` (${selectedTrade.origin} · ${selectedTrade.direction}${selectedTrade.archetype_id ? ` · ${selectedTrade.archetype_id}` : ''})`,
+        `- **Time (${clockMode.toUpperCase()}):** \`${timeStr}\``,
+        `- **Levels:** Entry \`${selectedTrade.entry.toFixed(digits)}\` | SL \`${selectedTrade.sl.toFixed(digits)}\` | TP \`${selectedTrade.tp.toFixed(digits)}\``,
+        `- **Result:** \`${selectedTrade.status}\`${selectedTrade.rr_realized != null ? ` (${selectedTrade.rr_realized.toFixed(2)}R / $${selectedTrade.realized_pnl_usd?.toFixed(2) ?? '0.00'})` : ''}`,
+        selectedTrade.notes ? `- **Notes:** ${selectedTrade.notes}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      setCategory('BOT_TRADE_EDIT');
+      setTitle(`Trade ${selectedTrade.trade_id}: ${question}`);
+      setRationale(md);
+      setTimestamp(selectedTrade.decision_time);
+      if (selectedTrade.archetype_id) setArchetypeId(selectedTrade.archetype_id);
+      await handleCopyText(md);
+      return;
+    }
+
+    if (currentTime !== null) {
+      const diag = resolveDiagAt(currentTime);
+      const barElem: SelectedSmcElement = {
+        id: `BAR:${currentTime}`,
+        kind: 'ASIAN_RANGE',
+        label: `Active Candle (${timeframe})`,
+        time: currentTime,
+      };
+      const md = buildSmcElementContextMarkdown({
+        symbol,
+        timeframe,
+        clockMode,
+        digits,
+        element: { ...barElem, kind: 'FVG', label: `Active Bar (${formatClockTick(currentTime, clockMode, true)})` },
+        candles,
+        diagnostic: diag,
+        question,
+      }).replace('Selected Element:** `FVG` —', 'Selected Bar:**');
+      setCategory('NOTE');
+      setTitle(`Bar @ ${formatClockTick(currentTime, clockMode, false)}: ${question}`);
+      setRationale(md);
+      setTimestamp(currentTime);
+      await handleCopyText(md);
+    }
+  };
+
   const handleSubmit = () => {
-    if (!title.trim()) {
-      setErrorMsg('Please enter a descriptive title for this feedback case.');
+    const resolvedTitle =
+      title.trim() ||
+      (boundElement ? `${boundElement.kind}: ${boundElement.label} on ${symbol}` : '');
+    if (!resolvedTitle) {
+      setErrorMsg('Please select a chart element or enter a title for this feedback case.');
       return;
     }
     setErrorMsg(null);
 
-    const targetTime = timestamp ?? currentTime ?? Math.floor(Date.now() / 1000);
+    const targetTime = timestamp ?? boundElement?.time ?? currentTime ?? Math.floor(Date.now() / 1000);
 
     startTransition(async () => {
       try {
         const res = await replayApi.createFeedbackCase({
           symbol,
           timestamp: targetTime,
-          title: title.trim(),
+          title: resolvedTitle,
           notes: rationale.trim(),
           category,
           archetype_id: archetypeId.trim() || undefined,
@@ -184,6 +289,79 @@ export const AgentifyFeedbackPanel: React.FC<AgentifyFeedbackPanelProps> = ({
           {errorMsg}
         </div>
       )}
+
+      {/* Bound Chart Target & One-Click Inquiry Chips */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#1e222d', padding: '10px 12px', borderRadius: '6px', border: boundElement || selectedTrade ? '1.5px solid #f0b90b' : '1px solid #2a2e39' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+          <span style={{ fontWeight: 700, fontSize: '11px', color: boundElement || selectedTrade ? '#ffd54f' : '#90caf9' }}>
+            {boundElement
+              ? `🎯 Bound ${boundElement.kind}: ${boundElement.label}`
+              : selectedTrade
+              ? `🎯 Bound Trade: ${selectedTrade.origin} ${selectedTrade.direction}`
+              : currentTime !== null
+              ? `🎯 Active Bar (${formatClockTick(currentTime, clockMode, false)})`
+              : 'Click any Breaker, FVG, Sweep, or Trade on the chart'}
+          </span>
+          {boundElement && onClearBoundElement && (
+            <button
+              onClick={onClearBoundElement}
+              style={{ background: 'none', border: 'none', color: '#787b86', cursor: 'pointer', fontSize: '10px' }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {boundElement && (
+          <div style={{ fontSize: '10px', color: '#b2b5be', backgroundColor: '#131722', padding: '5px 8px', borderRadius: '4px' }}>
+            {boundElement.top !== undefined && boundElement.bottom !== undefined ? (
+              <span>
+                Bounds: <b style={{ color: '#ffffff' }}>{boundElement.bottom.toFixed(digits)} – {boundElement.top.toFixed(digits)}</b>
+              </span>
+            ) : boundElement.price !== undefined ? (
+              <span>
+                Price: <b style={{ color: '#ffffff' }}>{boundElement.price.toFixed(digits)}</b>
+                {boundElement.top !== undefined ? ` (Swept: ${boundElement.top.toFixed(digits)})` : ''}
+              </span>
+            ) : null}
+            <span style={{ marginLeft: '8px', color: '#787b86' }}>
+              @ {formatClockTick(boundElement.time, clockMode, true)}
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '10px', color: '#787b86', fontWeight: 600 }}>
+            ONE-CLICK QUESTIONS (COPIES CONTEXT + OHLC + VETO):
+          </span>
+          {getQuickQuestionsForSmcElement(
+            boundElement ? boundElement.kind : selectedTrade ? 'TRADE' : 'BAR'
+          ).map((q) => (
+            <button
+              key={q}
+              onClick={() => void handleQuickQuestionClick(q)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '6px',
+                textAlign: 'left',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                backgroundColor: '#131722',
+                border: '1px solid #2a2e39',
+                color: '#d1d4dc',
+                fontSize: '11px',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <span>{q}</span>
+              <Copy size={11} style={{ color: '#00e676', flexShrink: 0 }} />
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* New Feedback Form Card */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#1e222d', padding: '12px', borderRadius: '6px', border: '1px solid #2a2e39' }}>

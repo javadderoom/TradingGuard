@@ -20,6 +20,9 @@ import {
   buildClusteredTradeMarkers,
   findMatchingTradesNearTime,
   getClusterWindowSeconds,
+  findMatchingSmcElementsAtPoint,
+  getQuickQuestionsForSmcElement,
+  buildSmcElementContextMarkdown,
 } from '../utils/coTraderLogic';
 import type { BreakerBox, Candle, CatalogSymbol, FvgBox, ReplayTrade, AsianRangeDay } from '../types/replay';
 
@@ -546,5 +549,52 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     const hits = findMatchingTradesNearTime(closeTrades, 10300, 1800, null);
     expect(hits.map((h) => h.trade_id)).toEqual(['BOT-2', 'BOT-1', 'BOT-3']);
     expect(getClusterWindowSeconds([{ time: 1000, open: 1, high: 1, low: 1, close: 1 }, { time: 1300, open: 1, high: 1, low: 1, close: 1 }])).toBe(1800);
+  });
+
+  it('hit-tests Breaker, FVG, and Sweep SMC elements by (time, price) and builds structured context', () => {
+    const brk: BreakerBox = {
+      top: 3982.0,
+      bottom: 3977.0,
+      t_start: 1794471000,
+      t_end: 1794473400,
+      type: 'BEARISH_BREAKER',
+    };
+    const fvg: FvgBox = {
+      top: 3960.0,
+      bottom: 3955.0,
+      t_start: 1794474000,
+      t_end: 1794475500,
+      dir: 'BEARISH',
+    };
+    const hits = findMatchingSmcElementsAtPoint(
+      1794472000,
+      3979.5,
+      { fvgs: [fvg], breakers: [brk], sweeps: [], asianRanges: [], showBoxes: true },
+      600,
+      3.0,
+      null
+    );
+    expect(hits).toHaveLength(1);
+    expect(hits[0].kind).toBe('BREAKER');
+    expect(hits[0].label).toBe('BEARISH_BREAKER');
+
+    const questions = getQuickQuestionsForSmcElement('BREAKER');
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+
+    const md = buildSmcElementContextMarkdown({
+      symbol: 'XAUUSD_o',
+      timeframe: '5M',
+      clockMode: 'tehran',
+      digits: 2,
+      element: hits[0],
+      candles: [
+        { time: 1794471700, open: 3983, high: 3984, low: 3978, close: 3979 },
+        { time: 1794472000, open: 3979, high: 3981, low: 3976, close: 3977 },
+      ],
+      question: questions[0],
+    });
+    expect(md).toContain('BEARISH_BREAKER');
+    expect(md).toContain('3977.00 – 3982.00');
+    expect(md).toContain(questions[0]);
   });
 });

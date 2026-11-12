@@ -27,6 +27,7 @@ import type {
   FvgBox,
   Killzone,
   ReplayTrade,
+  SelectedSmcElement,
   SweepFlag,
 } from '../types/replay';
 import {
@@ -187,6 +188,7 @@ interface ForensicBoxParams {
   sweeps: SweepFlag[];
   candles: Candle[];
   selectedTrade: ReplayTrade | null;
+  selectedElement: SelectedSmcElement | null;
   digits: number;
 }
 
@@ -199,7 +201,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D): void {
     target.useMediaCoordinateSpace((scope) => {
-      const { chart, series, fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, digits } = this._getParams();
+      const { chart, series, fvgs, breakers, asianRanges, sweeps, candles, selectedTrade, selectedElement, digits } = this._getParams();
       if (!chart || !series) return;
 
       const timeScale = chart.timeScale();
@@ -323,21 +325,40 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         const boxWidth = Math.max(6, renderRight - renderLeft);
 
         const isBull = fvg.dir === 'BULLISH';
-        const strokeColor = isBull ? 'rgba(38, 166, 154, 0.72)' : 'rgba(239, 83, 80, 0.72)';
-        const textColor = isBull ? '#4dd0e1' : '#ff8a80';
+        const isSelFvg =
+          selectedElement?.kind === 'FVG' &&
+          selectedElement.fvg?.t_start === fvg.t_start &&
+          selectedElement.fvg?.top === fvg.top &&
+          selectedElement.fvg?.bottom === fvg.bottom;
+        const strokeColor = isSelFvg
+          ? '#f0b90b'
+          : isBull
+          ? 'rgba(38, 166, 154, 0.72)'
+          : 'rgba(239, 83, 80, 0.72)';
+        const textColor = isSelFvg ? '#ffd54f' : isBull ? '#4dd0e1' : '#ff8a80';
 
         ctx.save();
-        ctx.fillStyle = isBull ? 'rgba(38, 166, 154, 0.12)' : 'rgba(239, 83, 80, 0.12)';
+        ctx.fillStyle = isSelFvg
+          ? 'rgba(240, 185, 11, 0.22)'
+          : isBull
+          ? 'rgba(38, 166, 154, 0.12)'
+          : 'rgba(239, 83, 80, 0.12)';
         ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = isSelFvg ? 2.5 : 1;
+        if (!isSelFvg) ctx.setLineDash([4, 3]);
         ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
         ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
         ctx.setLineDash([]);
 
-        if (boxWidth >= 18) {
+        if (boxWidth >= 18 || isSelFvg) {
           const labelY = boxTop >= 18 ? boxTop - 15 : boxTop + 2;
-          drawZonePill(isBull ? '+FVG' : '-FVG', renderLeft, labelY, textColor, strokeColor);
+          drawZonePill(
+            isSelFvg ? (isBull ? '★ +FVG' : '★ -FVG') : isBull ? '+FVG' : '-FVG',
+            renderLeft,
+            labelY,
+            textColor,
+            strokeColor
+          );
         }
         ctx.restore();
       }
@@ -368,18 +389,29 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         const boxWidth = Math.max(6, renderRight - renderLeft);
 
         const isBull = brk.type.toUpperCase().includes('BULLISH');
-        const brkStroke = 'rgba(206, 147, 216, 0.85)';
+        const isSelBrk =
+          selectedElement?.kind === 'BREAKER' &&
+          selectedElement.breaker?.t_start === brk.t_start &&
+          selectedElement.breaker?.top === brk.top &&
+          selectedElement.breaker?.bottom === brk.bottom;
+        const brkStroke = isSelBrk ? '#f0b90b' : 'rgba(206, 147, 216, 0.85)';
 
         ctx.save();
-        ctx.fillStyle = 'rgba(171, 71, 188, 0.14)';
+        ctx.fillStyle = isSelBrk ? 'rgba(240, 185, 11, 0.22)' : 'rgba(171, 71, 188, 0.14)';
         ctx.strokeStyle = brkStroke;
-        ctx.lineWidth = 1.25;
+        ctx.lineWidth = isSelBrk ? 2.5 : 1.25;
         ctx.fillRect(renderLeft, boxTop, boxWidth, boxHeight);
         ctx.strokeRect(renderLeft, boxTop, boxWidth, boxHeight);
 
-        if (boxWidth >= 18) {
+        if (boxWidth >= 18 || isSelBrk) {
           const labelY = boxTop >= 18 ? boxTop - 15 : boxTop + 2;
-          drawZonePill(isBull ? '+BRK' : '-BRK', renderLeft, labelY, '#e1bee7', brkStroke);
+          drawZonePill(
+            isSelBrk ? (isBull ? '★ +BRK' : '★ -BRK') : isBull ? '+BRK' : '-BRK',
+            renderLeft,
+            labelY,
+            isSelBrk ? '#ffd54f' : '#e1bee7',
+            brkStroke
+          );
         }
         ctx.restore();
       }
@@ -392,6 +424,10 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
         if (x < -20 || x > width + 20) continue;
 
         const isHighSweep = sweep.type === 'HIGH_SWEEP';
+        const isSelSweep =
+          selectedElement?.kind === 'SWEEP' &&
+          selectedElement.sweep?.time === sweep.time &&
+          selectedElement.sweep?.type === sweep.type;
         ctx.save();
 
         // Horizontal dashed reference line from swept pivot/Asian boundary to the sweep wick
@@ -437,7 +473,7 @@ class ForensicBoxPaneRenderer implements IPrimitivePaneRenderer {
 
         // Badge label with collision avoidance
         ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        const labelText = isHighSweep ? 'BSL Sweep' : 'SSL Sweep';
+        const labelText = `${isSelSweep ? '★ ' : ''}${isHighSweep ? 'BSL Sweep' : 'SSL Sweep'}`;
         const badgeW = Math.ceil(ctx.measureText(labelText).width) + 10;
         const badgeH = 15;
         const badgeX = Math.max(2, Math.min(width - badgeW - 2, x - badgeW / 2));
@@ -552,6 +588,7 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
   private _sweeps: SweepFlag[] = [];
   private _candles: Candle[] = [];
   private _selectedTrade: ReplayTrade | null = null;
+  private _selectedElement: SelectedSmcElement | null = null;
   private _digits: number = 2;
   private _paneView: IPrimitivePaneView;
 
@@ -565,6 +602,7 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
       sweeps: this._sweeps,
       candles: this._candles,
       selectedTrade: this._selectedTrade,
+      selectedElement: this._selectedElement,
       digits: this._digits,
     }));
 
@@ -581,6 +619,7 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
     sweeps?: SweepFlag[];
     candles?: Candle[];
     selectedTrade?: ReplayTrade | null;
+    selectedElement?: SelectedSmcElement | null;
     digits?: number;
   }): void {
     if (params.fvgs !== undefined) this._fvgs = params.fvgs;
@@ -589,6 +628,7 @@ export class ForensicBoxPrimitive implements ISeriesPrimitive<Time> {
     if (params.sweeps !== undefined) this._sweeps = params.sweeps;
     if (params.candles !== undefined) this._candles = params.candles;
     if (params.selectedTrade !== undefined) this._selectedTrade = params.selectedTrade;
+    if (params.selectedElement !== undefined) this._selectedElement = params.selectedElement;
     if (params.digits !== undefined) this._digits = params.digits;
     this._requestUpdate?.();
   }
