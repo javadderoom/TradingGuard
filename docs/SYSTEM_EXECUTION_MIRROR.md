@@ -2221,6 +2221,17 @@ Prompted by the Nov 12, 2026 price action (where GBPUSD swept `12:00 UTC` at `14
 - **Institutional Verdict**:
   While the setup yielded an attractive winner on Nov 12 due to macro session catalyst convergence (US data release and NYSE cash open), systematically trading midday swing sweeps during the low-volume London lunch / pre-NY lull consistently destroys capital across multi-seasonal market cycles. The setup is definitively rejected from automated production ratification. The screener's existing session veto (`Veto: Late NY PM / Silver Bullet window banned on GBPUSD_o per 1-year empirical audit`) remains strictly justified and actively protective.
 
+### 20.5 Visual Co-Backtester Coordinate & Refresh State Hardening
+1. **Dynamic Catalog-Driven Date Range Initialization (`web_replayer/src/App.tsx`)**:
+   - Replaced static fallback initialization (`'2026-11-10'` to `'2026-11-12'`) with dynamic catalog binding on component mount (`replayApi.getCatalog()`).
+   - Automatically resolves `getLatestRangeForSymbol(activeSym, 3)` so that page refresh immediately synchronizes to the latest cached date in the underlying parquet store (e.g. `2026-11-13`) without requiring manual preset clicks.
+   - Streamlined `handleSyncMt5` to avoid racing duplicate fetches when date states update.
+2. **Candle-Aware Killzone Coordinate Resolution (`web_replayer/src/chart/primitives.ts`, `ReplayChart.tsx`)**:
+   - Upgraded `KillzonePaneRenderer` to utilize `resolveTimeX(timeScale, kz.start_time / kz.end_time, candles)` binary search interpolation rather than raw `timeToCoordinate`.
+   - Prevents session killzone bands from vanishing or clipping across non-standard market open times (e.g. Gold 01:00 UTC vs Asian 00:00 UTC session start) and across varying chart resampling timeframes (5M, 15M, 1H, 4H, 1D).
+   - Wired `candles` dependency directly into `KillzonePrimitive` updates, ensuring robust, persistent session shading across pan, zoom, and background data synchronization.
+
+
 
 
 

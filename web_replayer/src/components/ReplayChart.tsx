@@ -199,7 +199,7 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     });
 
     // Create & Attach Custom Series Primitives
-    const kzPrim = new KillzonePrimitive(initialKillzonesRef.current);
+    const kzPrim = new KillzonePrimitive(initialKillzonesRef.current, candles);
     const boxPrim = new ForensicBoxPrimitive();
     const posPrim = new PositionBoxPrimitive();
 
@@ -357,12 +357,12 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     }
   }, [candles, replayTo]);
 
-  // Update Killzones with toggle support
+  // Update Killzones with toggle support & candle coordinate resolution
   useEffect(() => {
     if (killzonePrimitiveRef.current) {
-      killzonePrimitiveRef.current.updateKillzones(showKillzones ? killzones : []);
+      killzonePrimitiveRef.current.updateKillzones(showKillzones ? killzones : [], candles);
     }
-  }, [killzones, showKillzones]);
+  }, [killzones, showKillzones, candles]);
 
   // Update Forensic Boxes (FVGs, Breakers, Asian Range, Sweeps) with toggle support
   useEffect(() => {

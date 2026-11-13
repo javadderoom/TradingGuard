@@ -83,6 +83,7 @@ function resolveTimeX(
 interface KillzoneParams {
   chart: IChartApiBase<Time> | null;
   killzones: Killzone[];
+  candles?: Candle[];
 }
 
 class KillzonePaneRenderer implements IPrimitivePaneRenderer {
@@ -94,7 +95,7 @@ class KillzonePaneRenderer implements IPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D): void {
     target.useMediaCoordinateSpace((scope) => {
-      const { chart, killzones } = this._getParams();
+      const { chart, killzones, candles } = this._getParams();
       if (!chart || !killzones.length) return;
 
       const timeScale = chart.timeScale();
@@ -102,8 +103,8 @@ class KillzonePaneRenderer implements IPrimitivePaneRenderer {
       const { width, height } = scope.mediaSize;
 
       for (const kz of killzones) {
-        const x1 = timeScale.timeToCoordinate(kz.start_time as UTCTimestamp);
-        const x2 = timeScale.timeToCoordinate(kz.end_time as UTCTimestamp);
+        const x1 = resolveTimeX(timeScale, kz.start_time, candles);
+        const x2 = resolveTimeX(timeScale, kz.end_time, candles);
 
         let left: number | null = x1 !== null ? Number(x1) : null;
         let right: number | null = x2 !== null ? Number(x2) : null;
@@ -139,14 +140,17 @@ class KillzonePaneRenderer implements IPrimitivePaneRenderer {
 export class KillzonePrimitive implements ISeriesPrimitive<Time> {
   private _chart: IChartApiBase<Time> | null = null;
   private _killzones: Killzone[] = [];
+  private _candles: Candle[] = [];
   private _requestUpdate: (() => void) | null = null;
   private _paneView: IPrimitivePaneView;
 
-  constructor(killzones: Killzone[] = []) {
+  constructor(killzones: Killzone[] = [], candles: Candle[] = []) {
     this._killzones = killzones;
+    this._candles = candles;
     const renderer = new KillzonePaneRenderer(() => ({
       chart: this._chart,
       killzones: this._killzones,
+      candles: this._candles,
     }));
 
     this._paneView = {
@@ -155,8 +159,9 @@ export class KillzonePrimitive implements ISeriesPrimitive<Time> {
     };
   }
 
-  updateKillzones(killzones: Killzone[]): void {
+  updateKillzones(killzones: Killzone[], candles: Candle[] = []): void {
     this._killzones = killzones;
+    this._candles = candles;
     this._requestUpdate?.();
   }
 

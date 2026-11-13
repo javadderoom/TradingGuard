@@ -200,10 +200,16 @@ export function App() {
     };
   }, [startDateStr, endDateStr]);
 
-  // Load Catalog on Mount
+  // Load Catalog on Mount & adopt latest cached dates for selected symbol
   useEffect(() => {
     replayApi.getCatalog().then((res) => {
       setCatalog(res);
+      const curSym = res.symbols.find((s) => s.symbol === selectedSymbol);
+      const latest = getLatestRangeForSymbol(curSym, 3);
+      if (latest) {
+        setStartDateStr(latest.start);
+        setEndDateStr(latest.end);
+      }
     }).catch(() => {});
   }, []);
 
@@ -286,15 +292,9 @@ export function App() {
       }
       setFvgs(dedupeFvgBoxes(fvgList));
       setBreakers(dedupeBreakerBoxes(brkList));
-    } catch {
+    } catch (err) {
       if (isCancelled?.()) return;
-      setKillzones([]);
-      setAsianRanges({});
-      setDiagnostics([]);
-      setBotEvents([]);
-      setBotTrades([]);
-      setFvgs([]);
-      setBreakers([]);
+      console.warn('loadBotScan failed:', err);
     }
   }, [selectedSymbol, startEpoch, endEpoch, engineClockMode]);
 
@@ -569,15 +569,18 @@ export function App() {
         setCatalog(freshCatalog);
         const syncedSym = freshCatalog.symbols.find((s) => s.symbol === selectedSymbol);
         const latest = getLatestRangeForSymbol(syncedSym, 3);
-        if (syncRes.success && latest && latest.end > endDateStr) {
+        if (syncRes.success && latest && (latest.end !== endDateStr || latest.start !== startDateStr)) {
           setStartDateStr(latest.start);
           setEndDateStr(latest.end);
+        } else {
+          await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
         }
+      } else {
+        await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
       }
       if (syncRes.success === false && typeof syncRes.message === 'string') {
         setSyncNotice(syncRes.message);
       }
-      await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
     } catch (err) {
       setSyncNotice(err instanceof Error ? err.message : 'MT5 sync failed');
     } finally {
