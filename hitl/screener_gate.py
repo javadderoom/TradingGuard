@@ -36,14 +36,18 @@ TEHRAN_OFFSET = datetime.timedelta(hours=3, minutes=30)
 
 
 def tehran_hour_from_bar_time(bar_time: Any) -> int:
-    """Tehran hour of a bar time (epoch int/float, or a datetime)."""
-    if isinstance(bar_time, datetime.datetime):
-        dt = bar_time
-    else:
-        dt = datetime.datetime.fromtimestamp(int(bar_time), tz=datetime.timezone.utc)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
-    return (dt + TEHRAN_OFFSET).hour
+    """
+    Tehran hour of an MT5 broker bar time (epoch int/float, or datetime).
+    Properly converts MT5 broker server time (EET/EEST) to true Tehran time (UTC+3:30)
+    without 2-hour winter timezone skew.
+    """
+    from hitl.replay_data import server_epoch_to_zones, TZ_EU_ATHENS, TZ_TEHRAN
+    if isinstance(bar_time, (int, float)):
+        return server_epoch_to_zones(int(bar_time))["teh_dt"].hour
+    elif isinstance(bar_time, datetime.datetime):
+        aware = bar_time.replace(tzinfo=TZ_EU_ATHENS) if bar_time.tzinfo is None else bar_time
+        return aware.astimezone(TZ_TEHRAN).hour
+    return 0
 
 
 def fetch_live_bars(symbol: str) -> Optional[Dict[str, List[Dict[str, Any]]]]:

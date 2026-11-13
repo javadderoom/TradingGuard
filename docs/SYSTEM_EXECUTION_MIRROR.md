@@ -41,6 +41,9 @@ The market clock dynamically synchronizes timezones without static hardcoded ass
 - **Cable (`GBPUSD`) Session Restrictions**: All New York sessions (**`NY_Open`** producing -$21.55R and **`NY_Silver_Bullet`** producing -$6.54R) are **strictly banned on Cable** (combined -$28.09R capital destruction). Cable execution is strictly restricted to **London Open** and **London Continuation** (+15.48R, PF 1.70, 33.3% WR).
 - **Nasdaq 100 (`NQ`) Session Restrictions**: **`NY_Pre_Market`** (-$4.44R drag, PF 0.73) and NY Silver Bullet are **strictly banned on NQ**. NQ execution is restricted exclusively to **London Open Bearish Judas Breakers** (SHORT only, fading Judas highs into European morning flows: +5.36R, PF 1.60; Bullish Breakers decommissioned due to -$6.02R drag, 10% WR).
 
+### 2.1 Broker Timestamp Conversion & Screener Gate Resolution
+MT5 bar timestamps represent broker server time (EET = UTC+2 in winter, EEST = UTC+3 in summer). All modules convert broker timestamps via `server_epoch_to_zones()` or `ZoneInfo("Europe/Athens")` into true UTC before computing Tehran local time (`UTC+3:30`). Direct addition of UTC offsets to raw broker timestamps is strictly prohibited to prevent timezone skew (which previously shifted 16:30 Tehran NY Open bars into 18:30 Tehran Late NY Silver Bullet, causing false session bans).
+
 ---
 
 ## 3. MTF Structural State Machine (`hitl/backtest/mtf_structure.py`)
