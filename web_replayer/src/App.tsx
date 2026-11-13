@@ -101,6 +101,11 @@ export function App() {
   const [startDateStr, setStartDateStr] = useState<string>('2026-11-10');
   const [endDateStr, setEndDateStr] = useState<string>('2026-11-12');
 
+  // Auto-Sync state (persisted in WorkbenchPrefs, defaults to true every 60s)
+  const [autoSync, setAutoSync] = useState<boolean>(initialPrefs.autoSync ?? true);
+  const [autoSyncCountdown, setAutoSyncCountdown] = useState<number>(60);
+  const [isAutoSyncing, setIsAutoSyncing] = useState<boolean>(false);
+
   // Visibility Toggles
   const [showKillzones, setShowKillzones] = useState<boolean>(initialPrefs.showKillzones);
   const [showAsianRange, setShowAsianRange] = useState<boolean>(initialPrefs.showAsianRange);
@@ -130,6 +135,7 @@ export function App() {
       engineClockMode,
       timeframe,
       isDrawerOpen,
+      autoSync,
     });
   }, [
     showKillzones,
@@ -141,6 +147,7 @@ export function App() {
     engineClockMode,
     timeframe,
     isDrawerOpen,
+    autoSync,
   ]);
 
   // Co-Trading & Selection State
@@ -558,9 +565,10 @@ export function App() {
     });
   };
 
-  // MT5 Sync Handler
+  // MT5 Sync Handler (Manual)
   const handleSyncMt5 = async () => {
     setIsSyncingMt5(true);
+    setAutoSyncCountdown(60);
     setSyncNotice(null);
     try {
       const syncRes = await replayApi.syncMt5(selectedSymbol, 5);
@@ -587,6 +595,52 @@ export function App() {
       setIsSyncingMt5(false);
     }
   };
+
+  // Silent Background Auto-Sync Handler (Runs every 60s without intrusive toasts)
+  const silentSyncMt5 = useCallback(async () => {
+    if (isSyncingMt5 || isAutoSyncing) return;
+    setIsAutoSyncing(true);
+    try {
+      const syncRes = await replayApi.syncMt5(selectedSymbol, 1);
+      if (syncRes.success) {
+        const freshCatalog = await replayApi.getCatalog().catch(() => null);
+        if (freshCatalog) {
+          setCatalog(freshCatalog);
+          const syncedSym = freshCatalog.symbols.find((s) => s.symbol === selectedSymbol);
+          const latest = getLatestRangeForSymbol(syncedSym, 3);
+          if (latest && latest.end > endDateStr) {
+            setStartDateStr(latest.start);
+            setEndDateStr(latest.end);
+            return;
+          }
+        }
+        if (syncRes.bars_added && syncRes.bars_added > 0) {
+          await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
+        }
+      }
+    } catch {
+      // Non-disruptive silent fallback
+    } finally {
+      setIsAutoSyncing(false);
+    }
+  }, [selectedSymbol, endDateStr, isSyncingMt5, isAutoSyncing, loadCandles, loadBotScan, loadCoTrades]);
+
+  // Periodic Auto-Sync Timer (1-second tick for countdown & 60s trigger)
+  useEffect(() => {
+    if (!autoSync) return;
+
+    const interval = setInterval(() => {
+      setAutoSyncCountdown((prev) => {
+        if (prev <= 1) {
+          void silentSyncMt5();
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoSync, silentSyncMt5]);
 
   // Co-Trading: Initiate Draft Setup
   const handleCreateDraft = (dir: TradeDirection) => {
@@ -817,6 +871,46 @@ export function App() {
           >
             <RefreshCw size={12} className={isSyncingMt5 ? 'animate-spin' : ''} />
             {isSyncingMt5 ? 'Syncing...' : 'Sync MT5'}
+          </button>
+
+          {/* MT5 Auto-Sync Toggle Button */}
+          <button
+            onClick={() => {
+              setAutoSync((prev) => !prev);
+              setAutoSyncCountdown(60);
+            }}
+            title={
+              autoSync
+                ? `Auto-Sync active (syncs every 60s). Next sync in ${autoSyncCountdown}s. Click to pause.`
+                : 'Auto-Sync paused. Click to enable 60-second automatic MT5 sync.'
+            }
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              backgroundColor: autoSync ? 'rgba(8, 153, 129, 0.12)' : '#0f0f0f',
+              border: `1px solid ${autoSync ? 'rgba(8, 153, 129, 0.35)' : '#262626'}`,
+              borderRadius: '4px',
+              color: autoSync ? '#089981' : '#666666',
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: '3px 8px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: autoSync ? '#089981' : '#555555',
+                display: 'inline-block',
+                boxShadow: autoSync ? '0 0 6px #089981' : 'none',
+              }}
+            />
+            {isAutoSyncing ? <RefreshCw size={11} className="animate-spin" /> : null}
+            {autoSync ? `Auto (${autoSyncCountdown}s)` : 'Auto: OFF'}
           </button>
         </div>
 

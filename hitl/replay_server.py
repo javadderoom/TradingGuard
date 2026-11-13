@@ -512,6 +512,20 @@ class SpaFallbackHandler(BaseApiHandler):
         self.write(fallback_html)
 
 
+async def background_mt5_sync(data_mgr: ReplayDataManager, bot_scan_cache: collections.OrderedDict) -> None:
+    """Non-blocking periodic sync from MT5 terminal for active instruments every 60s."""
+    for sym in ("XAUUSD_o", "GBPUSD_o", "NQ"):
+        try:
+            res = await asyncio.to_thread(data_mgr.sync_symbol_from_mt5, symbol=sym, days_back=1)
+            if res.get("bars_added", 0) > 0:
+                sym_clean = sym.upper()
+                keys_to_purge = [k for k in list(bot_scan_cache.keys()) if k[0].upper() == sym_clean]
+                for k in keys_to_purge:
+                    bot_scan_cache.pop(k, None)
+        except Exception:
+            pass
+
+
 def make_app(
     data_mgr: Optional[ReplayDataManager] = None,
     ledger: Optional[CoBacktestLedger] = None,
@@ -547,6 +561,16 @@ def make_app(
         (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": str(assets_dir)}),
         (r"/(.*)", SpaFallbackHandler),
     ]
+
+    # Start periodic 60s background MT5 auto-sync
+    sync_cb = tornado.ioloop.PeriodicCallback(
+        lambda: asyncio.create_task(background_mt5_sync(data_mgr, bot_scan_cache)),
+        60000,
+    )
+    try:
+        sync_cb.start()
+    except Exception:
+        pass
 
     return tornado.web.Application(
         handlers,

@@ -35,6 +35,14 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json();
 }
 
+export interface SyncMt5Response {
+  success: boolean;
+  symbol?: string;
+  bars_added?: number;
+  total_bars?: number;
+  message?: string;
+}
+
 export const replayApi = {
   /**
    * Fetches the registered symbol catalog with cached date ranges and system risk limits.
@@ -196,12 +204,12 @@ export const replayApi = {
   /**
    * Syncs latest M1 candles directly from MetaTrader 5 terminal.
    */
-  async syncMt5(symbol: string, daysBack: number = 5): Promise<{ success: boolean; [key: string]: unknown }> {
+  async syncMt5(symbol: string, daysBack: number = 5): Promise<SyncMt5Response> {
     const res = await fetch(`${BASE_URL}/api/sync-mt5`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ symbol, days_back: daysBack }),
     });
-    return handleResponse<{ success: boolean; [key: string]: unknown }>(res);
+    return handleResponse<SyncMt5Response>(res);
   },
 };

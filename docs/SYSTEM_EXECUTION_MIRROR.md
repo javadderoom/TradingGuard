@@ -2230,6 +2230,9 @@ Prompted by the Nov 12, 2026 price action (where GBPUSD swept `12:00 UTC` at `14
    - Upgraded `KillzonePaneRenderer` to utilize `resolveTimeX(timeScale, kz.start_time / kz.end_time, candles)` binary search interpolation rather than raw `timeToCoordinate`.
    - Prevents session killzone bands from vanishing or clipping across non-standard market open times (e.g. Gold 01:00 UTC vs Asian 00:00 UTC session start) and across varying chart resampling timeframes (5M, 15M, 1H, 4H, 1D).
    - Wired `candles` dependency directly into `KillzonePrimitive` updates, ensuring robust, persistent session shading across pan, zoom, and background data synchronization.
+3. **Dual-Layer Automatic MetaTrader 5 Synchronization (`hitl/replay_server.py`, `web_replayer/src/App.tsx`)**:
+   - **Backend Daemon Periodic Sync**: Integrated `tornado.ioloop.PeriodicCallback` running every 60 seconds inside `hitl/replay_server.py` to pull fresh M1 rates for active symbols (`XAUUSD_o`, `GBPUSD_o`, `NQ`) and invalidate LRU scan caches via non-blocking `asyncio.to_thread`.
+   - **Frontend Auto-Sync Transport Toggle**: Added an interactive `[● Auto (60s)]` toggle button next to manual `[Sync MT5]` in `App.tsx` (persisted in `WorkbenchPrefs`). Executes non-disruptive incremental background updates without resetting user scroll/zoom positions or selected bars, smoothly displaying new bars and updated algorithmic verdicts in real time.
 
 
 

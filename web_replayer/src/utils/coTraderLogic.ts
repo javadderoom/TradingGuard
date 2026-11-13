@@ -602,6 +602,7 @@ export interface WorkbenchPrefs {
   engineClockMode: EngineClockMode;
   timeframe: Timeframe;
   isDrawerOpen: boolean;
+  autoSync: boolean;
 }
 
 export const WORKBENCH_PREFS_KEY = 'tradingguard_replayer_prefs_v1';
@@ -616,6 +617,7 @@ export const DEFAULT_WORKBENCH_PREFS: WorkbenchPrefs = {
   engineClockMode: 'true_tehran',
   timeframe: '5M',
   isDrawerOpen: true,
+  autoSync: true,
 };
 
 export function loadWorkbenchPrefs(): WorkbenchPrefs {
@@ -650,6 +652,7 @@ export function loadWorkbenchPrefs(): WorkbenchPrefs {
           ? parsed.timeframe
           : DEFAULT_WORKBENCH_PREFS.timeframe,
       isDrawerOpen: typeof parsed.isDrawerOpen === 'boolean' ? parsed.isDrawerOpen : DEFAULT_WORKBENCH_PREFS.isDrawerOpen,
+      autoSync: typeof parsed.autoSync === 'boolean' ? parsed.autoSync : DEFAULT_WORKBENCH_PREFS.autoSync,
     };
   } catch {
     return { ...DEFAULT_WORKBENCH_PREFS };
