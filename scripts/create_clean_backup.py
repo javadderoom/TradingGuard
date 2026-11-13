@@ -23,6 +23,7 @@ EXCLUDE_DIRS = {
     "dist",
     ".git",
     "cache",  # backtest_results/cache parquet data
+    "soli_chrome_profile",  # Chrome profile cache
 }
 
 EXCLUDE_EXTENSIONS = {
