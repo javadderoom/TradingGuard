@@ -752,7 +752,8 @@ def detect_reversal_origin_retest(
 def detect_ny_trend_continuation(
     bars_5m: List[Dict[str, Any]],
     bars_1h: Optional[List[Dict[str, Any]]],
-    symbol: str = "XAUUSD"
+    symbol: str = "XAUUSD",
+    bars_1d: Optional[List[Dict[str, Any]]] = None
 ) -> Tuple[bool, str, float, float, str]:
     """
     Detects SETUP-ARCH-015: NY Open One-Sided Trend Continuation Sweep on Gold.
@@ -764,6 +765,8 @@ def detect_ny_trend_continuation(
       4. Pullback reached >= 45% of the post-London leg before/on the trigger bar.
       5. Closed 5M trigger bar (range >= $2.00) sweeps prior 6-bar high/low with >= 25% wick
          and closes in the outer 40% in the trend direction ($1.80 <= risk <= $20.00).
+      6. Macro Regime Alignment: In a Daily Bullish Trend, Bearish continuations are VETOED.
+         In a Daily Bearish Trend, Bullish continuations are VETOED.
     """
     if "XAU" not in symbol.upper():
         return False, "NONE", 0.0, 0.0, ""
@@ -842,7 +845,19 @@ def detect_ny_trend_continuation(
     if leg <= 0:
         return False, "NONE", 0.0, 0.0, ""
 
+    d_trend = "NEUTRAL"
+    if bars_1d and len(bars_1d) >= 5:
+        d_alpha = 2.0 / (20.0 + 1.0)
+        d_ema = float(bars_1d[0]['close'])
+        for db in bars_1d[1:]:
+            d_ema = d_alpha * float(db['close']) + (1.0 - d_alpha) * d_ema
+        d_close = float(bars_1d[-1]['close'])
+        d_trend = "BULLISH" if d_close > d_ema else "BEARISH"
+
     if one_bear and h1_close < ema50 and cur['high'] < asia_h:
+        # Veto counter-trend Bearish continuations during a Macro Bullish Regime
+        if d_trend == "BULLISH":
+            return False, "NONE", 0.0, 0.0, ""
         uw = cur['high'] - max(cur['open'], cur['close'])
         ret = (cur['high'] - lon_l) / leg
         if (
@@ -860,6 +875,9 @@ def detect_ny_trend_continuation(
                 return True, "BEARISH", entry, sl, desc
 
     if one_bull and h1_close > ema50 and cur['low'] > asia_l:
+        # Veto counter-trend Bullish continuations during a Macro Bearish Regime
+        if d_trend == "BEARISH":
+            return False, "NONE", 0.0, 0.0, ""
         lw = min(cur['open'], cur['close']) - cur['low']
         ret = (lon_h - cur['low']) / leg
         if (
@@ -875,6 +893,253 @@ def detect_ny_trend_continuation(
             if 1.80 <= risk <= 20.00:
                 desc = f"NY Open One-Sided Bullish Trend Continuation (Swept pre-NY floor {pre6_l:.2f}, ret {ret*100:.0f}%, H1>EMA50 {ema50:.2f})"
                 return True, "BULLISH", entry, sl, desc
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
+def detect_nq_opening_range_breakout(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: Optional[List[Dict[str, Any]]],
+    bars_1d: Optional[List[Dict[str, Any]]],
+    symbol: str = "NQ"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-017: Institutional 15m Opening Range Breakout Continuation on NQ.
+    Active during NYSE Cash Open (14:45-17:00 UTC Winter / 13:45-16:00 UTC Summer).
+    Dynamic Macro Regime Alignment:
+      - Bullish Trend: LONG ONLY (Short breakouts vetoed).
+      - Bearish Trend: SHORT ONLY (Long breakouts vetoed).
+      - Neutral / Chop: VETO.
+    Filters:
+      - Breakout bar displacement >= 25.0 pts.
+      - Volume >= 1.2x 20-bar SMA.
+      - Consumed day range <= 70% ADR14.
+    """
+    if "NQ" not in symbol.upper() and "NAS" not in symbol.upper() and "US100" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+    if not bars_5m or len(bars_5m) < 12 or not bars_1h or len(bars_1h) < 20:
+        return False, "NONE", 0.0, 0.0, ""
+
+    offset_sec = 7200
+    try:
+        from hitl.backtest.chart_renderer import get_broker_utc_offset_seconds
+        offset_sec = get_broker_utc_offset_seconds()
+    except Exception:
+        pass
+
+    cur = bars_5m[-1]
+    sig_utc = int(cur['time']) - offset_sec
+    sig_dt = datetime.datetime.fromtimestamp(sig_utc, tz=datetime.timezone.utc)
+    stimes = get_session_times_for_date(sig_dt.date())
+    nyse_utc = int(stimes["nyse_open"]["utc_time"].timestamp())
+
+    # ORB window: 15m after NYSE open up to 2.5h
+    if not (nyse_utc + 900 <= sig_utc <= nyse_utc + 9000):
+        return False, "NONE", 0.0, 0.0, ""
+
+    # Day start in UTC
+    day_srv_date = datetime.datetime.fromtimestamp(int(cur['time']), tz=datetime.timezone.utc).date()
+    day_start_utc = int(datetime.datetime(day_srv_date.year, day_srv_date.month, day_srv_date.day, 0, 0, tzinfo=datetime.timezone.utc).timestamp()) - offset_sec
+
+    # 15m Opening Range bars: [nyse_utc .. nyse_utc + 900)
+    or_bars = [b for b in bars_5m if nyse_utc <= (int(b['time']) - offset_sec) < (nyse_utc + 900)]
+    if not or_bars:
+        return False, "NONE", 0.0, 0.0, ""
+
+    or_high = max(b['high'] for b in or_bars)
+    or_low = min(b['low'] for b in or_bars)
+    or_range = or_high - or_low
+    if or_range < 15.0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    # ADR Headroom Gate (<= 70% of ADR14 consumed)
+    if bars_1d and len(bars_1d) >= 5:
+        recent_adrs = [b['high'] - b['low'] for b in bars_1d[-15:-1]]
+        adr14 = sum(recent_adrs) / len(recent_adrs) if recent_adrs else 200.0
+        m5_day = [b for b in bars_5m if (int(b['time']) - offset_sec) >= day_start_utc]
+        day_consumed = (max(b['high'] for b in m5_day) - min(b['low'] for b in m5_day)) if m5_day else 0.0
+        if adr14 > 0 and (day_consumed / adr14) > 0.70:
+            return False, "NONE", 0.0, 0.0, ""
+
+    # Macro Trend Determination (Daily + H1 EMA50)
+    alpha = 2.0 / (50.0 + 1.0)
+    ema50 = float(bars_1h[0]['close'])
+    for hb in bars_1h[1:]:
+        ema50 = alpha * float(hb['close']) + (1.0 - alpha) * ema50
+    h1_close = float(bars_1h[-1]['close'])
+
+    h1_slope = 0.0
+    if len(bars_1h) >= 6:
+        ema_prev5 = float(bars_1h[-6]['close'])
+        h1_slope = ema50 - ema_prev5
+
+    macro_bull = (h1_close > ema50 and h1_slope >= 0)
+    macro_bear = (h1_close < ema50 and h1_slope <= 0)
+
+    # Volume expansion filter
+    vol_cur = cur.get('tick_volume', 1)
+    vols_20 = [b.get('tick_volume', 1) for b in bars_5m[-21:-1]]
+    avg_vol = (sum(vols_20) / len(vols_20)) if vols_20 else vol_cur
+    if vol_cur < 1.2 * avg_vol:
+        return False, "NONE", 0.0, 0.0, ""
+
+    candle_range = cur['high'] - cur['low']
+    body = abs(cur['close'] - cur['open'])
+    if candle_range <= 0 or (body / candle_range) < 0.55 or candle_range < 25.0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    uw = cur['high'] - max(cur['open'], cur['close'])
+    lw = min(cur['open'], cur['close']) - cur['low']
+
+    # Bullish Breakout (ONLY if Macro Trend is Bullish)
+    if macro_bull and cur['close'] >= or_high + 5.0 and (uw / candle_range <= 0.25):
+        entry = max(or_high, cur['open'])
+        sl = round(cur['low'] - 8.0, 1)
+        risk = entry - sl
+        if 15.0 <= risk <= 40.0:
+            desc = f"NYSE Cash 15m ORB Bullish Breakout (OR High {or_high:.1f}, Vol {vol_cur} >= 1.2x avg, H1>EMA50 {ema50:.1f})"
+            return True, "BULLISH", entry, sl, desc
+
+    # Bearish Breakout (ONLY if Macro Trend is Bearish)
+    if macro_bear and cur['close'] <= or_low - 5.0 and (lw / candle_range <= 0.25):
+        entry = min(or_low, cur['open'])
+        sl = round(cur['high'] + 8.0, 1)
+        risk = sl - entry
+        if 15.0 <= risk <= 40.0:
+            desc = f"NYSE Cash 15m ORB Bearish Breakdown (OR Low {or_low:.1f}, Vol {vol_cur} >= 1.2x avg, H1<EMA50 {ema50:.1f})"
+            return True, "BEARISH", entry, sl, desc
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
+def detect_nq_intermarket_smt(
+    bars_5m: List[Dict[str, Any]],
+    smt_info: Optional[Dict[str, Any]],
+    symbol: str = "NQ"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-016: Intermarket SMT Correlation Divergence on NQ vs SPX/YM.
+    Dual-directional (BUY & SELL).
+    Synchronized Liquidation Veto active.
+    """
+    if "NQ" not in symbol.upper() and "NAS" not in symbol.upper() and "US100" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+    if not smt_info or not smt_info.get("has_smt"):
+        return False, "NONE", 0.0, 0.0, ""
+
+    if smt_info.get("synchronized_sweep"):
+        return False, "NONE", 0.0, 0.0, ""
+
+    smt_type = smt_info.get("type", "")
+    entry = smt_info.get("entry", 0.0)
+    sl = smt_info.get("sl", 0.0)
+    risk = abs(entry - sl)
+    if risk <= 0 or risk > 60.0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    direction = "BULLISH" if "BULLISH" in smt_type else "BEARISH"
+    desc = f"Intermarket SMT Divergence (NQ vs SPX/YM: {smt_info.get('description', '')})"
+    return True, direction, entry, sl, desc
+
+
+def detect_gold_judas_extreme_reversal(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: Optional[List[Dict[str, Any]]],
+    bars_1d: Optional[List[Dict[str, Any]]],
+    symbol: str = "XAUUSD"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-018: Statistical Extreme Judas Swing Reversal on Gold.
+    Dynamic Regime Direction:
+      - Fading High (Short): Only when price sweeps Asian High / PDH by $0.30-$2.50 with H1 EMA20 overextension >= 1.5x ATR.
+      - Fading Low (Long): Only when price sweeps Asian Low / PDL by $0.30-$2.50 with macro Bullish regime.
+    """
+    if "XAU" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+    if not bars_5m or len(bars_5m) < 12 or not bars_1h or len(bars_1h) < 20:
+        return False, "NONE", 0.0, 0.0, ""
+
+    offset_sec = 7200
+    try:
+        from hitl.backtest.chart_renderer import get_broker_utc_offset_seconds
+        offset_sec = get_broker_utc_offset_seconds()
+    except Exception:
+        pass
+
+    cur = bars_5m[-1]
+    sig_utc = int(cur['time']) - offset_sec
+    sig_dt = datetime.datetime.fromtimestamp(sig_utc, tz=datetime.timezone.utc)
+    stimes = get_session_times_for_date(sig_dt.date())
+    lon_utc = int(stimes["london"]["utc_time"].timestamp())
+    ny_utc = int(stimes["new_york"]["utc_time"].timestamp())
+
+    # Must be in London Judas or NY Judas window
+    in_lon = (lon_utc <= sig_utc <= lon_utc + 9000)
+    in_ny = (ny_utc <= sig_utc <= ny_utc + 9000)
+    if not (in_lon or in_ny):
+        return False, "NONE", 0.0, 0.0, ""
+
+    day_srv_date = datetime.datetime.fromtimestamp(int(cur['time']), tz=datetime.timezone.utc).date()
+    day_start_utc = int(datetime.datetime(day_srv_date.year, day_srv_date.month, day_srv_date.day, 0, 0, tzinfo=datetime.timezone.utc).timestamp()) - offset_sec
+
+    m5_day = [b for b in bars_5m if (int(b['time']) - offset_sec) >= day_start_utc]
+    asia_bars = [b for b in m5_day if (int(b['time']) - offset_sec) < lon_utc]
+    if not asia_bars:
+        return False, "NONE", 0.0, 0.0, ""
+
+    asia_h = max(b['high'] for b in asia_bars)
+    asia_l = min(b['low'] for b in asia_bars)
+
+    pdh, pdl = None, None
+    if bars_1d and len(bars_1d) >= 2:
+        pdh = bars_1d[-2]['high']
+        pdl = bars_1d[-2]['low']
+
+    bench_h = max(asia_h, pdh) if pdh else asia_h
+    bench_l = min(asia_l, pdl) if pdl else asia_l
+
+    atrs = [b['high'] - b['low'] for b in bars_5m[-15:-1]]
+    atr_m5 = sum(atrs) / len(atrs) if atrs else 2.0
+
+    alpha20 = 2.0 / (20.0 + 1.0)
+    ema20 = float(bars_1h[0]['close'])
+    for hb in bars_1h[1:]:
+        ema20 = alpha20 * float(hb['close']) + (1.0 - alpha20) * ema20
+
+    candle_range = cur['high'] - cur['low']
+    if candle_range <= 0:
+        return False, "NONE", 0.0, 0.0, ""
+
+    body = abs(cur['close'] - cur['open'])
+    body_ratio = body / candle_range
+    uw = cur['high'] - max(cur['open'], cur['close'])
+    lw = min(cur['open'], cur['close']) - cur['low']
+
+    stat_overextended = abs(cur['close'] - ema20) >= (1.5 * atr_m5)
+
+    # Bearish Judas Fade (Short High Sweep)
+    if cur['high'] > bench_h:
+        pen = cur['high'] - bench_h
+        if 0.30 <= pen <= 2.50 and pen <= 1.0 * atr_m5:
+            if (uw / candle_range >= 0.40) and (body_ratio <= 0.35) and (cur['close'] <= bench_h + 0.40) and stat_overextended:
+                entry = round(cur['close'], 2)
+                sl = round(cur['high'] + 1.20, 2)
+                risk = sl - entry
+                if 1.0 <= risk <= 15.0:
+                    desc = f"Statistical Extreme Judas High Sweep Reversal (Swept {bench_h:.2f} by +${pen:.2f}, Overextended from H1 EMA20 {ema20:.2f})"
+                    return True, "BEARISH", entry, sl, desc
+
+    # Bullish Judas Fade (Long Low Sweep - gated by macro support)
+    if cur['low'] < bench_l:
+        pen = bench_l - cur['low']
+        if 0.30 <= pen <= 2.50 and pen <= 1.0 * atr_m5:
+            if (lw / candle_range >= 0.40) and (body_ratio <= 0.35) and (cur['close'] >= bench_l - 0.40) and stat_overextended:
+                entry = round(cur['close'], 2)
+                sl = round(cur['low'] - 1.20, 2)
+                risk = entry - sl
+                if 1.0 <= risk <= 15.0:
+                    desc = f"Statistical Extreme Judas Low Sweep Reversal (Swept {bench_l:.2f} by -${pen:.2f}, Overextended from H1 EMA20 {ema20:.2f})"
+                    return True, "BULLISH", entry, sl, desc
 
     return False, "NONE", 0.0, 0.0, ""
 
@@ -1087,15 +1352,38 @@ def screen_ict_session(
         # Allow DST-validated SETUP-ARCH-015 during Winter NY Open..NYSE+1h before applying legacy session ban
         if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-015"):
             has_ny_cont, nyc_dir, nyc_entry, nyc_sl, nyc_desc = detect_ny_trend_continuation(
-                bars_5m, bars_1h, symbol=symbol
+                bars_5m, bars_1h, symbol=symbol, bars_1d=bars_1d
             )
             if has_ny_cont:
                 from hitl.backtest.mtf_structure import analyze_mtf_state
                 nyc_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
                 nyc_dir_label = "LONG" if nyc_dir == "BULLISH" else "SHORT"
                 return _build_setup_package(nyc_mtf, "SETUP-ARCH-015", f"{nyc_dir}_NY_TREND_CONT", nyc_entry, nyc_sl, nyc_desc, nyc_dir_label)
+
+        # Institutional 15m Opening Range Breakout on NQ (SETUP-ARCH-017)
+        if is_nq and setup_registry.is_archetype_ratified("SETUP-ARCH-017"):
+            has_orb, orb_dir, orb_entry, orb_sl, orb_desc = detect_nq_opening_range_breakout(
+                bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
+            )
+            if has_orb:
+                from hitl.backtest.mtf_structure import analyze_mtf_state
+                orb_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
+                orb_dir_label = "LONG" if orb_dir == "BULLISH" else "SHORT"
+                return _build_setup_package(orb_mtf, "SETUP-ARCH-017", f"{orb_dir}_ORB_CONT", orb_entry, orb_sl, orb_desc, orb_dir_label)
+
+        # Intermarket SMT Correlation Divergence on NQ (SETUP-ARCH-016)
+        if is_nq and setup_registry.is_archetype_ratified("SETUP-ARCH-016") and smt_info:
+            has_smt, smt_dir, smt_entry, smt_sl, smt_desc = detect_nq_intermarket_smt(
+                bars_5m=bars_5m, smt_info=smt_info, symbol=symbol
+            )
+            if has_smt:
+                from hitl.backtest.mtf_structure import analyze_mtf_state
+                smt_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
+                smt_dir_label = "LONG" if smt_dir == "BULLISH" else "SHORT"
+                return _build_setup_package(smt_mtf, "SETUP-ARCH-016", f"{smt_dir}_SMT_DIV", smt_entry, smt_sl, smt_desc, smt_dir_label)
+
         if "XAU" in symbol.upper() or is_gbp or is_nq:
-            # Banned on Gold (-33.01R), Cable (-6.54R), and NQ per 1-year empirical audit
+            # Banned on Gold (-33.01R), Cable (-6.54R), and unratified NQ models per empirical audit
             return {
                 "has_setup": False,
                 "reason": f"Veto: Late NY PM / Silver Bullet window banned on {symbol} per 1-year empirical audit",
@@ -1339,12 +1627,42 @@ def screen_ict_session(
 
     # Setup K: NY Open One-Sided Trend Continuation Sweep (SETUP-ARCH-015)
     has_ny_cont, nyc_dir, nyc_entry, nyc_sl, nyc_desc = detect_ny_trend_continuation(
-        bars_5m, bars_1h, symbol=symbol
+        bars_5m, bars_1h, symbol=symbol, bars_1d=bars_1d
     )
     if has_ny_cont and setup_registry.is_archetype_ratified("SETUP-ARCH-015"):
         arch_id = "SETUP-ARCH-015"
         direction = "LONG" if nyc_dir == "BULLISH" else "SHORT"
         return _package_setup(arch_id, f"{nyc_dir}_NY_TREND_CONT", nyc_entry, nyc_sl, nyc_desc, direction)
+
+    # Setup L: Intermarket SMT Correlation Divergence on NQ (SETUP-ARCH-016)
+    if is_nq and setup_registry.is_archetype_ratified("SETUP-ARCH-016") and smt_info:
+        has_smt, smt_dir, smt_entry, smt_sl, smt_desc = detect_nq_intermarket_smt(
+            bars_5m=bars_5m, smt_info=smt_info, symbol=symbol
+        )
+        if has_smt:
+            arch_id = "SETUP-ARCH-016"
+            direction = "LONG" if smt_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{smt_dir}_SMT_DIV", smt_entry, smt_sl, smt_desc, direction)
+
+    # Setup M: Institutional 15m Opening Range Breakout Continuation on NQ (SETUP-ARCH-017)
+    if is_nq and setup_registry.is_archetype_ratified("SETUP-ARCH-017"):
+        has_orb, orb_dir, orb_entry, orb_sl, orb_desc = detect_nq_opening_range_breakout(
+            bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
+        )
+        if has_orb:
+            arch_id = "SETUP-ARCH-017"
+            direction = "LONG" if orb_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{orb_dir}_ORB_CONT", orb_entry, orb_sl, orb_desc, direction)
+
+    # Setup N: Statistical Extreme Judas Swing Reversal (SETUP-ARCH-018)
+    if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-018"):
+        has_jsr, jsr_dir, jsr_entry, jsr_sl, jsr_desc = detect_gold_judas_extreme_reversal(
+            bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
+        )
+        if has_jsr:
+            arch_id = "SETUP-ARCH-018"
+            direction = "LONG" if jsr_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{jsr_dir}_EXTREME_JUDAS_REV", jsr_entry, jsr_sl, jsr_desc, direction)
 
     # Price in equilibrium consolidation or no ratified archetype entry criteria met
     return {

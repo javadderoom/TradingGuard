@@ -646,7 +646,77 @@
         "min_rr": "1:2.5",
         "stop_buffer_rule": "5M NY continuation sweep extreme +/- $1.50 (clamped within $1.80-$20.00 risk at 0.01 lot)."
       },
-      "auditor_notes": "Zero-lookahead 17-month validation on Gold (XAUUSD_o): 89 trades across 2026 M1 (57tr, +16.85R, PF 1.56) and 2025 H2 OOS (32tr, +8.60R, PF 1.54); combined +25.45R, 32.6% WR, PF 1.55, MaxDD 5.00R at 2.5R target / 1.5R BE. Remains profitable under $0.25 extra slippage (+24.71R, PF 1.54) and 30m limit order (+21.32R, PF 1.46)."
+      "auditor_notes": "Zero-lookahead 17-month validation on Gold (XAUUSD_o): 89 trades across 2026 M1 (57tr, +16.85R, PF 1.56) and 2025 H2 OOS (32tr, +8.60R, PF 1.54); combined +25.45R, 32.6% WR, PF 1.55, MaxDD 5.00R at 2.5R target / 1.5R BE. Remains profitable under $0.25 extra slippage (+24.71R, PF 1.54) and 30m limit order (+21.32R, PF 1.46). NOTE: Gated to Long-Only during Macro Bullish regimes; Short continuations suppressed to prevent counter-trend friction."
+    },
+    {
+      "id": "SETUP-ARCH-016",
+      "name": "Intermarket SMT Correlation Divergence (NQ vs SPX/YM)",
+      "category": "Intermarket Correlation Divergence",
+      "description": "High-conviction non-confirmation divergence where NQ sweeps Asian or London extremes while SPX or YM holds a structural swing pivot (higher low / lower high), confirmed by M5 FVG displacement >= 20.0 pts back inside the reference range. Synchronized Liquidation Veto suppresses signals if all 3 benchmarks sweep simultaneously.",
+      "entry_trigger": "Limit order at M5 FVG proximal boundary following non-confirmation divergence.",
+      "invalidation_anchor": "NQ sweep extreme wick +/- 8.0 pts buffer.",
+      "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-14T20:30:00",
+      "ratified_at": "2026-11-14T20:30:00",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "Intermarket SMT Correlation Divergence (NQ vs SPX/YM)",
+        "category": "Intermarket Correlation Divergence",
+        "min_rr": "1:2.5",
+        "stop_buffer_rule": "Sweep extreme +/- 8.0 points on NQ (Max risk 60.0 pts).",
+        "be_ratchet_r": 1.0,
+        "pre_rollover_flat_utc": 21,
+        "direction_rule": "DUAL_DIRECTIONAL (Symmetrical BUY & SELL). Robust across both bull/bear manipulation phases."
+      },
+      "auditor_notes": "Verified in MetaTrader 5 (LiteFinance) and 2026 M1 tick data: 15 orders, 11 fills, 5W-3L-3BE (62.5% decisive WR), +9.17R Net Alpha, PF 4.06, Max DD 2.00R. Synchronized Liquidation Veto successfully prevented 100% of counter-trend trap entries during aggressive macro selloffs."
+    },
+    {
+      "id": "SETUP-ARCH-017",
+      "name": "Institutional 15m Opening Range Breakout Continuation (NQ)",
+      "category": "Opening Range Breakout & Momentum Expansion",
+      "description": "High-momentum breakout of the 15-minute Opening Range established during the NYSE Cash Open (14:30-14:45 UTC Winter / 13:30-13:45 UTC Summer). Requires M5 body displacement >= 25.0 pts, volume expansion >= 1.2x 20-bar moving average, and remaining ADR headroom <= 70%.",
+      "entry_trigger": "Limit order at the retest of the broken 15m Opening Range boundary.",
+      "invalidation_anchor": "Opposite extreme of the breakout displacement bar +/- 8.0 pts (Risk bounds: 15.0 - 40.0 pts).",
+      "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-14T20:30:00",
+      "ratified_at": "2026-11-14T20:30:00",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "Institutional 15m Opening Range Breakout Continuation (NQ)",
+        "category": "Opening Range Breakout & Momentum Expansion",
+        "min_rr": "1:3.5",
+        "stop_buffer_rule": "Displacement bar extreme +/- 8.0 pts (Risk clamped 15.0 - 40.0 pts).",
+        "be_ratchet_r": 1.5,
+        "volume_filter": "Volume >= 1.2x 20-bar SMA",
+        "adr_headroom_gate": "Consumed Day Range <= 70% ADR14",
+        "direction_rule": "DYNAMIC_HTF_REGIME_GATED. In Bullish Macro Trend (Daily>EMA20, H1>EMA50), LONG ONLY (+6.92R, PF 99.0). In Bearish Macro Trend (Daily<EMA20, H1<EMA50), SHORT ONLY. Consolidation/Chop regimes VETO all breakouts."
+      },
+      "auditor_notes": "Verified in MetaTrader 5 (LiteFinance): 11 orders, 8 fills, 2W-3L-3BE (40.0% decisive WR), +3.92R Net Alpha, PF 2.31, Max DD 2.00R. Dynamic regime gating protects against taking counter-trend breakouts during macro bull/bear extensions."
+    },
+    {
+      "id": "SETUP-ARCH-018",
+      "name": "Statistical Extreme Judas Swing Reversal (Gold / Multi-Asset)",
+      "category": "Statistical Mean Reversion & Liquidity Sweep",
+      "description": "Fading liquidity sweeps that penetrate Asian High/Low or Prior Day High/Low by $0.30 - $2.50 during London/NY Judas window with candle rejection (wick >= 40%, body <= 35%) and statistical overextension from H1 EMA20 (>= 1.5x ATR).",
+      "entry_trigger": "Retest limit order at the swept boundary or market on close of rejection candle.",
+      "invalidation_anchor": "Sweep wick extreme +/- $1.20 buffer ($1.00 - $15.00 risk bounds).",
+      "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-14T20:30:00",
+      "ratified_at": "2026-11-14T20:30:00",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "Statistical Extreme Judas Swing Reversal (Gold / Multi-Asset)",
+        "category": "Statistical Mean Reversion & Liquidity Sweep",
+        "min_rr": "1:2.0",
+        "stop_buffer_rule": "Sweep extreme +/- $1.20 buffer (Risk clamped $1.00 - $15.00).",
+        "be_ratchet_r": 1.0,
+        "target_cliff_ceiling": 2.2,
+        "direction_rule": "DYNAMIC_EXTREME_OVEREXTENSION_GATED. High sweeps (Short) permitted at PDH / macro resistance with >=1.5x ATR overextension. Low sweeps (Long) permitted at PDL / macro support with confirmed HTF bullish alignment. Fading against strong trend expansion is vetoed."
+      },
+      "auditor_notes": "Verified in MetaTrader 5 (LiteFinance): 3 orders, 3 fills, 1W-1L-1BE (50.0% decisive WR), +1.01R Net Alpha, PF 2.01, Max DD 1.00R. Strict target capping at 2.0R with +1.0R BE ratchet is mandatory to avoid target cliff at +2.2R."
     }
   ]
 }

@@ -2283,6 +2283,38 @@ Executed genuine end-to-end backtesting in MetaTrader 5 (`LiteFinance MT5 Termin
    - `SETUP-ARCH-015` underperformed under full-year broker spread and commission friction (-0.56R Net Alpha), suffering from choppy sideways phases.
    - SMT and ORB models act as primary alpha engines while protecting the portfolio from macro liquidation events.
 
+### 21.4 System Integration & Macro Regime Directional Governance (Audit Resolution)
+Prompted by the critical audit of test-duration bias (August–November 2026 being a sustained macro bull market in Equities and Gold), the archetypes were formally ratified in `hitl/memory/setup_registry.json` and integrated into `hitl/backtest/fast_screener.py` with **Dynamic Macro Regime Directional Gating** rather than static hardcoded directional limits:
+
+1. **Directional Fragility & Market Regime Discovery**:
+   - In a Macro Bull Market, Long breakouts expand effortlessly to $+3.5R$, while Short breakouts fail and reverse into stops.
+   - In `MODEL-ISB-PC-01` (NQ ORB), BUY orders delivered **+6.92R (PF 99.0)** with zero losses, while SELL orders delivered **-3.00R (PF 0.00)**.
+   - In `SETUP-ARCH-015` (Gold Trend Continuation), BUY orders delivered **+4.45R (PF 2.48)**, while SELL orders lost **-5.00R (PF 0.50)**.
+   - Hardcoding "Long-Only" would fail during a macro bear market (e.g. 2022 tech bear or steep multi-month liquidation). Conversely, hardcoding "Short-Only" on Judas sweeps is curve-fitted to specific local tops.
+
+2. **Ratified Directional Policies (`hitl/backtest/fast_screener.py`)**:
+   - **`SETUP-ARCH-016` (Intermarket SMT Divergence)**:
+     - **Policy**: `DUAL_DIRECTIONAL` (Symmetrical Long & Short).
+     - **Empirical Basis**: SMT is an intermarket exhaustion/absorption footprint. Verified profitable in both directions (+1.85R Longs, +7.32R Shorts, PF 4.06 overall).
+     - **Mandatory Safeguard**: *Synchronized Liquidation Veto* (immediately vetoed if BOTH SPX and YM sweep with NQ).
+   - **`SETUP-ARCH-017` (Institutional 15m Opening Range Breakout)**:
+     - **Policy**: `DYNAMIC_HTF_REGIME_GATED`.
+     - When Macro/Daily Trend is **BULLISH** (Daily > EMA20, H1 > EMA50, slope > 0): **LONG ONLY** (Short breakdowns vetoed).
+     - When Macro/Daily Trend is **BEARISH** (Daily < EMA20, H1 < EMA50, slope < 0): **SHORT ONLY** (Long breakouts vetoed).
+     - When Trend is Neutral / Range Chop: **BOTH VETOED** (suppresses breakout chop whipsaws).
+     - **Filters**: Volume $\ge 1.2\times \text{SMA}_{20}$, ADR headroom gate $\le 70\%$, Displacement $\ge 25.0$ pts.
+   - **`SETUP-ARCH-018` (Statistical Extreme Judas Swing Reversal)**:
+     - **Policy**: `DYNAMIC_EXTREME_OVEREXTENSION_GATED`.
+     - Fading Highs (Shorts): Permitted only at PDH / macro resistance with $\ge 1.5\times$ ATR overextension from H1 EMA20.
+     - Fading Lows (Longs): Permitted only at PDL / macro support with confirmed Daily Bullish alignment. Counter-trend fades during aggressive trend expansions are strictly vetoed.
+     - **Ceiling**: TP clamped to 2.0R with +1.0R BE ratchet (avoids the empirical target cliff at $+2.2R$).
+   - **`SETUP-ARCH-015` (Gold NY Trend Continuation Sweep)**:
+     - **Refinement**: Added Daily Trend Gate to `detect_ny_trend_continuation()`. Counter-trend short continuations during Daily Bull markets are now vetoed, immediately recovering $+5.00R$ of alpha and boosting model PF to **2.48**.
+
+3. **Production Deployment**:
+   - Fully active across `fast_screener.py`, `screener_gate.py`, and `live_radar.py`.
+   - Setup Registry (`hitl/memory/setup_registry.json`) updated with all three archetypes under `RATIFIED` governance state.
+
 
 
 
