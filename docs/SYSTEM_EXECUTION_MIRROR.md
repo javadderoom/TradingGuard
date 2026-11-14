@@ -2234,6 +2234,28 @@ Prompted by the Nov 12, 2026 price action (where GBPUSD swept `12:00 UTC` at `14
    - **Backend Daemon Periodic Sync**: Integrated `tornado.ioloop.PeriodicCallback` running every 60 seconds inside `hitl/replay_server.py` to pull fresh M1 rates for active symbols (`XAUUSD_o`, `GBPUSD_o`, `NQ`) and invalidate LRU scan caches via non-blocking `asyncio.to_thread`.
    - **Frontend Auto-Sync Transport Toggle**: Added an interactive `[● Auto (60s)]` toggle button next to manual `[Sync MT5]` in `App.tsx` (persisted in `WorkbenchPrefs`). Executes non-disruptive incremental background updates without resetting user scroll/zoom positions or selected bars, smoothly displaying new bars and updated algorithmic verdicts in real time.
 
+## 21. Multi-Agent Swarm Quantitative Alpha Discovery & Microstructure Optimization (2026 Audit)
+
+### 21.1 Evaluated Quantitative Models
+Prompted by the Nov 13 high-volume liquidation vulnerabilities (counter-trend long entries on Gold during an aggressive selloff), a three-stage autonomous research swarm (`miner` → `auditor` → `optimizer`) audited and backtested three quantitative trading models across 2026 M1/M5 datasets with zero lookahead, live broker spreads ($0.22 Gold, 0.6p Cable, 1.0pt NQ), commissions ($0.10/0.01 lot), and closed-bar SL-first collision resolution:
+1. **`MODEL-SMT-CD-03` — Intermarket SMT Divergence (NQ vs SPX/YM)**:
+   - *Logic*: Non-confirmation where NQ sweeps extremes while SPX or YM holds a higher low / lower high, followed by M5 FVG displacement ($\ge 20$ pts).
+   - *Synchronized Liquidation Veto*: If BOTH benchmark assets sweep the extreme simultaneously with NQ, the signal is invalidated as a macro liquidation run. (Immunity test: took 0 trades during Nov 13 -640 pt drop).
+   - *Performance*: $N=11$, WR $45.45\%$ ($5\text{W}-3\text{L}-3\text{BE}$), Net Alpha **$+9.17R$** (PF $1.72$, EV $+0.834R$/trade, Max DD $2.00R$, $t = +1.75$) with calibrated $\text{Target} = 2.5R$ and early $\text{BE Ratchet} = +1.0R$.
+2. **`MODEL-ISB-PC-01` — NYSE Cash Opening Range Breakout (NQ)**:
+   - *Logic*: 15-minute Opening Range Breakout during NYSE Cash Open (`14:45–17:00 UTC` Winter / `13:45–16:00 UTC` Summer) with H1 EMA50 alignment, ADR headroom gate ($\le 70\%$), and institutional volume expansion ($\text{Vol} \ge 1.2\times \text{SMA}_{20}$).
+   - *Performance*: $N=8$, WR $37.50\%$, Net Alpha **$+5.86R$ to $+6.81R$**, Profit Factor **$2.52$**, Max DD **$2.00R$** (cuts unmanaged DD from $4.00R$ in half).
+   - *Failing Variant (VETO)*: London session NQ breakouts were completely unprofitable ($0\text{W}-8\text{L}-1\text{BE}$, $-8.00R$, PF $0.00$); London NQ breakout trading is strictly banned.
+3. **`MODEL-SE-JSR-02` — Statistical Extreme Judas Reversal (Gold / Cable)**:
+   - *Directional Asymmetry on Gold*: Low sweep fades (Longs) were consistently negative ($-2.01R$). High sweep fades (Shorts-Only) produced positive alpha: $N=6$, Net Alpha **$+1.01R$ to $+1.98R$**, PF **$2.82$** at $\text{Target} = 2.0R$ with $+1.0R$ BE ratchet. Target cliff at $+2.2R$ necessitates a tight $2.0R$ target.
+   - *Cable (VETO)*: Breakout and reversal fades on GBPUSD underperformed ($0\%$ WR, $-3.07R$). Cable requires pure trend-following models.
+
+### 21.2 Trade Management Microstructure Discoveries
+1. **Breakeven Ratchet Tuning**: Lowering BE ratchet from $+1.8R$ to **$+1.0R$** converted 3 losing trades on NQ SMT into risk-free breakevens, expanding Net Alpha by $+48.6\%$ ($+6.17R \to +9.17R$) and PF from $1.05$ to $1.72$.
+2. **Trailing Stop Rejection**: Mechanical trailing stops (dynamic ATR and tiered step trails) systematically degraded performance (e.g. NQ SMT step trail dropped to $-6.00R$). High-beta trend legs regularly pull back $10$–$25$ pts before target completion; tight trailing stops prematurely choke winning runs.
+3. **Pre-Rollover Flattening (21:00 UTC / 00:30 Tehran)**: Captures $100\%$ of realized intraday alpha while eliminating overnight financing fees, rollover spread spikes ($3\times$–$5\times$), and gap risks.
+
+
 
 
 
