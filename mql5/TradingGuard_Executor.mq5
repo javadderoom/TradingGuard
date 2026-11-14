@@ -24,6 +24,7 @@ struct OrderPlan
    double            tp;
    double            lot;
    int               ttl_minutes;
+   double            be_ratchet;
    bool              placed;
 };
 
@@ -84,6 +85,7 @@ int OnInit()
       string o_tp    = (count > 6) ? fields[6] : "0";
       string o_lot   = (count > 7) ? fields[7] : "0.01";
       string o_ttl   = (count > 8) ? fields[8] : "360";
+      string o_be    = (count > 9) ? fields[9] : "0.0";
 
       int idx = ArraySize(g_plans);
       ArrayResize(g_plans, idx + 1);
@@ -97,6 +99,7 @@ int OnInit()
       g_plans[idx].lot          = (StringToDouble(o_lot) > 0) ? StringToDouble(o_lot) : 0.01;
       g_plans[idx].ttl_minutes  = (int)StringToInteger(o_ttl);
       if(g_plans[idx].ttl_minutes <= 0) g_plans[idx].ttl_minutes = 360;
+      g_plans[idx].be_ratchet   = StringToDouble(o_be);
       g_plans[idx].placed       = false;
 
       StringToUpper(o_type);
@@ -332,16 +335,30 @@ void ManageActivePositions()
       }
 
       // B. Breakeven Ratchet Protocol
-      // Index (NQ): 0.8R, Cable: 1.0R, Gold: 1.5R, BTC: 1.8R
+      // Check if plan has custom be_ratchet
       double be_thresh = 1.0;
-      if(StringFind(sym, "NQ") >= 0 || StringFind(sym, "NAS") >= 0 || StringFind(sym, "USTEC") >= 0)
-         be_thresh = 0.8;
-      else if(StringFind(sym, "XAU") >= 0)
-         be_thresh = 1.5;
-      else if(StringFind(sym, "GBP") >= 0)
-         be_thresh = 1.0;
-      else if(StringFind(sym, "BTC") >= 0)
-         be_thresh = 1.8;
+      bool has_plan_be = false;
+      for(int k = 0; k < ArraySize(g_plans); k++)
+      {
+         if(g_plans[k].id == comment && g_plans[k].be_ratchet > 0.0)
+         {
+            be_thresh = g_plans[k].be_ratchet;
+            has_plan_be = true;
+            break;
+         }
+      }
+      if(!has_plan_be)
+      {
+         // Fallback defaults: Index (NQ): 0.8R, Cable: 1.0R, Gold: 1.5R, BTC: 1.8R
+         if(StringFind(sym, "NQ") >= 0 || StringFind(sym, "NAS") >= 0 || StringFind(sym, "USTEC") >= 0)
+            be_thresh = 0.8;
+         else if(StringFind(sym, "XAU") >= 0)
+            be_thresh = 1.5;
+         else if(StringFind(sym, "GBP") >= 0)
+            be_thresh = 1.0;
+         else if(StringFind(sym, "BTC") >= 0)
+            be_thresh = 1.8;
+      }
 
       MqlTick tick;
       if(!SymbolInfoTick(sym, tick))
