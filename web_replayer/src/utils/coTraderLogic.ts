@@ -512,6 +512,50 @@ export function extractLiquiditySweeps(
         session: 'MinorSwing',
       });
       emittedKeys.add(`HIGH:${c.time}`);
+    } else if (!emittedKeys.has(`HIGH:${c.time}`) && upperWick >= 0.35 * barRange) {
+      // Track 4: Dynamic Distance-Independent Backward Ray Search
+      // Casts a horizontal ray backwards across all prior visible candles to find distant unmitigated swing peaks
+      let bestRayHigh: { time: number; price: number } | null = null;
+      for (let k = i - 4; k >= 2; k--) {
+        const prev = visibleCandles[k];
+        if (prev.close > c.high) break; // Hard ceiling breach
+
+        const isCrest =
+          prev.high >= visibleCandles[k - 1].high &&
+          prev.high >= visibleCandles[k - 2].high &&
+          prev.high >= visibleCandles[k + 1].high &&
+          prev.high >= visibleCandles[k + 2].high;
+
+        if (isCrest && c.high > prev.high) {
+          if (c.close < prev.high || c.close <= c.low + barRange * 0.50) {
+            let intermediateBreak = false;
+            for (let m = k + 1; m < i; m++) {
+              if (visibleCandles[m].close > prev.high + (visibleCandles[m].high - visibleCandles[m].low) * 0.25) {
+                intermediateBreak = true;
+                break;
+              }
+            }
+            if (!intermediateBreak) {
+              if (!bestRayHigh || prev.high > bestRayHigh.price) {
+                bestRayHigh = { time: prev.time, price: prev.high };
+              }
+            }
+          }
+        }
+      }
+
+      if (bestRayHigh) {
+        sweeps.push({
+          time: c.time,
+          price: c.high,
+          type: 'HIGH_SWEEP',
+          label: `BSL Sweep (${bestRayHigh.price})`,
+          level: bestRayHigh.price,
+          origin_time: bestRayHigh.time,
+          session: 'Swing',
+        });
+        emittedKeys.add(`HIGH:${c.time}`);
+      }
     }
 
     const sweptMajorLow = consumeSweptLow(activeSwingLows, c, 0.35);
@@ -546,6 +590,49 @@ export function extractLiquiditySweeps(
         session: 'MinorSwing',
       });
       emittedKeys.add(`LOW:${c.time}`);
+    } else if (!emittedKeys.has(`LOW:${c.time}`) && lowerWick >= 0.35 * barRange) {
+      // Track 4: Dynamic Distance-Independent Backward Ray Search for Lows
+      let bestRayLow: { time: number; price: number } | null = null;
+      for (let k = i - 4; k >= 2; k--) {
+        const prev = visibleCandles[k];
+        if (prev.close < c.low) break; // Hard floor breach
+
+        const isTrough =
+          prev.low <= visibleCandles[k - 1].low &&
+          prev.low <= visibleCandles[k - 2].low &&
+          prev.low <= visibleCandles[k + 1].low &&
+          prev.low <= visibleCandles[k + 2].low;
+
+        if (isTrough && c.low < prev.low) {
+          if (c.close > prev.low || c.close >= c.high - barRange * 0.50) {
+            let intermediateBreak = false;
+            for (let m = k + 1; m < i; m++) {
+              if (visibleCandles[m].close < prev.low - (visibleCandles[m].high - visibleCandles[m].low) * 0.25) {
+                intermediateBreak = true;
+                break;
+              }
+            }
+            if (!intermediateBreak) {
+              if (!bestRayLow || prev.low < bestRayLow.price) {
+                bestRayLow = { time: prev.time, price: prev.low };
+              }
+            }
+          }
+        }
+      }
+
+      if (bestRayLow) {
+        sweeps.push({
+          time: c.time,
+          price: c.low,
+          type: 'LOW_SWEEP',
+          label: `SSL Sweep (${bestRayLow.price})`,
+          level: bestRayLow.price,
+          origin_time: bestRayLow.time,
+          session: 'Swing',
+        });
+        emittedKeys.add(`LOW:${c.time}`);
+      }
     }
   }
 
@@ -561,7 +648,7 @@ export function shiftIsoDateDays(dateStr: string, deltaDays: number): string {
 
 export function getLatestRangeForSymbol(
   symInfo: CatalogSymbol | undefined,
-  windowDays: number = 3
+  windowDays: number = 7
 ): { start: string; end: string } | null {
   if (!symInfo?.max_date) return null;
   const end = symInfo.max_date;

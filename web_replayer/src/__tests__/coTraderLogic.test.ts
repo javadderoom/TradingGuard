@@ -721,4 +721,43 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     expect(swept1200).toBeDefined();
     expect(swept1200?.origin_time).toBe(1794471000);
   });
+
+  it('detects distant macro swing high sweep across a wide consolidation gap without fixed distance limits', () => {
+    // Simulates the exact user screenshot scenario:
+    // Left peak at t=1000 with high 4000.0, followed by 30 bars of consolidation well below 4000.0.
+    // Then at t=10000, price rallies up, spikes to 4005.0, and closes at 3995.0 with a prominent upper wick.
+    const distantBars: Candle[] = [
+      { time: 800, open: 3980, high: 3985, low: 3978, close: 3982 },
+      { time: 900, open: 3982, high: 3992, low: 3980, close: 3990 },
+      { time: 1000, open: 3990, high: 4000.0, low: 3988, close: 3995 }, // Left Peak (High = 4000.0)
+      { time: 1100, open: 3995, high: 3996, low: 3980, close: 3982 },
+      { time: 1200, open: 3982, high: 3985, low: 3975, close: 3978 },
+    ];
+
+    // Add 30 bars of low consolidation in the 3940 - 3970 range
+    let curTime = 1300;
+    for (let b = 0; b < 30; b++) {
+      distantBars.push({
+        time: curTime,
+        open: 3950,
+        high: 3965,
+        low: 3945,
+        close: 3955,
+      });
+      curTime += 100;
+    }
+
+    // Right-side rally to sweep 4000.0
+    distantBars.push(
+      { time: curTime, open: 3970, high: 3995, low: 3968, close: 3992 },
+      { time: curTime + 100, open: 3992, high: 4005.0, low: 3990, close: 3994.0 }, // Sweep Bar: high 4005 > 4000, close 3994 < 4000 (upper wick = 11 / 15 = 73%)
+    );
+
+    const sweeps = extractLiquiditySweeps(distantBars, {}, null);
+    const macroSweep = sweeps.find((s) => s.level === 4000.0);
+    expect(macroSweep).toBeDefined();
+    expect(macroSweep?.type).toBe('HIGH_SWEEP');
+    expect(macroSweep?.origin_time).toBe(1000);
+    expect(macroSweep?.price).toBe(4005.0);
+  });
 });
