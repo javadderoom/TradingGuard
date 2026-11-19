@@ -1,0 +1,57 @@
+[
+  {
+    "Date": "2026-11-09 (Mon)",
+    "Gold_Open": "4063.24",
+    "Gold_Close": "4141.10",
+    "Gold_Range": "$94.39",
+    "Gold_Net": "+77.86",
+    "NQ_Range": "1376.9 pts",
+    "NQ_Net": "+1149.4 pts",
+    "Cable_Range": "96.0 pips",
+    "Cable_Net": "+91.5 pips"
+  },
+  {
+    "Date": "2026-11-10 (Tue)",
+    "Gold_Open": "4136.36",
+    "Gold_Close": "4032.86",
+    "Gold_Range": "$132.96",
+    "Gold_Net": "-103.50",
+    "NQ_Range": "587.2 pts",
+    "NQ_Net": "-171.0 pts",
+    "Cable_Range": "147.2 pips",
+    "Cable_Net": "-98.0 pips"
+  },
+  {
+    "Date": "2026-11-11 (Wed)",
+    "Gold_Open": "4033.76",
+    "Gold_Close": "3987.74",
+    "Gold_Range": "$84.27",
+    "Gold_Net": "-46.02",
+    "NQ_Range": "848.7 pts",
+    "NQ_Net": "+555.2 pts",
+    "Cable_Range": "89.1 pips",
+    "Cable_Net": "-70.0 pips"
+  },
+  {
+    "Date": "2026-11-12 (Thu)",
+    "Gold_Open": "3993.39",
+    "Gold_Close": "3877.59",
+    "Gold_Range": "$147.89",
+    "Gold_Net": "-115.80",
+    "NQ_Range": "636.9 pts",
+    "NQ_Net": "+175.9 pts",
+    "Cable_Range": "61.3 pips",
+    "Cable_Net": "-40.2 pips"
+  },
+  {
+    "Date": "2026-11-13 (Fri)",
+    "Gold_Open": "3877.14",
+    "Gold_Close": "3881.56",
+    "Gold_Range": "$55.59",
+    "Gold_Net": "+4.42",
+    "NQ_Range": "906.6 pts",
+    "NQ_Net": "-459.0 pts",
+    "Cable_Range": "46.0 pips",
+    "Cable_Net": "-22.7 pips"
+  }
+]
