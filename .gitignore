@@ -48,6 +48,14 @@ Thumbs.db
 .mypy_cache/
 .coverage
 coverage.xml
+scratch/
+
+############################
+# Node / Frontend artifacts
+############################
+node_modules/
+web_replayer/node_modules/
+web_replayer/dist/
 
 ############################
 # Project-specific

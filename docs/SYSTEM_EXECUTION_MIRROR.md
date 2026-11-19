@@ -3053,6 +3053,34 @@ All trades and run metrics are immutably archived on disk with cryptographic ver
   - `sha256: 59da7d6d0d8878625ebd6330465ab22bdf67ace323d4ee70a964886ee78ebbcb`.
 - **Setup Registry Synchronization**: All 9 newly ratified archetypes formally registered in `hitl/memory/setup_registry.json` and exported to `hitl/memory/setup_registry.md`.
 
+---
+
+## 32. Repository File Architecture, Code Hygiene & Dead-Code Decommissioning (Nov 2026 Audit)
+
+### 32.1 Forensic Sprawl & Bloat Audit
+
+Following extensive continuous backtesting and forensic audits, the codebase had accumulated significant artifact sprawl:
+- **Root Clutter**: 7 asset-specific `orders_schedule_*.csv` files, stale smoke test JSONs, and test badges.
+- **Scratch Directory**: 71 one-off exploratory scripts, ad-hoc diagnosis files, and a 3.2 MB unindexed Parquet file.
+- **Micro-Audit Cache**: 820 temporary browser session files (193 MB) residing in `hitl/signals/soli_chrome_profile/`.
+- **Ad-Hoc Backtest Scripts**: Over 120 historical single-purpose runner scripts in `hitl/backtest/` obscuring the canonical production engine.
+
+### 32.2 Systematic Remediation & Reorganization
+
+1. **Root Directory Pruning**:
+   - Asset-specific schedules (`orders_schedule_btc.csv`, `orders_schedule_cable_quant.csv`, `orders_schedule_gbpusd.csv`, `orders_schedule_gold_quant.csv`, `orders_schedule_nq.csv`, `orders_schedule_xauusd.csv`) were consolidated and relocated to `backtest_results/schedules/`.
+   - The root directory was reduced to 13 essential files, preserving solely the canonical MT5 bridge file `orders_schedule.csv` and core project configurations (`.env`, `.gitignore`, `GEMINI.md`, `FIELD_GUIDE.md`, `requirements.txt`).
+2. **Decommissioning Dead Scratch Scripts**:
+   - Safely permanently deleted 56 unreferenced, obsolete scripts from `scratch/` (`audit_*.py`, `check_*.py`, `diagnose_*.py`, `test_*.py`, and `gold_breach_events_2026.parquet`).
+   - Relocated valuable research reports (`INSTITUTIONAL_QUANT_AUDIT_REPORT_2026.md`, `QUANTITATIVE_MICROSTRUCTURE_OPTIMIZATION_REPORT_2026.md`, and `QUANT_MODEL_SPECS_2026.md`) into `docs/research/`.
+   - Purged 12 unreferenced scratch scripts from `hitl/backtest/` (`scratch_debug_bar10.py`, `scratch_today_screen.py`, `test_council_btc_friday.py`, etc.).
+3. **Storage & Cache Recovery**:
+   - Completely wiped `hitl/signals/soli_chrome_profile/`, instantly reclaiming 193 MB and 820 disk files (reducing `hitl/` storage from 199.5 MB down to 6.4 MB, a 97% reduction).
+4. **Git Governance Hardening (`.gitignore`)**:
+   - Added `scratch/`, `node_modules/`, `web_replayer/node_modules/`, and `web_replayer/dist/` to `.gitignore` to prevent any future scratch bloat from entering version control.
+5. **Regression Verification**:
+   - Executed full test suite (`pytest app/tests/`): **130/130 tests passing (100%)** with zero broken imports or side effects.
+
 
 
 
