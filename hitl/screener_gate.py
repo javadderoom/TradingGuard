@@ -59,7 +59,8 @@ def fetch_live_bars(symbol: str) -> Optional[Dict[str, List[Dict[str, Any]]]]:
     try:
         r1d = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_D1, 0, 90)
         r1h = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_H1, 0, 80)
-        r5m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M5, 0, 120)
+        r5m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M5, 0, 240)
+        r1m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M1, 0, 60)
     except Exception as e:
         print(f"[ScreenerGate] MT5 bar fetch error for {symbol}: {e}")
         return None
@@ -69,6 +70,7 @@ def fetch_live_bars(symbol: str) -> Optional[Dict[str, List[Dict[str, Any]]]]:
         "bars_5m": _convert_records(r5m),
         "bars_1h": _convert_records(r1h),
         "bars_1d": _convert_records(r1d) if r1d is not None else None,
+        "bars_1m": _convert_records(r1m) if r1m is not None else None,
     }
 
 
@@ -91,13 +93,30 @@ def run_screener_gate(symbol: str) -> Dict[str, Any]:
             "signal_bar_time": None,
         }
     session_hour = tehran_hour_from_bar_time(bars["bars_5m"][-1]["time"])
+
+    # Compute intermarket SMT divergence for precious metals
+    smt_info = None
+    if "XAU" in symbol.upper():
+        try:
+            temp_engine = MT5Engine()
+            res_silver = temp_engine.resolve_symbol("XAGUSD")
+            if res_silver and temp_engine.ensure_connected():
+                rates_s = mt5.copy_rates_from_pos(res_silver, mt5.TIMEFRAME_M5, 0, 240)
+                if rates_s is not None and len(rates_s) >= 40:
+                    from hitl.backtest.metals_smt import detect_metals_smt_divergence
+                    smt_info = detect_metals_smt_divergence(bars["bars_5m"], _convert_records(rates_s), session_hour)
+        except Exception as smt_err:
+            print(f"[ScreenerGate] SMT fetch error for {symbol}: {smt_err}")
+
     try:
         result = screen_ict_session(
             bars_5m=bars["bars_5m"],
             bars_1h=bars["bars_1h"],
             symbol=symbol,
             session_hour=session_hour,
-            bars_1d=bars["bars_1d"],
+            smt_info=smt_info,
+            bars_1m=bars.get("bars_1m"),
+            bars_1d=bars.get("bars_1d"),
             closed_bars_only=True,
         )
     except Exception as e:

@@ -175,7 +175,7 @@ def _execute_agent_prompt(
         return seat_name, time.time() - t0, f"[ERROR: Seat {seat_name} encountered exception: {e}]"
 
 
-def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
+def assemble_council_intelligence(symbol: str = "XAUUSD", force_refresh_charts: bool = True) -> Dict[str, Any]:
     """
     Gathers multi-source market intelligence for the AI Council:
     1. Multi-timeframe chart image paths (1D, 1H, 15M, 5M)
@@ -201,8 +201,10 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
     p_15m = mtf_dir / f"{sym}_15M.png"
     p_5m = mtf_dir / f"{sym}_5M.png"
     
-    charts_ready = all(p.exists() for p in [p_1d, p_1h, p_15m, p_5m])
-    if not charts_ready:
+    # Check chart freshness (max 3 minutes old) unless forced
+    now_ts = time.time()
+    charts_fresh = all(p.exists() and (now_ts - p.stat().st_mtime < 180.0) for p in [p_1d, p_1h, p_15m, p_5m])
+    if force_refresh_charts or not charts_fresh:
         try:
             from hitl.backtest.chart_renderer import render_candlestick_chart, extract_chart_landmarks
             from hitl.backtest.data_feed import _convert_records
@@ -223,7 +225,7 @@ def assemble_council_intelligence(symbol: str = "XAUUSD") -> Dict[str, Any]:
                     render_candlestick_chart(r5m, sym, "5M", p_5m, horizontal_levels=landmarks)
                     charts_ready = True
         except Exception as e:
-            print(f"[Council] Error generating chart fallback: {e}")
+            print(f"[Council] Error generating fresh charts: {e}")
     
     # Live MT5 Market Data
     engine = MT5Engine()

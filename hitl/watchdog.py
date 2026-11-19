@@ -6,18 +6,73 @@ TradingGuard HITL - Watchdog & Safety Radar Service
 
 import time
 import datetime
-from typing import Dict, Set, Tuple, Optional, Callable
+from pathlib import Path
+from typing import Dict, Set, Tuple, Optional, Callable, Any
+import json
 import MetaTrader5 as mt5
 from hitl.config import (
     MOMENTUM_ATR_MULTIPLIER,
     INACTIVITY_REMINDER_MINUTES,
     COOLDOWN_WIN_MINUTES,
     COOLDOWN_LOSS_MINUTES,
-    TELEGRAM_CHAT_ID
+    TELEGRAM_CHAT_ID,
+    BASE_DIR,
+    DEFAULT_SYMBOL
 )
 from hitl.mt5_engine import MT5Engine
 from hitl.telegram_client import TelegramClient
 from hitl.macro_calendar import check_news_danger
+
+
+ORDER_META_FILE = BASE_DIR / "hitl" / "memory" / "active_order_meta.json"
+
+def register_order_metadata(ticket: int, data: Dict[str, Any]):
+    """Saves per-ticket execution metadata (archetype_id, be_rr, target_rr, ttl_minutes)."""
+    try:
+        meta = {}
+        if ORDER_META_FILE.exists():
+            with open(ORDER_META_FILE, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        meta[str(ticket)] = data
+        ORDER_META_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(ORDER_META_FILE, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
+    except Exception as e:
+        print(f"[Watchdog] Error saving order metadata: {e}")
+
+def get_order_metadata(ticket: int) -> Dict[str, Any]:
+    """Retrieves per-ticket execution metadata."""
+    try:
+        if ORDER_META_FILE.exists():
+            with open(ORDER_META_FILE, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+                return meta.get(str(ticket), {})
+    except Exception:
+        pass
+    return {}
+
+
+def is_rollover_blackout(dt: Optional[datetime.datetime] = None) -> bool:
+    """
+    Checks if current time is within daily broker rollover blackout (23:55 to 00:15 broker server time).
+    During rollover, bank liquidity disappears and spreads blow out normally; cancellations and entries are suppressed.
+    """
+    if dt is None:
+        try:
+            tick = mt5.symbol_info_tick(DEFAULT_SYMBOL)
+            if tick and tick.time > 0:
+                from hitl.replay_data import server_epoch_to_zones
+                dt = server_epoch_to_zones(int(tick.time))["broker_dt"]
+            else:
+                dt = datetime.datetime.now()
+        except Exception:
+            dt = datetime.datetime.now()
+
+    h = dt.hour
+    m = dt.minute
+    if (h == 23 and m >= 55) or (h == 0 and m <= 15):
+        return True
+    return False
 
 
 class MarketWatchdog:
@@ -94,19 +149,36 @@ class MarketWatchdog:
         )
         self.client.send_message(chat_id, card)
 
+    def _get_max_allowable_spread(self, symbol: str) -> int:
+        """Returns max allowable broker spread in points before triggering protection cancellation."""
+        s = symbol.upper()
+        if "GBP" in s or "EUR" in s:
+            return 60  # 6.0 pips on 5-digit FX
+        elif "XAU" in s:
+            return 120  # $1.20 on Gold (normal is 20-35 points)
+        elif "XAG" in s:
+            return 150  # 15.0 cents on Silver
+        elif "NQ" in s or "USTEC" in s or "NAS100" in s:
+            return 450  # 45.0 points on NQ (normal is 100-150 points)
+        elif "SPX" in s or "US500" in s:
+            return 250  # 25.0 points on SPX
+        elif "BTC" in s:
+            return 3000  # $30.00 on BTC
+        return 100
+
     def check_momentum_and_spread(self, order) -> Tuple[bool, str]:
         """
         Evaluates whether current price velocity towards pending limit order constitutes a sharp spike.
         Returns (should_cancel, reason).
         """
         symbol = order.symbol
-        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 15)
-        if rates is None or len(rates) < 10:
+        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 16)
+        if rates is None or len(rates) < 12:
             return False, ""
 
-        # Calculate 14-period True Range
+        # Calculate 14-period True Range on closed bars (excluding forming spike bar)
         tr_list = []
-        for i in range(1, len(rates)):
+        for i in range(1, len(rates) - 1):
             hl = rates[i]['high'] - rates[i]['low']
             hc = abs(rates[i]['high'] - rates[i-1]['close'])
             lc = abs(rates[i]['low'] - rates[i-1]['close'])
@@ -120,19 +192,30 @@ class MarketWatchdog:
         is_buy_limit = (order.type == mt5.ORDER_TYPE_BUY_LIMIT)
         is_sell_limit = (order.type == mt5.ORDER_TYPE_SELL_LIMIT)
 
-        # Check Spread Spike (> 3x normal)
+        # Check if broker is in rollover blackout (spread naturally widens 10x-50x; suppress false spread cancellation)
+        if is_rollover_blackout():
+            return False, ""
+
+        # Check Spread Spike (> asset-scaled threshold)
         sym_info = mt5.symbol_info(symbol)
-        if sym_info and sym_info.spread > 50: # Spread > 50 points (e.g. 5.0 pips)
-            return True, f"جهش غیرعادی اسپرد بروکر ({sym_info.spread} پوینت)"
+        max_spread = self._get_max_allowable_spread(symbol)
+        if sym_info and sym_info.spread > max_spread:
+            return True, f"Abnormal broker spread spike ({sym_info.spread} points > {max_spread} limit)"
 
-        # Check Sharp Directional Thrust
-        # For Buy Limit: adverse move is aggressive red candle plunging downwards
-        if is_buy_limit and candle_body < 0 and abs_body >= (MOMENTUM_ATR_MULTIPLIER * atr):
-            return True, f"کندل نزولی پرقدرت شتابان ({abs_body:.2f} > {MOMENTUM_ATR_MULTIPLIER}x ATR)"
+        # Calibrate per RULE-METALS-011: 3.5x ATR for Precious Metals, 2.0x for Forex/Indices
+        is_metal = ("XAU" in symbol.upper() or "XAG" in symbol.upper())
+        spike_mult = 3.5 if is_metal else 2.0
 
-        # For Sell Limit: adverse move is aggressive green candle surging upwards
-        if is_sell_limit and candle_body > 0 and abs_body >= (MOMENTUM_ATR_MULTIPLIER * atr):
-            return True, f"کندل صعودی پرقدرت شتابان ({abs_body:.2f} > {MOMENTUM_ATR_MULTIPLIER}x ATR)"
+        # Check Sharp Directional Thrust within 3.0x ATR distance of entry
+        if is_buy_limit and candle_body < 0 and abs_body >= (spike_mult * atr):
+            dist_to_entry = abs(latest['close'] - order.price_open)
+            if dist_to_entry <= (3.0 * atr):
+                return True, f"Sharp adverse thrust near entry ({abs_body:.2f} >= {spike_mult}x ATR within 3x ATR distance)"
+
+        if is_sell_limit and candle_body > 0 and abs_body >= (spike_mult * atr):
+            dist_to_entry = abs(latest['close'] - order.price_open)
+            if dist_to_entry <= (3.0 * atr):
+                return True, f"Sharp adverse thrust near entry ({abs_body:.2f} >= {spike_mult}x ATR within 3x ATR distance)"
 
         return False, ""
 
@@ -184,9 +267,23 @@ class MarketWatchdog:
                         )
                     continue
 
-                # B) Time-Based Inactivity Reminder (TTL)
+                # B) Time-Based Inactivity TTL Auto-Cancellation
                 order_age_minutes = (time.time() - o.time_setup) / 60.0
-                if order_age_minutes >= INACTIVITY_REMINDER_MINUTES and o.ticket not in self.reminded_tickets:
+                meta = get_order_metadata(o.ticket)
+                ttl_limit = meta.get("ttl_minutes", INACTIVITY_REMINDER_MINUTES)
+                if order_age_minutes >= ttl_limit:
+                    success, msg = self.engine.cancel_order(o.ticket)
+                    if success:
+                        self.client.send_message(
+                            chat_id,
+                            f"⏳ *Auto-Cancellation of Stale Limit Order #{o.ticket}*\n"
+                            f"📌 Symbol: `{o.symbol}`\n"
+                            f"⏱ *TTL Expired:* {int(order_age_minutes)}m unfilled (TTL limit: {int(ttl_limit)}m)\n"
+                            f"🛡️ Smart order lifecycle management cancelled stale setup safely."
+                        )
+                    continue
+
+                if order_age_minutes >= (ttl_limit * 0.7) and o.ticket not in self.reminded_tickets:
                     self.reminded_tickets.add(o.ticket)
                     order_type_str = "Buy Limit" if o.type == mt5.ORDER_TYPE_BUY_LIMIT else "Sell Limit"
                     buttons = {
@@ -202,7 +299,7 @@ class MarketWatchdog:
                         f"⏳ *Stale Limit Order Reminder*\n"
                         f"📌 Ticket: `#{o.ticket}` ({order_type_str})\n"
                         f"🔹 Entry: `{o.price_open}`\n"
-                        f"⏱ Unfilled for {int(order_age_minutes)} minutes.\n"
+                        f"⏱ Unfilled for {int(order_age_minutes)} minutes (TTL limit: {int(ttl_limit)}m).\n"
                         f"Would you like to keep or cancel?",
                         reply_markup=buttons
                     )
@@ -236,13 +333,20 @@ class MarketWatchdog:
                     try:
                         from hitl.backtest.session_clock import get_active_session_status
                         from hitl.backtest.evaluator import get_optimal_trade_management, get_default_broker_spread
-                        _, _, sess_key = get_active_session_status()
-                        _, be_rr = get_optimal_trade_management(p.symbol, sess_key)
+                        
+                        meta = get_order_metadata(p.ticket)
+                        be_rr = meta.get("be_rr")
+                        setup_arch_id = meta.get("archetype_id")
+                        
+                        if be_rr is None:
+                            _, _, sess_key = get_active_session_status()
+                            _, be_rr = get_optimal_trade_management(p.symbol, sess_key, setup_arch_id=setup_arch_id)
 
                         if be_rr is not None and be_rr > 0:
                             risk_pts = abs(p.price_open - p.sl)
                             spread_pts = get_default_broker_spread(p.symbol)
-                            digits = 5 if ("EUR" in p.symbol or "GBP" in p.symbol) else 2
+                            sym_info = mt5.symbol_info(p.symbol)
+                            digits = sym_info.digits if sym_info else (5 if ("EUR" in p.symbol or "GBP" in p.symbol) else (1 if "NQ" in p.symbol else 2))
 
                             if is_buy:
                                 trigger_px = p.price_open + (be_rr * risk_pts)

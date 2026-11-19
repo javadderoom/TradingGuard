@@ -202,6 +202,8 @@ class AccountRiskManager:
         today_str = now.strftime("%Y-%m-%d")
 
         acc = engine.get_account_summary() if engine else None
+        if acc and not isinstance(acc.get("equity"), (int, float)):
+            acc = None
         current_equity = float(acc["equity"]) if acc else self.get_reference_capital(engine)
         current_balance = float(acc["balance"]) if acc else current_equity
 

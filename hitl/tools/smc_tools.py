@@ -39,7 +39,9 @@ def get_smc_landmarks(
     """
     is_fx = "GBP" in symbol.upper() or "EUR" in symbol.upper()
     is_crypto = "BTC" in symbol.upper() or "ETH" in symbol.upper()
-    pip_size = 0.00010 if is_fx else (1.0 if is_crypto else 0.01)
+    is_nq = "NQ" in symbol.upper() or "USTEC" in symbol.upper() or "NAS100" in symbol.upper()
+    is_gold = "XAU" in symbol.upper()
+    pip_size = 0.00010 if is_fx else (1.0 if is_crypto else (0.1 if is_nq else 0.01))
 
     atr_5m = calculate_atr(bars_5m, 14)
     atr_1d = calculate_atr(bars_1d, 14)
@@ -52,7 +54,7 @@ def get_smc_landmarks(
     # Protected Swing Anchors (Stop Loss defense per RULE-CORE-005)
     protected_high = sweep_high
     protected_low = sweep_low
-    buf = max(20.0, 0.8 * atr_5m) if is_crypto else pip_size
+    buf = max(20.0, 0.8 * atr_5m) if is_crypto else (pip_size if is_fx else (1.20 if is_gold else (1.0 if is_nq else pip_size)))
     sl_sell_pinned = round(protected_high + buf, 5 if is_fx else 2)
     sl_buy_pinned = round(protected_low - buf, 5 if is_fx else 2)
 
@@ -85,20 +87,26 @@ def get_smc_landmarks(
         c1, c2, c3 = bars_5m[i - 2], bars_5m[i - 1], bars_5m[i]
         # Bearish FVG: c1['low'] > c3['high']
         if not bearish_fvg and (c1['low'] - c3['high']) >= min_gap:
-            bearish_fvg = {
-                "proximal": round(c3['high'], 5) if is_fx else round(c3['high'], 2),
-                "distal": round(c1['low'], 5) if is_fx else round(c1['low'], 2),
-                "ce": round((c3['high'] + c1['low']) / 2.0, 5) if is_fx else round((c3['high'] + c1['low']) / 2.0, 2),
-                "size_pips": round((c1['low'] - c3['high']) / pip_size, 1)
-            }
+            # Check mitigation by subsequent bars
+            is_mitigated = any(sub['high'] >= c1['low'] or sub['close'] > c1['low'] for sub in bars_5m[i+1:])
+            if not is_mitigated:
+                bearish_fvg = {
+                    "proximal": round(c3['high'], 5) if is_fx else round(c3['high'], 2),
+                    "distal": round(c1['low'], 5) if is_fx else round(c1['low'], 2),
+                    "ce": round((c3['high'] + c1['low']) / 2.0, 5) if is_fx else round((c3['high'] + c1['low']) / 2.0, 2),
+                    "size_pips": round((c1['low'] - c3['high']) / pip_size, 1)
+                }
         # Bullish FVG: c3['low'] > c1['high']
         if not bullish_fvg and (c3['low'] - c1['high']) >= min_gap:
-            bullish_fvg = {
-                "proximal": round(c3['low'], 5) if is_fx else round(c3['low'], 2),
-                "distal": round(c1['high'], 5) if is_fx else round(c1['high'], 2),
-                "ce": round((c3['low'] + c1['high']) / 2.0, 5) if is_fx else round((c3['low'] + c1['high']) / 2.0, 2),
-                "size_pips": round((c3['low'] - c1['high']) / pip_size, 1)
-            }
+            # Check mitigation by subsequent bars
+            is_mitigated = any(sub['low'] <= c1['high'] or sub['close'] < c1['high'] for sub in bars_5m[i+1:])
+            if not is_mitigated:
+                bullish_fvg = {
+                    "proximal": round(c3['low'], 5) if is_fx else round(c3['low'], 2),
+                    "distal": round(c1['high'], 5) if is_fx else round(c1['high'], 2),
+                    "ce": round((c3['low'] + c1['high']) / 2.0, 5) if is_fx else round((c3['low'] + c1['high']) / 2.0, 2),
+                    "size_pips": round((c3['low'] - c1['high']) / pip_size, 1)
+                }
         if bearish_fvg and bullish_fvg:
             break
 
@@ -183,6 +191,8 @@ def validate_order_ticket(
     sl: float,
     tp: float,
     pip_size: float = 0.00010,
+    symbol: str = "XAUUSD",
+    lot: float = 0.01,
     max_risk_usd: float = 12.0,
     min_rr: float = 3.0
 ) -> Dict[str, Any]:
@@ -194,10 +204,10 @@ def validate_order_ticket(
     order_type = order_type.upper().strip()
 
     if order_type == "STAND_ASIDE":
-        return {"is_valid": True, "reason": "Deliberate stand aside.", "risk_pips": 0.0, "rr": 0.0}
+        return {"is_valid": True, "reason": "Deliberate stand aside.", "risk_pips": 0.0, "risk_usd": 0.0, "rr": 0.0}
 
     if order_type not in ("BUY_LIMIT", "SELL_LIMIT"):
-        return {"is_valid": False, "reason": f"Unsupported order type: {order_type}. Firm allows LIMIT orders only.", "risk_pips": 0.0, "rr": 0.0}
+        return {"is_valid": False, "reason": f"Unsupported order type: {order_type}. Firm allows LIMIT orders only.", "risk_pips": 0.0, "risk_usd": 0.0, "rr": 0.0}
 
     # 1. Exchange Limit Placement Rule
     if order_type == "SELL_LIMIT":
@@ -207,6 +217,7 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_LIMIT_GEOMETRY: Current Bid ({current_bid:.5f}) >= Entry ({entry:.5f}). A SELL_LIMIT cannot be placed below current market price.",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
         # Stop loss must be strictly above entry
@@ -215,6 +226,7 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_STOPS: Stop Loss ({sl:.5f}) must be strictly above Sell entry ({entry:.5f}).",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
         # Take profit must be strictly below entry
@@ -223,6 +235,7 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_TARGET: Take Profit ({tp:.5f}) must be strictly below Sell entry ({entry:.5f}).",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
     elif order_type == "BUY_LIMIT":
@@ -232,6 +245,7 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_LIMIT_GEOMETRY: Current Ask ({current_ask:.5f}) <= Entry ({entry:.5f}). A BUY_LIMIT cannot be placed above current market price.",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
         # Stop loss must be strictly below entry
@@ -240,6 +254,7 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_STOPS: Stop Loss ({sl:.5f}) must be strictly below Buy entry ({entry:.5f}).",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
         # Take profit must be strictly above entry
@@ -248,17 +263,58 @@ def validate_order_ticket(
                 "is_valid": False,
                 "reason": f"INVALID_TARGET: Take Profit ({tp:.5f}) must be strictly above Buy entry ({entry:.5f}).",
                 "risk_pips": 0.0,
+                "risk_usd": 0.0,
                 "rr": 0.0
             }
 
-    # 2. Mathematical Capital Defense Rule (Strict Dollar & Pip Ceiling on 0.01 lot)
-    is_fx = pip_size < 0.001
+    # 2. Mathematical Capital Defense Rule (Strict Dollar & Pip Ceiling on lot)
+    sym_clean = symbol.upper()
+    is_fx = ("GBP" in sym_clean or "EUR" in sym_clean or "USD" in sym_clean) and not ("XAU" in sym_clean or "XAG" in sym_clean or "BTC" in sym_clean or "ETH" in sym_clean or "NQ" in sym_clean)
+    is_gold = "XAU" in sym_clean
+    is_silver = "XAG" in sym_clean
+    is_index = "NQ" in sym_clean or "USTEC" in sym_clean or "NAS100" in sym_clean or "SPX" in sym_clean or "US500" in sym_clean or "YM" in sym_clean
+    is_crypto = "BTC" in sym_clean or "ETH" in sym_clean
+
     price_dist = abs(entry - sl)
 
+    # First attempt: Query native MT5 profit calculation if available
+    risk_usd = None
+    try:
+        import MetaTrader5 as mt5
+        if mt5.initialize():
+            calc_type = mt5.ORDER_TYPE_BUY if "BUY" in order_type.upper() else mt5.ORDER_TYPE_SELL
+            res_sym = symbol
+            from hitl.mt5_engine import MT5Engine
+            eng = MT5Engine()
+            res_sym = eng.resolve_symbol(symbol)
+            native_loss = mt5.order_calc_profit(calc_type, res_sym, lot, entry, sl)
+            if native_loss is not None:
+                risk_usd = round(abs(float(native_loss)), 2)
+    except Exception:
+        pass
+
+    if risk_usd is None:
+        # Offline analytical fallback based on verified broker contract sizes
+        if is_fx:
+            risk_pips = round(price_dist / 0.00010, 1)
+            risk_usd = round(risk_pips * 0.10 * (lot / 0.01), 2)
+        elif is_gold:
+            # 100 oz contract: $1.00 move on 0.01 lot = $1.00
+            risk_usd = round(price_dist * 1.0 * (lot / 0.01), 2)
+        elif is_silver:
+            # 5000 oz contract: $1.00 move on 0.01 lot = $50.00
+            risk_usd = round(price_dist * 50.0 * lot, 2)
+        elif is_index:
+            # On LiteFinance, NQ contract size is 1.0. 1 pt on 0.01 lot = $0.01.
+            risk_usd = round(price_dist * 0.01 * (lot / 0.01), 2)
+        elif is_crypto:
+            risk_usd = round(price_dist * 0.01 * (lot / 0.01), 2)
+        else:
+            risk_usd = round(price_dist * (lot / 0.01), 2)
+
+    risk_pips = round(price_dist / (pip_size if pip_size > 0 else 0.01), 1)
+
     if is_fx:
-        # Forex: 1 pip = 0.00010, risk on 0.01 lot = $0.10 per pip
-        risk_pips = round(price_dist / 0.00010, 1)
-        risk_usd = round(risk_pips * 0.10, 2)
         max_stop_pips = 35.0  # Max 35.0 pips stop on FX ($3.50 risk on 0.01 lot)
         if risk_pips > max_stop_pips:
             return {
@@ -268,29 +324,17 @@ def validate_order_ticket(
                 "risk_usd": risk_usd,
                 "rr": 0.0
             }
-    else:
-        # Commodities (Gold): 1 point ($1.00 move) on 0.01 lot = $1.00 risk
-        risk_pips = round(price_dist, 2)
-        risk_usd = round(price_dist * 1.0, 2)
-        if risk_usd > max_risk_usd:
-            return {
-                "is_valid": False,
-                "reason": f"RISK_CEILING_BREACH: Gold stop distance (${risk_usd:.2f}) exceeds firm's ${max_risk_usd:.2f} maximum dollar ceiling.",
-                "risk_pips": risk_pips,
-                "risk_usd": risk_usd,
-                "rr": 0.0
-            }
 
     if risk_usd > max_risk_usd:
         return {
             "is_valid": False,
-            "reason": f"RISK_CEILING_BREACH: Dollar risk ${risk_usd:.2f} exceeds firm's ${max_risk_usd:.2f} maximum dollar ceiling.",
+            "reason": f"RISK_CEILING_BREACH: Dollar risk (${risk_usd:.2f}) exceeds firm's ${max_risk_usd:.2f} maximum dollar ceiling.",
             "risk_pips": risk_pips,
             "risk_usd": risk_usd,
             "rr": 0.0
         }
 
-    # 3. Minimum Risk-to-Reward Threshold (min 3.0R)
+    # 3. Minimum Risk-to-Reward Threshold
     reward_dist = abs(tp - entry)
     reward_pips = round(reward_dist / 0.00010, 1) if is_fx else round(reward_dist, 2)
     rr = round(reward_dist / max(0.00001, price_dist), 2)
@@ -299,6 +343,7 @@ def validate_order_ticket(
             "is_valid": False,
             "reason": f"UNFAVORABLE_ASYMMETRY: R:R ({rr:.2f}R) is below institutional {min_rr:.1f}R minimum threshold.",
             "risk_pips": risk_pips,
+            "risk_usd": risk_usd,
             "rr": rr
         }
 
@@ -306,6 +351,7 @@ def validate_order_ticket(
         "is_valid": True,
         "reason": "APPROVED_PRE_FLIGHT",
         "risk_pips": risk_pips,
+        "risk_usd": risk_usd,
         "rr": rr
     }
 
@@ -314,109 +360,129 @@ def build_validated_order_plan(
     decision: str,
     poi_selection: str,
     landmarks: Dict[str, Any],
-    macro_filter: str
+    macro_filter: str = "",
+    entry_ref: Optional[float] = None,
+    sl_ref: Optional[float] = None,
+    recommended_target_rr: Optional[float] = None,
+    archetype_id: Optional[str] = None
 ) -> Tuple[Optional[Dict[str, Any]], str]:
     """
-    Combines Council qualitative selection with deterministic SMC landmarks.
+    Combines Council qualitative selection with deterministic SMC landmarks or ratified screener geometry.
     Returns (order_dict or None, log_reason).
     """
     if decision not in ("BUY_LIMIT", "SELL_LIMIT"):
         return None, "Decision is STAND_ASIDE."
 
-    is_fx = "GBP" in landmarks["symbol"] or "EUR" in landmarks["symbol"]
+    sym = landmarks.get("symbol", "AUTO")
+    is_fx = "GBP" in sym.upper() or "EUR" in sym.upper()
+    digits = 5 if is_fx else 2
 
-    # Entry Selection based on Council POI choice with automatic boundary fallback
-    entry = None
-    if decision == "SELL_LIMIT":
-        bfvg = landmarks.get("bearish_fvg")
-        candidates = []
-        if bfvg:
-            if poi_selection == "DISTAL_EDGE":
-                candidates = [bfvg.get("distal"), bfvg.get("ce"), bfvg.get("proximal")]
-            elif poi_selection == "CONSEQUENT_ENCROACHMENT":
-                candidates = [bfvg.get("ce"), bfvg.get("distal")]
-            else: # PROXIMAL_EDGE (default)
-                candidates = [bfvg.get("proximal"), bfvg.get("ce"), bfvg.get("distal")]
-        elif landmarks.get("fvg_type") == "BEARISH":
-            candidates = [landmarks.get("fvg_proximal"), landmarks.get("fvg_ce"), landmarks.get("fvg_distal")]
-
-        # Filter candidates that are valid limit orders strictly above current market Bid
-        valid_candidates = [c for c in candidates if c and c > landmarks["current_bid"]]
-        if not valid_candidates:
-            # Fallback to 50% equilibrium retracement between current bid and sweep high
-            sweep_high = landmarks.get("sweep_high")
-            if sweep_high and sweep_high > landmarks["current_bid"]:
-                eq = round((sweep_high + landmarks["current_bid"]) / 2.0, 5 if is_fx else 2)
-                if eq > landmarks["current_bid"]:
-                    valid_candidates = [eq]
-
-        if not valid_candidates:
-            return None, f"PRE_FLIGHT_REJECTION: All Bearish POIs are at or below current Bid ({landmarks['current_bid']:.5f}). Pending limit entry impossible without chasing."
-        entry = valid_candidates[0]
-
-        sl = landmarks.get("sl_sell_pinned")
-        is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
-        if is_crypto and sl and abs(sl - entry) > 1200.0:
-            sl = round(entry + 400.0, 2)
-        elif not is_fx and not is_crypto and sl and abs(sl - entry) > 12.0:
-            sl = round(entry + 7.50, 2)
-        targeted_low = landmarks.get("targeted_swing_low")
-        htf_tp = landmarks.get("htf_expansion_bearish")
-        risk_dist = abs(entry - sl) if sl else 1.0
-        if targeted_low and targeted_low < entry and ((entry - targeted_low) / max(0.1, risk_dist)) >= 3.0:
-            tp = targeted_low
-        elif htf_tp and htf_tp < entry and ((entry - htf_tp) / max(0.1, risk_dist)) >= 3.0:
-            tp = htf_tp
+    # Fast path: If explicit, calibrated screener coordinates are provided, prioritize them directly
+    if entry_ref is not None and sl_ref is not None:
+        entry = round(entry_ref, digits)
+        sl = round(sl_ref, digits)
+        risk_dist = abs(entry - sl)
+        target_rr = recommended_target_rr if (recommended_target_rr and recommended_target_rr > 0) else 3.0
+        if decision == "BUY_LIMIT":
+            tp = round(entry + (risk_dist * target_rr), digits)
+        elif decision == "SELL_LIMIT":
+            tp = round(entry - (risk_dist * target_rr), digits)
         else:
-            tp = round(entry - 3.5 * risk_dist, 5 if is_fx else 2)
+            return None, "Decision is STAND_ASIDE."
+    else:
+        # Entry Selection based on Council POI choice with automatic boundary fallback
+        entry = None
+        if decision == "SELL_LIMIT":
+            bfvg = landmarks.get("bearish_fvg")
+            candidates = []
+            if bfvg:
+                if poi_selection == "DISTAL_EDGE":
+                    candidates = [bfvg.get("distal"), bfvg.get("ce"), bfvg.get("proximal")]
+                elif poi_selection == "CONSEQUENT_ENCROACHMENT":
+                    candidates = [bfvg.get("ce"), bfvg.get("distal")]
+                else: # PROXIMAL_EDGE (default)
+                    candidates = [bfvg.get("proximal"), bfvg.get("ce"), bfvg.get("distal")]
+            elif landmarks.get("fvg_type") == "BEARISH":
+                candidates = [landmarks.get("fvg_proximal"), landmarks.get("fvg_ce"), landmarks.get("fvg_distal")]
 
-    elif decision == "BUY_LIMIT":
-        ufvg = landmarks.get("bullish_fvg")
-        candidates = []
-        if ufvg:
-            if poi_selection == "DISTAL_EDGE":
-                candidates = [ufvg.get("distal"), ufvg.get("ce"), ufvg.get("proximal")]
-            elif poi_selection == "CONSEQUENT_ENCROACHMENT":
-                candidates = [ufvg.get("ce"), ufvg.get("distal")]
-            else: # PROXIMAL_EDGE (default)
-                candidates = [ufvg.get("proximal"), ufvg.get("ce"), ufvg.get("distal")]
-        elif landmarks.get("fvg_type") == "BULLISH":
-            candidates = [landmarks.get("fvg_proximal"), landmarks.get("fvg_ce"), landmarks.get("fvg_distal")]
+            # Filter candidates that are valid limit orders strictly above current market Bid
+            valid_candidates = [c for c in candidates if c and c > landmarks["current_bid"]]
+            if not valid_candidates:
+                # Fallback to 50% equilibrium retracement between current bid and sweep high
+                sweep_high = landmarks.get("sweep_high")
+                if sweep_high and sweep_high > landmarks["current_bid"]:
+                    eq = round((sweep_high + landmarks["current_bid"]) / 2.0, 5 if is_fx else 2)
+                    if eq > landmarks["current_bid"]:
+                        valid_candidates = [eq]
 
-        # Filter candidates that are valid limit orders strictly below current market Ask
-        valid_candidates = [c for c in candidates if c and c < landmarks["current_ask"]]
-        if not valid_candidates:
-            # Fallback to 50% equilibrium retracement between current ask and sweep low
-            sweep_low = landmarks.get("sweep_low")
-            if sweep_low and sweep_low < landmarks["current_ask"]:
-                eq = round((sweep_low + landmarks["current_ask"]) / 2.0, 5 if is_fx else 2)
-                if eq < landmarks["current_ask"]:
-                    valid_candidates = [eq]
+            if not valid_candidates:
+                return None, f"PRE_FLIGHT_REJECTION: All Bearish POIs are at or below current Bid ({landmarks['current_bid']:.5f}). Pending limit entry impossible without chasing."
+            entry = valid_candidates[0]
 
-        if not valid_candidates:
-            return None, f"PRE_FLIGHT_REJECTION: All Bullish POIs are at or above current Ask ({landmarks['current_ask']:.5f}). Pending limit entry impossible without chasing."
-        entry = valid_candidates[0]
+            sl = landmarks.get("sl_sell_pinned")
+            is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
+            if is_crypto and sl and abs(sl - entry) > 1200.0:
+                sl = round(entry + 400.0, 2)
+            elif not is_fx and not is_crypto and sl and abs(sl - entry) > 12.0:
+                sl = round(entry + 7.50, 2)
+            targeted_low = landmarks.get("targeted_swing_low")
+            htf_tp = landmarks.get("htf_expansion_bearish")
+            risk_dist = abs(entry - sl) if sl else 1.0
+            if targeted_low and targeted_low < entry and ((entry - targeted_low) / max(0.1, risk_dist)) >= 3.0:
+                tp = targeted_low
+            elif htf_tp and htf_tp < entry and ((entry - htf_tp) / max(0.1, risk_dist)) >= 3.0:
+                tp = htf_tp
+            else:
+                tp = round(entry - 3.5 * risk_dist, 5 if is_fx else 2)
 
-        sl = landmarks.get("sl_buy_pinned")
-        is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
-        if is_crypto and sl and abs(entry - sl) > 1200.0:
-            sl = round(entry - 400.0, 2)
-        elif not is_fx and not is_crypto and sl and abs(entry - sl) > 12.0:
-            sl = round(entry - 7.50, 2)
-        targeted_high = landmarks.get("targeted_swing_high")
-        htf_tp = landmarks.get("htf_expansion_bullish")
-        risk_dist = abs(entry - sl) if sl else 1.0
-        if targeted_high and targeted_high > entry and ((targeted_high - entry) / max(0.1, risk_dist)) >= 3.0:
-            tp = targeted_high
-        elif htf_tp and htf_tp > entry and ((htf_tp - entry) / max(0.1, risk_dist)) >= 3.0:
-            tp = htf_tp
-        else:
-            tp = round(entry + 3.5 * risk_dist, 5 if is_fx else 2)
+        elif decision == "BUY_LIMIT":
+            ufvg = landmarks.get("bullish_fvg")
+            candidates = []
+            if ufvg:
+                if poi_selection == "DISTAL_EDGE":
+                    candidates = [ufvg.get("distal"), ufvg.get("ce"), ufvg.get("proximal")]
+                elif poi_selection == "CONSEQUENT_ENCROACHMENT":
+                    candidates = [ufvg.get("ce"), ufvg.get("distal")]
+                else: # PROXIMAL_EDGE (default)
+                    candidates = [ufvg.get("proximal"), ufvg.get("ce"), ufvg.get("distal")]
+            elif landmarks.get("fvg_type") == "BULLISH":
+                candidates = [landmarks.get("fvg_proximal"), landmarks.get("fvg_ce"), landmarks.get("fvg_distal")]
+
+            # Filter candidates that are valid limit orders strictly below current market Ask
+            valid_candidates = [c for c in candidates if c and c < landmarks["current_ask"]]
+            if not valid_candidates:
+                # Fallback to 50% equilibrium retracement between current ask and sweep low
+                sweep_low = landmarks.get("sweep_low")
+                if sweep_low and sweep_low < landmarks["current_ask"]:
+                    eq = round((sweep_low + landmarks["current_ask"]) / 2.0, 5 if is_fx else 2)
+                    if eq < landmarks["current_ask"]:
+                        valid_candidates = [eq]
+
+            if not valid_candidates:
+                return None, f"PRE_FLIGHT_REJECTION: All Bullish POIs are at or above current Ask ({landmarks['current_ask']:.5f}). Pending limit entry impossible without chasing."
+            entry = valid_candidates[0]
+
+            sl = landmarks.get("sl_buy_pinned")
+            is_crypto = "BTC" in landmarks["symbol"].upper() or "ETH" in landmarks["symbol"].upper()
+            if is_crypto and sl and abs(entry - sl) > 1200.0:
+                sl = round(entry - 400.0, 2)
+            elif not is_fx and not is_crypto and sl and abs(entry - sl) > 12.0:
+                sl = round(entry - 7.50, 2)
+            targeted_high = landmarks.get("targeted_swing_high")
+            htf_tp = landmarks.get("htf_expansion_bullish")
+            risk_dist = abs(entry - sl) if sl else 1.0
+            if targeted_high and targeted_high > entry and ((targeted_high - entry) / max(0.1, risk_dist)) >= 3.0:
+                tp = targeted_high
+            elif htf_tp and htf_tp > entry and ((htf_tp - entry) / max(0.1, risk_dist)) >= 3.0:
+                tp = htf_tp
+            else:
+                tp = round(entry + 3.5 * risk_dist, 5 if is_fx else 2)
 
     if not entry or not sl or not tp:
         return None, "Incomplete landmark coordinates."
 
-    # Pre-Flight Validation
+    # Pre-Flight Validation with archetype-aware minimum RR
+    min_rr_threshold = min(recommended_target_rr, 3.0) if (recommended_target_rr and recommended_target_rr > 0) else 3.0
     val = validate_order_ticket(
         order_type=decision,
         current_bid=landmarks["current_bid"],
@@ -424,27 +490,37 @@ def build_validated_order_plan(
         entry=entry,
         sl=sl,
         tp=tp,
-        pip_size=landmarks["pip_size"],
+        pip_size=landmarks.get("pip_size", 0.00010 if is_fx else 0.01),
+        symbol=sym,
+        lot=0.01,
         max_risk_usd=12.0,
-        min_rr=3.0
+        min_rr=min_rr_threshold
     )
 
     if not val["is_valid"]:
         return None, f"PRE_FLIGHT_REJECTION: {val['reason']}"
 
-    b_time = landmarks["broker_time"]
-    order_id = f"ORD-{b_time.strftime('%m%d')}-{b_time.strftime('%H%M')}"
+    b_time = landmarks.get("broker_time")
+    if hasattr(b_time, "strftime"):
+        t_str = b_time.strftime("%Y.%m.%d %H:%M:00")
+        order_id = f"ORD-{b_time.strftime('%m%d')}-{b_time.strftime('%H%M')}"
+    else:
+        t_str = str(b_time or time.time())
+        order_id = f"ORD-{int(time.time())}"
+
     plan = {
         "id": order_id,
-        "symbol": "AUTO",
+        "symbol": sym,
         "type": decision,
-        "trigger_time": b_time.strftime("%Y.%m.%d %H:%M:00"),
+        "trigger_time": t_str,
         "entry": entry,
         "sl": sl,
         "tp": tp,
         "lot": 0.01,
         "ttl": 360,
         "risk_pips": val["risk_pips"],
-        "rr": val["rr"]
+        "risk_usd": val.get("risk_usd", 0.0),
+        "rr": val["rr"],
+        "archetype_id": archetype_id or landmarks.get("archetype_id", "DISCRETIONARY_SMC")
     }
     return plan, f"APPROVED: {plan['id']} {decision} @ {entry} (SL: {sl}, TP: {tp}, {val['rr']}R)"

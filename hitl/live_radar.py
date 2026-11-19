@@ -78,15 +78,17 @@ class LiveMarketRadar:
         if raw_pos or raw_ord:
             return None
 
-        # Fetch 5M bars (last 120 bars = 10 hours)
-        rates_5m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M5, 0, 120)
-        rates_1m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M1, 0, 30)
-        rates_1d = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_D1, 0, 5)
+        # Fetch closed M5 bars (240 bars = 20 hours to capture Asian & London benchmarks)
+        rates_5m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M5, 0, 240)
+        rates_1h = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_H1, 0, 48)
+        rates_1m = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_M1, 0, 60)
+        rates_1d = mt5.copy_rates_from_pos(resolved, mt5.TIMEFRAME_D1, 0, 10)
 
-        if rates_5m is None or len(rates_5m) < 40:
+        if rates_5m is None or len(rates_5m) < 60 or rates_1h is None or len(rates_1h) < 10:
             return None
 
         list_5m = _convert_records(rates_5m)
+        list_1h = _convert_records(rates_1h)
         list_1m = _convert_records(rates_1m) if rates_1m is not None else []
         list_1d = _convert_records(rates_1d) if rates_1d is not None else []
 
@@ -103,97 +105,46 @@ class LiveMarketRadar:
         pip_size = 0.00010 if is_fx else (1.0 if is_index else 0.10)
         min_sweep_pips = 1.0 if is_fx else (5.0 if is_index else 2.0)
 
-        # Filter bars of current trading day in true UTC
-        today_bars = [b for b in list_5m if b['_utc_dt'].date() == cur_dt.date()]
+        # Check Intermarket SMT Divergence for Gold vs Silver (SETUP-ARCH-005/007)
+        smt_info = None
+        if "XAU" in symbol.upper():
+            try:
+                res_silver = self.engine.resolve_symbol("XAGUSD")
+                if res_silver:
+                    rates_s = mt5.copy_rates_from_pos(res_silver, mt5.TIMEFRAME_M5, 0, 240)
+                    if rates_s is not None and len(rates_s) >= 40:
+                        list_5m_s = _convert_records(rates_s)
+                        from hitl.backtest.metals_smt import detect_metals_smt_divergence
+                        smt_info = detect_metals_smt_divergence(list_5m, list_5m_s, cur_dt.hour)
+            except Exception as e:
+                print(f"[LiveRadar] Metals SMT check error: {e}")
 
-        # 1. Determine Benchmark (Asian or London)
-        # London Session begins at 07:00 UTC (10:30 Tehran time)
-        # NY Session begins at 12:00 UTC (15:30 Tehran time)
-        if cur_dt.hour < 12:
-            bench_name = "Asian Range (00:00 - 07:00 UTC)"
-            bench_bars = [b for b in today_bars if 0 <= b['_utc_dt'].hour < 7]
-            session_bars = [b for b in today_bars if b['_utc_dt'].hour >= 7]
-        else:
-            bench_name = "London Range (07:00 - 12:00 UTC)"
-            bench_bars = [b for b in today_bars if 7 <= b['_utc_dt'].hour < 12]
-            session_bars = [b for b in today_bars if b['_utc_dt'].hour >= 12]
+        # Execute institutional screener directly on closed bars
+        from hitl.backtest.fast_screener import screen_ict_session
+        from hitl.screener_gate import tehran_hour_from_bar_time
 
-        if not bench_bars or not session_bars:
+        try:
+            screener_result = screen_ict_session(
+                bars_5m=list_5m,
+                bars_1h=list_1h,
+                symbol=symbol,
+                session_hour=tehran_hour_from_bar_time(list_5m[-1]["time"]),
+                smt_info=smt_info,
+                bars_1m=list_1m,
+                bars_1d=list_1d,
+                closed_bars_only=True
+            )
+        except Exception as e:
+            print(f"[LiveRadar] screen_ict_session error for {symbol}: {e}")
+            screener_result = None
+
+        if not screener_result or not screener_result.get("has_setup"):
             return None
 
-        bench_high = max(b['high'] for b in bench_bars)
-        bench_low = min(b['low'] for b in bench_bars)
+        side = screener_result.get("direction", "BUY")
+        extreme_val = screener_result.get("sweep_extreme", list_5m[-2]["high"] if side == "SELL" else list_5m[-2]["low"])
 
-        # PDH and PDL
-        pdh = list_1d[-2]['high'] if len(list_1d) >= 2 else bench_high
-        pdl = list_1d[-2]['low'] if len(list_1d) >= 2 else bench_low
-
-        session_high = max(b['high'] for b in session_bars)
-        session_low = min(b['low'] for b in session_bars)
-
-        # 2. Check Liquidity Sweep Status
-        swept_high_target = None
-        swept_low_target = None
-        sweep_delta_pips = 0.0
-
-        # Sweep of Benchmark High or PDH
-        if session_high >= bench_high + (min_sweep_pips * pip_size):
-            swept_high_target = f"{bench_name} High ({bench_high:.5f})" if is_fx else f"{bench_name} High ({bench_high:.2f})"
-            sweep_delta_pips = (session_high - bench_high) / pip_size
-        elif session_high >= pdh + (min_sweep_pips * pip_size):
-            swept_high_target = f"Prior Day High ({pdh:.5f})" if is_fx else f"Prior Day High ({pdh:.2f})"
-            sweep_delta_pips = (session_high - pdh) / pip_size
-
-        # Sweep of Benchmark Low or PDL
-        if session_low <= bench_low - (min_sweep_pips * pip_size):
-            swept_low_target = f"{bench_name} Low ({bench_low:.5f})" if is_fx else f"{bench_name} Low ({bench_low:.2f})"
-            sweep_delta_pips = (bench_low - session_low) / pip_size
-        elif session_low <= pdl - (min_sweep_pips * pip_size):
-            swept_low_target = f"Prior Day Low ({pdl:.5f})" if is_fx else f"Prior Day Low ({pdl:.2f})"
-            sweep_delta_pips = (pdl - session_low) / pip_size
-
-        if not swept_high_target and not swept_low_target:
-            return None
-
-        # If both High and Low were swept in the session, isolate the most recent sweep
-        if swept_high_target and swept_low_target:
-            high_bar = max(session_bars, key=lambda b: b['high'])
-            low_bar = min(session_bars, key=lambda b: b['low'])
-            if low_bar['time'] > high_bar['time']:
-                # Low sweep occurred after High sweep -> Bullish context is active
-                swept_high_target = None
-                sweep_delta_pips = (bench_low - session_low) / pip_size
-            else:
-                # High sweep occurred after Low sweep -> Bearish context is active
-                swept_low_target = None
-                sweep_delta_pips = (session_high - bench_high) / pip_size
-
-        # 3. Market Structure Shift (MSS) Displacement Confirmation
-        # Requires current price to displace back inside structure
-        is_bearish_mss = False
-        is_bullish_mss = False
-
-        if swept_high_target:
-            latest_bar = list_5m[-1]
-            if latest_bar['close'] < bench_high and latest_bar['close'] < latest_bar['open']:
-                is_bearish_mss = True
-            elif list_1m and list_1m[-1]['close'] < bench_high and list_1m[-1]['close'] < list_1m[-1]['open']:
-                is_bearish_mss = True
-
-        if swept_low_target:
-            latest_bar = list_5m[-1]
-            if latest_bar['close'] > bench_low and latest_bar['close'] > latest_bar['open']:
-                is_bullish_mss = True
-            elif list_1m and list_1m[-1]['close'] > bench_low and list_1m[-1]['close'] > list_1m[-1]['open']:
-                is_bullish_mss = True
-
-        if not is_bearish_mss and not is_bullish_mss:
-            return None
-
-        side = "SELL" if is_bearish_mss else "BUY"
-        extreme_val = session_high if side == "SELL" else session_low
-
-        # 4. Check Cooldown & Extreme Progression
+        # Check Cooldown & Extreme Progression per (symbol, side)
         now_ts = time.time()
         last_t = self.last_trigger_times.get((symbol, side), 0.0)
         last_ext = self.last_sweep_extremes.get((symbol, side), 0.0)
@@ -205,41 +156,31 @@ class LiveMarketRadar:
             if side == "BUY" and (last_ext != 0.0 and extreme_val >= last_ext - (min_sweep_pips * pip_size)):
                 return None
 
-        # Check Intermarket SMT Divergence for Gold vs Silver (SETUP-ARCH-005/007)
-        smt_info = None
-        if "XAU" in symbol.upper():
-            try:
-                res_silver = self.engine.resolve_symbol("XAGUSD")
-                if res_silver:
-                    rates_s = mt5.copy_rates_from_pos(res_silver, mt5.TIMEFRAME_M5, 0, 120)
-                    if rates_s is not None and len(rates_s) >= 40:
-                        list_5m_s = _convert_records(rates_s)
-                        from hitl.backtest.metals_smt import detect_metals_smt_divergence
-                        smt_info = detect_metals_smt_divergence(list_5m, list_5m_s, cur_dt.hour)
-            except Exception as e:
-                print(f"[LiveRadar] Metals SMT check error: {e}")
-
-        setup_type = "BEARISH_SWEEP_MSS" if is_bearish_mss else "BULLISH_SWEEP_MSS"
+        setup_type = screener_result.get("setup_type", f"{side}_SETUP")
         if smt_info and smt_info.get("has_smt"):
             smt_type = smt_info.get("smt_type", "")
-            if "BEARISH" in smt_type and is_bearish_mss:
-                setup_type = "[SETUP-ARCH-007] Bearish Intermarket SMT Displacement"
-            elif "BULLISH" in smt_type and is_bullish_mss:
-                setup_type = "[SETUP-ARCH-005] Bullish Intermarket SMT Accumulation"
-
-        target_name = swept_high_target if is_bearish_mss else swept_low_target
+            if "BEARISH" in smt_type and side == "SELL":
+                setup_type = f"[SETUP-ARCH-007] Bearish Intermarket SMT Displacement ({setup_type})"
+            elif "BULLISH" in smt_type and side == "BUY":
+                setup_type = f"[SETUP-ARCH-005] Bullish Intermarket SMT Accumulation ({setup_type})"
 
         return {
             "symbol": symbol,
             "resolved_symbol": resolved,
             "side": side,
             "setup_type": setup_type,
-            "swept_target": target_name,
+            "archetype_id": screener_result.get("archetype_id"),
+            "entry_ref": screener_result.get("entry_price"),
+            "sl_ref": screener_result.get("sl_price"),
+            "recommended_target_rr": screener_result.get("recommended_target_rr"),
+            "recommended_be_rr": screener_result.get("recommended_be_rr"),
+            "swept_target": screener_result.get("swept_target", setup_type),
             "sweep_extreme": extreme_val,
-            "sweep_delta_pips": round(sweep_delta_pips, 1),
+            "sweep_delta_pips": screener_result.get("sweep_delta_pips", 0.0),
             "current_price": current_bid,
             "timestamp_utc": cur_dt,
-            "smt_info": smt_info
+            "smt_info": smt_info,
+            "screener_result": screener_result
         }
 
     def trigger_autonomous_pipeline(self, setup: Dict[str, Any]):
@@ -298,25 +239,23 @@ class LiveMarketRadar:
         except Exception as e:
             print(f"[LiveRadar] Chart generation error: {e}")
 
-        # Pack 5 — Screener gate: run the same screen_ict_session()
-        # (closed bars) the backtests use, on the bars just fetched for the
-        # charts. A veto means no council call at all.
-        screener = None
-        try:
-            from hitl.backtest.fast_screener import screen_ict_session
-            from hitl.screener_gate import tehran_hour_from_bar_time
-            if r5m and r1h:
+        # Screener gate: use pre-screened setup or run screen_ict_session on full closed bars
+        screener = setup.get("screener_result")
+        if not screener and r5m_full and r1h:
+            try:
+                from hitl.backtest.fast_screener import screen_ict_session
+                from hitl.screener_gate import tehran_hour_from_bar_time
                 screener = screen_ict_session(
-                    bars_5m=r5m,
+                    bars_5m=r5m_full,
                     bars_1h=r1h,
                     symbol=sym,
-                    session_hour=tehran_hour_from_bar_time(r5m[-1]["time"]),
+                    session_hour=tehran_hour_from_bar_time(r5m_full[-1]["time"]),
                     bars_1d=r1d,
                     closed_bars_only=True,
                 )
-        except Exception as e:
-            print(f"[LiveRadar] Screener gate error: {e}")
-            screener = None
+            except Exception as e:
+                print(f"[LiveRadar] Screener gate error: {e}")
+                screener = None
         if not screener or not screener.get("has_setup"):
             veto = (screener or {}).get("reason", "live bars unavailable for screening")
             print(f"[LiveRadar] Screener veto for {sym}: {veto} (silent background log)")
@@ -365,7 +304,11 @@ class LiveMarketRadar:
                     decision=decision,
                     poi_selection="PROXIMAL_EDGE",
                     landmarks=landmarks,
-                    macro_filter=macro_filter
+                    macro_filter=macro_filter,
+                    entry_ref=setup.get("entry_ref"),
+                    sl_ref=setup.get("sl_ref"),
+                    recommended_target_rr=setup.get("recommended_target_rr"),
+                    archetype_id=setup.get("archetype_id")
                 )
 
             # Record cooldown per (symbol, side)
@@ -379,11 +322,13 @@ class LiveMarketRadar:
                 from hitl.backtest.session_clock import get_active_session_status
                 from hitl.backtest.evaluator import get_optimal_trade_management
                 _, _, sess_key = get_active_session_status()
-                target_rr_cap, breakeven_rr = get_optimal_trade_management(sym, sess_key)
+                target_rr_cap, breakeven_rr = get_optimal_trade_management(sym, sess_key, setup_arch_id=setup.get("archetype_id"))
+                if setup.get("recommended_be_rr"):
+                    breakeven_rr = setup["recommended_be_rr"]
 
-                # Cap Take Profit target to empirical optimal ceiling
+                # Cap Take Profit target to empirical optimal ceiling if not using archetype calibrated RR
                 initial_rr = plan.get("rr", 3.0)
-                if initial_rr > target_rr_cap:
+                if not setup.get("recommended_target_rr") and initial_rr > target_rr_cap:
                     risk_dist = abs(plan["entry"] - plan["sl"])
                     if "BUY" in decision:
                         capped_tp = plan["entry"] + (risk_dist * target_rr_cap)
@@ -393,7 +338,10 @@ class LiveMarketRadar:
                     plan["rr"] = target_rr_cap
 
                 plan_id = f"PLN-{sym}-{int(time.time())}"
-                risk_usd = plan["risk_pips"] * (0.1 if is_fx else 1.0)
+                risk_usd = plan.get("risk_usd")
+                if not risk_usd or risk_usd <= 0:
+                    native_risk = self.engine.calculate_risk_usd(setup["resolved_symbol"], decision, plan["entry"], plan["sl"], 0.01)
+                    risk_usd = native_risk if native_risk is not None else (plan["risk_pips"] * 0.1 if is_fx else plan["risk_pips"] * 1.0)
                 order_lbl = decision.replace("_", " ")
 
                 # Extract concise final verdict
@@ -422,6 +370,20 @@ class LiveMarketRadar:
                         is_autonomous=True
                     )
 
+                    if success and ticket:
+                        try:
+                            from hitl.watchdog import register_order_metadata
+                            register_order_metadata(ticket, {
+                                "symbol": sym,
+                                "archetype_id": plan.get("archetype_id", setup.get("archetype_id")),
+                                "be_rr": breakeven_rr,
+                                "target_rr": plan.get("rr"),
+                                "ttl_minutes": 60,
+                                "created_at": time.time()
+                            })
+                        except Exception as e:
+                            print(f"[LiveRadar] Failed to register order metadata: {e}")
+
                     PENDING_EXECUTION_PLANS[plan_id] = {
                         "symbol": setup["resolved_symbol"],
                         "clean_sym": sym,
@@ -434,6 +396,7 @@ class LiveMarketRadar:
                         "breakeven_rr": breakeven_rr,
                         "session_key": sess_key,
                         "risk_usd": risk_usd,
+                        "archetype_id": plan.get("archetype_id", setup.get("archetype_id", "DISCRETIONARY_SMC")),
                         "ticket": ticket if success else None,
                         "full_report": report,
                         "created_at": time.time()
@@ -487,6 +450,7 @@ class LiveMarketRadar:
                         "breakeven_rr": breakeven_rr,
                         "session_key": sess_key,
                         "risk_usd": risk_usd,
+                        "archetype_id": plan.get("archetype_id", setup.get("archetype_id", "DISCRETIONARY_SMC")),
                         "full_report": report,
                         "created_at": time.time()
                     }

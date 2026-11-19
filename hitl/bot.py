@@ -247,21 +247,30 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
 
                 plan_id = f"PLN-{sym_name}-{int(time.time())}"
                 plan = None
-                if decision != "STAND_ASIDE" and 'landmarks' in locals() and landmarks:
-                    from hitl.tools.smc_tools import build_validated_order_plan
-                    plan, _ = build_validated_order_plan(
-                        decision=decision,
-                        poi_selection="PROXIMAL_EDGE",
-                        landmarks=landmarks
-                    )
-
                 engine = MT5Engine()
+                res_sym = engine.resolve_symbol(sym_name) if engine.ensure_connected() else sym_name
+                if decision != "STAND_ASIDE":
+                    if 'landmarks' not in locals() or not landmarks:
+                        from hitl.council import assemble_council_intelligence
+                        dossier = assemble_council_intelligence(sym_name)
+                        landmarks = dossier.get("landmarks") if dossier else None
+                    if landmarks:
+                        from hitl.tools.smc_tools import build_validated_order_plan
+                        plan, _ = build_validated_order_plan(
+                            decision=decision,
+                            poi_selection="PROXIMAL_EDGE",
+                            landmarks=landmarks,
+                            entry_ref=screener.get("entry_ref"),
+                            sl_ref=screener.get("sl_ref"),
+                            recommended_target_rr=screener.get("recommended_target_rr"),
+                            archetype_id=screener.get("archetype_id")
+                        )
+
                 is_demo = engine.is_demo_account()
                 ticket = None
                 auto_placed = False
 
                 if plan and is_demo:
-                    res_sym = engine.resolve_symbol(sym_name)
                     ok, fb, ticket = engine.place_limit_order(
                         symbol=res_sym,
                         order_type_str=decision,
@@ -275,9 +284,16 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                         auto_placed = True
 
                 PENDING_EXECUTION_PLANS[plan_id] = {
-                    "symbol": sym_name,
+                    "symbol": res_sym or sym_name,
                     "clean_sym": sym_name,
                     "type": decision,
+                    "entry": plan["entry"] if plan else None,
+                    "sl": plan["sl"] if plan else None,
+                    "tp": plan["tp"] if plan else None,
+                    "lot": plan["lot"] if plan else BASE_LOT,
+                    "rr": plan["rr"] if plan else None,
+                    "risk_usd": plan.get("risk_usd", 0.0) if plan else 0.0,
+                    "archetype_id": plan.get("archetype_id", screener.get("archetype_id", "DISCRETIONARY_SMC")) if plan else "DISCRETIONARY_SMC",
                     "plan": plan,
                     "ticket": ticket,
                     "full_report": report,
@@ -303,6 +319,16 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                     buttons = {
                         "inline_keyboard": [
                             [{"text": f"❌ Cancel Order #{ticket}", "callback_data": f"cancel_{ticket}"}],
+                            btn_row
+                        ]
+                    }
+                elif plan and not is_demo:
+                    buttons = {
+                        "inline_keyboard": [
+                            [
+                                {"text": f"🚀 Approve & Place {decision.replace('_', ' ')}", "callback_data": f"exec_plan_{plan_id}"},
+                                {"text": "🛡️ Veto / Stand Aside", "callback_data": f"veto_plan_{plan_id}"}
+                            ],
                             btn_row
                         ]
                     }
@@ -395,16 +421,20 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                     plan, _ = build_validated_order_plan(
                         decision=decision,
                         poi_selection="PROXIMAL_EDGE",
-                        landmarks=landmarks
+                        landmarks=landmarks,
+                        entry_ref=screener.get("entry_ref"),
+                        sl_ref=screener.get("sl_ref"),
+                        recommended_target_rr=screener.get("recommended_target_rr"),
+                        archetype_id=screener.get("archetype_id")
                     )
 
             engine = MT5Engine()
             is_demo = engine.is_demo_account()
             ticket = None
             auto_placed = False
+            res_sym = engine.resolve_symbol(sym_name) if engine.ensure_connected() else sym_name
 
             if plan and is_demo:
-                res_sym = engine.resolve_symbol(sym_name)
                 ok, fb, ticket = engine.place_limit_order(
                     symbol=res_sym,
                     order_type_str=decision,
@@ -418,9 +448,16 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                     auto_placed = True
 
             PENDING_EXECUTION_PLANS[plan_id] = {
-                "symbol": sym_name,
+                "symbol": res_sym or sym_name,
                 "clean_sym": sym_name,
                 "type": decision,
+                "entry": plan["entry"] if plan else None,
+                "sl": plan["sl"] if plan else None,
+                "tp": plan["tp"] if plan else None,
+                "lot": plan["lot"] if plan else BASE_LOT,
+                "rr": plan["rr"] if plan else None,
+                "risk_usd": plan.get("risk_usd", 0.0) if plan else 0.0,
+                "archetype_id": plan.get("archetype_id", screener.get("archetype_id", "DISCRETIONARY_SMC")) if plan else "DISCRETIONARY_SMC",
                 "plan": plan,
                 "ticket": ticket,
                 "full_report": report,
@@ -445,6 +482,16 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                 action_buttons = {
                     "inline_keyboard": [
                         [{"text": f"❌ Cancel Order #{ticket}", "callback_data": f"cancel_{ticket}"}],
+                        btn_row
+                    ]
+                }
+            elif plan and not is_demo:
+                action_buttons = {
+                    "inline_keyboard": [
+                        [
+                            {"text": f"🚀 Approve & Place {decision.replace('_', ' ')}", "callback_data": f"exec_plan_{plan_id}"},
+                            {"text": "🛡️ Veto / Stand Aside", "callback_data": f"veto_plan_{plan_id}"}
+                        ],
                         btn_row
                     ]
                 }
@@ -1076,32 +1123,55 @@ def run_bot():
                             if not plan:
                                 client.send_message(sender_id, "⚠️ This order plan has expired or was already executed.")
                             else:
-                                success, feedback, ticket = engine.place_limit_order(
-                                    symbol=plan['symbol'],
-                                    order_type_str=plan['type'],
-                                    price=plan['entry'],
-                                    sl=plan['sl'],
-                                    tp=plan['tp'],
-                                    lot=plan['lot']
-                                )
-                                if success:
-                                    del PENDING_EXECUTION_PLANS[plan_id]
-                                    order_label = plan['type'].replace('_', ' ')
-                                    fmt = ".5f" if "GBP" in plan['symbol'] or "EUR" in plan['symbol'] else ".2f"
-                                    client.send_message(
-                                        sender_id,
-                                        f"🚀 *Order Approved & Placed in MetaTrader 5!*\n\n"
-                                        f"📌 *Ticket:* `#{ticket}`\n"
-                                        f"🔹 *Type:* `{order_label}`\n"
-                                        f"📍 *Entry:* `{plan['entry']:{fmt}}`\n"
-                                        f"🛑 *SL:*    `{plan['sl']:{fmt}}`\n"
-                                        f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}*)\n"
-                                        f"⚖️ *Lot:*   `{plan['lot']}`\n\n"
-                                        f"🛡️ *Velocity Guard Activated:*\n"
-                                        f"Order will be auto-cancelled if price exhibits adverse momentum before fill."
-                                    )
+                                entry_p = plan.get('entry') or (plan.get('plan') or {}).get('entry')
+                                sl_p = plan.get('sl') or (plan.get('plan') or {}).get('sl')
+                                tp_p = plan.get('tp') or (plan.get('plan') or {}).get('tp')
+                                lot_v = plan.get('lot') or (plan.get('plan') or {}).get('lot') or BASE_LOT
+                                rr_v = plan.get('rr') or (plan.get('plan') or {}).get('rr') or 3.0
+                                sym_p = plan.get('symbol') or (plan.get('plan') or {}).get('symbol') or sym_name
+                                type_p = plan.get('type') or (plan.get('plan') or {}).get('type') or "BUY_LIMIT"
+
+                                if entry_p is None or sl_p is None or tp_p is None:
+                                    client.send_message(sender_id, "⚠️ Plan coordinates are incomplete or corrupt.")
                                 else:
-                                    client.send_message(sender_id, f"⚠️ *MetaTrader 5 Placement Error:*\n`{feedback}`")
+                                    success, feedback, ticket = engine.place_limit_order(
+                                        symbol=sym_p,
+                                        order_type_str=type_p,
+                                        price=entry_p,
+                                        sl=sl_p,
+                                        tp=tp_p,
+                                        lot=lot_v
+                                    )
+                                    if success:
+                                        try:
+                                            from hitl.watchdog import register_order_metadata
+                                            register_order_metadata(ticket, {
+                                                "symbol": sym_p,
+                                                "archetype_id": plan.get("archetype_id", "DISCRETIONARY_SMC"),
+                                                "be_rr": plan.get("breakeven_rr"),
+                                                "target_rr": rr_v,
+                                                "ttl_minutes": 60,
+                                                "created_at": time.time()
+                                            })
+                                        except Exception:
+                                            pass
+                                        del PENDING_EXECUTION_PLANS[plan_id]
+                                        order_label = type_p.replace('_', ' ')
+                                        fmt = ".5f" if "GBP" in sym_p or "EUR" in sym_p else ".2f"
+                                        client.send_message(
+                                            sender_id,
+                                            f"🚀 *Order Approved & Placed in MetaTrader 5!*\n\n"
+                                            f"📌 *Ticket:* `#{ticket}`\n"
+                                            f"🔹 *Type:* `{order_label}`\n"
+                                            f"📍 *Entry:* `{entry_p:{fmt}}`\n"
+                                            f"🛑 *SL:*    `{sl_p:{fmt}}`\n"
+                                            f"🎯 *TP:*    `{tp_p:{fmt}}` (R:R: *1:{rr_v:.2f}*)\n"
+                                            f"⚖️ *Lot:*   `{lot_v}`\n\n"
+                                            f"🛡️ *Velocity Guard Activated:*\n"
+                                            f"Order will be auto-cancelled if price exhibits adverse momentum before fill."
+                                        )
+                                    else:
+                                        client.send_message(sender_id, f"⚠️ *MetaTrader 5 Placement Error:*\n`{feedback}`")
                         elif data.startswith("veto_plan_"):
                             from hitl.live_radar import PENDING_EXECUTION_PLANS
                             plan_id = data.replace("veto_plan_", "")

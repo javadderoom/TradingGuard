@@ -195,7 +195,7 @@ def calculate_htf_fundamental_bias(
                 f"fuels structural sovereign demand for {asset_name}. All intraday shorts are hard-vetoed. "
                 f"Mandate is to buy Asian/London Judas purges into discount Fair Value Gaps."
             )
-        elif usd_mom < -0.10 or usd_trend == "CONSOLIDATION_RANGE":
+        elif usd_mom < -0.10:
             bias = "BULLISH"
             execution_filter = "BUY_ONLY"
             narrative = (

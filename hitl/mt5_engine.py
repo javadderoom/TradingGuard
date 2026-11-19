@@ -7,6 +7,7 @@ pending order cancellation, and account queries.
 import os
 import time
 import datetime
+import threading
 from typing import Optional, Dict, Any, List, Tuple
 import MetaTrader5 as mt5
 from hitl.config import (
@@ -21,6 +22,8 @@ from hitl.config import (
     SESSION_END_MINUTE
 )
 from hitl.macro_calendar import check_news_danger
+
+_MT5_LOCK = threading.RLock()
 
 
 class MT5Engine:
@@ -163,11 +166,18 @@ class MT5Engine:
                 "reason": ""
             }
 
-        now = datetime.datetime.now()
-        midnight = datetime.datetime(now.year, now.month, now.day, 0, 0, 0)
-        deals = mt5.history_deals_get(midnight, now + datetime.timedelta(days=1))
+        # Resolve broker server time to anchor today's midnight in server time
+        server_now = None
+        s_tick = mt5.symbol_info_tick(DEFAULT_SYMBOL)
+        if s_tick and hasattr(s_tick, 'time') and isinstance(s_tick.time, (int, float)) and s_tick.time > 0:
+            server_now = datetime.datetime.fromtimestamp(s_tick.time)
+        else:
+            server_now = datetime.datetime.now()
 
-        if not deals:
+        midnight = datetime.datetime(server_now.year, server_now.month, server_now.day, 0, 0, 0)
+        deals = mt5.history_deals_get(midnight, server_now + datetime.timedelta(days=1))
+
+        if not deals or not isinstance(deals, (list, tuple)):
             return {
                 "realized_pnl": 0.0,
                 "daily_loss": 0.0,
@@ -185,7 +195,8 @@ class MT5Engine:
 
         consec_losses = 0
         for ct in closed_trades:
-            if ct.profit < 0:
+            net_ct_pnl = ct.profit + ct.commission + ct.swap + ct.fee
+            if net_ct_pnl < 0:
                 consec_losses += 1
             else:
                 break
@@ -194,10 +205,10 @@ class MT5Engine:
         reason = ""
         if daily_loss >= MAX_DAILY_LOSS_USD:
             circuit_tripped = True
-            reason = f"سقف زیان روزانه (${daily_loss:.2f} >= ${MAX_DAILY_LOSS_USD:.2f}) پر شده است."
+            reason = f"Daily loss ceiling reached (${daily_loss:.2f} >= ${MAX_DAILY_LOSS_USD:.2f})."
         elif consec_losses >= MAX_CONSECUTIVE_LOSSES:
             circuit_tripped = True
-            reason = f"تعداد ضررهای متوالی امروز ({consec_losses} ترید) به حد مجاز رسیده است."
+            reason = f"Maximum consecutive losses reached today ({consec_losses} trades)."
 
         return {
             "realized_pnl": round(total_pnl, 2),
@@ -222,72 +233,72 @@ class MT5Engine:
         Returns (is_valid, error_message, details_dict).
         """
         if not self.ensure_connected():
-            return False, "اتصال به متاتریدر ۵ برقرار نشد.", {}
+            return False, "Failed to connect to MetaTrader 5.", {}
 
         # 1. Circuit Breaker Check (Daily loss ceiling & consecutive loss lock)
         perf = self.get_daily_performance()
         if perf["circuit_tripped"]:
             return False, (
-                f"🚫 *سیستم در وضعیت قفل انضباطی (Circuit Breaker) است!*\n"
-                f"دلیل: {perf['reason']}\n"
-                f"جهت محافظت از سرمایه و پیشگیری از معامله احساسی، ثبت اردر جدید تا پایان روز مسدود می‌باشد."
+                f"🚫 *System in Circuit Breaker Discipline Lock!*\n"
+                f"Reason: {perf['reason']}\n"
+                f"To protect capital and prevent emotional trading, new orders are locked for the remainder of the session."
             ), {}
 
         # 2. Cooldown Check (Post-trade pause - bypassed on Demo or for Council autonomous executions)
         in_cooldown, rem_min, cd_reason = self.get_cooldown_status()
         if in_cooldown and not self.is_demo_account() and not is_autonomous:
             return False, (
-                f"⏳ *قفل آرامش ذهن (Cooldown) فعال است!*\n"
-                f"تا پایان زمان وقفه (*{rem_min} دقیقه* باقی‌مانده) امکان ثبت اردر جدید وجود ندارد.\n"
-                f"💡 *علت:* {cd_reason}\n"
-                f"هدف: جلوگیری از ورودهای شتاب‌زده، انتقامی یا تصمیم‌گیری هیجانی."
+                f"⏳ *Mindfulness Cooldown Active!*\n"
+                f"New order placement is locked for *{rem_min} minutes*.\n"
+                f"💡 *Reason:* {cd_reason}\n"
+                f"Purpose: Prevent revenge trading, impulsive entries, and emotional decisions."
             ), {}
 
         # 3. Session Hours Check (Tehran 11:30 - 21:00)
         in_session, session_msg = self.is_within_session_hours(symbol)
         if not in_session:
-            return False, f"🚫 *عدم تایید اردر (سشن معاملاتی):*\n{session_msg}", {}
+            return False, f"🚫 *Session Hour Rejection:*\n{session_msg}", {}
 
         # 4. High-Impact Macro News Danger Zone Check
         is_news_danger, news_ev = check_news_danger(symbol, window_minutes=20)
         if is_news_danger and news_ev:
             return False, (
-                f"🚫 *توقف به دلیل اخبار با تاثیر بالا (News Radar)!*\n"
-                f"📌 رویداد: `{news_ev['title']}` ({news_ev['country']})\n"
-                f"⏰ زمان انتشار: ساعت `{news_ev['time_str']}` به وقت تهران ({news_ev['minutes_away']} دقیقه باقی‌مانده)\n"
-                f"🛑 ورود اردر لیمیت در آستانه اخبار پرریسک به دلیل جهش اسپرد و اسلیپیج مسدود می‌باشد."
+                f"🚫 *High-Impact Macro News Danger Zone Active!*\n"
+                f"📌 Event: `{news_ev['title']}` ({news_ev['country']})\n"
+                f"⏰ Release Time: `{news_ev['time_str']}` Tehran ({news_ev['minutes_away']}m away)\n"
+                f"🛑 Pending orders prohibited during high-risk news releases due to spread blowouts and slippage."
             ), {}
 
         resolved_sym = self.resolve_symbol(symbol)
         if not resolved_sym:
-            return False, f"نماد `{symbol}` در بروکر پیدا نشد.", {}
+            return False, f"Symbol `{symbol}` not found on broker.", {}
 
         tick = mt5.symbol_info_tick(resolved_sym)
         if not tick:
-            return False, f"دریافت قیمت لحظه‌ای برای `{resolved_sym}` ناموفق بود.", {}
+            return False, f"Failed to retrieve live market quote for `{resolved_sym}`.", {}
 
         is_buy = "BUY" in order_type_str.upper()
 
         # Semantic Direction Validation
         if is_buy:
             if price >= tick.ask:
-                return False, f"قیمت Buy Limit ({price}) باید پایین‌تر از قیمت لحظه‌ای فروش ({tick.ask}) باشد.", {}
+                return False, f"Buy Limit price ({price}) must be below current Ask ({tick.ask}).", {}
             if sl >= price:
-                return False, f"حد ضرر Buy Limit ({sl}) باید پایین‌تر از نقطه ورود ({price}) باشد.", {}
+                return False, f"Buy Limit Stop Loss ({sl}) must be below Entry price ({price}).", {}
             if tp <= price:
-                return False, f"حد سود Buy Limit ({tp}) باید بالاتر از نقطه ورود ({price}) باشد.", {}
+                return False, f"Buy Limit Take Profit ({tp}) must be above Entry price ({price}).", {}
         else: # SELL LIMIT
             if price <= tick.bid:
-                return False, f"قیمت Sell Limit ({price}) باید بالاتر از قیمت لحظه‌ای خرید ({tick.bid}) باشد.", {}
+                return False, f"Sell Limit price ({price}) must be above current Bid ({tick.bid}).", {}
             if sl <= price:
-                return False, f"حد ضرر Sell Limit ({sl}) باید بالاتر از نقطه ورود ({price}) باشد.", {}
+                return False, f"Sell Limit Stop Loss ({sl}) must be above Entry price ({price}).", {}
             if tp >= price:
-                return False, f"حد سود Sell Limit ({tp}) باید پایین‌تر از نقطه ورود ({price}) باشد.", {}
+                return False, f"Sell Limit Take Profit ({tp}) must be below Entry price ({price}).", {}
 
         # Dollar Risk Validation ($12 Ceiling including Spread & Commission buffer)
         risk_usd = self.calculate_risk_usd(resolved_sym, order_type_str, price, sl, lot)
         if risk_usd is None:
-            return False, "محاسبه مقدار ریسک با خطای بروکر مواجه شد.", {}
+            return False, "Broker risk calculation returned an error.", {}
 
         reward_usd = self.calculate_risk_usd(resolved_sym, "SELL" if is_buy else "BUY", price, tp, lot) or 0.0
 
@@ -299,11 +310,11 @@ class MT5Engine:
 
         if total_risk_usd > MAX_RISK_USD:
             return False, (
-                f"❌ *رد دستور به دلیل نقض سقف ریسک!*\n"
-                f"ضرر حاصل از قیمت: *${risk_usd:.2f}*\n"
-                f"هزینه اسپرد و کمیسیون: *${friction_total:.2f}*\n"
-                f"مجموع ریسک معامله: *${total_risk_usd:.2f}* (سقف مجاز: *${MAX_RISK_USD:.2f}*)\n"
-                f"💡 لطفاً حد ضرر را کمی بسته‌تر انتخاب کنید تا مجموع ریسک زیر ۱۲ دلار بماند."
+                f"❌ *Order Rejected: Max Dollar Risk Violation!*\n"
+                f"Structural Stop Loss: *${risk_usd:.2f}*\n"
+                f"Friction (Spread & Commission): *${friction_total:.2f}*\n"
+                f"Total Projected Risk: *${total_risk_usd:.2f}* (Max Allowed: *${MAX_RISK_USD:.2f}*)\n"
+                f"💡 Please refine Stop Loss distance to keep total risk strictly under ${MAX_RISK_USD:.2f}."
             ), {}
 
         # 6. Account Profile & Prop Firm Risk Governor Validation
@@ -357,65 +368,95 @@ class MT5Engine:
         is_buy = "BUY" in details["type"]
         mt5_order_type = mt5.ORDER_TYPE_BUY_LIMIT if is_buy else mt5.ORDER_TYPE_SELL_LIMIT
 
+        sym_info = mt5.symbol_info(sym)
+        if not sym_info:
+            return False, f"Failed to retrieve symbol info for {sym}.", None
+
+        # Snap price, SL, TP to broker digits and tick size
+        digits = getattr(sym_info, "digits", 2)
+        tick_size = getattr(sym_info, "trade_tick_size", 0.0) or 0.0
+        if tick_size > 0:
+            snapped_price = round(round(price / tick_size) * tick_size, digits)
+            snapped_sl = round(round(sl / tick_size) * tick_size, digits)
+            snapped_tp = round(round(tp / tick_size) * tick_size, digits)
+        else:
+            snapped_price = round(price, digits)
+            snapped_sl = round(sl, digits)
+            snapped_tp = round(tp, digits)
+
+        # Dynamic filling_mode resolution: RETURN (4) -> IOC (2) -> FOK (1)
+        filling_mode = getattr(sym_info, "filling_mode", 0)
+        if (filling_mode & 4) != 0:
+            resolved_filling = mt5.ORDER_FILLING_RETURN
+        elif (filling_mode & 2) != 0:
+            resolved_filling = mt5.ORDER_FILLING_IOC
+        elif (filling_mode & 1) != 0:
+            resolved_filling = mt5.ORDER_FILLING_FOK
+        else:
+            resolved_filling = mt5.ORDER_FILLING_RETURN
+
         request = {
             "action": mt5.TRADE_ACTION_PENDING,
             "symbol": sym,
             "volume": lot,
             "type": mt5_order_type,
-            "price": price,
-            "sl": sl,
-            "tp": tp,
-            "type_filling": mt5.ORDER_FILLING_RETURN,
+            "price": snapped_price,
+            "sl": snapped_sl,
+            "tp": snapped_tp,
+            "type_filling": resolved_filling,
             "type_time": mt5.ORDER_TIME_GTC,
             "comment": "TradingGuard HITL",
         }
 
-        result = mt5.order_send(request)
-        if not result:
-            return False, f"خطا در ارسال درخواست به بروکر: {mt5.last_error()}", None
+        with _MT5_LOCK:
+            result = mt5.order_send(request)
+            if not result:
+                return False, f"Broker request dispatch error: {mt5.last_error()}", None
 
-        if result.retcode != mt5.TRADE_RETCODE_DONE:
-            return False, f"بروکر درخواست را رد کرد: [{result.retcode}] {result.comment}", None
+            if result.retcode != mt5.TRADE_RETCODE_DONE:
+                return False, f"Broker rejected order: [{result.retcode}] {result.comment}", None
 
-        return True, f"اردر لیمیت با تیکت #{result.order} ثبت شد.", result.order
+            return True, f"Limit order successfully placed with ticket #{result.order}.", result.order
 
     def cancel_order(self, ticket: int) -> Tuple[bool, str]:
         """Cancels a pending order by ticket ID."""
         if not self.ensure_connected():
-            return False, "اتصال به متاتریدر برقرار نیست."
+            return False, "MT5 connection is not active."
 
         request = {
             "action": mt5.TRADE_ACTION_REMOVE,
             "order": ticket,
         }
-        result = mt5.order_send(request)
-        if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
-            comment = result.comment if result else str(mt5.last_error())
-            return False, f"Order cancellation failed: {comment}"
-        return True, f"Order #{ticket} cancelled successfully."
+        with _MT5_LOCK:
+            result = mt5.order_send(request)
+            if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
+                comment = result.comment if result else str(mt5.last_error())
+                return False, f"Order cancellation failed: {comment}"
+            return True, f"Order #{ticket} cancelled successfully."
 
     def modify_position_sltp(self, ticket: int, sl: float, tp: float) -> Tuple[bool, str]:
         """Modifies Stop Loss and Take Profit of an active open position."""
         if not self.ensure_connected():
-            return False, "MT5 connection failed"
+            return False, "MT5 connection is not active."
         
-        pos = mt5.positions_get(ticket=ticket)
-        if not pos:
-            return False, f"Position #{ticket} not found"
-        p = pos[0]
+        with _MT5_LOCK:
+            pos = mt5.positions_get(ticket=ticket)
+            if not pos:
+                return False, f"Position #{ticket} not found."
+            p = pos[0]
 
-        request = {
-            "action": mt5.TRADE_ACTION_SLTP,
-            "position": ticket,
-            "symbol": p.symbol,
-            "sl": float(sl),
-            "tp": float(tp),
-        }
-        res = mt5.order_send(request)
-        if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-            return True, f"Position #{ticket} SL/TP updated successfully."
-        err = res.comment if res else str(mt5.last_error())
-        return False, f"Failed to modify position #{ticket}: {err}"
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "position": ticket,
+                "symbol": p.symbol,
+                "sl": float(sl),
+                "tp": float(tp),
+            }
+            res = mt5.order_send(request)
+            if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                return True, f"Position #{ticket} SL/TP updated successfully."
+            err = res.comment if res else str(mt5.last_error())
+            return False, f"Failed to modify position #{ticket}: {err}"
 
     def get_pending_orders(self) -> List[Dict[str, Any]]:
         """Retrieves all active pending orders."""
