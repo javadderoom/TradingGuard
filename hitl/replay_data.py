@@ -433,14 +433,29 @@ class ReplayDataManager:
                         "message": f"Broker symbol '{symbol}' not found in MT5",
                     }
 
-            count = max(1000, days_back * 1440)
-            rates = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_M1, 0, count)
+            # Seamless gap-free sync:
+            # 1. Load existing dataset to find the latest timestamp.
+            df_existing = self.load_m1_df(symbol)
+            latest_time = int(df_existing["time"].max()) if not df_existing.empty else 0
+
+            rates = None
+            if latest_time > 0:
+                # Copy from 2 hours before the latest bar (to heal any partial or revised bars)
+                # up to tomorrow, ensuring continuous zero-gap synchronization.
+                start_dt = datetime.datetime.fromtimestamp(latest_time - 7200, tz=datetime.timezone.utc)
+                end_dt = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
+                rates = mt5.copy_rates_range(broker_sym, mt5.TIMEFRAME_M1, start_dt, end_dt)
+
+            if rates is None or len(rates) == 0:
+                count = max(2880, days_back * 1440)
+                rates = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_M1, 0, count)
+
             if rates is None or len(rates) == 0:
                 return {
                     "success": False,
                     "symbol": symbol,
                     "bars_added": 0,
-                    "total_bars": 0,
+                    "total_bars": len(df_existing),
                     "message": "No rates returned from MT5 terminal",
                 }
 
@@ -451,10 +466,11 @@ class ReplayDataManager:
                     df_new[c] = 0.0
 
             df_new = df_new[cols]
-            df_existing = self.load_m1_df(symbol)
 
+            # Crucial: keep='last' ensures that finalized, complete bars from MT5 overwrite
+            # any incomplete or partially formed 1M bars from prior synchronization cycles.
             df_merged = pd.concat([df_existing, df_new], ignore_index=True)
-            df_merged = df_merged.drop_duplicates(subset=["time"]).sort_values("time").reset_index(drop=True)
+            df_merged = df_merged.drop_duplicates(subset=["time"], keep="last").sort_values("time").reset_index(drop=True)
             bars_added = len(df_merged) - len(df_existing)
 
             # Persist updated cache file

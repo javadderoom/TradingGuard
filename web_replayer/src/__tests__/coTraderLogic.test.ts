@@ -760,4 +760,29 @@ describe('coTraderLogic - Workbench Preferences & Forensic Box Deduplication', (
     expect(macroSweep?.origin_time).toBe(1000);
     expect(macroSweep?.price).toBe(4005.0);
   });
+
+  it('detects 5M large expansion candle sweep with 25% rejection wick that closes below swept high', () => {
+    // Replicates 2026-11-16 16:45 5M gold bar:
+    // Left morning high at 04:40: 3887.62
+    // Raid bar at 16:45: open 3878.45, high 3888.88, low 3876.91, close 3885.68 (wick ratio 26.7%, close < 3887.62)
+    const bars: Candle[] = [
+      { time: 100, open: 3880, high: 3885, low: 3878, close: 3882 },
+      { time: 200, open: 3882, high: 3886, low: 3880, close: 3884 },
+      { time: 300, open: 3884, high: 3887.62, low: 3882, close: 3885 }, // Confirmed 3L/3R high
+      { time: 400, open: 3885, high: 3881, low: 3875, close: 3876 },
+      { time: 500, open: 3876, high: 3878, low: 3872, close: 3874 },
+      { time: 600, open: 3874, high: 3876, low: 3870, close: 3872 },
+      { time: 700, open: 3872, high: 3875, low: 3869, close: 3871 },
+      { time: 800, open: 3871, high: 3877, low: 3870, close: 3875 },
+      // 16:45 5M expansion raid bar:
+      { time: 900, open: 3878.45, high: 3888.88, low: 3876.91, close: 3885.68 },
+    ];
+
+    const sweeps = extractLiquiditySweeps(bars, {}, null);
+    const sweep = sweeps.find((s) => s.level === 3887.62);
+    expect(sweep).toBeDefined();
+    expect(sweep?.time).toBe(900);
+    expect(sweep?.price).toBe(3888.88);
+    expect(sweep?.origin_time).toBe(300);
+  });
 });

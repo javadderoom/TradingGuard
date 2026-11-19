@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-11-13T09:59:24.478980+00:00",
+  "cases": [
+    {
+      "symbol": "XAUUSD_o",
+      "timestamp": 1794496200,
+      "title": "Veto Analysis: SETUP-ARCH-015 on XAUUSD_o",
+      "notes": "Diagnostic at 2026-11-12 13:10 (UTC):\nSession Hour: 16\nPhase: PRO_EXPANSION\nReason / Veto: [SETUP-ARCH-015] NY Open One-Sided Bearish Trend Continuation (Swept pre-NY ceiling 3939.68, ret 52%, H1<EMA50 4009.95) | Scaled Entry: 3929.66 | Phase: PRO_EXPANSION\nClock Mode: true_tehran",
+      "category": "VETO_DISAGREEMENT",
+      "archetype_id": "SETUP-ARCH-015",
+      "case_id": "CASE-XAUUSD_o-bd750c81",
+      "created_at": "2026-11-13T09:59:24.478864+00:00",
+      "prompt_markdown": "### 🔬 Agentify Forensic Snapshot: CASE-XAUUSD_o-bd750c81\n**Instrument:** `XAUUSD_o` | **Date:** `2026-11-12` | **Server:** `15:10` | **Tehran:** `16:40` | **UTC:** `13:10`\n\n#### 📊 Trade Geometry Comparison\n| Attribute | Human Setup / Adjustment | Bot Verdict / Execution |\n| :--- | :--- | :--- |\n| **Direction** | `N/A` | `NO_BOT_TRADE` |\n| **Entry Price** | `N/A` | `-` |\n| **Stop Loss** | `N/A` | `-` |\n| **Take Profit** | `N/A` | `-` |\n| **Outcome / PnL** | (Proposed / Evaluated) | `NO_SETUP` ($0.00) |\n\n#### ⚙️ Screener Telemetry & Algorithm Brain State\n- **Session Hour:** `N/A`\n- **Algorithm Decision:** `VETO / STAND ASIDE`\n- **Archetype ID:** `None`\n- **Exact Screener Veto / Reason:** `No screener output recorded.`\n- **Market Phase:** `N/A`\n\n#### 📝 Trader Rationale & Forensic Notes\n> No notes provided.\n\n#### 🎯 Antigravity Optimization Directives\n1. **Audit Veto Authenticity**: Check if the veto reason above reflects a genuine institutional safeguard or an edge-case miscalibration (e.g., timezone skew, tight buffer, or over-filtering).\n2. **Zero Reality Distortion**: Do not fabricate a setup if contract physics or macro phase invalidate it. Maintain strict mathematical rigor.\n3. **SSOT Rule Synchronization**: If an algorithmic calibration or parameter adjustment is verified, ensure `docs/SYSTEM_EXECUTION_MIRROR.md` is synchronized in the exact same turn."
+    }
+  ]
+}

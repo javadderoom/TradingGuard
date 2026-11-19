@@ -212,7 +212,7 @@ export function App() {
     replayApi.getCatalog().then((res) => {
       setCatalog(res);
       const curSym = res.symbols.find((s) => s.symbol === selectedSymbol);
-      const latest = getLatestRangeForSymbol(curSym, 3);
+      const latest = getLatestRangeForSymbol(curSym, 7);
       if (latest) {
         setStartDateStr(latest.start);
         setEndDateStr(latest.end);
@@ -242,7 +242,7 @@ export function App() {
     setBotEvents([]);
 
     const targetSym = catalog?.symbols.find((s) => s.symbol === nextSymbol);
-    const resolved = resolveDateRangeForSymbol(targetSym, startDateStr, endDateStr, 3);
+    const resolved = resolveDateRangeForSymbol(targetSym, startDateStr, endDateStr, 7);
     if (resolved.adjusted) {
       setStartDateStr(resolved.start);
       setEndDateStr(resolved.end);
@@ -571,12 +571,12 @@ export function App() {
     setAutoSyncCountdown(60);
     setSyncNotice(null);
     try {
-      const syncRes = await replayApi.syncMt5(selectedSymbol, 5);
+      const syncRes = await replayApi.syncMt5(selectedSymbol, 7);
       const freshCatalog = await replayApi.getCatalog().catch(() => null);
       if (freshCatalog) {
         setCatalog(freshCatalog);
         const syncedSym = freshCatalog.symbols.find((s) => s.symbol === selectedSymbol);
-        const latest = getLatestRangeForSymbol(syncedSym, 3);
+        const latest = getLatestRangeForSymbol(syncedSym, 7);
         if (syncRes.success && latest && (latest.end !== endDateStr || latest.start !== startDateStr)) {
           setStartDateStr(latest.start);
           setEndDateStr(latest.end);
@@ -596,26 +596,25 @@ export function App() {
     }
   };
 
-  // Silent Background Auto-Sync Handler (Runs every 60s without intrusive toasts)
+  // Silent Background Auto-Sync Handler (Runs every 60s without intrusive toasts or date range hijacking)
   const silentSyncMt5 = useCallback(async () => {
     if (isSyncingMt5 || isAutoSyncing) return;
     setIsAutoSyncing(true);
     try {
-      const syncRes = await replayApi.syncMt5(selectedSymbol, 1);
+      const syncRes = await replayApi.syncMt5(selectedSymbol, 5);
       if (syncRes.success) {
         const freshCatalog = await replayApi.getCatalog().catch(() => null);
         if (freshCatalog) {
           setCatalog(freshCatalog);
           const syncedSym = freshCatalog.symbols.find((s) => s.symbol === selectedSymbol);
-          const latest = getLatestRangeForSymbol(syncedSym, 3);
-          if (latest && latest.end > endDateStr) {
-            setStartDateStr(latest.start);
-            setEndDateStr(latest.end);
-            return;
+          // Only advance endDateStr if the user was already viewing the live edge; NEVER mutate or shrink startDateStr
+          if (syncedSym?.max_date && syncedSym.max_date > endDateStr) {
+            setEndDateStr(syncedSym.max_date);
           }
         }
+        await loadCandles();
         if (syncRes.bars_added && syncRes.bars_added > 0) {
-          await Promise.all([loadCandles(), loadBotScan(), loadCoTrades()]);
+          await Promise.all([loadBotScan(), loadCoTrades()]);
         }
       }
     } catch {

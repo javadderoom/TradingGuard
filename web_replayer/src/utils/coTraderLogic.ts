@@ -392,14 +392,16 @@ export function extractLiquiditySweeps(
       const sh = list[s];
       if (bar.high > sh.price) {
         // True sweep rejection: bar penetrated pivot, rejected with prominent upper wick,
-        // and closed in the lower half of the bar (or below the pivot).
+        // and closed either below pivot, marginally above (<= 15% range), or in the lower half of the bar.
+        const isClosedBelow = bar.close <= sh.price + barRng * 0.15;
+        const qualifiesWick = wickRatio >= minWickRatio || (isClosedBelow && wickRatio >= 0.20);
         if (
-          wickRatio >= minWickRatio &&
-          (bar.close < sh.price || bar.close <= bar.low + barRng * 0.50)
+          qualifiesWick &&
+          (isClosedBelow || bar.close <= bar.low + barRng * 0.55)
         ) {
           if (!best || sh.price > best.price) best = sh;
           list.splice(s, 1);
-        } else if (bar.close > sh.price + barRng * 0.25 && wickRatio < 0.35) {
+        } else if (bar.close > sh.price + barRng * 0.15) {
           // Clean bullish displacement body closed clearly above pivot -> structural break, invalidate pivot
           list.splice(s, 1);
         }
@@ -423,13 +425,15 @@ export function extractLiquiditySweeps(
     for (let s = list.length - 1; s >= 0; s--) {
       const sl = list[s];
       if (bar.low < sl.price) {
+        const isClosedAbove = bar.close >= sl.price - barRng * 0.15;
+        const qualifiesWick = wickRatio >= minWickRatio || (isClosedAbove && wickRatio >= 0.20);
         if (
-          wickRatio >= minWickRatio &&
-          (bar.close > sl.price || bar.close >= bar.high - barRng * 0.50)
+          qualifiesWick &&
+          (isClosedAbove || bar.close >= bar.high - barRng * 0.55)
         ) {
           if (!best || sl.price < best.price) best = sl;
           list.splice(s, 1);
-        } else if (bar.close < sl.price - barRng * 0.25 && wickRatio < 0.35) {
+        } else if (bar.close < sl.price - barRng * 0.15) {
           list.splice(s, 1);
         }
       }
@@ -480,46 +484,17 @@ export function extractLiquiditySweeps(
     const upperWick = c.high - Math.max(c.open, c.close);
     const lowerWick = Math.min(c.open, c.close) - c.low;
 
+    // 1. Causal Major High Sweep
     const sweptMajorHigh = consumeSweptHigh(activeSwingHighs, c, 0.35);
-    const sweptMinorHigh = consumeSweptHigh(activeMinorHighs, c, 0.50);
 
-    if (
-      sweptMajorHigh &&
-      !emittedKeys.has(`HIGH:${c.time}`)
-    ) {
-      sweeps.push({
-        time: c.time,
-        price: c.high,
-        type: 'HIGH_SWEEP',
-        label: `BSL Sweep (${sweptMajorHigh.price})`,
-        level: sweptMajorHigh.price,
-        origin_time: sweptMajorHigh.time,
-        session: 'Swing',
-      });
-      emittedKeys.add(`HIGH:${c.time}`);
-    } else if (
-      sweptMinorHigh &&
-      upperWick >= 0.50 * barRange &&
-      !emittedKeys.has(`HIGH:${c.time}`)
-    ) {
-      sweeps.push({
-        time: c.time,
-        price: c.high,
-        type: 'HIGH_SWEEP',
-        label: `Minor BSL Sweep (${sweptMinorHigh.price})`,
-        level: sweptMinorHigh.price,
-        origin_time: sweptMinorHigh.time,
-        session: 'MinorSwing',
-      });
-      emittedKeys.add(`HIGH:${c.time}`);
-    } else if (!emittedKeys.has(`HIGH:${c.time}`) && upperWick >= 0.35 * barRange) {
-      // Track 4: Dynamic Distance-Independent Backward Ray Search
-      // Casts a horizontal ray backwards across all prior visible candles to find distant unmitigated swing peaks
-      let bestRayHigh: { time: number; price: number } | null = null;
+    // 2. Dynamic Distance-Independent Backward Ray Search for Major/Distant Highs
+    let bestRayHigh: { time: number; price: number } | null = null;
+    if (upperWick >= 0.20 * barRange) {
       for (let k = i - 4; k >= 2; k--) {
         const prev = visibleCandles[k];
         if (prev.close > c.high) break; // Hard ceiling breach
 
+        // Structural Crest (standing above adjacent bars)
         const isCrest =
           prev.high >= visibleCandles[k - 1].high &&
           prev.high >= visibleCandles[k - 2].high &&
@@ -527,7 +502,7 @@ export function extractLiquiditySweeps(
           prev.high >= visibleCandles[k + 2].high;
 
         if (isCrest && c.high > prev.high) {
-          if (c.close < prev.high || c.close <= c.low + barRange * 0.50) {
+          if (c.close <= prev.high + barRange * 0.15 || c.close <= c.low + barRange * 0.55) {
             let intermediateBreak = false;
             for (let m = k + 1; m < i; m++) {
               if (visibleCandles[m].close > prev.high + (visibleCandles[m].high - visibleCandles[m].low) * 0.25) {
@@ -543,56 +518,83 @@ export function extractLiquiditySweeps(
           }
         }
       }
+    }
 
-      if (bestRayHigh) {
-        sweeps.push({
+    // Determine winning High Sweep: Major / Distant Peak always takes precedence over minor local wiggles
+    let winningHighSweep: { time: number; price: number; level: number; origin_time: number; session: string; label: string } | null = null;
+
+    if (sweptMajorHigh && bestRayHigh) {
+      if (bestRayHigh.price >= sweptMajorHigh.price) {
+        winningHighSweep = {
           time: c.time,
           price: c.high,
-          type: 'HIGH_SWEEP',
-          label: `BSL Sweep (${bestRayHigh.price})`,
           level: bestRayHigh.price,
           origin_time: bestRayHigh.time,
           session: 'Swing',
-        });
-        emittedKeys.add(`HIGH:${c.time}`);
+          label: `BSL Sweep (${bestRayHigh.price})`,
+        };
+      } else {
+        winningHighSweep = {
+          time: c.time,
+          price: c.high,
+          level: sweptMajorHigh.price,
+          origin_time: sweptMajorHigh.time,
+          session: 'Swing',
+          label: `BSL Sweep (${sweptMajorHigh.price})`,
+        };
+      }
+    } else if (sweptMajorHigh) {
+      winningHighSweep = {
+        time: c.time,
+        price: c.high,
+        level: sweptMajorHigh.price,
+        origin_time: sweptMajorHigh.time,
+        session: 'Swing',
+        label: `BSL Sweep (${sweptMajorHigh.price})`,
+      };
+    } else if (bestRayHigh) {
+      winningHighSweep = {
+        time: c.time,
+        price: c.high,
+        level: bestRayHigh.price,
+        origin_time: bestRayHigh.time,
+        session: 'Swing',
+        label: `BSL Sweep (${bestRayHigh.price})`,
+      };
+    } else {
+      // Fall back to Minor Swing Sweep only if no major/distant peak was swept
+      const sweptMinorHigh = consumeSweptHigh(activeMinorHighs, c, 0.50);
+      if (sweptMinorHigh && upperWick >= 0.50 * barRange) {
+        winningHighSweep = {
+          time: c.time,
+          price: c.high,
+          level: sweptMinorHigh.price,
+          origin_time: sweptMinorHigh.time,
+          session: 'MinorSwing',
+          label: `Minor BSL Sweep (${sweptMinorHigh.price})`,
+        };
       }
     }
 
-    const sweptMajorLow = consumeSweptLow(activeSwingLows, c, 0.35);
-    const sweptMinorLow = consumeSweptLow(activeMinorLows, c, 0.50);
+    if (winningHighSweep && !emittedKeys.has(`HIGH:${c.time}`)) {
+      sweeps.push({
+        time: winningHighSweep.time,
+        price: winningHighSweep.price,
+        type: 'HIGH_SWEEP',
+        label: winningHighSweep.label,
+        level: winningHighSweep.level,
+        origin_time: winningHighSweep.origin_time,
+        session: winningHighSweep.session,
+      });
+      emittedKeys.add(`HIGH:${c.time}`);
+    }
 
-    if (
-      sweptMajorLow &&
-      !emittedKeys.has(`LOW:${c.time}`)
-    ) {
-      sweeps.push({
-        time: c.time,
-        price: c.low,
-        type: 'LOW_SWEEP',
-        label: `SSL Sweep (${sweptMajorLow.price})`,
-        level: sweptMajorLow.price,
-        origin_time: sweptMajorLow.time,
-        session: 'Swing',
-      });
-      emittedKeys.add(`LOW:${c.time}`);
-    } else if (
-      sweptMinorLow &&
-      lowerWick >= 0.50 * barRange &&
-      !emittedKeys.has(`LOW:${c.time}`)
-    ) {
-      sweeps.push({
-        time: c.time,
-        price: c.low,
-        type: 'LOW_SWEEP',
-        label: `Minor SSL Sweep (${sweptMinorLow.price})`,
-        level: sweptMinorLow.price,
-        origin_time: sweptMinorLow.time,
-        session: 'MinorSwing',
-      });
-      emittedKeys.add(`LOW:${c.time}`);
-    } else if (!emittedKeys.has(`LOW:${c.time}`) && lowerWick >= 0.35 * barRange) {
-      // Track 4: Dynamic Distance-Independent Backward Ray Search for Lows
-      let bestRayLow: { time: number; price: number } | null = null;
+    // 3. Causal Major Low Sweep
+    const sweptMajorLow = consumeSweptLow(activeSwingLows, c, 0.35);
+
+    // 4. Dynamic Distance-Independent Backward Ray Search for Major/Distant Lows
+    let bestRayLow: { time: number; price: number } | null = null;
+    if (lowerWick >= 0.20 * barRange) {
       for (let k = i - 4; k >= 2; k--) {
         const prev = visibleCandles[k];
         if (prev.close < c.low) break; // Hard floor breach
@@ -604,7 +606,7 @@ export function extractLiquiditySweeps(
           prev.low <= visibleCandles[k + 2].low;
 
         if (isTrough && c.low < prev.low) {
-          if (c.close > prev.low || c.close >= c.high - barRange * 0.50) {
+          if (c.close >= prev.low - barRange * 0.15 || c.close >= c.high - barRange * 0.55) {
             let intermediateBreak = false;
             for (let m = k + 1; m < i; m++) {
               if (visibleCandles[m].close < prev.low - (visibleCandles[m].high - visibleCandles[m].low) * 0.25) {
@@ -620,19 +622,73 @@ export function extractLiquiditySweeps(
           }
         }
       }
+    }
 
-      if (bestRayLow) {
-        sweeps.push({
+    let winningLowSweep: { time: number; price: number; level: number; origin_time: number; session: string; label: string } | null = null;
+
+    if (sweptMajorLow && bestRayLow) {
+      if (bestRayLow.price <= sweptMajorLow.price) {
+        winningLowSweep = {
           time: c.time,
           price: c.low,
-          type: 'LOW_SWEEP',
-          label: `SSL Sweep (${bestRayLow.price})`,
           level: bestRayLow.price,
           origin_time: bestRayLow.time,
           session: 'Swing',
-        });
-        emittedKeys.add(`LOW:${c.time}`);
+          label: `SSL Sweep (${bestRayLow.price})`,
+        };
+      } else {
+        winningLowSweep = {
+          time: c.time,
+          price: c.low,
+          level: sweptMajorLow.price,
+          origin_time: sweptMajorLow.time,
+          session: 'Swing',
+          label: `SSL Sweep (${sweptMajorLow.price})`,
+        };
       }
+    } else if (sweptMajorLow) {
+      winningLowSweep = {
+        time: c.time,
+        price: c.low,
+        level: sweptMajorLow.price,
+        origin_time: sweptMajorLow.time,
+        session: 'Swing',
+        label: `SSL Sweep (${sweptMajorLow.price})`,
+      };
+    } else if (bestRayLow) {
+      winningLowSweep = {
+        time: c.time,
+        price: c.low,
+        level: bestRayLow.price,
+        origin_time: bestRayLow.time,
+        session: 'Swing',
+        label: `SSL Sweep (${bestRayLow.price})`,
+      };
+    } else {
+      const sweptMinorLow = consumeSweptLow(activeMinorLows, c, 0.50);
+      if (sweptMinorLow && lowerWick >= 0.50 * barRange) {
+        winningLowSweep = {
+          time: c.time,
+          price: c.low,
+          level: sweptMinorLow.price,
+          origin_time: sweptMinorLow.time,
+          session: 'MinorSwing',
+          label: `Minor SSL Sweep (${sweptMinorLow.price})`,
+        };
+      }
+    }
+
+    if (winningLowSweep && !emittedKeys.has(`LOW:${c.time}`)) {
+      sweeps.push({
+        time: winningLowSweep.time,
+        price: winningLowSweep.price,
+        type: 'LOW_SWEEP',
+        label: winningLowSweep.label,
+        level: winningLowSweep.level,
+        origin_time: winningLowSweep.origin_time,
+        session: winningLowSweep.session,
+      });
+      emittedKeys.add(`LOW:${c.time}`);
     }
   }
 

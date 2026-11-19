@@ -187,7 +187,9 @@ export const ReplayChart: React.FC<ReplayChartProps> = ({
     const series = chart.addSeries(CandlestickSeries, {
       upColor: '#089981',
       downColor: '#9c9c9c',
-      borderVisible: false,
+      borderVisible: true,
+      borderUpColor: '#089981',
+      borderDownColor: '#9c9c9c',
       wickUpColor: '#089981',
       wickDownColor: '#9c9c9c',
       priceLineColor: '#737373',

@@ -514,9 +514,9 @@ class SpaFallbackHandler(BaseApiHandler):
 
 async def background_mt5_sync(data_mgr: ReplayDataManager, bot_scan_cache: collections.OrderedDict) -> None:
     """Non-blocking periodic sync from MT5 terminal for active instruments every 60s."""
-    for sym in ("XAUUSD_o", "GBPUSD_o", "NQ"):
+    for sym in ("XAUUSD_o", "GBPUSD_o", "NQ", "SPX", "YM"):
         try:
-            res = await asyncio.to_thread(data_mgr.sync_symbol_from_mt5, symbol=sym, days_back=1)
+            res = await asyncio.to_thread(data_mgr.sync_symbol_from_mt5, symbol=sym, days_back=3)
             if res.get("bars_added", 0) > 0:
                 sym_clean = sym.upper()
                 keys_to_purge = [k for k in list(bot_scan_cache.keys()) if k[0].upper() == sym_clean]
