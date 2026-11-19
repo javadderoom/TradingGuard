@@ -197,10 +197,15 @@ def run_gold_annual_integrity_audit() -> Dict[str, Any]:
         }
 
     # Baseline & Calibrated for Historical Candidates
+    # Exclude all root-level decommissioned archetypes on Gold
+    GOLD_DECOMMISSIONED = [
+        "SETUP-ARCH-002", "SETUP-ARCH-004", "SETUP-ARCH-009", "SETUP-ARCH-010",
+        "SETUP-ARCH-012", "SETUP-ARCH-014", "SETUP-ARCH-019"
+    ]
     hist_base = summarize_smc(df_hist_re, "canonical_status", "canonical_pnl_usd", "canonical_rr")
     df_hist_calib = df_hist_re[
         (df_hist_re["session"] != "NY_Silver_Bullet") &
-        (~df_hist_re["archetype_id"].isin(["SETUP-ARCH-002", "SETUP-ARCH-009"]))
+        (~df_hist_re["archetype_id"].isin(GOLD_DECOMMISSIONED))
     ]
     hist_calib = summarize_smc(df_hist_calib, "canonical_status", "canonical_pnl_usd", "canonical_rr")
 
@@ -353,7 +358,7 @@ def run_gold_annual_integrity_audit() -> Dict[str, Any]:
     dyn_base = summarize_smc(df_dyn_re, "status", "realized_pnl_usd", "rr_realized")
     df_dyn_calib = df_dyn_re[
         (df_dyn_re["session"] != "NY_Silver_Bullet") &
-        (~df_dyn_re["archetype_id"].isin(["SETUP-ARCH-002", "SETUP-ARCH-009"]))
+        (~df_dyn_re["archetype_id"].isin(GOLD_DECOMMISSIONED))
     ]
     dyn_calib = summarize_smc(df_dyn_calib, "status", "realized_pnl_usd", "rr_realized")
 

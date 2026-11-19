@@ -151,14 +151,14 @@ All setups are strictly gated by Review Council ratification:
 | **`SETUP-ARCH-009`** | Pro-Trend Session Retest | Retracement into 50% - 70.5% OTE of prior session expansion. | **PERMANENTLY DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** (-$77.41R uncalibrated loss, 11.6% WR, PF 0.55). |
 | **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. Freshness gated: sweep must occur within last 4 bars (20m) and index $\ge \text{len}(recent) - 6$. | **DECOMMISSIONED ON GOLD** per 1-year empirical audit (7.4% WR, -8.0R loss, PF 0.47 due to false breaks on minor internal 36-bar wicks in chop) and **NQ** (-15.17R drag). |
 | **`SETUP-ARCH-011`** | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Downtrend sweeps $L_1 \to L_2$, displaces above $H_1$ to $H_2$ (1st MSS), pulls back in $H_2 \to L_3 \to H_3 \to L_4$, displaces above $H_3$ to $H_4$ (2nd MSS). Entry on retest of $H_3$ / 5M FVG at $L_5$. | **DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** per 12-month empirical audit (-$3.99R drag, 0.0% win rate across 8 fills). |
-| **`SETUP-ARCH-012`** | ADR Exhaustion Snapback | Daily ADR $\ge 120\%$ exhaustion with 5M reversal FVG. Timestamps converted via `server_epoch_to_zones()` to true UTC for session alignment. | Active across Gold, GBPUSD, NQ. Fades exhausted trend extremes. |
+| **`SETUP-ARCH-012`** | ADR Exhaustion Snapback | Daily ADR $\ge 120\%$ exhaustion with 5M reversal FVG. Timestamps converted via `server_epoch_to_zones()` to true UTC for session alignment. | **PERMANENTLY DECOMMISSIONED ON GOLD** at root detector level per 1-year continuous audit (199 fills, 13.1% WR, **-82.52R loss**, PF 0.49). Fades exhausted trend extremes into momentum runs; false exhaustion in mid-range chop. |
 | **`SETUP-ARCH-013`** | HTF DOL Sweep & Trailing Runner | Macro liquidity pool purged with 15M structural trailing exit. Asian session range resolved strictly via true UTC hours (00:00–07:00 UTC). | Extended target mode with dynamic structural trail. |
-| **`SETUP-ARCH-014`** | Macro H1 Reversal Origin Retest | Retest of origin displacement zone following H1 MSS. Invalidation checked across full candle wicks ($L < \text{inval\_sl}$ / $H > \text{inval\_sl}$) with single-retest gating. | Active during London & NY sessions. |
+| **`SETUP-ARCH-014`** | Macro H1 Reversal Origin Retest | Retest of origin displacement zone following H1 MSS. Invalidation checked across full candle wicks ($L < \text{inval\_sl}$ / $H > \text{inval\_sl}$) with single-retest gating. | **PERMANENTLY DECOMMISSIONED ON GOLD** at root detector level per 1-year continuous audit (50 fills, 14.0% WR, **-18.58R loss**, PF 0.56). Macro H1 origin levels repeatedly invalidated by deep liquidity runs. |
 | **`SETUP-ARCH-015`** | Gold NY Open Trend Continuation Sweep | NY session high/low liquidity sweep in direction of Daily trend. | Strictly Gold (`XAUUSD_o`), target R:R 2.5, BE 1.5. |
 | **`SETUP-ARCH-016`** | Intermarket SMT Divergence | SMT divergence between correlated assets (e.g. NQ vs ES/YM, Gold vs Silver). | Active on NQ and Gold. |
 | **`SETUP-ARCH-017`** | Institutional 15m Opening Range Breakout | Breakout of initial 15-minute session range with limit retracement entry. H1 trend slope evaluated from EMA50 series ($\text{ema50}[-1] - \text{ema50}[-6]$). | Active on Gold, GBPUSD, NQ with risk clamped $\le \$10.00$. |
 | **`SETUP-ARCH-018`** | Statistical Extreme Judas Reversal | Mean-reversion fade of statistical session extreme sweep in range regime. Overextension evaluated against H1 ATR ($\ge 1.2 \times \text{ATR}_{H1}$) from H1 EMA20. | Active on Gold, GBPUSD, NQ with ADX trend gate. |
-| **`SETUP-ARCH-019`** | Gold Double Sweep Displacement Reversal | Secondary stop-hunt: sweep of prior leg high/low, pullback, sweep of new extreme with $\ge 25\%$ wick + opposing 5M FVG & MSS. | **Strictly gated to Gold (`XAUUSD_o`)**. Target R:R 3.0, BE 1.5, risk clamped $\$1.50 - \$10.00$. PF 1.46 - 1.76. |
+| **`SETUP-ARCH-019`** | Gold Double Sweep Displacement Reversal | Secondary stop-hunt: sweep of prior leg high/low, pullback, sweep of new extreme with $\ge 25\%$ wick + opposing 5M FVG & MSS. | **PERMANENTLY DECOMMISSIONED ON GOLD** at root detector level per 1-year continuous audit (115 fills, 16.5% WR, **-29.73R loss**, PF 0.71). Late NY PM double sweep reversals bleed into market close under closed-bar causality. |
 
 ---
 
@@ -2840,6 +2840,41 @@ Contains 6 automated mathematical integrity verification tests:
    - Vault 1 (Discovery/Train): 2025 H1 - 2026 Q1.
    - Vault 2 (Validation/Calibration): 2026 Q2 - Nov 6, 2026.
    - Vault 3 (Locked Holdout): 2025 H2 OOS & Post-Nov 7, 2026 forward holdout.
+
+
+---
+
+## 28. Permanent Root-Detector Decommissioning of Toxic Gold SMC Archetypes (2026-11-19 Audit)
+
+Following an end-to-end continuous 1-year causal backtest on Gold (`XAUUSD_o`) evaluating 308,472 M1 bars under closed-bar causality, audited broker spreads, and zero-lookahead simulation, empirical evidence revealed that three previously ratified archetypes were systematically destroying account equity. These archetypes have been permanently decommissioned on Gold at the root detector level.
+
+### 28.1 Empirical Audit Evidence & Drag Accounting
+
+| Archetype ID | Archetype Name | Completed Fills | Win Rate % | Net Realized R | Profit Factor | Core Microstructure Failure Mechanism |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **`SETUP-ARCH-012`** | ADR Exhaustion Snapback / Minor Mid-Range Sweep | 199 | 13.1% | **-82.52R** | 0.49 | Fades strong daily trend days into continuous Gold momentum; generates false exhaustion signals in minor mid-range consolidation chop. |
+| **`SETUP-ARCH-014`** | Macro H1 Reversal Origin Retest | 50 | 14.0% | **-18.58R** | 0.56 | Macro H1 origin levels repeatedly invalidated by deep liquidity sweeps on Gold before any structural reversal materializes. |
+| **`SETUP-ARCH-019`** | Gold Double Sweep Displacement Reversal | 115 | 16.5% | **-29.73R** | 0.71 | Late NY PM double sweep reversals bleed into market close under closed-bar causality. Earlier apparent profitability was an artifact of unclosed candle lookahead. |
+| **Total Toxic Drag Purged** | **Combined Decommissioned Impact** | **364** | **14.3%** | **-130.83R** | **0.55** | **Purging these 3 archetypes directly eliminates 364 losing trades and -130.83R of catastrophic drag from Gold SMC execution.** |
+
+### 28.2 Multi-Layer Defense-in-Depth Implementation
+
+To guarantee that decommissioned archetypes can never trigger in backtesting, visual replaying, or live bot radar execution, four defensive layers have been engineered:
+
+1. **Root Module-Level Kill-Switch (`hitl/backtest/fast_screener.py`)**:
+   - Defined `GOLD_DECOMMISSIONED_ARCHETYPES = {"SETUP-ARCH-002", "SETUP-ARCH-004", "SETUP-ARCH-009", "SETUP-ARCH-010", "SETUP-ARCH-012", "SETUP-ARCH-014", "SETUP-ARCH-019"}`.
+   - In `_build_setup_package()`, an early check immediately returns `has_setup: False`, `reason: "Veto: Archetype {arch_id} is permanently decommissioned on Gold at root detector level per 1-year empirical audit"`, and `setup_type: "DECOMMISSIONED_ON_GOLD"`.
+2. **Sub-Detector Short-Circuits**:
+   - `detect_adr_exhaustion_snapback()`: Immediately returns `False, "NONE", 0.0, 0.0, ""` when `is_gold` is True.
+   - `detect_gold_double_sweep_reversal()`: Immediately returns `False, "NONE", 0.0, 0.0, ""` when `is_gold` is True.
+   - Removed `SETUP-ARCH-019` detector call from the late NY session router block (`session_hour in (17, 18, 19)`).
+3. **Session Routing Gating (`screen_ict_session`)**:
+   - Setups H (`ARCH-012`), J (`ARCH-014`), and O (`ARCH-019`) are gated with `"XAU" not in symbol.upper() and setup_registry.is_archetype_ratified(...)`.
+4. **Live Screener Gate Secondary Veto (`hitl/screener_gate.py`)**:
+   - In `run_screener_gate()`, an explicit secondary check intercepts any setup where `is_gold` is True and `archetype_id` matches any decommissioned archetype, returning `has_setup: False`.
+5. **Setup Registry Lifecycle State (`hitl/memory/setup_registry.json`)**:
+   - Formally updated `SETUP-ARCH-012`, `SETUP-ARCH-014`, and `SETUP-ARCH-019` to `"status": "DECOMMISSIONED"` and `"vetting_verdict": "DECOMMISSIONED"` with full audit trail notes, synchronized to `hitl/memory/setup_registry.md`.
+
 
 
 

@@ -119,6 +119,17 @@ def run_screener_gate(symbol: str) -> Dict[str, Any]:
             bars_1d=bars.get("bars_1d"),
             closed_bars_only=True,
         )
+        # Defense-in-depth: Enforce root-level decommissioning of toxic archetypes on Gold
+        if result.get("has_setup") and "XAU" in symbol.upper():
+            arch_id = result.get("archetype_id", "")
+            if arch_id in ("SETUP-ARCH-002", "SETUP-ARCH-004", "SETUP-ARCH-009", "SETUP-ARCH-010", "SETUP-ARCH-012", "SETUP-ARCH-014", "SETUP-ARCH-019"):
+                return {
+                    "has_setup": False,
+                    "reason": f"Veto: Archetype {arch_id} is permanently decommissioned on Gold at root detector level per 1-year empirical audit",
+                    "setup_type": "DECOMMISSIONED_ON_GOLD",
+                    "closed_bars_only": True,
+                    "signal_bar_time": result.get("signal_bar_time"),
+                }
     except Exception as e:
         print(f"[ScreenerGate] screen_ict_session error for {symbol}: {e}")
         return {

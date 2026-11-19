@@ -187,8 +187,9 @@ def compile_visual_replay(target_dates: List[str], symbol: str = "XAUUSD_o", ref
         asian_start_srv = int(datetime.datetime(d_date.year, d_date.month, d_date.day, 0, 0, tzinfo=TZ_UTC).timestamp()) + srv_off
         asian_end_srv = int(datetime.datetime(d_date.year, d_date.month, d_date.day, 7, 0, tzinfo=TZ_UTC).timestamp()) + srv_off
 
-        lon_start_srv = int(stimes["london"]["utc_time"].timestamp()) + srv_off
-        lon_end_srv = lon_start_srv + (3 * 3600)
+        # London Killzone: from 30m pre-open liquidity run (07:30 UTC) through 3h post-open
+        lon_start_srv = int(stimes["london"]["utc_time"].timestamp()) + srv_off - 1800
+        lon_end_srv = int(stimes["london"]["utc_time"].timestamp()) + srv_off + (3 * 3600)
 
         ny_start_srv = int(stimes["new_york"]["utc_time"].timestamp()) + srv_off
         ny_end_srv = ny_start_srv + (3 * 3600)
@@ -221,6 +222,9 @@ def compile_visual_replay(target_dates: List[str], symbol: str = "XAUUSD_o", ref
             is_active_kz = False
             if asian_start_srv <= bar_time < asian_end_srv:
                 sess_lbl = "Asian Range"
+                # Enable screening during morning Judas window (09:00 - 13:00 Tehran)
+                if z["teh_dt"].hour in (9, 10, 11, 12, 13):
+                    is_active_kz = True
             elif lon_start_srv <= bar_time < lon_end_srv:
                 sess_lbl = "London Open"
                 is_active_kz = True
@@ -296,7 +300,7 @@ def compile_visual_replay(target_dates: List[str], symbol: str = "XAUUSD_o", ref
 
             # Capture significant timeline events
             if has_setup:
-                already_session_taken = (sess_lbl == "London Open" and lon_trade_taken) or (sess_lbl == "NY Open" and ny_trade_taken)
+                already_session_taken = (sess_lbl in ("Asian Range", "London Open") and lon_trade_taken) or (sess_lbl == "NY Open" and ny_trade_taken)
                 if not already_session_taken:
                     events.append({
                         "time": bar_time,
@@ -306,7 +310,7 @@ def compile_visual_replay(target_dates: List[str], symbol: str = "XAUUSD_o", ref
                         "msg": f"[{sess_lbl}] {reason}",
                     })
                 if not already_session_taken and res.get("entry_ref") and res.get("sl_ref"):
-                    if sess_lbl == "London Open": lon_trade_taken = True
+                    if sess_lbl in ("Asian Range", "London Open"): lon_trade_taken = True
                     if sess_lbl == "NY Open": ny_trade_taken = True
                     entry_p = float(res["entry_ref"])
                     sl_p = float(res["sl_ref"])

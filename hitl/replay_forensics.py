@@ -423,8 +423,10 @@ def run_bot_scan(
                 finally:
                     chart_renderer.get_broker_utc_offset_seconds = orig_offset_func
         else:
-            # live_legacy: uncalibrated tehran_hour_from_bar_time
-            sess_hour = tehran_hour_from_bar_time(t)
+            # live_legacy: historic uncalibrated calculation that treated broker server epoch as UTC
+            # and added 3:30 directly, skewing winter EET (UTC+2) server time by +2 hours into hour 18
+            legacy_dt = datetime.datetime.fromtimestamp(int(t), tz=datetime.timezone.utc)
+            sess_hour = (legacy_dt + datetime.timedelta(hours=3, minutes=30)).hour
             screener_res = screen_ict_session(
                 bars_5m=bars_5m_slice,
                 bars_1h=bars_1h_slice,

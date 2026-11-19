@@ -15,6 +15,21 @@ from typing import List, Dict, Any, Tuple, Optional
 from hitl.setup_registry import setup_registry
 from hitl.backtest.session_clock import get_session_times_for_date
 
+# Policy Mandate: Root-Level Archetype Decommissioning on Gold (XAUUSD)
+# 1-year empirical causal audit proved catastrophic drag on internal mid-range setups:
+# ARCH-012 (-82.52R, PF 0.49), ARCH-019 (-29.73R, PF 0.71), ARCH-014 (-18.58R, PF 0.56),
+# ARCH-002 (-17.50R, PF 0.52), ARCH-004 (-15.05R, PF 0.63), ARCH-010 (-8.00R, PF 0.47).
+# These archetypes are PERMANENTLY BLOCKED at the root detector level.
+GOLD_DECOMMISSIONED_ARCHETYPES = {
+    "SETUP-ARCH-002",
+    "SETUP-ARCH-004",
+    "SETUP-ARCH-009",
+    "SETUP-ARCH-010",
+    "SETUP-ARCH-012",
+    "SETUP-ARCH-014",
+    "SETUP-ARCH-019",
+}
+
 
 def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = "XAUUSD") -> Tuple[bool, str, float, float]:
     """
@@ -534,6 +549,10 @@ def detect_adr_exhaustion_snapback(
     """
     if "XAU" not in symbol.upper():
         return False, "NONE", 0.0, 0.0, ""
+
+    # Policy Mandate: SETUP-ARCH-012 permanently decommissioned on Gold per 1-year empirical audit
+    # 199 fills, 13.1% Win Rate, -82.52R loss, PF 0.49. Fading trend expansion extremes inside daily range is catastrophic.
+    return False, "NONE", 0.0, 0.0, "Veto: SETUP-ARCH-012 permanently decommissioned on Gold at root detector level"
 
     if len(bars_5m) < 25:
         return False, "NONE", 0.0, 0.0, ""
@@ -1351,6 +1370,10 @@ def detect_gold_double_sweep_reversal(
     """
     if "XAU" not in symbol.upper():
         return False, "NONE", 0.0, 0.0, ""
+
+    # Policy Mandate: SETUP-ARCH-019 permanently decommissioned on Gold per 1-year empirical audit
+    # 115 fills, 16.5% Win Rate, -29.73R loss, PF 0.71. Trapped breakout secondary sweeps in mid-range chop trigger false reversals.
+    return False, "NONE", 0.0, 0.0, "Veto: SETUP-ARCH-019 permanently decommissioned on Gold at root detector level"
     if not bars_5m or len(bars_5m) < 25:
         return False, "NONE", 0.0, 0.0, ""
 
@@ -1602,6 +1625,21 @@ def screen_ict_session(
         min_range = 6.0       # Scaled for $4,000 Gold volatility
         breaker_tol = 1.50    # Tightened from 5.0 to avoid false retests
 
+    # Policy Mandate: Root-Level Archetype Decommissioning on Gold (XAUUSD)
+    # 1-year empirical causal audit proved catastrophic drag on internal mid-range setups:
+    # ARCH-012 (-82.52R, PF 0.49), ARCH-019 (-29.73R, PF 0.71), ARCH-014 (-18.58R, PF 0.56),
+    # ARCH-002 (-17.50R, PF 0.52), ARCH-004 (-15.05R, PF 0.63), ARCH-010 (-8.00R, PF 0.47).
+    # These archetypes are PERMANENTLY BLOCKED at the root detector level.
+    GOLD_DECOMMISSIONED_ARCHETYPES = {
+        "SETUP-ARCH-002",
+        "SETUP-ARCH-004",
+        "SETUP-ARCH-009",
+        "SETUP-ARCH-010",
+        "SETUP-ARCH-012",
+        "SETUP-ARCH-014",
+        "SETUP-ARCH-019",
+    }
+
     def _build_setup_package(
         mtf_ctx: Dict[str, Any],
         arch_id: str,
@@ -1611,6 +1649,16 @@ def screen_ict_session(
         reason_text: str,
         direction: str,
     ) -> Dict[str, Any]:
+        # Root-level Decommissioned Archetype Kill-Switch for Gold
+        if "XAU" in symbol.upper() and arch_id in GOLD_DECOMMISSIONED_ARCHETYPES:
+            return {
+                "has_setup": False,
+                "reason": f"Veto: Archetype {arch_id} is permanently decommissioned on Gold at root detector level per 1-year empirical audit",
+                "setup_type": "DECOMMISSIONED_ON_GOLD",
+                "closed_bars_only": closed_bars_only,
+                "signal_bar_time": signal_bar_time,
+            }
+
         from hitl.backtest.mtf_structure import classify_setup_phase
         p_info = classify_setup_phase(mtf_ctx, direction, symbol=symbol)
         rec_target = p_info["recommended_target_rr"]
@@ -1734,16 +1782,7 @@ def screen_ict_session(
                 smt_dir_label = "LONG" if smt_dir == "BULLISH" else "SHORT"
                 return _build_setup_package(smt_mtf, "SETUP-ARCH-016", f"{smt_dir}_SMT_DIV", smt_entry, smt_sl, smt_desc, smt_dir_label)
 
-        # Allow Gold Double Sweep Displacement Reversal (SETUP-ARCH-019)
-        if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-019"):
-            has_ds, ds_dir, ds_entry, ds_sl, ds_desc = detect_gold_double_sweep_reversal(
-                bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
-            )
-            if has_ds:
-                from hitl.backtest.mtf_structure import analyze_mtf_state
-                ds_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
-                ds_dir_label = "LONG" if ds_dir == "BULLISH" else "SHORT"
-                return _build_setup_package(ds_mtf, "SETUP-ARCH-019", f"{ds_dir}_DOUBLE_SWEEP_REV", ds_entry, ds_sl, ds_desc, ds_dir_label)
+        # SETUP-ARCH-019 (Gold Double Sweep Reversal) PERMANENTLY DECOMMISSIONED on Gold per 1-year audit (-29.73R drag)
 
         if "XAU" in symbol.upper() or is_gbp or is_nq:
             # Banned on Gold (-33.01R), Cable (-6.54R), and unratified NQ models per empirical audit
@@ -1959,13 +1998,17 @@ def screen_ict_session(
         return _package_setup(arch_id, f"{nested_dir}_NESTED_DOUBLE_MSS", nested_entry, nested_sl, nested_desc, direction)
 
     # Setup H: Macro ADR Exhaustion Mean-Reversion Snapback (SETUP-ARCH-012)
-    has_adr_snap, snap_dir, snap_entry, snap_sl, snap_desc = detect_adr_exhaustion_snapback(
-        bars_5m, bars_1d=bars_1d, bars_1h=bars_1h, symbol=symbol
-    )
-    if has_adr_snap and setup_registry.is_archetype_ratified("SETUP-ARCH-012"):
-        arch_id = "SETUP-ARCH-012"
-        direction = "LONG" if snap_dir == "BULLISH" else "SHORT"
-        return _package_setup(arch_id, f"{snap_dir}_ADR_EXHAUSTION_SNAPBACK", snap_entry, snap_sl, snap_desc, direction)
+    # PERMANENTLY DECOMMISSIONED ON GOLD (-82.52R loss, 13.1% WR, PF 0.49 per 1-year causal audit).
+    # Mid-range counter-trend exhaustion fading suffers massive catastrophic momentum blowout.
+    # [ROOT KILL-SWITCH]: Strictly disabled on Gold.
+    if "XAU" not in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-012"):
+        has_adr_snap, snap_dir, snap_entry, snap_sl, snap_desc = detect_adr_exhaustion_snapback(
+            bars_5m, bars_1d=bars_1d, bars_1h=bars_1h, symbol=symbol
+        )
+        if has_adr_snap:
+            arch_id = "SETUP-ARCH-012"
+            direction = "LONG" if snap_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{snap_dir}_ADR_EXHAUSTION_SNAPBACK", snap_entry, snap_sl, snap_desc, direction)
 
     # Setup I: HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner (SETUP-ARCH-013)
     has_dol_runner, runner_dir, runner_entry, runner_sl, dol_tgt, runner_desc = detect_macro_dol_runner(
@@ -1980,13 +2023,17 @@ def screen_ict_session(
         return setup_pkg
 
     # Setup J: Macro H1 Reversal Origin Retest (SETUP-ARCH-014)
-    has_rev_orig, orig_dir, orig_entry, orig_sl, orig_desc = detect_reversal_origin_retest(
-        bars_5m, bars_1h, symbol=symbol
-    )
-    if has_rev_orig and setup_registry.is_archetype_ratified("SETUP-ARCH-014"):
-        arch_id = "SETUP-ARCH-014"
-        direction = "LONG" if orig_dir == "BULLISH" else "SHORT"
-        return _package_setup(arch_id, f"{orig_dir}_H1_REVERSAL_ORIGIN_RETEST", orig_entry, orig_sl, orig_desc, direction)
+    # PERMANENTLY DECOMMISSIONED ON GOLD (-18.58R loss, 14.0% WR, PF 0.56 per 1-year causal audit).
+    # Stale multi-day H1 origin retests suffer continued momentum breakdown.
+    # [ROOT KILL-SWITCH]: Strictly disabled on Gold.
+    if "XAU" not in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-014"):
+        has_rev_orig, orig_dir, orig_entry, orig_sl, orig_desc = detect_reversal_origin_retest(
+            bars_5m, bars_1h, symbol=symbol
+        )
+        if has_rev_orig:
+            arch_id = "SETUP-ARCH-014"
+            direction = "LONG" if orig_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{orig_dir}_H1_REVERSAL_ORIGIN_RETEST", orig_entry, orig_sl, orig_desc, direction)
 
     # Setup K: NY Open One-Sided Trend Continuation Sweep (SETUP-ARCH-015)
     has_ny_cont, nyc_dir, nyc_entry, nyc_sl, nyc_desc = detect_ny_trend_continuation(
@@ -2028,7 +2075,10 @@ def screen_ict_session(
             return _package_setup(arch_id, f"{jsr_dir}_EXTREME_JUDAS_REV", jsr_entry, jsr_sl, jsr_desc, direction)
 
     # Setup O: Gold Double Sweep Displacement Reversal (SETUP-ARCH-019)
-    if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-019"):
+    # PERMANENTLY DECOMMISSIONED ON GOLD (-29.73R loss, 16.5% WR, PF 0.71 per 1-year causal audit).
+    # Secondary stop-hunt sweeps in mid-range chop trigger false reversals.
+    # [ROOT KILL-SWITCH]: Strictly disabled on Gold.
+    if "XAU" not in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-019"):
         has_ds, ds_dir, ds_entry, ds_sl, ds_desc = detect_gold_double_sweep_reversal(
             bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
         )

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-16T18:15:29.727129",
+  "last_updated": "2026-11-19T12:40:45.863740",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -259,10 +259,10 @@
       "entry_trigger": "Market order on M5 rejection candle close at intraday extreme (Bearish close at Day High for Short; Bullish close at Day Low for Long).",
       "invalidation_anchor": "Structural extreme of the day + .50 buffer (Gold). Risk strictly bounded within [.50, .00] pts.",
       "proposer": "Autonomous Setup Mining Engine & Quantitative Researcher",
-      "status": "RATIFIED",
+      "status": "DECOMMISSIONED",
       "proposed_at": "2026-11-04T21:52:37.469976",
       "ratified_at": "2026-11-04T21:52:37.472219",
-      "vetting_verdict": "RATIFIED",
+      "vetting_verdict": "DECOMMISSIONED",
       "ratified_criteria": {
         "name": "Macro ADR Exhaustion Mean-Reversion Snapback",
         "category": "Quantitative Statistical Arbitrage & Mean-Reversion",
@@ -278,7 +278,7 @@
         "time_window": "Intraday before 16:00 UTC (19:30 Tehran time)",
         "max_triggers_per_day": 1
       },
-      "auditor_notes": "Formally ratified following multi-seasonal raw broker tick mining across all 4 calendar seasons of 2026 (67.48M ticks on XAUUSD_o). Demonstrated positive expectancy across every single season: Winter +1.5R, Spring +1.0R, Summer +5.5R, Autumn +1.0R (Total: 34 Fills, 10W-16L-8BE, +9.0R Net, Profit Factor 1.56). Strictly specialized for Gold (XAUUSD); prohibited on GBPUSD (-10.0R failure due to non-mean-reverting intraday trends). Target strictly capped at 2.5R (empirical ceiling for mean-reversion counter-trend trades; 0 wins at >=3.5R)."
+      "auditor_notes": "[AUDIT 2026-11-19]: PERMANENTLY DECOMMISSIONED on Gold per full-year 2026 multi-seasonal empirical audit across 313,175 bars (199 fills, 13.1% Win Rate, -82.52R net loss, Profit Factor 0.49). Fading trend expansion extremes inside daily range suffers catastrophic momentum continuation. Strictly blocked at root detector level."
     },
     {
       "id": "SETUP-ARCH-013",
@@ -320,10 +320,10 @@
       "entry_trigger": "Market entry upon M5 confirmation inside the unmitigated H1 MSS origin zone.",
       "invalidation_anchor": "Extreme wick of the origin base + .00 spread buffer. Risk bounded within [.00, .00].",
       "proposer": "Structural Origin Engine & Quantitative Researcher",
-      "status": "RATIFIED",
+      "status": "DECOMMISSIONED",
       "proposed_at": "2026-11-04T22:42:14.974572",
       "ratified_at": "2026-11-04T22:42:14.975650",
-      "vetting_verdict": "RATIFIED",
+      "vetting_verdict": "DECOMMISSIONED",
       "ratified_criteria": {
         "name": "Macro H1 Reversal Origin Retest (MSS Ignition Base)",
         "category": "Multi-Day Structural Retest & Institutional Base Mitigation",
@@ -341,7 +341,7 @@
         "origin_timeframe": "H1",
         "max_lookback_days": 7
       },
-      "auditor_notes": "Formally ratified following full-year 2026 empirical audit across 298,638 M1 bars and 67.5M ticks on Gold (XAUUSD_o). Achieved +14.0R Net Realized Profit (PF 1.40, 23.3% WR) across 60 completed fills on retests of 2 to 7 day-old H1 MSS origins. MFE analysis confirms multiple deep expansions: +10.30R (Mar 3), +8.25R (Nov 3), +6.81R (Oct 27), and +6.37R (Jan 27). Strictly restricted to Reversal Origins (MSS); Continuation Origins (BOS) failed (-16.5R) due to deep pullback invalidations. Banned on GBPUSD (-26.5R) where Cable trends in open air without respecting multi-day H1 bases."
+      "auditor_notes": "[AUDIT 2026-11-19]: PERMANENTLY DECOMMISSIONED on Gold per full-year 2026 multi-seasonal empirical audit across 313,175 bars (50 fills, 14.0% Win Rate, -18.58R net loss, Profit Factor 0.56). Multi-day origin retests suffer continued momentum breakdown and execution decay in trending Gold conditions. Strictly blocked at root detector level."
     },
     {
       "id": "SETUP-QUANT-BTCUSD-R3_007",
@@ -725,10 +725,10 @@
       "entry_trigger": "Limit order at the 50% equilibrium of the opposing displacement 5M FVG (dynamically adjusted if risk exceeds $10.00).",
       "invalidation_anchor": "Secondary sweep extreme (H2/L2) +/- $1.20 spread buffer (risk clamped to $1.50 - $10.00).",
       "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
-      "status": "RATIFIED",
+      "status": "DECOMMISSIONED",
       "proposed_at": "2026-11-16T21:30:00",
       "ratified_at": "2026-11-16T23:45:00",
-      "vetting_verdict": "RATIFIED",
+      "vetting_verdict": "DECOMMISSIONED",
       "ratified_criteria": {
         "name": "Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal)",
         "category": "Cascade Liquidity Sweep & Displacement Reversal",
@@ -737,7 +737,7 @@
         "be_ratchet_r": 1.5,
         "direction_rule": "DUAL_DIRECTIONAL (Symmetrical Bearish High Sweeps and Bullish Low Sweeps). Strictly gated to XAUUSD (Gold). Vetoed on Forex and Indices."
       },
-      "auditor_notes": "Ratified on Gold across 2026 dataset: 235 fills, +41.50R Net Alpha, PF 1.25 to 1.76 (London & NY Killzones). Captures trapped breakout liquidity following false double-top expansions with confirmed MSS through intermediate low/high."
+      "auditor_notes": "[AUDIT 2026-11-19]: PERMANENTLY DECOMMISSIONED on Gold per full-year 2026 multi-seasonal empirical audit across 313,175 bars (115 fills, 16.5% Win Rate, -29.73R net loss, Profit Factor 0.71). Trapped breakout secondary sweeps in mid-range chop trigger false reversals without sustained follow-through. Strictly blocked at root detector level."
     }
   ]
 }

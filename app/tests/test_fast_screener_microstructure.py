@@ -86,5 +86,24 @@ class TestFastScreenerMicrostructure(unittest.TestCase):
         # Should not trigger a stale high sweep
         self.assertNotEqual(res.get("setup_type"), "BEARISH_SWEEP_MSS")
 
+    def test_gold_decommissioned_archetypes_blocked_at_root(self):
+        """SETUP-ARCH-012, 014, 019 must be permanently blocked at root detector level on Gold."""
+        from hitl.backtest.fast_screener import (
+            detect_adr_exhaustion_snapback,
+            detect_gold_double_sweep_reversal
+        )
+        # Test ARCH-012 helper
+        has_adr, _, _, _, _ = detect_adr_exhaustion_snapback([], symbol="XAUUSD")
+        self.assertFalse(has_adr, "ARCH-012 must be blocked at root for Gold")
+
+        # Test ARCH-019 helper
+        has_ds, _, _, _, _ = detect_gold_double_sweep_reversal([], symbol="XAUUSD")
+        self.assertFalse(has_ds, "ARCH-019 must be blocked at root for Gold")
+
+        # Test setup package veto
+        from hitl.backtest.fast_screener import GOLD_DECOMMISSIONED_ARCHETYPES
+        for arch in ["SETUP-ARCH-002", "SETUP-ARCH-004", "SETUP-ARCH-009", "SETUP-ARCH-010", "SETUP-ARCH-012", "SETUP-ARCH-014", "SETUP-ARCH-019"]:
+            self.assertIn(arch, GOLD_DECOMMISSIONED_ARCHETYPES)
+
 if __name__ == "__main__":
     unittest.main()

@@ -29,7 +29,7 @@ from hitl.replay_ledger import (
 def test_bot_scan_nov11_gold_finds_arch001_and_live_legacy_reproduces_ny_veto():
     """
     Runs run_bot_scan on 2026-11-11 (XAUUSD_o):
-    - In clock_mode="true_tehran", SETUP-ARCH-001 fires at 10:05 server time.
+    - In clock_mode="true_tehran", SETUP-ARCH-001 fires at 08:05 server time (1794384300).
     - Incremental Asian High (4065.88) never leaks prior to 07:00 UTC (09:00 Server).
     - In clock_mode="live_legacy", reproduces the 16:40 Tehran NY PM veto at 15:10 server time.
     """
@@ -56,19 +56,19 @@ def test_bot_scan_nov11_gold_finds_arch001_and_live_legacy_reproduces_ny_veto():
     assert "asian_ranges_by_day" in scan_true
     assert "bot_scorecard" in scan_true
 
-    # Find the trade for SETUP-ARCH-001 firing at 10:05 server time (epoch 1794391500)
+    # Find the trade for SETUP-ARCH-001 firing at 08:05 server time (epoch 1794384300)
     arch001_trades = [
         t for t in scan_true["bot_trades"]
-        if t["archetype_id"] == "SETUP-ARCH-001" and t.get("decision_time") == 1794391500
+        if t["archetype_id"] == "SETUP-ARCH-001" and t.get("decision_time") == 1794384300
     ]
-    assert len(arch001_trades) == 1, "Expected SETUP-ARCH-001 trade at 10:05 server time"
+    assert len(arch001_trades) == 1, "Expected SETUP-ARCH-001 trade at 08:05 server time"
     trade = arch001_trades[0]
     assert trade["origin"] == "BOT"
     assert trade["direction"] == "SHORT"
-    assert trade["signal_time"] == 1794391200  # 10:00 server time (closed signal bar)
+    assert trade["signal_time"] == 1794384000  # 08:00 server time (closed signal bar)
     assert trade["status"] == "WIN"
-    assert trade["rr_realized"] == pytest.approx(1.99, abs=0.05)
-    assert trade["realized_pnl_usd"] == pytest.approx(15.90, abs=0.5)
+    assert trade["rr_realized"] == pytest.approx(1.98, abs=0.05)
+    assert trade["realized_pnl_usd"] == pytest.approx(12.18, abs=0.5)
 
     # 2. Verify incremental Asian High anti-spoiler rule:
     # 4065.88 was formed at 05:33 UTC (07:33 Server time).

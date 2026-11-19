@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-16T18:15:29.727129` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-19T12:40:45.863740` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -79,14 +79,6 @@
 - **Stop Buffer Requirement:** `Sweep Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
 > **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Designed specifically to capture runaway trend expansions (such as September 11 Equal Highs sweep and September 16 PDH sweep) without demanding deep 50% HTF retracements. By locking invalidation to the M1 sweep wick, dollar risk remains strictly within the  cap while providing 1:3R to 1:6R+ asymmetry. [AUDIT 2026-11-04]: Flagship on Gold (+14.0R, PF 1.67) and 100% WR on Cable (+5.0R, 2/2 wins).*
 
-### 🟢 [SETUP-ARCH-012] Macro ADR Exhaustion Mean-Reversion Snapback (Quantitative Statistical Arbitrage & Mean-Reversion)
-- **Description:** Statistical exhaustion pattern triggering when an asset expands >= 85% of its 20-day Average Daily Range (ADR) during institutional session hours before 16:00 UTC, followed by an M5 rejection bar at the intraday extreme. Exploits low probability of unilateral trend continuation past ADR without mean-reverting towards session equilibrium.
-- **Entry Trigger:** `Market order on M5 rejection candle close at intraday extreme (Bearish close at Day High for Short; Bullish close at Day Low for Long).`
-- **Invalidation Anchor:** `Structural extreme of the day + .50 buffer (Gold). Risk strictly bounded within [.50, .00] pts.`
-- **Mandated Minimum R:R:** `1:2.5`
-- **Stop Buffer Requirement:** `Extreme of the day + .50 spread buffer (Gold), bounded between .50 min and .00 max.`
-> **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following multi-seasonal raw broker tick mining across all 4 calendar seasons of 2026 (67.48M ticks on XAUUSD_o). Demonstrated positive expectancy across every single season: Winter +1.5R, Spring +1.0R, Summer +5.5R, Autumn +1.0R (Total: 34 Fills, 10W-16L-8BE, +9.0R Net, Profit Factor 1.56). Strictly specialized for Gold (XAUUSD); prohibited on GBPUSD (-10.0R failure due to non-mean-reverting intraday trends). Target strictly capped at 2.5R (empirical ceiling for mean-reversion counter-trend trades; 0 wins at >=3.5R).*
-
 ### 🟢 [SETUP-ARCH-013] HTF Draw on Liquidity (DOL) Sweep & 15M Structural Trailing Runner (Macro Trend Expansion & Structural Trailing)
 - **Description:** Captures multi-hour higher timeframe expansion legs on Cable (GBPUSD) by identifying liquidity sweeps of Prior Day High/Low (PDH/PDL) or Asian Session extremes, triggering on 1-minute Market Structure Shift displacement, and holding across multi-hour expansions by trailing invalidation behind 15-minute swing pivots.
 - **Entry Trigger:** `1-Minute MSS displacement body close breaking counter-trend micro-pivot following sweep of PDH/PDL or Asian extreme.`
@@ -94,14 +86,6 @@
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `M1 sweep wick extreme + 0.6 pips (0.00006), clamped to [5.0, 12.0] pips.`
 > **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following full-year 2026 multi-seasonal audit on GBPUSD across 22.74M ticks (126 setups). Delivered +47.1R Net Realized Profit (PF 1.53, 24.6% WR) by trailing 15-minute swing structure to capture multi-hour expansions, compared to only +7.0R under static 2.5R target. Produced multiple massive winners: +9.08R (Jun 5), +8.33R (Jul 20), +8.09R (Jun 1), +8.03R (Jun 22), and +7.46R (Oct 6). Positive in 3 of 4 seasons: Summer +37.1R, Winter +8.1R, Autumn +6.0R.*
-
-### 🟢 [SETUP-ARCH-014] Macro H1 Reversal Origin Retest (MSS Ignition Base) (Multi-Day Structural Retest & Institutional Base Mitigation)
-- **Description:** Identifies the exact multi-day H1 consolidation base that launched a major Market Structure Shift (MSS) reversal (> .00 displacement). When price retraces back into the unmitigated origin base 1 to 7 days later during institutional London/NY hours, enters with Stop Loss strictly anchored beyond the origin base wick.
-- **Entry Trigger:** `Market entry upon M5 confirmation inside the unmitigated H1 MSS origin zone.`
-- **Invalidation Anchor:** `Extreme wick of the origin base + .00 spread buffer. Risk bounded within [.00, .00].`
-- **Mandated Minimum R:R:** `1:3.0`
-- **Stop Buffer Requirement:** `Origin base extreme wick + .00 spread buffer (Gold), bounded to [.00, .00].`
-> **Supervisory Audit Verdict:** RATIFIED | *Formally ratified following full-year 2026 empirical audit across 298,638 M1 bars and 67.5M ticks on Gold (XAUUSD_o). Achieved +14.0R Net Realized Profit (PF 1.40, 23.3% WR) across 60 completed fills on retests of 2 to 7 day-old H1 MSS origins. MFE analysis confirms multiple deep expansions: +10.30R (Mar 3), +8.25R (Nov 3), +6.81R (Oct 27), and +6.37R (Jan 27). Strictly restricted to Reversal Origins (MSS); Continuation Origins (BOS) failed (-16.5R) due to deep pullback invalidations. Banned on GBPUSD (-26.5R) where Cable trends in open air without respecting multi-day H1 bases.*
 
 ### 🟢 [SETUP-QUANT-BTCUSD-R3_007] Autonomous Machine Quant Rule (BTCUSD SELL) (Machine-Discovered Quant)
 - **Description:** Autonomous pure mathematical state-space model: [SELL] (price_zscore_100 <= -1.1366) AND (parkinson_vol >= 0.0007) AND (-0.0008 <= velocity_55 <= 0.0004) | TP: 1.8xATR, SL: 2.0xATR, BE: 1.2R, TTL: 36b
@@ -215,14 +199,6 @@
 - **Stop Buffer Requirement:** `Sweep extreme +/- buffer ($1.20 Gold, 4 pips FX, 6.0 pts NQ).`
 > **Supervisory Audit Verdict:** RATIFIED | *Ratified multi-asset across 1-Year (2025-2026) backtest: 844 trades, 30.9% WR, +343.14R Net Alpha, PF 2.11. Gold: +141.09R (PF 2.09). NQ: +152.50R (PF 2.46). GBPUSD: +49.55R (PF 1.20). Directionally symmetric: Longs +177.21R, Shorts +165.93R. Successfully eliminates knife-catching by vetoing all counter-trend fades when H1 ADX >= 22.*
 
-### 🟢 [SETUP-ARCH-019] Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal) (Cascade Liquidity Sweep & Displacement Reversal)
-- **Description:** Institutional secondary stop-hunt and trapped breakout reversal strictly on Gold (XAUUSD). Price sweeps a prominent high/low (H0/L0) from a prior leg, pulls back by at least $1.20 forming an intermediate swing level (L_mid/H_mid), pushes again to sweep the new high/low (H2 > H1 or L2 < L1) with a rejection wick >= 25% or close back inside, and immediately prints an opposing 5M Fair Value Gap (FVG) and Market Structure Shift (MSS) through L_mid/H_mid. Active during London Open through NY Open Killzones. Enforces Prop Firm Dynamic Limit Entry Retracement.
-- **Entry Trigger:** `Limit order at the 50% equilibrium of the opposing displacement 5M FVG (dynamically adjusted if risk exceeds $10.00).`
-- **Invalidation Anchor:** `Secondary sweep extreme (H2/L2) +/- $1.20 Gold spread buffer (risk clamped to $1.50 - $10.00).`
-- **Mandated Minimum R:R:** `1:3.0`
-- **Stop Buffer Requirement:** `Secondary sweep extreme +/- $1.20 Gold spread buffer.`
-> **Supervisory Audit Verdict:** RATIFIED | *Ratified on Gold across 2026 dataset: 235 fills, +41.50R Net Alpha, PF 1.25 to 1.76 (London & NY Killzones). Captures trapped breakout liquidity following false double-top expansions with confirmed MSS through intermediate low/high.*
-
 ---
 ## ⏳ Candidate Archetypes Under Review / Proposed
 
@@ -230,3 +206,6 @@
 | :--- | :--- | :--- | :---: | :--- |
 | `SETUP-ARCH-009` | Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation) | Pro-Trend POI Mitigation & Trend Continuation | **DECOMMISSIONED** | M1 retracement into the displacement FVG / Breaker following confirmed M1 MSS at the London breakdown/breakout origin zone. |
 | `SETUP-ARCH-011` | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Structural Shift & Complex Pullback Exhaustion | **DECOMMISSIONED** | Limit order at H3 breaker retest or newly formed displacement FVG at L5. |
+| `SETUP-ARCH-012` | Macro ADR Exhaustion Mean-Reversion Snapback | Quantitative Statistical Arbitrage & Mean-Reversion | **DECOMMISSIONED** | Market order on M5 rejection candle close at intraday extreme (Bearish close at Day High for Short; Bullish close at Day Low for Long). |
+| `SETUP-ARCH-014` | Macro H1 Reversal Origin Retest (MSS Ignition Base) | Multi-Day Structural Retest & Institutional Base Mitigation | **DECOMMISSIONED** | Market entry upon M5 confirmation inside the unmitigated H1 MSS origin zone. |
+| `SETUP-ARCH-019` | Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal) | Cascade Liquidity Sweep & Displacement Reversal | **DECOMMISSIONED** | Limit order at the 50% equilibrium of the opposing displacement 5M FVG (dynamically adjusted if risk exceeds $10.00). |
