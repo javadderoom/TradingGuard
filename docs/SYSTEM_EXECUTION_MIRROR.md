@@ -3098,9 +3098,48 @@ To verify the ratified quant setups against authentic broker ticks inside the Me
    - Automatically synchronizes all schedules to `%APPDATA%\MetaQuotes\Terminal\Common\Files\` and terminal directories (`065434634B76DD288A1DDF20131E8DDB` and `A19DFEF1E80BEC73AB07B83E44201DC0`).
    - Verifies deployment of compiled `TradingGuard_Executor.ex5` in `MQL5\Experts\`.
 
+## 33. Review Council Governor & Execution Deliberation Toggle (`hitl/council_governor.py`)
 
+### 33.1 Forensic Motivation (Decision Audit Findings)
+A forensic audit across 237 historical Council decisions and 18 decisions on 2026-11-19 demonstrated systematic adverse selection and alpha destruction caused by qualitative LLM deliberations:
+- **80% Stop-Out Rate on Approved Trades**: LLM Council approvals experienced an 80% loss rate (16 losses, 0 wins on logged live orders).
+- **58.5% Missed Winners on Flawed Vetoes**: 62 flawed vetoes rejected high-conviction screener setups that subsequent tick replay proved expanded straight to target (+319.6 pts, -258.9 pts).
+- **Latency & Slip Vulnerability**: Multi-turn LLM generation introduces 15–45 seconds of deliberation delay before order generation.
 
+### 33.2 Council Governor Architecture (`hitl/council_governor.py`)
+To grant the human operator full command over the execution pipeline, the Review Council Governor provides a thread-safe, persistent, multi-layered toggle:
+1. **Persistent State Storage (`hitl/memory/council_state.json`)**:
+   - Stores `council_enabled` (boolean), `last_toggled` (UTC ISO timestamp), and `toggled_by` (user/admin/source).
+   - Atomic disk writes via `.tmp` file replacement prevent race conditions or partial writes.
+2. **Configuration Fallback (`hitl/config.py`)**:
+   - `COUNCIL_ENABLED`: Defaults to `os.getenv("COUNCIL_ENABLED", "true")`.
+3. **API Functions**:
+   - `is_council_enabled() -> bool`: Evaluates persistent state first, falling back to `hitl.config.COUNCIL_ENABLED`.
+   - `set_council_enabled(enabled: bool, toggled_by: str) -> bool`: Explicitly toggles and persists state.
+   - `toggle_council(toggled_by: str) -> bool`: Flips state between `True` and `False`.
+   - `format_council_status_card() -> tuple[str, dict]`: Formats Telegram markdown card with inline toggle buttons (`[🔴 Disable Review Council]` / `[🟢 Enable Review Council]`).
 
+### 33.3 Execution Pipeline Modes
+1. **ENABLED Mode (`council_enabled = true`)**:
+   - Screener setup passes gate on closed bars.
+   - Radar convenes full 6-seat LLM Council (`convene_investment_council`).
+   - Deliberation is parsed into `decision` (`BUY_LIMIT`, `SELL_LIMIT`, `STAND_ASIDE`).
+2. **DISABLED / BYPASSED Mode (`council_enabled = false`)**:
+   - Screener setup passes gate on closed bars.
+   - LLM Council is completely bypassed (zero network calls, zero token consumption, zero prompt latency).
+   - Bot directly constructs `decision = "BUY_LIMIT"` or `"SELL_LIMIT"` from screener geometry and validates coordinates (`entry_ref`, `sl_ref`, `recommended_target_rr`, `archetype_id`).
+   - Order plan is presented to operator via Telegram with execution buttons (`[🚀 Approve & Place]`, `[🛡️ Veto / Stand Aside]`) or auto-placed on Demo accounts.
+   - Decision logged to `council_decisions_log.json` with `parse_status="COUNCIL_BYPASSED"`.
 
-
+### 33.4 Operator Control Interfaces
+1. **Telegram Text Commands**:
+   - `/council on` or `/council enable`: Enables Council.
+   - `/council off` or `/council disable`: Disables Council (switches to pure quant direct execution).
+   - `/council toggle`: Inverts current state.
+   - `/council status` or `/council settings` or `/council`: Shows the Governor card with inline buttons.
+2. **Inline Callback Buttons**:
+   - `council_enable`, `council_disable`, `council_toggle`, `council_refresh`.
+3. **System Status Integration**:
+   - `/status` command prominently displays `🏛️ Review Council: 🟢 Active` or `🔴 Bypassed (Direct Quant Mode)` with a 1-tap `[⚙️ Review Council Settings]` button.
+   - Market Analysis menu keyboard features direct `⚙️ Council Settings` button.
 

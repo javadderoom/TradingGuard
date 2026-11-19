@@ -62,7 +62,7 @@ ANALYSIS_KEYBOARD = {
         [{"text": "💷 GBP Full Pack"}, {"text": "💶 EUR Full Pack"}],
         [{"text": "💻 Nasdaq Full Pack"}, {"text": "🏛️ Gold Council Only"}],
         [{"text": "🏛️ GBP Council Only"}, {"text": "🏛️ NQ Council Only"}],
-        [{"text": "🔙 Back to Main Menu"}]
+        [{"text": "⚙️ Council Settings"}, {"text": "🔙 Back to Main Menu"}]
     ],
     "resize_keyboard": True,
     "is_persistent": True
@@ -228,13 +228,14 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
             client.send_message(chat_id, format_screener_veto(sym_name, screener))
             return
 
-        # 2. Convene Tactical Council Silently (No raw transcript spam)
+        # 2. Convene Tactical Council Silently or Direct Quant Execution
         try:
-            report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
-            if report:
-                from hitl.live_radar import PENDING_EXECUTION_PLANS
-                from hitl.council_decisions import log_council_decision
-
+            from hitl.council_governor import is_council_enabled
+            if is_council_enabled():
+                report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
+                if not report:
+                    client.send_message(chat_id, "⚠️ *Council deliberation unavailable.* Please retry in a few moments.")
+                    return
                 from hitl.council import parse_council_decision_detailed
                 decision, parse_status = parse_council_decision_detailed(report)
 
@@ -244,6 +245,33 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                     clean_verdict = re.sub(r'^[•\*\-\s]+', '', clean_verdict)
                 else:
                     clean_verdict = "Council recommends standing aside pending higher-conviction liquidity sweep."
+            else:
+                # Direct Quant Execution: Review Council Bypassed
+                stype = str(screener.get("setup_type", "")).upper()
+                sbias = str(screener.get("bias", "")).upper()
+                if "BUY" in stype or "BULLISH" in stype or "BUY" in sbias or "BULLISH" in sbias:
+                    decision = "BUY_LIMIT"
+                else:
+                    decision = "SELL_LIMIT"
+
+                arch_id = screener.get("archetype_id", "ICT_SETUP")
+                clean_verdict = f"Direct Quant Setup Execution ({arch_id}) · Council Bypassed"
+                parse_status = "COUNCIL_BYPASSED"
+                report = (
+                    f"Executive Summary & Critical Trigger: {clean_verdict}\n\n"
+                    f"🏛️ Review Council Bypassed (Direct Quant Execution Mode)\n\n"
+                    f"• Archetype: {arch_id}\n"
+                    f"• Setup Type: {screener.get('setup_type', 'N/A')}\n"
+                    f"• Directive: {decision}\n"
+                    f"• Entry Reference: {screener.get('entry_ref', 'N/A')}\n"
+                    f"• Stop Loss Reference: {screener.get('sl_ref', 'N/A')}\n"
+                    f"• Recommended R:R: 1:{screener.get('recommended_target_rr', 3.0):.2f}\n"
+                    f"• Session Filter: Passed screener gate on closed MT5 bars."
+                )
+
+            if report:
+                from hitl.live_radar import PENDING_EXECUTION_PLANS
+                from hitl.council_decisions import log_council_decision
 
                 plan_id = f"PLN-{sym_name}-{int(time.time())}"
                 plan = None
@@ -341,9 +369,10 @@ def _chart_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                 elif plan and not is_demo:
                     auto_header = f"🔒 *[LIVE ACCOUNT · Requires Manual Approval]*\n"
 
+                mode_tag = " [Direct Quant · Council Bypassed]" if parse_status == "COUNCIL_BYPASSED" else ""
                 summary_card = (
                     f"{auto_header}"
-                    f"🏛️ *{sym_icon} {sym_name} · Council Assessment*\n\n"
+                    f"🏛️ *{sym_icon} {sym_name} · Council Assessment{mode_tag}*\n\n"
                     f"⚖️ *Directive:* `{decision.replace('_', ' ')}`\n"
                     f"🛑 *Final Verdict:* {clean_verdict}"
                 )
@@ -395,12 +424,12 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
             client.send_message(chat_id, format_screener_veto(sym_name, screener))
             return
 
-        report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
-        if report:
-            from hitl.live_radar import PENDING_EXECUTION_PLANS
-            from hitl.council_decisions import log_council_decision
-            from hitl.council import assemble_council_intelligence
-
+        from hitl.council_governor import is_council_enabled
+        if is_council_enabled():
+            report = convene_investment_council(sym_name, mode="tactical", screener_result=screener)
+            if not report:
+                client.send_message(chat_id, f"⚠️ *Council convening error for {sym_icon} {sym_name}.*")
+                return
             from hitl.council import parse_council_decision_detailed
             decision, parse_status = parse_council_decision_detailed(report)
 
@@ -410,6 +439,34 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
                 clean_verdict = re.sub(r'^[•\*\-\s]+', '', clean_verdict)
             else:
                 clean_verdict = "Council recommends standing aside pending higher-conviction liquidity sweep."
+        else:
+            # Direct Quant Execution: Review Council Bypassed
+            stype = str(screener.get("setup_type", "")).upper()
+            sbias = str(screener.get("bias", "")).upper()
+            if "BUY" in stype or "BULLISH" in stype or "BUY" in sbias or "BULLISH" in sbias:
+                decision = "BUY_LIMIT"
+            else:
+                decision = "SELL_LIMIT"
+
+            arch_id = screener.get("archetype_id", "ICT_SETUP")
+            clean_verdict = f"Direct Quant Setup Execution ({arch_id}) · Council Bypassed"
+            parse_status = "COUNCIL_BYPASSED"
+            report = (
+                f"Executive Summary & Critical Trigger: {clean_verdict}\n\n"
+                f"🏛️ Review Council Bypassed (Direct Quant Execution Mode)\n\n"
+                f"• Archetype: {arch_id}\n"
+                f"• Setup Type: {screener.get('setup_type', 'N/A')}\n"
+                f"• Directive: {decision}\n"
+                f"• Entry Reference: {screener.get('entry_ref', 'N/A')}\n"
+                f"• Stop Loss Reference: {screener.get('sl_ref', 'N/A')}\n"
+                f"• Recommended R:R: 1:{screener.get('recommended_target_rr', 3.0):.2f}\n"
+                f"• Session Filter: Passed screener gate on closed MT5 bars."
+            )
+
+        if report:
+            from hitl.live_radar import PENDING_EXECUTION_PLANS
+            from hitl.council_decisions import log_council_decision
+            from hitl.council import assemble_council_intelligence
 
             plan_id = f"PLN-{sym_name}-{int(time.time())}"
             plan = None
@@ -504,9 +561,10 @@ def _council_worker(client: TelegramClient, chat_id: int | str, symbol: str):
             elif plan and not is_demo:
                 auto_header = f"🔒 *[LIVE ACCOUNT · Requires Manual Approval]*\n"
 
+            mode_tag = " [Direct Quant · Council Bypassed]" if parse_status == "COUNCIL_BYPASSED" else ""
             summary_card = (
                 f"{auto_header}"
-                f"🏛️ *{sym_icon} {sym_name} · Council Assessment*\n\n"
+                f"🏛️ *{sym_icon} {sym_name} · Council Assessment{mode_tag}*\n\n"
                 f"⚖️ *Directive:* `{decision.replace('_', ' ')}`\n"
                 f"🛑 *Final Verdict:* {clean_verdict}"
             )
@@ -772,6 +830,10 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
         f"   • Overall DD: `{gov_sync['overall_dd_pct']:.1f}%` / {gov_prof['max_overall_drawdown_pct']:.1f}%"
     )
 
+    from hitl.council_governor import is_council_enabled
+    council_on = is_council_enabled()
+    council_badge = "🟢 *Active* (6-Seat Deliberation)" if council_on else "🔴 *Bypassed* (Direct Quant Mode)"
+
     text = (
         f"🛡️ *TradingGuard HITL System Status*\n\n"
         f"👤 *Account:* `{acc['login']}` ({acc['server']})\n"
@@ -782,12 +844,18 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
         f"🎯 *Active Positions:* {pos_count}\n"
         f"⚖️ *Per-Trade Risk Cap:* `${MAX_RISK_USD:.2f}` (Lot: {BASE_LOT})\n\n"
         f"{gov_line}\n\n"
+        f"🏛️ *Review Council:* {council_badge}\n"
         f"🛡️ *Daily Circuit Breaker:* {breaker_badge}\n"
         f"⏰ *Trading Session:* {session_badge}\n"
         f"⏱ *Cooldown Status:* {cd_badge}\n"
         f"📡 *Telegram Proxy:* Connected"
     )
-    client.send_message(chat_id, text)
+    status_kb = {
+        "inline_keyboard": [
+            [{"text": "⚙️ Review Council Settings", "callback_data": "council_status"}]
+        ]
+    }
+    client.send_message(chat_id, text, reply_markup=status_kb)
 
 
 def handle_prop_command(client: TelegramClient, engine: MT5Engine, chat_id: int | str):
@@ -975,6 +1043,28 @@ def run_bot():
                         else:
                             handle_backtest_command(client, sender_id, "nq")
 
+                    # 2.5 Review Council Governor (Toggle / On / Off / Status / Settings)
+                    elif any(cmd in text.lower() for cmd in ["/council on", "/council_on", "council on", "فعال شورا", "روشن کردن شورا", "enable council"]):
+                        from hitl.council_governor import set_council_enabled, format_council_status_card
+                        set_council_enabled(True, toggled_by=f"user_{sender_id}")
+                        card, kb = format_council_status_card()
+                        client.send_message(sender_id, f"✅ *Review Council ENABLED*\n\n{card}", reply_markup=kb)
+                    elif any(cmd in text.lower() for cmd in ["/council off", "/council_off", "council off", "غیرفعال شورا", "خاموش کردن شورا", "disable council"]):
+                        from hitl.council_governor import set_council_enabled, format_council_status_card
+                        set_council_enabled(False, toggled_by=f"user_{sender_id}")
+                        card, kb = format_council_status_card()
+                        client.send_message(sender_id, f"⛔ *Review Council DISABLED (Bypassed)*\n\n{card}", reply_markup=kb)
+                    elif any(cmd in text.lower() for cmd in ["/council toggle", "council toggle", "تغییر وضعیت شورا"]):
+                        from hitl.council_governor import toggle_council, format_council_status_card
+                        new_st = toggle_council(toggled_by=f"user_{sender_id}")
+                        card, kb = format_council_status_card()
+                        st_msg = "ENABLED" if new_st else "DISABLED"
+                        client.send_message(sender_id, f"🔄 *Review Council Toggled to: {st_msg}*\n\n{card}", reply_markup=kb)
+                    elif any(cmd in text.lower() for cmd in ["/council status", "council status", "/council settings", "council settings", "تنظیمات شورا", "council governor"]) or text.strip().lower() in ["/council", "council", "شورا", "⚙️ council settings"]:
+                        from hitl.council_governor import format_council_status_card
+                        card, kb = format_council_status_card()
+                        client.send_message(sender_id, card, reply_markup=kb)
+
                     # 3. Council Only (Without recapturing charts)
                     elif any(k in text.lower() for k in ["council only", "🏛️"]) or (any(k in text.lower() for k in ["/council", "council", "شورا", "مجلس"]) and not any(k in text.lower() for k in ["چارت", "پکیج", "کامل", "pack"])):
                         if any(k in text.lower() for k in ["💻", "nq", "nasdaq", "نزدک"]):
@@ -1081,6 +1171,26 @@ def run_bot():
                             handle_chart_command(client, sender_id, "GBPUSD")
                         elif data == "pack_nq":
                             handle_chart_command(client, sender_id, "NQ")
+                        elif data in ["council_status", "council_refresh"]:
+                            from hitl.council_governor import format_council_status_card
+                            card, kb = format_council_status_card()
+                            client.send_message(sender_id, card, reply_markup=kb)
+                        elif data == "council_toggle":
+                            from hitl.council_governor import toggle_council, format_council_status_card
+                            new_st = toggle_council(toggled_by=f"tg_btn_{sender_id}")
+                            card, kb = format_council_status_card()
+                            st_msg = "ENABLED" if new_st else "DISABLED"
+                            client.send_message(sender_id, f"🔄 *Review Council Toggled to: {st_msg}*\n\n{card}", reply_markup=kb)
+                        elif data == "council_enable":
+                            from hitl.council_governor import set_council_enabled, format_council_status_card
+                            set_council_enabled(True, toggled_by=f"tg_btn_{sender_id}")
+                            card, kb = format_council_status_card()
+                            client.send_message(sender_id, f"✅ *Review Council ENABLED*\n\n{card}", reply_markup=kb)
+                        elif data == "council_disable":
+                            from hitl.council_governor import set_council_enabled, format_council_status_card
+                            set_council_enabled(False, toggled_by=f"tg_btn_{sender_id}")
+                            card, kb = format_council_status_card()
+                            client.send_message(sender_id, f"⛔ *Review Council DISABLED (Bypassed)*\n\n{card}", reply_markup=kb)
                         elif data in ["council_gold", "council_xauusd"]:
                             handle_council_command(client, sender_id, "XAUUSD")
                         elif data in ["council_eur", "council_eurusd"]:

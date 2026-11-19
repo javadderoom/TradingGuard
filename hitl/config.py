@@ -52,3 +52,7 @@ DEFAULT_SYMBOL = os.getenv("DEFAULT_SYMBOL", "XAUUSD_o")
 SNAP_API_KEY = os.getenv("SNAP_API_KEY", "")
 SNAP_API_URL = os.getenv("SNAP_API_URL", "https://api.subq.ai/v1/systemone")
 SNAP_MODEL = os.getenv("SNAP_MODEL", "subq-snap-1.1")
+
+# Review Council Deliberation Governor
+COUNCIL_ENABLED = os.getenv("COUNCIL_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+

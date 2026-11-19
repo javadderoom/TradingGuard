@@ -276,26 +276,50 @@ class LiveMarketRadar:
                 print(f"[LiveRadar] Decision logging error: {log_err}")
             return
 
-        # 2. Convene Tactical Council (Tier 2 Execution Strike Team)
+        # 2. Convene Tactical Council (Tier 2 Execution Strike Team) or Direct Quant Execution
         try:
             dossier = assemble_council_intelligence(sym)
             if not dossier:
                 print(f"[LiveRadar] Failed to assemble intelligence for {sym}")
                 return
 
-            report = convene_investment_council(sym, mode="tactical", screener_result=screener)
-            if not report:
-                print(f"[LiveRadar] Council failed to convene for {sym}")
-                return
-
-            print(f"[LiveRadar] Council deliberation received ({len(report)} chars). Evaluating order plan...")
-
-            # Extract order plan from dossier landmarks & report
             landmarks = dossier.get("landmarks")
             macro_filter = dossier.get("macro_bias_data", {}).get("execution_filter", "")
 
-            from hitl.council import parse_council_decision_detailed
-            decision, parse_status = parse_council_decision_detailed(report)
+            from hitl.council_governor import is_council_enabled
+            if is_council_enabled():
+                report = convene_investment_council(sym, mode="tactical", screener_result=screener)
+                if not report:
+                    print(f"[LiveRadar] Council failed to convene for {sym}")
+                    return
+
+                print(f"[LiveRadar] Council deliberation received ({len(report)} chars). Evaluating order plan...")
+                from hitl.council import parse_council_decision_detailed
+                decision, parse_status = parse_council_decision_detailed(report)
+            else:
+                # Direct Quant Execution: Review Council Bypassed
+                stype = str(setup.get("setup_type", "")).upper()
+                sbias = str(setup.get("bias", "")).upper()
+                if "BUY" in stype or "BULLISH" in stype or "BUY" in sbias or "BULLISH" in sbias:
+                    decision = "BUY_LIMIT"
+                else:
+                    decision = "SELL_LIMIT"
+
+                arch_id = setup.get("archetype_id", "ICT_SETUP")
+                clean_verdict = f"Direct Quant Setup Execution ({arch_id}) · Council Bypassed"
+                parse_status = "COUNCIL_BYPASSED"
+                report = (
+                    f"Executive Summary & Critical Trigger: {clean_verdict}\n\n"
+                    f"🏛️ Review Council Bypassed (Direct Quant Execution Mode)\n\n"
+                    f"• Archetype: {arch_id}\n"
+                    f"• Setup Type: {setup.get('setup_type', 'N/A')}\n"
+                    f"• Directive: {decision}\n"
+                    f"• Entry Reference: {setup.get('entry_ref', 'N/A')}\n"
+                    f"• Stop Loss Reference: {setup.get('sl_ref', 'N/A')}\n"
+                    f"• Recommended R:R: 1:{setup.get('recommended_target_rr', 3.0):.2f}\n"
+                    f"• Session Filter: Passed screener gate on closed MT5 bars."
+                )
+                print(f"[LiveRadar] Direct Quant Execution active (Council Bypassed) for {sym}: {decision}")
 
             plan = None
             reason = ""
