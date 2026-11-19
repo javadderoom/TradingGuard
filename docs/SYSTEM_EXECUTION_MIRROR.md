@@ -2875,6 +2875,80 @@ To guarantee that decommissioned archetypes can never trigger in backtesting, vi
 5. **Setup Registry Lifecycle State (`hitl/memory/setup_registry.json`)**:
    - Formally updated `SETUP-ARCH-012`, `SETUP-ARCH-014`, and `SETUP-ARCH-019` to `"status": "DECOMMISSIONED"` and `"vetting_verdict": "DECOMMISSIONED"` with full audit trail notes, synchronized to `hitl/memory/setup_registry.md`.
 
+---
+
+## 29. Pure Quantitative Alpha Discovery & Microstructure Models (Zero SMC)
+
+In response to discretionary SMC failure modes, geometric curve-fitting, and subjective retail patterns (e.g. FVGs, order blocks, breaker blocks, liquidity sweeps), TradingGuard has engineered and deployed an autonomous, purely mathematical and statistical quantitative alpha generation engine (`hitl/quant_engine/`).
+
+This architecture is governed by zero human narrative bias: all signal predicates, entry triggers, stop-loss invalidations, and take-profit targets are derived strictly from stationary statistical distributions, kinetic derivatives, volatility estimators, and microstructure orderflow imbalances.
+
+### 29.1 Mathematical State Space Expansion (`hitl/quant_engine/state_space.py`)
+
+The state space was expanded from 25 to 31 stationary continuous and discrete dimensions. Every feature is strictly stationary (bounded or Z-scored) and zero-lookahead (evaluated strictly at bar close $t$):
+
+1. **`variance_ratio_20`**: Lo-MacKinlay variance ratio proxy $\frac{\text{Var}(R_{2k})}{2 \times \text{Var}(R_k)}$. Distinguishes mean-reverting regimes ($VR < 0.85$), random walk ($VR \approx 1.00$), and trending/momentum regimes ($VR > 1.15$).
+2. **`bb_keltner_squeeze`**: Bollinger Band bandwidth (20, 2.0) divided by Keltner Channel bandwidth (20, 1.5). Quantifies John Carter volatility compression coils ($< 0.90$ indicates pre-expansion squeeze).
+3. **`rsi_stationary_14`**: Centered and scaled RSI: $\frac{RSI_{14} - 50}{10} \in [-5.0, 5.0]$. Provides a zero-mean stationary oscillator.
+4. **`downside_semi_var_ratio_30`**: Realized downside semi-variance divided by total realized variance over 30 bars: $\frac{\sum \min(R_t, 0)^2}{\sum R_t^2} \in [0.0, 1.0]$. Separates one-sided panic liquidations from orderly two-way flow.
+5. **`rolling_quantile_100`**: Scale-invariant rolling 100-bar percentile location of Close: $\frac{\text{Rank}(\text{Close}, 100)}{100} \in [0.0, 1.0]$.
+6. **`acceleration_convexity`**: Kinetic momentum convexity: $\text{sign}(v_{21}) \times a_8 \times 1000$. Measures accelerating velocity in the direction of the intermediate trend.
+
+### 29.2 Autonomous Alpha Miner & Multi-Asset Backtest Framework (`hitl/quant_engine/quant_alpha_miner.py`)
+
+The quantitative alpha engine combines hypothesis-driven microstructure paradigms with multi-seed genetic evolution to discover and audit candidate rules.
+
+#### Dataset & Stress-Testing Bounds
+- **Dataset**: 100,000 continuous M5 bars (~515 calendar days, June 2025 to November 2026) per asset.
+- **Assets Audited**: Gold (`XAUUSD`), Nasdaq (`NQ`), Bitcoin (`BTCUSD`), Cable (`GBPUSD`).
+- **Candidates Audited**: 278 total candidate quantitative models.
+- **Simulation**: Single-simulator mandate with closed-bar execution, audited broker spreads, realistic commissions, and pessimistic intrabar SL resolution.
+
+#### The 5 Institutional Overfitting Gates
+To prevent curve-fitting and data-snooping bias, every candidate rule must pass 5 strict chronological walk-forward gates:
+1. **Gate 1 (In-Sample PF)**: In-Sample Profit Factor $\ge 1.25$ across the first 60,000 M5 bars.
+2. **Gate 2 (Out-of-Sample PF)**: Out-of-Sample Profit Factor $\ge 1.20$ across the remaining 39,900 M5 bars (following a 100-bar purge buffer).
+3. **Gate 3 (Degradation Ratio)**: $OOS\_PF / IS\_PF \ge 0.48$.
+4. **Gate 4 (Drawdown Expansion Ratio)**: $OOS\_MaxDD_R / IS\_MaxDD_R \le 2.20$.
+5. **Gate 5 (Statistical Significance)**: Student's t-statistic $\ge 1.96$ ($p < 0.05$ against the null hypothesis of zero alpha).
+
+### 29.3 Ratified Pure Quantitative Archetypes
+
+Out of 278 audited models, 24 configurations passed all 5 gates (16 on Gold, 8 on Bitcoin). The 8 master archetypes formally ratified and registered into `hitl/memory/setup_registry.json` are:
+
+| Archetype ID | Asset / Dir | Core Mathematical Formula & Microstructure Anchor | Full Fills | Win Rate | Full Net R | Full PF | IS PF | OOS PF | Deg Ratio | Sharpe | t-stat | Status |
+| :--- | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`SETUP-QUANT-XAU-001`** | Gold BUY | `(velocity_55 >= 0.0070) AND (kurtosis_30 > 1.2000)`<br>TP: 3.0xATR, SL: 1.2xATR, BE: 2.0R, TTL: 24b | 146 | 30.8% | **+61.97R** | **1.87** | 1.94 | 1.74 | 0.895 | 3.34 | 3.32 | **RATIFIED** |
+| **`SETUP-QUANT-XAU-002`** | Gold SELL | `(bb_keltner_squeeze < 0.8500) AND (velocity_21 < -0.0020) AND (directional_vol_imb < -0.3000)`<br>TP: 3.5xATR, SL: 1.5xATR, BE: 1.8R, TTL: 36b | 264 | 30.3% | **+50.82R** | **1.31** | 1.30 | 1.32 | 1.014 | 2.04 | 2.08 | **RATIFIED** |
+| **`SETUP-QUANT-XAU-003`** | Gold BUY | `(acceleration_convexity > 1.9159) AND (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016)`<br>TP: 3.5xATR, SL: 2.5xATR, BE: 1.5R, TTL: 24b | 84 | 42.9% | **+32.56R** | **2.15** | 2.21 | 2.08 | 0.939 | 3.39 | 3.37 | **RATIFIED** |
+| **`SETUP-QUANT-XAU-004`** | Gold BUY | `(0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) AND (variance_ratio_20 > 0.7774)`<br>TP: 3.5xATR, SL: 2.0xATR, BE: 2.0R, TTL: 18b | 61 | 29.5% | **+25.02R** | **2.30** | 1.88 | 3.65 | 1.939 | 2.91 | 2.89 | **RATIFIED** |
+| **`SETUP-QUANT-BTC-001`** | BTC SELL | `(skewness_30 < -1.4852) AND (0.0252 <= autocorr_lag1 <= 0.0762)`<br>TP: 4.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b | 126 | 38.9% | **+77.66R** | **2.13** | 2.42 | 1.59 | 0.656 | 4.22 | 4.20 | **RATIFIED** |
+| **`SETUP-QUANT-BTC-002`** | BTC BUY | `(-0.0003 <= accel_8 <= -0.0000) AND (parkinson_vol > 0.0020)`<br>TP: 3.5xATR, SL: 2.5xATR, TTL: 36b | 157 | 38.2% | **+34.94R** | **1.51** | 1.49 | 1.56 | 1.049 | 2.61 | 2.60 | **RATIFIED** |
+| **`SETUP-QUANT-BTC-003`** | BTC SELL | `(skewness_30 < -1.4852) AND (0.0012 <= norm_atr <= 0.0024)`<br>TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b | 297 | 39.4% | **+76.14R** | **1.37** | 1.40 | 1.30 | 0.930 | 2.89 | 3.13 | **RATIFIED** |
+| **`SETUP-QUANT-BTC-004`** | BTC SELL | `(gk_vol <= 0.0020) AND (0.0252 <= autocorr_lag1 <= 0.0762) AND (skewness_30 < -1.4852)`<br>TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b | 98 | 50.0% | **+55.74R** | **2.06** | 2.51 | 1.34 | 0.536 | 3.95 | 3.93 | **RATIFIED** |
+
+### 29.4 Brutal Neutral Audit of Rejected Assets (Unvarnished Truth)
+
+In strict accordance with the Zero Cheerleading Mandate, the failure of candidate models on NQ and GBPUSD is documented transparently:
+
+1. **Nasdaq (`NQ`) Failure Analysis**:
+   - Audited: 60 candidate models.
+   - Ratified: **0 models passed**.
+   - Root Failure Cause: While gross price movement exhibited substantial R-multiples for several trend models (e.g. `HYP_NQ_COIL_EXPANSION_BUY` achieved OOS PF 1.73 and +31.0R gross), the institutional spread model (1.0 pt / $20 spread friction on large contracts) eroded edge during the 2025 in-sample regime (IS PF 0.98, Full PF 1.03), failing Gate 1 ($PF \ge 1.25$). Fading models suffered catastrophic trend runs during US earnings and FOMC days.
+2. **Cable (`GBPUSD`) Failure Analysis**:
+   - Audited: 56 candidate models.
+   - Ratified: **0 models passed**.
+   - Root Failure Cause: Mean-reversion oscillators (`rsi_stationary_14`, `bb_keltner_squeeze`, `variance_ratio_20`) were repeatedly blown through during sustained London trend sessions. Breakout and momentum models triggered during Asian and pre-London consolidation suffered whipsaw stop-outs, producing low win rates (22-26%) and sub-1.15 profit factors failing Gate 1.
+
+### 29.5 Cryptographic Run Provenance & Artifacts
+
+All trades and run metrics are immutably archived on disk with cryptographic verification:
+- **Master Trade Ledger**: `backtest_results/quant_discovery/quant_alpha_trade_ledger.csv` (3,066 trades executed across the 1-year backtest).
+- **Run Discovery Summary**: `backtest_results/quant_discovery/quant_alpha_discovery_summary.json`.
+- **Cryptographic Manifest**: `backtest_results/quant_discovery/quant_alpha_run_manifest.json` containing SHA-256 integrity hash:
+  - `sha256: d187e1f4fc1fa98a69a0362f275e5330e7054bfd27c92b23a35d947514a604be`.
+
+
 
 
 

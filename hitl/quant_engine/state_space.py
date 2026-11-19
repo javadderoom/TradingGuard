@@ -23,6 +23,10 @@ class StateSpaceConfig:
     autocorr_lags: List[int] = field(default_factory=lambda: [1, 2, 3, 5])
     volume_window: int = 20
     vwap_window: int = 50
+    rsi_window: int = 14
+    squeeze_bb_window: int = 20
+    vr_window: int = 50
+    vr_lag: int = 20
 
 
 class MathematicalStateSpace:
@@ -176,6 +180,46 @@ class MathematicalStateSpace:
             corr = cov_lag / (var_r + 1e-12)
             res[f'autocorr_lag{lag}'] = corr.clip(-1.0, 1.0)
 
+        # -------------------------------------------------------------
+        # 6. REGIME, SQUEEZE & ASYMMETRY EXPANSIONS
+        # -------------------------------------------------------------
+        # Variance Ratio (Lo-MacKinlay variance ratio proxy on rolling window)
+        ret_vr = np.log(c / c.shift(self.cfg.vr_lag).fillna(c))
+        var_1 = (log_ret ** 2).rolling(self.cfg.vr_window, min_periods=self.cfg.vr_window).mean()
+        var_vr = (ret_vr ** 2).rolling(self.cfg.vr_window, min_periods=self.cfg.vr_window).mean()
+        vr = var_vr / (self.cfg.vr_lag * var_1 + 1e-12)
+        res['variance_ratio_20'] = vr.clip(0.1, 5.0)
+
+        # Bollinger-Keltner Volatility Squeeze Ratio (Carter Squeeze)
+        bb_std = c.rolling(self.cfg.squeeze_bb_window, min_periods=self.cfg.squeeze_bb_window).std()
+        bb_width = 4.0 * bb_std
+        kc_width = 3.0 * atr  # 1.5 ATR on each side = 3.0 ATR
+        res['bb_keltner_squeeze'] = (bb_width / (kc_width + 1e-9)).clip(0.1, 4.0)
+
+        # Stationary Normalized RSI 14: (RSI - 50.0) / 10.0 in [-5.0, 5.0]
+        delta = c.diff()
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+        avg_gain = gain.ewm(alpha=1.0 / self.cfg.rsi_window, min_periods=self.cfg.rsi_window, adjust=False).mean()
+        avg_loss = loss.ewm(alpha=1.0 / self.cfg.rsi_window, min_periods=self.cfg.rsi_window, adjust=False).mean()
+        rs = avg_gain / (avg_loss + 1e-12)
+        rsi = 100.0 - (100.0 / (1.0 + rs))
+        res['rsi_stationary_14'] = ((rsi - 50.0) / 10.0).clip(-5.0, 5.0)
+
+        # Downside Realized Semi-Variance Ratio (Rolling 30 bars)
+        downside_sq = np.where(log_ret < 0, log_ret ** 2, 0.0)
+        downside_var = pd.Series(downside_sq, index=df.index).rolling(30, min_periods=30).mean()
+        total_var = (log_ret ** 2).rolling(30, min_periods=30).mean()
+        res['downside_semi_var_ratio_30'] = (downside_var / (total_var + 1e-12)).clip(0.0, 1.0)
+
+        # Rolling Quantile 100: scale-invariant percentile location of current close in [0.0, 1.0]
+        roll_h100 = h.rolling(100, min_periods=100).max()
+        roll_l100 = l.rolling(100, min_periods=100).min()
+        res['rolling_quantile_100'] = ((c - roll_l100) / (roll_h100 - roll_l100 + 1e-9)).clip(0.0, 1.0)
+
+        # Acceleration-Velocity Convexity Interaction
+        res['acceleration_convexity'] = (np.sign(res['velocity_21']) * res['accel_8'] * 1000.0).clip(-50.0, 50.0)
+
         # Keep raw prices for backtest execution
         res['open'] = o
         res['high'] = h
@@ -214,4 +258,10 @@ class MathematicalStateSpace:
             'autocorr_lag2',
             'autocorr_lag3',
             'autocorr_lag5',
+            'variance_ratio_20',
+            'bb_keltner_squeeze',
+            'rsi_stationary_14',
+            'downside_semi_var_ratio_30',
+            'rolling_quantile_100',
+            'acceleration_convexity',
         ]

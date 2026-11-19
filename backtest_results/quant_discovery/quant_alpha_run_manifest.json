@@ -1,0 +1,61 @@
+{
+  "execution_timestamp_utc": "2026-11-19T10:35:50Z",
+  "symbols_audited": [
+    "XAUUSD",
+    "NQ",
+    "BTCUSD",
+    "GBPUSD"
+  ],
+  "total_runtime_seconds": 81.36,
+  "trade_ledger_sha256": "fd8cb328ab0ee3bc869b95be5f18f5baedcc5697bedff344510b04b9f24fe927",
+  "governance": {
+    "mandate": "Zero SMC / Zero Human Narrative / Pure Mathematical State Space",
+    "overfitting_protocol": "60/40 Walk-Forward Cross-Validation with 100-Bar Purge",
+    "statistical_test": "Student's t-statistic >= 1.96 (p < 0.05)",
+    "microstructure_realism": "MT5 Spreads + $0.10 Commission + Pessimistic Same-Bar Precedence"
+  },
+  "portfolio_summary": {
+    "XAUUSD": {
+      "ratified_count": 16,
+      "top_models": [
+        "R9_014",
+        "HYP_KURT_BUY_70v_12k",
+        "R7_030",
+        "R10_025",
+        "R11_009",
+        "R11_011",
+        "R11_035",
+        "R11_010",
+        "R5_014",
+        "R11_029",
+        "R11_037",
+        "R11_034",
+        "R11_021",
+        "R11_014",
+        "R11_018",
+        "HYP_SQZ_SELL_85sq_20v"
+      ]
+    },
+    "NQ": {
+      "ratified_count": 0,
+      "top_models": []
+    },
+    "BTCUSD": {
+      "ratified_count": 8,
+      "top_models": [
+        "R10_008",
+        "R11_026",
+        "R8_012",
+        "R11_009",
+        "R11_008",
+        "R11_015",
+        "R11_013",
+        "R11_006"
+      ]
+    },
+    "GBPUSD": {
+      "ratified_count": 0,
+      "top_models": []
+    }
+  }
+}
