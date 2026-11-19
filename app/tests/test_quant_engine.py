@@ -268,9 +268,9 @@ def test_breakeven_pnl_accounting():
     assert res.total_fills == 1
     t = res.trades[0]
     assert t.status == "BREAKEVEN"
-    # Initial risk = 2.0 pts. USD per pt = 12.0 / 2.0 = 6.0 USD/pt.
-    # Covered spread = 1.0 pt = $6.00 gross. Net PnL = $6.00 - $0.10 commission = $5.90.
-    assert t.pnl_usd == 5.90
+    # Initial risk = 2.0 pts. USD per pt = 12.0 / 2.0 = 6.0 USD/pt (0.06 lot).
+    # Covered spread = 1.0 pt = $6.00 gross. Net PnL = $6.00 - $0.60 lot-scaled commission = $5.40.
+    assert t.pnl_usd == 5.40
 
 
 def test_cross_asset_stress_transferability():
@@ -354,12 +354,10 @@ def test_live_quant_bridge_ratified_suite_and_pricing():
     from hitl.quant_engine.live_quant_bridge import LiveQuantBridge
     bridge = LiveQuantBridge(engine=None, client=None)
     
-    # 1. Verify 11 ratified rules loaded
+    # 1. Verify 5 ratified orthogonal rules loaded (NQ: 2, XAUUSD: 3)
     total_rules = sum(len(r) for r in bridge.rules_by_symbol.values())
-    assert total_rules == 11, f"Expected 11 ratified rules, got {total_rules}"
-    assert "BTCUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["BTCUSD"]) == 3
-    assert "NQ" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["NQ"]) == 3
-    assert "GBPUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["GBPUSD"]) == 2
+    assert total_rules == 5, f"Expected 5 ratified orthogonal rules, got {total_rules}"
+    assert "NQ" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["NQ"]) == 2
     assert "XAUUSD" in bridge.rules_by_symbol and len(bridge.rules_by_symbol["XAUUSD"]) == 3
 
     # 2. Verify limit pricing logic:

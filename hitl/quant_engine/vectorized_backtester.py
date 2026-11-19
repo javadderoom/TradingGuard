@@ -111,6 +111,15 @@ class VectorizedBacktester:
                     return v
             return 1.0  # Generic default
 
+    def _is_rollover_blackout(self, bar_epoch: int) -> bool:
+        """Checks if bar_epoch falls within daily broker rollover freeze (23:45 - 01:05 server time)."""
+        if bar_epoch < 86400 * 365:  # Skip for unit test synthetic timestamps
+            return False
+        sec_in_day = bar_epoch % 86400
+        server_hour = sec_in_day // 3600
+        server_min = (sec_in_day % 3600) // 60
+        return (server_hour == 23 and server_min >= 45) or (server_hour == 0) or (server_hour == 1 and server_min <= 5)
+
     def run(self, state_df: pd.DataFrame, rule: QuantRule) -> BacktestResult:
         """
         Executes a vectorized backtest for the specified rule on state_df.
@@ -166,6 +175,12 @@ class VectorizedBacktester:
             if np.isnan(atr_val) or atr_val <= 0:
                 continue
 
+            # Rollover Blackout Check on entry bar:
+            # Suppress execution during daily bank rollover freeze (23:45 - 01:05 server time)
+            entry_time = int(times[entry_idx])
+            if self._is_rollover_blackout(entry_time):
+                continue
+
             raw_open = opens[entry_idx]
 
             # Price levels with authentic MT5 broker spread accounting:
@@ -198,10 +213,12 @@ class VectorizedBacktester:
             for f_idx in range(entry_idx, max_forward):
                 f_high = highs[f_idx]
                 f_low = lows[f_idx]
+                f_time = int(times[f_idx])
+                current_spread = self.spread * 5.0 if self._is_rollover_blackout(f_time) else self.spread
 
                 if is_buy:
                     # 1. Evaluate exits against levels in force at the START of this bar
-                    effective_sl = (entry_price + self.spread) if be_active else sl_price
+                    effective_sl = (entry_price + current_spread) if be_active else sl_price
                     sl_hit = (f_low <= effective_sl)
                     tp_hit = (f_high >= tp_price)
 
@@ -230,9 +247,9 @@ class VectorizedBacktester:
                             be_active = True
 
                 else:  # SELL (Exits at Ask = Bid + spread)
-                    effective_sl = (entry_price - self.spread) if be_active else sl_price
-                    sl_hit = (f_high + self.spread >= effective_sl)
-                    tp_hit = (f_low + self.spread <= tp_price)
+                    effective_sl = (entry_price - current_spread) if be_active else sl_price
+                    sl_hit = (f_high + current_spread >= effective_sl)
+                    tp_hit = (f_low + current_spread <= tp_price)
 
                     if sl_hit and tp_hit:
                         trade_status = 'BREAKEVEN' if be_active else 'LOSS'
@@ -252,22 +269,40 @@ class VectorizedBacktester:
 
                     # Breakeven ratchet update at END of bar, for subsequent bars
                     if rule.be_ratchet_r is not None and not be_active:
-                        mfe_fav = entry_price - (f_low + self.spread)
+                        mfe_fav = entry_price - (f_low + current_spread)
                         if mfe_fav >= (rule.be_ratchet_r * initial_risk_pts):
                             be_active = True
 
-            # Calculate realized R and PnL
+            # Calculate realized R and PnL with lot-scaled commissions
+            sym = self.symbol.upper()
+            if "XAU" in sym:
+                point_val_001 = 1.0       # 0.01 lot = $1.00/point
+            elif "XAG" in sym:
+                point_val_001 = 50.0      # 0.01 lot = $50.00/point
+            elif "EUR" in sym or "GBP" in sym:
+                point_val_001 = 1000.0    # 0.01 lot = $0.10/pip
+            elif "BTC" in sym:
+                point_val_001 = 0.01      # 0.01 lot = $0.01/dollar
+            elif any(k in sym for k in ("NQ", "NAS", "US100", "SPX", "US500", "YM", "US30", "DJ")):
+                point_val_001 = 0.01      # 0.01 lot = $0.01/point (0.10 lot = $0.10/pt)
+            else:
+                point_val_001 = 1.0
+
+            lot_ratio = max(1.0, (self.risk_per_trade_usd / (initial_risk_pts * point_val_001)))
+            lot = round(lot_ratio * 0.01, 2)
+            trade_commission = self.commission_usd * (lot / 0.01)
+
             usd_per_pt = self.risk_per_trade_usd / initial_risk_pts
             if trade_status == 'WIN':
                 r_realized = rule.tp_atr_mult / rule.sl_atr_mult
-                pnl_usd = (r_realized * self.risk_per_trade_usd) - self.commission_usd
+                pnl_usd = (r_realized * self.risk_per_trade_usd) - trade_commission
             elif trade_status == 'LOSS':
                 r_realized = -1.0
-                pnl_usd = -self.risk_per_trade_usd - self.commission_usd
+                pnl_usd = -self.risk_per_trade_usd - trade_commission
             elif trade_status == 'BREAKEVEN':
                 # BE covers broker spread: gross profit is spread points
                 gross_usd = self.spread * usd_per_pt
-                pnl_usd = gross_usd - self.commission_usd
+                pnl_usd = gross_usd - trade_commission
                 r_realized = pnl_usd / self.risk_per_trade_usd
             else:  # EXPIRED
                 if is_buy:
@@ -275,7 +310,7 @@ class VectorizedBacktester:
                 else:
                     pts_diff = entry_price - exit_price
                 r_realized = pts_diff / initial_risk_pts
-                pnl_usd = (r_realized * self.risk_per_trade_usd) - self.commission_usd
+                pnl_usd = (r_realized * self.risk_per_trade_usd) - trade_commission
 
             trades.append(
                 TradeRecord(

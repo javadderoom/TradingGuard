@@ -53,8 +53,9 @@ class LiveQuantBridge:
                 import json
                 with open(nq_path, "r", encoding="utf-8") as f:
                     nq_data = json.load(f)
+                # Deduplicated orthogonal rules: R14_011 (mean reversion) and R14_025 (vol compression)
                 self.rules_by_symbol["NQ"] = [
-                    QuantRule.from_dict(r["rule"]) for r in nq_data if r["rule"]["rule_id"] in ["R14_011", "R14_025", "R14_009"]
+                    QuantRule.from_dict(r["rule"]) for r in nq_data if r["rule"]["rule_id"] in ["R14_011", "R14_025"]
                 ]
 
             # 2. XAUUSD (Gold - Dual-Direction Momentum & Orderflow)
@@ -63,8 +64,9 @@ class LiveQuantBridge:
                 import json
                 with open(xau_path, "r", encoding="utf-8") as f:
                     xau_data = json.load(f)
+                # Deduplicated orthogonal rules: R15_048 (velocity breakout), R14_058 (orderflow volume imbalance), R15_023 (autocorrelation momentum)
                 self.rules_by_symbol["XAUUSD"] = [
-                    QuantRule.from_dict(r["rule"]) for r in xau_data if r["rule"]["rule_id"] in ["R15_048", "R14_058", "R11_022"]
+                    QuantRule.from_dict(r["rule"]) for r in xau_data if r["rule"]["rule_id"] in ["R15_048", "R14_058", "R15_023"]
                 ]
             else:
                 legacy_xau = DISCOVERY_DIR / "xauusd" / "ratified_quant_strategies.json"
@@ -81,6 +83,27 @@ class LiveQuantBridge:
         except Exception as e:
             print(f"[LiveQuantBridge] Error loading ratified rules: {e}")
 
+    def _calculate_quant_lot(self, resolved_sym: str, order_type_str: str, entry: float, sl: float, target_risk_usd: float = 12.0) -> Tuple[float, float]:
+        """Calculates optimal lot size clamped to broker limits targeting exact risk."""
+        base_risk = self.engine.calculate_risk_usd(resolved_sym, order_type_str, entry, sl, 0.01)
+        sym_info = mt5.symbol_info(resolved_sym)
+        min_lot = getattr(sym_info, 'volume_min', 0.01) if sym_info else 0.01
+        max_lot = getattr(sym_info, 'volume_max', 1.00) if sym_info else 1.00
+        step_lot = getattr(sym_info, 'volume_step', 0.01) if sym_info else 0.01
+
+        if base_risk and base_risk > 0:
+            calc_lot = 0.01 * (target_risk_usd / base_risk)
+            lot = max(min_lot, min(calc_lot, max_lot))
+            lot = round(round(lot / step_lot) * step_lot, 2)
+            # Recalculate true risk
+            real_risk = self.engine.calculate_risk_usd(resolved_sym, order_type_str, entry, sl, lot)
+            # If rounding pushed risk above ceiling, step down one increment
+            while real_risk and real_risk > target_risk_usd and lot > min_lot:
+                lot = round(lot - step_lot, 2)
+                real_risk = self.engine.calculate_risk_usd(resolved_sym, order_type_str, entry, sl, lot)
+            return lot, round(real_risk or target_risk_usd, 2)
+        return min_lot, 10.0
+
     def scan_symbol(self, clean_sym: str) -> Optional[Dict[str, Any]]:
         """
         Fetches M5 bars, computes 33-dim state space, and evaluates predicates for clean_sym.
@@ -91,8 +114,19 @@ class LiveQuantBridge:
         if not self.engine.ensure_connected():
             return None
 
+        # 1. Gate strictly by session hours (Tehran 11:30 - 21:00)
+        in_session, _ = self.engine.is_within_session_hours(clean_sym)
+        if not in_session:
+            return None
+
         resolved = self.engine.resolve_symbol(clean_sym)
         if not resolved:
+            return None
+
+        # 2. Duplicate Exposure Check: Stand aside if open position or pending order exists on symbol
+        open_pos = self.engine.get_open_positions()
+        pending_ords = self.engine.get_pending_orders()
+        if any(p.get("symbol") == resolved for p in open_pos) or any(o.get("symbol") == resolved for o in pending_ords):
             return None
 
         # Fetch last 120 M5 bars (sufficient for 55-period velocity and 100-period z-score)
@@ -153,37 +187,29 @@ class LiveQuantBridge:
 
             point = sym_info.point
             stops_level = getattr(sym_info, 'stops_level', 0) * point
-            min_offset = max(stops_level, point * 5, 0.2 * spread)
+            min_offset = max(stops_level, point)
 
-            # Anchor limit entry strictly outside spread to ensure immediate broker validity
+            # Anchor limit entry right at market boundary (matching next-bar open fill physics)
             if is_buy:
-                # BUY LIMIT: Must be strictly below current market bid
                 entry = round(tick.bid - min_offset, digits)
-                if entry >= tick.bid:
-                    entry = round(tick.bid - (point * 5), digits)
                 sl = round(entry - (rule.sl_atr_mult * atr), digits)
                 tp = round(entry + (rule.tp_atr_mult * atr), digits)
             else:
-                # SELL LIMIT: Must be strictly above current market ask
                 entry = round(tick.ask + min_offset, digits)
-                if entry <= tick.ask:
-                    entry = round(tick.ask + (point * 5), digits)
                 sl = round(entry + (rule.sl_atr_mult * atr), digits)
                 tp = round(entry - (rule.tp_atr_mult * atr), digits)
 
-            # Risk USD check
-            risk_usd = self.engine.calculate_risk_usd(resolved, order_type_str, entry, sl, 0.01)
-            if risk_usd is None or risk_usd <= 0:
-                risk_usd = 10.0
+            # Calculate dynamic lot size targeting firm $12.00 risk
+            lot, risk_usd = self._calculate_quant_lot(resolved, order_type_str, entry, sl, target_risk_usd=12.0)
 
-            # 1. Gate strictly via Account Profile & Prop Firm Risk Governor
+            # 3. Gate strictly via Account Profile & Prop Firm Risk Governor
             gov_ok, gov_msg, metrics = risk_governor.evaluate_order_feasibility(
                 symbol=resolved,
                 order_type_str=order_type_str,
                 price=entry,
                 sl=sl,
                 tp=tp,
-                lot=0.01,
+                lot=lot,
                 risk_usd=risk_usd,
                 engine=self.engine
             )
@@ -208,9 +234,11 @@ class LiveQuantBridge:
                 "entry": entry,
                 "sl": sl,
                 "tp": tp,
-                "lot": 0.01,
+                "lot": lot,
                 "rr": round(rr, 2),
                 "risk_usd": round(risk_usd, 2),
+                "be_rr": getattr(rule, 'be_ratchet_r', 2.0),
+                "ttl_minutes": getattr(rule, 'ttl_bars', 24) * 5,
                 "predicates_str": ", ".join(str(p) for p in rule.predicates),
                 "sym_icon": sym_icon,
                 "digits": digits,
@@ -248,6 +276,18 @@ class LiveQuantBridge:
             )
 
             if success:
+                try:
+                    from hitl.watchdog import register_order_metadata
+                    register_order_metadata(ticket, {
+                        "symbol": sym,
+                        "archetype_id": f"QUANT_{payload['rule_id']}",
+                        "be_rr": payload.get("be_rr", 2.0),
+                        "target_rr": payload["rr"],
+                        "ttl_minutes": payload.get("ttl_minutes", 120),
+                        "created_at": time.time()
+                    })
+                except Exception:
+                    pass
                 card = (
                     f"🤖 *[AUTONOMOUS QUANT EXECUTION · Ticket #{ticket}]*\n"
                     f"⚡ *Pure Mathematical Execution (Council & Snap Bypassed)*\n\n"
