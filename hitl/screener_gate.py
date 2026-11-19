@@ -130,6 +130,28 @@ def run_screener_gate(symbol: str) -> Dict[str, Any]:
                     "closed_bars_only": True,
                     "signal_bar_time": result.get("signal_bar_time"),
                 }
+
+        # Defense-in-depth: Strict Counter-HTF Veto
+        # Veto all fading limit orders that trade counter to 1H Market Structure Shift (HTF_RETRACEMENT).
+        # Exception: Specifically calibrated Gold London Open Judas High fade (SETUP-ARCH-001, PF 2.60).
+        if result.get("has_setup"):
+            arch_id = result.get("archetype_id", "")
+            phase = result.get("phase")
+            h1_state = result.get("mtf_info", {}).get("h1_state", "NEUTRAL")
+            setup_type = result.get("setup_type", "")
+            is_sell = "BEARISH" in setup_type or "SELL" in setup_type or "SHORT" in setup_type
+            is_buy = "BULLISH" in setup_type or "BUY" in setup_type or "LONG" in setup_type
+            is_counter_h1 = (is_sell and h1_state == "BULLISH_MSS") or (is_buy and h1_state == "BEARISH_MSS")
+            is_gold_judas = (arch_id == "SETUP-ARCH-001" and "XAU" in symbol.upper())
+            if (phase == "HTF_RETRACEMENT" or is_counter_h1) and not is_gold_judas:
+                return {
+                    "has_setup": False,
+                    "reason": f"Veto: Counter-HTF phase conflict ({phase} counter to 1H {h1_state}). Trading counter to higher-timeframe market structure shift is strictly prohibited.",
+                    "setup_type": "COUNTER_HTF_VETO",
+                    "closed_bars_only": True,
+                    "signal_bar_time": result.get("signal_bar_time"),
+                    "mtf_info": result.get("mtf_info"),
+                }
     except Exception as e:
         print(f"[ScreenerGate] screen_ict_session error for {symbol}: {e}")
         return {

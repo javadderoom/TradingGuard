@@ -2948,6 +2948,42 @@ All trades and run metrics are immutably archived on disk with cryptographic ver
 - **Cryptographic Manifest**: `backtest_results/quant_discovery/quant_alpha_run_manifest.json` containing SHA-256 integrity hash:
   - `sha256: d187e1f4fc1fa98a69a0362f275e5330e7054bfd27c92b23a35d947514a604be`.
 
+---
+
+## 30. Strict Counter-HTF Veto: Structural Liquidity Delivery Protection (2026-11-19 Live Audit Fix)
+
+### 30.1 Forensic Failure Mechanism (Live GBPUSD Audit)
+
+On 2026-11-19 at 12:56 UTC, TradingGuard executed live order ticket `381114397` on `GBPUSD_o` (`SELL_LIMIT` at `1.31536`, SL `1.31616`, TP `1.31256`). The trade filled at 12:53:04 server time and was stopped out at 13:13:34 server time (-$0.84 net loss) as price surged to `1.31730`.
+
+Forensic investigation revealed the core structural trap:
+1. **HTF Liquidity Sweep**: In the Asian session (05:00 UTC), GBPUSD swept the Previous Day Low (`1.31357`) down to `1.31202` (-15.5 pips of deep sell-side liquidity absorption).
+2. **HTF Market Structure Shift**: The rejection off `1.31202` broke H1 market structure upward (`h1_state: BULLISH_MSS`) at `1.31534`, targeting internal Draw on Liquidity (`dol_internal: 1.31730`).
+3. **The Micro Fading Trap**: At London open, price tagged the Asian Session High at `1.31606` and paused. The screener flagged `SETUP-ARCH-010` (Prominent Sweep MSS) and classified the phase as `HTF_RETRACEMENT counter to 1H BULLISH_MSS`.
+4. **Algorithmic Defect**: In `fast_screener.py`, `phase == "HTF_RETRACEMENT"` was previously used solely to calibrate POI retracement depth (`poi_ratio = 0.50`). The screener permitted fading limit orders to execute counter to the active 1H MSS, resulting in orders stepping directly in front of the HTF upward delivery.
+
+### 30.2 Multi-Layer Codebase Implementation
+
+To permanently guarantee that no fading limit orders can ever trade counter to a confirmed 1H Market Structure Shift, two defense layers were implemented:
+
+1. **Root Screener Veto (`hitl/backtest/fast_screener.py::_build_setup_package`)**:
+   - Compares the setup `direction` against `mtf_ctx["h1_state"]`.
+   - If `p_info["phase"] == "HTF_RETRACEMENT"` or `is_counter_h1` is True (e.g. `SHORT` into `BULLISH_MSS` or `LONG` into `BEARISH_MSS`), the package immediately returns:
+     - `has_setup: False`
+     - `setup_type: "COUNTER_HTF_VETO"`
+     - `reason: "Veto: Counter-HTF phase conflict ({phase} counter to 1H {h1_state}). Trading counter to higher-timeframe market structure shift is strictly prohibited."`
+   - *Exception*: Specifically calibrated Gold London Open Judas High fade (`SETUP-ARCH-001` on `XAUUSD`, PF 2.60) which is empirically ratified for Asian extreme fading.
+2. **Live Screener Gate Defense-in-Depth (`hitl/screener_gate.py::run_screener_gate`)**:
+   - Secondary verification on all live MT5 bar evaluations. Intercepts any setup flagged with `phase == "HTF_RETRACEMENT"` or counter-1H directional mismatch, returning `has_setup: False` and `setup_type: "COUNTER_HTF_VETO"`.
+3. **Live Bot Telegram Guard (`hitl/bot.py`)**:
+   - When `run_screener_gate()` returns `has_setup: False`, the bot immediately logs a `STAND_ASIDE` decision with the veto reason, transmits the explanation to Telegram via `format_screener_veto()`, and completely aborts the AI Council deliberation.
+
+### 30.3 Test Suite & Verification
+
+- Added `app/tests/test_counter_htf_veto.py` verifying both root `fast_screener` and `screener_gate` counter-HTF vetoes.
+- Full test suite passed: **130/130 tests passing (100%)**.
+
+
 
 
 

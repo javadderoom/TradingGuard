@@ -1673,6 +1673,25 @@ def screen_ict_session(
             rec_target = 3.0  # Calibrated for Gold Double Sweep Displacement Reversal (PF 1.46 - 1.76)
             rec_be = 1.5
 
+        # Root-level Strict Counter-HTF Veto:
+        # Veto all fading limit orders that trade counter to 1H Market Structure Shift (HTF_RETRACEMENT).
+        # Exception: Specifically calibrated Gold London Open Judas High fade (SETUP-ARCH-001, PF 2.60).
+        h1_state = mtf_ctx.get("h1_state", "NEUTRAL")
+        is_buy = "BUY" in direction.upper() or "LONG" in direction.upper() or "BULLISH" in direction.upper()
+        is_counter_h1 = (is_buy and h1_state == "BEARISH_MSS") or ((not is_buy) and h1_state == "BULLISH_MSS")
+
+        if (p_info.get("phase") == "HTF_RETRACEMENT" or is_counter_h1):
+            is_gold_judas = (arch_id == "SETUP-ARCH-001" and "XAU" in symbol.upper())
+            if not is_gold_judas:
+                return {
+                    "has_setup": False,
+                    "reason": f"Veto: Counter-HTF phase conflict ({p_info.get('phase', 'HTF_RETRACEMENT')} counter to 1H {h1_state}). Trading counter to higher-timeframe market structure shift is strictly prohibited.",
+                    "setup_type": "COUNTER_HTF_VETO",
+                    "closed_bars_only": closed_bars_only,
+                    "signal_bar_time": signal_bar_time,
+                    "mtf_info": mtf_ctx,
+                }
+
         return {
             "has_setup": True,
             "reason": f"[{arch_id}] {reason_text} | Scaled Entry: {entry_p:{fmt}} | Phase: {p_info['phase']}",
