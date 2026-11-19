@@ -3,29 +3,29 @@
   "horizons": {
     "session": {
       "bias": "BEARISH",
-      "confidence": 0.69,
+      "confidence": 0.46,
       "session_archetype": "BEARISH_EXPANSION",
       "expected_range": {
-        "high": 1.32801,
-        "low": 1.32219
+        "high": 1.32391,
+        "low": 1.31866
       },
-      "key_trigger": 1.32826,
-      "catalyst_danger": "MEDIUM"
+      "key_trigger": 1.32281,
+      "catalyst_danger": "HIGH"
     },
     "day": {
       "bias": "BEARISH",
-      "confidence": 0.39,
+      "confidence": 0.36,
       "daily_dol": {
-        "target": 1.32643,
-        "type": "SELL_SIDE_LIQUIDITY",
-        "rationale": "SubQ Snap classified BEARISH_DAY targeting SELL_SIDE_LIQUIDITY"
+        "target": 1.32826,
+        "type": "BUY_SIDE_LIQUIDITY",
+        "rationale": "SubQ Snap classified BEARISH_DAY targeting BUY_SIDE_LIQUIDITY"
       },
-      "invalidation": 1.32826,
+      "invalidation": 1.32433,
       "candle_archetype": "BEARISH_DAY"
     },
     "week": {
       "bias": "NEUTRAL",
-      "confidence": 0.09,
+      "confidence": 0.12,
       "macro_target": 1.35034,
       "weekly_profile": "MID_WEEK_REVERSAL"
     }
@@ -50,28 +50,28 @@
       "note": "Forex Range Fade: 2.5R TP with 0.8R BE protection"
     }
   },
-  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for GBPUSD_o. Session bias rated BEARISH (confidence 69%), Daily horizon aligned with BEARISH_DAY toward 1.32643. Weekly profile: MID_WEEK_REVERSAL.",
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for GBPUSD_o. Session bias rated BEARISH (confidence 45%), Daily horizon aligned with BEARISH_DAY toward 1.32826. Weekly profile: MID_WEEK_REVERSAL.",
   "source": "subq-snap-1.1",
-  "latency_ms": 1656.9,
-  "generated_at_utc": "2026-11-12 12:21:31 UTC",
-  "generated_at_tehran": "2026-11-12 15:51:31 Tehran",
+  "latency_ms": 1638.0,
+  "generated_at_utc": "2026-11-13 10:37:57 UTC",
+  "generated_at_tehran": "2026-11-13 14:07:57 Tehran",
   "on_chart_telemetry": {
     "symbol": "GBPUSD_o",
     "asset_class": "FOREX",
-    "active_anchor": "PRE_NY",
-    "current_price": 1.32649,
-    "timestamp_utc": "2026-11-12 12:21:29 UTC",
-    "timestamp_tehran": "2026-11-12 15:51:29 Tehran",
+    "active_anchor": "PRE_LONDON",
+    "current_price": 1.3224,
+    "timestamp_utc": "2026-11-13 10:37:55 UTC",
+    "timestamp_tehran": "2026-11-13 14:07:55 Tehran",
     "daily_structure": {
-      "pdh": 1.33556,
-      "pdl": 1.32665,
-      "pdc": 1.32733,
-      "daily_open": 1.32732,
-      "daily_high": 1.32826,
-      "daily_low": 1.32502,
-      "daily_range": 0.00324,
-      "adr_14": 0.0076,
-      "adr_utilization_pct": 42.7,
+      "pdh": 1.32826,
+      "pdl": 1.32213,
+      "pdc": 1.3233,
+      "daily_open": 1.32332,
+      "daily_high": 1.32433,
+      "daily_low": 1.3221,
+      "daily_range": 0.00223,
+      "adr_14": 0.00753,
+      "adr_utilization_pct": 29.6,
       "has_swept_pdh": false,
       "has_swept_pdl": true
     },
@@ -82,49 +82,41 @@
       "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
     },
     "session_ranges": {
-      "asian_high": 1.32826,
-      "asian_low": 1.32502,
-      "asian_range": 0.00324,
-      "london_high": 1.32771,
-      "london_low": 1.32518,
-      "london_range": 0.00253
+      "asian_high": 1.32409,
+      "asian_low": 1.32281,
+      "asian_range": 0.00128,
+      "london_high": 1.32433,
+      "london_low": 1.3221,
+      "london_range": 0.00223
     },
     "london_context": {
       "is_established": true,
-      "london_high": 1.32771,
-      "london_low": 1.32518,
-      "london_range": 0.00253,
-      "swept_asian_high": false,
-      "swept_asian_low": false,
-      "pre_ny_adr_util_pct": 42.7,
+      "london_high": 1.32433,
+      "london_low": 1.3221,
+      "london_range": 0.00223,
+      "swept_asian_high": true,
+      "swept_asian_low": true,
+      "pre_ny_adr_util_pct": 29.6,
       "exhaustion_alert": false
     },
     "draw_on_liquidity": {
-      "type": "SELL_SIDE_LIQUIDITY",
-      "target_price": 1.32643,
-      "distance_pts": 0.6,
-      "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
+      "type": "BUY_SIDE_LIQUIDITY",
+      "target_price": 1.32826,
+      "distance_pts": 58.6,
+      "rationale": "Swept PDL with bullish displacement; Draw on Liquidity is PDH."
     },
     "liquidity_pools": {
       "overhead_bsl": [
-        1.32733,
-        1.32745,
-        1.3275
+        1.32328,
+        1.32333,
+        1.32342
       ],
       "underlying_ssl": [
-        1.32643,
-        1.32618,
-        1.32571
+        1.32238,
+        1.3223,
+        1.32223
       ],
       "active_h1_fvgs": [
-        {
-          "type": "BEARISH_FVG",
-          "top": 1.33082,
-          "bottom": 1.32845,
-          "midpoint": 1.32964,
-          "size": 0.00237,
-          "bar_time": 1794409200
-        },
         {
           "type": "BEARISH_FVG",
           "top": 1.32721,
@@ -136,28 +128,28 @@
       ],
       "active_h4_fvgs": [
         {
-          "type": "BEARISH_FVG",
-          "top": 1.34438,
-          "bottom": 1.34279,
-          "midpoint": 1.34359,
-          "size": 0.00159,
-          "bar_time": 1793937600
+          "type": "BULLISH_FVG",
+          "top": 1.33699,
+          "bottom": 1.33578,
+          "midpoint": 1.33638,
+          "size": 0.00121,
+          "bar_time": 1794182400
         },
         {
-          "type": "BEARISH_FVG",
-          "top": 1.34245,
-          "bottom": 1.34043,
-          "midpoint": 1.34144,
-          "size": 0.00202,
-          "bar_time": 1793952000
+          "type": "BULLISH_FVG",
+          "top": 1.34098,
+          "bottom": 1.33816,
+          "midpoint": 1.33957,
+          "size": 0.00282,
+          "bar_time": 1794211200
         }
       ]
     },
     "htf_trend": {
       "h1_regime": "BEARISH_EXPANSION",
-      "h1_ma20": 1.32696,
-      "h4_ma20": 1.33507,
-      "h1_displacement_3bar": -0.00072
+      "h1_ma20": 1.32333,
+      "h4_ma20": 1.32906,
+      "h1_displacement_3bar": -0.00052
     },
     "smt_divergence": {
       "has_smt": true,
@@ -167,27 +159,20 @@
   },
   "off_chart_telemetry": {
     "symbol": "GBPUSD_o",
-    "timestamp_utc": "2026-11-12 12:21:29 UTC",
-    "timestamp_tehran": "2026-11-12 15:51:29 Tehran",
+    "timestamp_utc": "2026-11-13 10:37:55 UTC",
+    "timestamp_tehran": "2026-11-13 14:07:55 Tehran",
     "session_context": {
-      "is_active_killzone": false,
-      "session_label": "Outside Killzones",
-      "session_key": "Outside_Killzones"
+      "is_active_killzone": true,
+      "session_label": "London Killzone",
+      "session_key": "London_Post_Open"
     },
     "catalysts": {
-      "session_risk": "MEDIUM",
-      "day_risk": "LOW",
+      "session_risk": "HIGH",
+      "day_risk": "HIGH",
       "week_risk": "MEDIUM",
-      "upcoming_high_impact_session": [],
-      "upcoming_high_impact_day_count": 0,
-      "upcoming_high_impact_week_count": 2
-    },
-    "retail_sentiment": {
-      "sample_size": 9,
-      "retail_long_pct": 22.2,
-      "retail_short_pct": 77.8,
-      "contrarian_bias": "INSTITUTIONAL_LONG_HUNT",
-      "interpretation": "Retail crowd is 22.2% LONG. Institutional liquidity hunt favors squeezing Buy-Side Liquidity."
-    }
-  }
-}
+      "upcoming_high_impact_session": [
+        {
+          "title": "Core PPI m/m",
+          "country": "USD",
+          "impact": "High",
+          "datetime_tehran": 

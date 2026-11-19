@@ -1,6 +1,6 @@
 {
   "account_mode": "PROP_FIRM",
-  "account_size_usd": 1142.51,
+  "account_size_usd": 1112.51,
   "use_auto_account_size": true,
   "profiles": {
     "PROP_FIRM": {
@@ -24,10 +24,10 @@
       "hard_overall_drawdown_pct": 20.0
     }
   },
-  "daily_reference_equity": 1142.51,
-  "daily_reference_date": "2026-11-12",
-  "high_water_mark_equity": 1146.11,
+  "daily_reference_equity": 1112.51,
+  "daily_reference_date": "2026-11-19",
+  "high_water_mark_equity": 1112.51,
   "circuit_breaker_active": false,
   "circuit_breaker_reason": "",
-  "last_updated": "2026-11-12T00:00:01.274299"
+  "last_updated": "2026-11-19T11:41:38.460492"
 }

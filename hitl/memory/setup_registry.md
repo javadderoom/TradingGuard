@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-10T10:13:05.608376` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-16T18:15:29.727129` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -12,7 +12,8 @@
 - **Entry Trigger:** `Anchor Limit Order at Breaker Block proximal edge.`
 - **Invalidation Anchor:** `Structural extreme of the Judas sweep wick with mandated ATR buffer.`
 - **Mandated Minimum R:R:** `1:3.0`
-> **Supervisory Audit Verdict:** RATIFIED | *Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution. [AUDIT 2026-11-10]: Decommissioned on GBPUSD due to -9.50R empirical drag (PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading session highs, +5.36R, PF 1.60); Bullish Breaker decommissioned (-6.02R drag, 10% WR). Active on XAUUSD (+2.50R) and NQ London Open SHORT.*
+- **Stop Buffer Requirement:** `Extreme of Judas Sweep Wick + Max(1.5 * 5M ATR, 2.0 * Median Session Spread), with hard floor at 3.5 pips (FX) / $1.80 (XAUUSD).`
+> **Supervisory Audit Verdict:** RATIFIED | *Approved for automated and discretionary deployment across MULTI engine runtime during designated London and NY session killzones. All orders must enforce proximal breaker block limit mitigation with strict OCO execution. NOTE: DECOMMISSIONED on GBPUSD due to -9.50R empirical drag (PF 0.44). On NQ, strictly restricted to London Open Bearish Judas Breakers (SHORT only, fading session highs, +5.36R, PF 1.60); Bullish Breaker decommissioned (-6.02R drag, 10% WR). Active on XAUUSD (+2.50R) and NQ London Open SHORT.*
 
 ### 🟢 [SETUP-ARCH-002] Judas Swing & Fair Value Gap Mitigation (Liquidity Sweep & FVG Mitigation)
 - **Description:** Session sweep of liquidity followed by immediate mitigation of a newly formed 5M Fair Value Gap.
@@ -36,7 +37,7 @@
 - **Invalidation Anchor:** `Prior session boundary or FVG distal edge.`
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `FVG Distal Edge + minimum 3.0 pips (FX) / 2.0 ticks outside displacement pivot`
-> **Supervisory Audit Verdict:** RATIFIED | *Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization. [AUDIT 2026-11-10]: Decommissioned on GBPUSD due to -8.50R empirical drag (PF 0.83). Active on XAUUSD (PRO_EXPANSION only).*
+> **Supervisory Audit Verdict:** RATIFIED | *Authorized strictly for execution within the 10:00 AM - 11:00 AM NY window, conditional on higher-timeframe trend alignment and post-news spread normalization. NOTE: DECOMMISSIONED on GBPUSD due to -8.50R empirical drag (PF 0.83). Active on XAUUSD (PRO_EXPANSION only).*
 
 ### 🟢 [SETUP-ARCH-005] Precious Metals Intermarket SMT Divergence & Liquidity Sweep Mitigation (Intermarket SMT Divergence & Liquidity Sweep)
 - **Description:** Relative structural non-confirmation between Gold (XAUUSD) and Silver (XAGUSD) at key session liquidity boundaries (London / NY Open). When one metal sweeps session extremes (Judas swing) while the other refuses to sweep (holding higher low or lower high), enter on the mitigation of the confirmed 5M FVG or Breaker Block aligned with institutional accumulation/distribution.
@@ -69,14 +70,6 @@
 - **Mandated Minimum R:R:** `1:3.0`
 - **Stop Buffer Requirement:** `Sweep Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
 > **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Proven on Monday, September 21, 2026 Cable NY Open sweep (PDH 1.33982 swept to 1.34003 peak; M1 MSS at 1.33925; entry at 1.33933 with 7.8 pip stop at 1.34011; TP hit at 1.33686 for +24.7 pips / 3.17R). Eliminates blind sweep stop-outs.*
-
-### 🟢 [SETUP-ARCH-009] Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation) (Pro-Trend POI Mitigation & Trend Continuation)
-- **Description:** High-probability trend continuation archetype executing during the New York session (15:30-17:30 Tehran / 08:00-10:00 NY) when price is aligned with the Macro Directional Filter (SELL_ONLY or BUY_ONLY). Bypasses mid-range chop filters by recognizing internal retracement into the unmitigated origin of the prior session's impulse leg (London Breaker Block, 15M/1H FVG, or 50% Mean Threshold). Requires M1 Market Structure Shift (MSS) displacement confirmation before entry.
-- **Entry Trigger:** `M1 retracement into the displacement FVG / Breaker following confirmed M1 MSS at the London breakdown/breakout origin zone.`
-- **Invalidation Anchor:** `Retracement swing peak + spread buffer (1.0 pip for GBPUSD; 1.5-2.5 pips for EURUSD).`
-- **Mandated Minimum R:R:** `1:3.0`
-- **Stop Buffer Requirement:** `Retracement Peak Wick + 1.0 pip spread buffer (GBPUSD) / 1.5-2.5 pips (EURUSD).`
-> **Supervisory Audit Verdict:** RATIFIED | *Ratified collaboratively with Lead Human Partner (Seat #7). Proven on Tuesday, September 22, 2026 Cable NY retracement (London dump from 1.3387 to 1.3326; NY retracement into London breakdown origin at 1.3368-1.3373; M1 MSS trigger at 1.33685 with 6.1 pip stop; dump to 1.33215 yielding +45 pips / 6.9R). Eliminates the mid-range chop blind spot on trend continuation days. [AUDIT 2026-11-04]: Permanently Decommissioned on Gold (-46.5R) and GBPUSD (-20.5R, 13.2% WR, PF 0.46) due to deep retracement failure in trending markets.*
 
 ### 🟢 [SETUP-ARCH-010] Prominent Liquidity Sweep with Pro-Trend M1 MSS Displacement (Pro-Trend Prominent Sweep & LTF Execution)
 - **Description:** High-conviction trend continuation archetype executing exclusively in the direction of the confirmed HTF trend (Daily/4H). When price sweeps a visually prominent horizontal liquidity ceiling or floor (Equal Highs/Lows [EQH/EQL], Previous Day High/Low [PDH/PDL], or Prior Session Extreme), it bypasses deep HTF retracement requirements. Execution is triggered when price prints an immediate 1-Minute (M1) Market Structure Shift (MSS) with an energetic displacement candle body closing past the micro-swing pivot in the pre-determined trend direction. Entry is placed on the M1 FVG / Breaker retest or immediate execution upon M1 MSS close, with Stop Loss strictly anchored 1.0 pip beyond the sweep wick extreme.
@@ -190,9 +183,50 @@
 - **Stop Buffer Requirement:** `Per Active Playbook`
 > **Supervisory Audit Verdict:** PASSED_WALK_FORWARD_CROSS_VALIDATION | *Walk-forward verified on 7656 OOS bars with zero narrative bias.*
 
+### 🟢 [SETUP-ARCH-015] NY Open One-Sided Trend Continuation Sweep (Gold) (NY Session Trend Continuation)
+- **Description:** Following a clean one-sided London expansion beyond Asian Range (without dual-sweep of the opposite Asian boundary) and H1 close aligned with H1 EMA(50), a counter-trend pullback >=45% of the London leg sets up a dynamic DST NY Open (08:00 NY to NYSE +1h) 5M stop-hunt rejection bar (>=25% wick, closing aggressively in trend direction).
+- **Entry Trigger:** `Close of confirmed 5M NY stop-hunt continuation bar aligned with H1 EMA(50) and one-sided London trend.`
+- **Invalidation Anchor:** `Sweep wick extreme of the 5M NY continuation bar plus $1.50 structural buffer ($1.80-$20.00 risk bounds).`
+- **Mandated Minimum R:R:** `1:2.5`
+- **Stop Buffer Requirement:** `5M NY continuation sweep extreme +/- $1.50 (clamped within $1.80-$20.00 risk at 0.01 lot).`
+> **Supervisory Audit Verdict:** RATIFIED | *Zero-lookahead 17-month validation on Gold (XAUUSD_o): 89 trades across 2026 M1 (57tr, +16.85R, PF 1.56) and 2025 H2 OOS (32tr, +8.60R, PF 1.54); combined +25.45R, 32.6% WR, PF 1.55, MaxDD 5.00R at 2.5R target / 1.5R BE. Remains profitable under $0.25 extra slippage (+24.71R, PF 1.54) and 30m limit order (+21.32R, PF 1.46). NOTE: Gated to Long-Only during Macro Bullish regimes; Short continuations suppressed to prevent counter-trend friction.*
+
+### 🟢 [SETUP-ARCH-016] Intermarket SMT Correlation Divergence (NQ vs SPX/YM) (Intermarket Correlation Divergence)
+- **Description:** High-conviction non-confirmation divergence where NQ sweeps Asian or London extremes while SPX or YM holds a structural swing pivot (higher low / lower high), confirmed by M5 FVG displacement >= 20.0 pts back inside the reference range. Synchronized Liquidation Veto suppresses signals if all 3 benchmarks sweep simultaneously.
+- **Entry Trigger:** `Limit order at M5 FVG proximal boundary following non-confirmation divergence.`
+- **Invalidation Anchor:** `NQ sweep extreme wick +/- 8.0 pts buffer.`
+- **Mandated Minimum R:R:** `1:2.5`
+- **Stop Buffer Requirement:** `Sweep extreme +/- 8.0 points on NQ (Max risk 60.0 pts).`
+> **Supervisory Audit Verdict:** RATIFIED | *Verified in MetaTrader 5 (LiteFinance) and 2026 M1 tick data: 15 orders, 11 fills, 5W-3L-3BE (62.5% decisive WR), +9.17R Net Alpha, PF 4.06, Max DD 2.00R. Synchronized Liquidation Veto successfully prevented 100% of counter-trend trap entries during aggressive macro selloffs.*
+
+### 🟢 [SETUP-ARCH-017] Multi-Asset Institutional 15m Opening Range Breakout Continuation (ORB) (Opening Range Breakout & Momentum Expansion)
+- **Description:** High-momentum breakout of the 15-minute Opening Range established during the London Cash Open or NYSE Cash Open across NQ, XAUUSD, GBPUSD, SPX, YM. Requires M5 body displacement, volume expansion >= 1.15x 20-bar moving average, and remaining ADR headroom <= 75%. Direction is governed symmetrically by the prior H1/D1 Macro Regime: Bullish Trend -> LONG ONLY; Bearish Trend -> SHORT ONLY; Range-Bound / Chop -> VETOED. Enforces Prop Firm Dynamic Limit Entry Retracement.
+- **Entry Trigger:** `Limit order at the retest of the broken 15m Opening Range boundary (dynamically adjusted if risk exceeds $10.00).`
+- **Invalidation Anchor:** `Opposite extreme of the breakout displacement bar or IB midpoint (risk clamped to account budget).`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `Displacement bar extreme +/- buffer (Gold $1.20, Forex 4 pips, NQ 6.0 pts).`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified multi-asset across 1-Year (2025-2026) backtest: 556 trades, 34.2% WR, +345.50R Net Alpha, PF 3.17. Gold: +171.30R (PF 4.26). NQ: +95.00R (PF 1.73). GBPUSD: +79.20R (PF 1.48). Directionally symmetric: Longs +182.20R, Shorts +163.30R. Combined with dynamic limit retracement for prop firm compliance.*
+
+### 🟢 [SETUP-ARCH-018] Multi-Asset Statistical Extreme Judas Swing Reversal (Judas Reversal in Range) (Statistical Mean Reversion & Liquidity Sweep)
+- **Description:** Fading liquidity sweeps that penetrate Asian High/Low or Prior Day High/Low during London/NY Judas window with candle rejection (wick >= 35%, body <= 40%) across XAUUSD, GBPUSD, NQ, SPX, YM. Strictly gated to RANGE_BOUND and TRANSITION regimes. Vetoed in heavy runaway trends to prevent counter-trend knife catching. Enforces Prop Firm Dynamic Limit Entry Retracement.
+- **Entry Trigger:** `Retest limit order at the swept boundary or market on close of rejection candle (dynamically adjusted if risk exceeds $10.00).`
+- **Invalidation Anchor:** `Sweep wick extreme +/- asset buffer ($1.20 Gold, 4 pips FX, 6.0 pts NQ).`
+- **Mandated Minimum R:R:** `1:2.5`
+- **Stop Buffer Requirement:** `Sweep extreme +/- buffer ($1.20 Gold, 4 pips FX, 6.0 pts NQ).`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified multi-asset across 1-Year (2025-2026) backtest: 844 trades, 30.9% WR, +343.14R Net Alpha, PF 2.11. Gold: +141.09R (PF 2.09). NQ: +152.50R (PF 2.46). GBPUSD: +49.55R (PF 1.20). Directionally symmetric: Longs +177.21R, Shorts +165.93R. Successfully eliminates knife-catching by vetoing all counter-trend fades when H1 ADX >= 22.*
+
+### 🟢 [SETUP-ARCH-019] Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal) (Cascade Liquidity Sweep & Displacement Reversal)
+- **Description:** Institutional secondary stop-hunt and trapped breakout reversal strictly on Gold (XAUUSD). Price sweeps a prominent high/low (H0/L0) from a prior leg, pulls back by at least $1.20 forming an intermediate swing level (L_mid/H_mid), pushes again to sweep the new high/low (H2 > H1 or L2 < L1) with a rejection wick >= 25% or close back inside, and immediately prints an opposing 5M Fair Value Gap (FVG) and Market Structure Shift (MSS) through L_mid/H_mid. Active during London Open through NY Open Killzones. Enforces Prop Firm Dynamic Limit Entry Retracement.
+- **Entry Trigger:** `Limit order at the 50% equilibrium of the opposing displacement 5M FVG (dynamically adjusted if risk exceeds $10.00).`
+- **Invalidation Anchor:** `Secondary sweep extreme (H2/L2) +/- $1.20 Gold spread buffer (risk clamped to $1.50 - $10.00).`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `Secondary sweep extreme +/- $1.20 Gold spread buffer.`
+> **Supervisory Audit Verdict:** RATIFIED | *Ratified on Gold across 2026 dataset: 235 fills, +41.50R Net Alpha, PF 1.25 to 1.76 (London & NY Killzones). Captures trapped breakout liquidity following false double-top expansions with confirmed MSS through intermediate low/high.*
+
 ---
 ## ⏳ Candidate Archetypes Under Review / Proposed
 
 | ID | Name | Category | Status | Proposed Trigger |
 | :--- | :--- | :--- | :---: | :--- |
+| `SETUP-ARCH-009` | Pro-Trend Session Breakdown Origin Retest (NY AM Trend Continuation) | Pro-Trend POI Mitigation & Trend Continuation | **DECOMMISSIONED** | M1 retracement into the displacement FVG / Breaker following confirmed M1 MSS at the London breakdown/breakout origin zone. |
 | `SETUP-ARCH-011` | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Structural Shift & Complex Pullback Exhaustion | **DECOMMISSIONED** | Limit order at H3 breaker retest or newly formed displacement FVG at L5. |

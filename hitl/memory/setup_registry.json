@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-11-10T10:13:05.608376",
+  "last_updated": "2026-11-16T18:15:29.727129",
   "archetypes": [
     {
       "id": "SETUP-ARCH-001",
@@ -115,7 +115,7 @@
         "min_rr": "1:3.0",
         "stop_buffer_rule": "XAUUSD: Max($1.50, $0.80 + 1.5x 5M ATR) | XAGUSD: Max($0.06, $0.03 + 1.5x 5M ATR) beyond Judas sweep extreme"
       },
-      "auditor_notes": "Approved for algorithmic and discretionary execution exclusively within the designated London Open (07:00\u201309:00 UTC) and NY Open (12:30\u201314:30 UTC) liquidity windows. Execution is strictly conditioned on confirmed 5M structural displacement and strict enforcement of the spread-expansion cap."
+      "auditor_notes": "Approved for algorithmic and discretionary execution exclusively within the designated London Open (07:00–09:00 UTC) and NY Open (12:30–14:30 UTC) liquidity windows. Execution is strictly conditioned on confirmed 5M structural displacement and strict enforcement of the spread-expansion cap."
     },
     {
       "id": "SETUP-ARCH-006",
@@ -673,50 +673,71 @@
     },
     {
       "id": "SETUP-ARCH-017",
-      "name": "Institutional 15m Opening Range Breakout Continuation (NQ)",
+      "name": "Multi-Asset Institutional 15m Opening Range Breakout Continuation (ORB)",
       "category": "Opening Range Breakout & Momentum Expansion",
-      "description": "High-momentum breakout of the 15-minute Opening Range established during the NYSE Cash Open (14:30-14:45 UTC Winter / 13:30-13:45 UTC Summer). Requires M5 body displacement >= 25.0 pts, volume expansion >= 1.2x 20-bar moving average, and remaining ADR headroom <= 70%.",
-      "entry_trigger": "Limit order at the retest of the broken 15m Opening Range boundary.",
-      "invalidation_anchor": "Opposite extreme of the breakout displacement bar +/- 8.0 pts (Risk bounds: 15.0 - 40.0 pts).",
+      "description": "High-momentum breakout of the 15-minute Opening Range established during the London Cash Open or NYSE Cash Open across NQ, XAUUSD, GBPUSD, SPX, YM. Requires M5 body displacement, volume expansion >= 1.15x 20-bar moving average, and remaining ADR headroom <= 75%. Direction is governed symmetrically by the prior H1/D1 Macro Regime: Bullish Trend -> LONG ONLY; Bearish Trend -> SHORT ONLY; Range-Bound / Chop -> VETOED. Enforces Prop Firm Dynamic Limit Entry Retracement.",
+      "entry_trigger": "Limit order at the retest of the broken 15m Opening Range boundary (dynamically adjusted if risk exceeds $10.00).",
+      "invalidation_anchor": "Opposite extreme of the breakout displacement bar or IB midpoint (risk clamped to account budget).",
       "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
       "status": "RATIFIED",
       "proposed_at": "2026-11-14T20:30:00",
-      "ratified_at": "2026-11-14T20:30:00",
+      "ratified_at": "2026-11-16T18:15:00",
       "vetting_verdict": "RATIFIED",
       "ratified_criteria": {
-        "name": "Institutional 15m Opening Range Breakout Continuation (NQ)",
+        "name": "Multi-Asset Institutional 15m Opening Range Breakout Continuation (ORB)",
         "category": "Opening Range Breakout & Momentum Expansion",
-        "min_rr": "1:3.5",
-        "stop_buffer_rule": "Displacement bar extreme +/- 8.0 pts (Risk clamped 15.0 - 40.0 pts).",
+        "min_rr": "1:3.0",
+        "stop_buffer_rule": "Displacement bar extreme +/- buffer (Gold $1.20, Forex 4 pips, NQ 6.0 pts).",
         "be_ratchet_r": 1.5,
-        "volume_filter": "Volume >= 1.2x 20-bar SMA",
-        "adr_headroom_gate": "Consumed Day Range <= 70% ADR14",
-        "direction_rule": "DYNAMIC_HTF_REGIME_GATED. In Bullish Macro Trend (Daily>EMA20, H1>EMA50), LONG ONLY (+6.92R, PF 99.0). In Bearish Macro Trend (Daily<EMA20, H1<EMA50), SHORT ONLY. Consolidation/Chop regimes VETO all breakouts."
+        "volume_filter": "Volume >= 1.15x 20-bar SMA",
+        "adr_headroom_gate": "Consumed Day Range <= 75% ADR14",
+        "direction_rule": "DYNAMIC_HTF_REGIME_GATED (Fully Symmetric). Bullish Macro Trend -> LONG ONLY; Bearish Macro Trend -> SHORT ONLY. Range-Bound / Chop regimes strictly VETO all breakout entries."
       },
-      "auditor_notes": "Verified in MetaTrader 5 (LiteFinance): 11 orders, 8 fills, 2W-3L-3BE (40.0% decisive WR), +3.92R Net Alpha, PF 2.31, Max DD 2.00R. Dynamic regime gating protects against taking counter-trend breakouts during macro bull/bear extensions."
+      "auditor_notes": "Ratified multi-asset across 1-Year (2025-2026) backtest: 556 trades, 34.2% WR, +345.50R Net Alpha, PF 3.17. Gold: +171.30R (PF 4.26). NQ: +95.00R (PF 1.73). GBPUSD: +79.20R (PF 1.48). Directionally symmetric: Longs +182.20R, Shorts +163.30R. Combined with dynamic limit retracement for prop firm compliance."
     },
     {
       "id": "SETUP-ARCH-018",
-      "name": "Statistical Extreme Judas Swing Reversal (Gold / Multi-Asset)",
+      "name": "Multi-Asset Statistical Extreme Judas Swing Reversal (Judas Reversal in Range)",
       "category": "Statistical Mean Reversion & Liquidity Sweep",
-      "description": "Fading liquidity sweeps that penetrate Asian High/Low or Prior Day High/Low by $0.30 - $2.50 during London/NY Judas window with candle rejection (wick >= 40%, body <= 35%) and statistical overextension from H1 EMA20 (>= 1.5x ATR).",
-      "entry_trigger": "Retest limit order at the swept boundary or market on close of rejection candle.",
-      "invalidation_anchor": "Sweep wick extreme +/- $1.20 buffer ($1.00 - $15.00 risk bounds).",
+      "description": "Fading liquidity sweeps that penetrate Asian High/Low or Prior Day High/Low during London/NY Judas window with candle rejection (wick >= 35%, body <= 40%) across XAUUSD, GBPUSD, NQ, SPX, YM. Strictly gated to RANGE_BOUND and TRANSITION regimes. Vetoed in heavy runaway trends to prevent counter-trend knife catching. Enforces Prop Firm Dynamic Limit Entry Retracement.",
+      "entry_trigger": "Retest limit order at the swept boundary or market on close of rejection candle (dynamically adjusted if risk exceeds $10.00).",
+      "invalidation_anchor": "Sweep wick extreme +/- asset buffer ($1.20 Gold, 4 pips FX, 6.0 pts NQ).",
       "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
       "status": "RATIFIED",
       "proposed_at": "2026-11-14T20:30:00",
-      "ratified_at": "2026-11-14T20:30:00",
+      "ratified_at": "2026-11-16T18:15:00",
       "vetting_verdict": "RATIFIED",
       "ratified_criteria": {
-        "name": "Statistical Extreme Judas Swing Reversal (Gold / Multi-Asset)",
+        "name": "Multi-Asset Statistical Extreme Judas Swing Reversal (Judas Reversal in Range)",
         "category": "Statistical Mean Reversion & Liquidity Sweep",
-        "min_rr": "1:2.0",
-        "stop_buffer_rule": "Sweep extreme +/- $1.20 buffer (Risk clamped $1.00 - $15.00).",
-        "be_ratchet_r": 1.0,
-        "target_cliff_ceiling": 2.2,
-        "direction_rule": "DYNAMIC_EXTREME_OVEREXTENSION_GATED. High sweeps (Short) permitted at PDH / macro resistance with >=1.5x ATR overextension. Low sweeps (Long) permitted at PDL / macro support with confirmed HTF bullish alignment. Fading against strong trend expansion is vetoed."
+        "min_rr": "1:2.5",
+        "stop_buffer_rule": "Sweep extreme +/- buffer ($1.20 Gold, 4 pips FX, 6.0 pts NQ).",
+        "be_ratchet_r": 1.2,
+        "direction_rule": "DYNAMIC_REGIME_GATED (Fully Symmetric). Active exclusively in RANGE_BOUND and TRANSITION regimes. Counter-trend fades during active heavy trend expansions (H1 ADX >= 22) are strictly VETOED."
       },
-      "auditor_notes": "Verified in MetaTrader 5 (LiteFinance): 3 orders, 3 fills, 1W-1L-1BE (50.0% decisive WR), +1.01R Net Alpha, PF 2.01, Max DD 1.00R. Strict target capping at 2.0R with +1.0R BE ratchet is mandatory to avoid target cliff at +2.2R."
+      "auditor_notes": "Ratified multi-asset across 1-Year (2025-2026) backtest: 844 trades, 30.9% WR, +343.14R Net Alpha, PF 2.11. Gold: +141.09R (PF 2.09). NQ: +152.50R (PF 2.46). GBPUSD: +49.55R (PF 1.20). Directionally symmetric: Longs +177.21R, Shorts +165.93R. Successfully eliminates knife-catching by vetoing all counter-trend fades when H1 ADX >= 22."
+    },
+    {
+      "id": "SETUP-ARCH-019",
+      "name": "Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal)",
+      "category": "Cascade Liquidity Sweep & Displacement Reversal",
+      "description": "Institutional secondary stop-hunt and trapped breakout reversal strictly on Gold (XAUUSD). Price sweeps a prominent high/low (H0/L0) from a prior leg, pulls back by at least $1.20 forming an intermediate swing level (L_mid/H_mid), pushes again to sweep the new high/low (H2 > H1 or L2 < L1) with a rejection wick >= 25% or close back inside, and immediately prints an opposing 5M Fair Value Gap (FVG) and Market Structure Shift (MSS) through L_mid/H_mid. Active during London Open through NY Open Killzones. Enforces Prop Firm Dynamic Limit Entry Retracement.",
+      "entry_trigger": "Limit order at the 50% equilibrium of the opposing displacement 5M FVG (dynamically adjusted if risk exceeds $10.00).",
+      "invalidation_anchor": "Secondary sweep extreme (H2/L2) +/- $1.20 spread buffer (risk clamped to $1.50 - $10.00).",
+      "proposer": "Quantitative Swarm / Autonomous Pattern Mining",
+      "status": "RATIFIED",
+      "proposed_at": "2026-11-16T21:30:00",
+      "ratified_at": "2026-11-16T23:45:00",
+      "vetting_verdict": "RATIFIED",
+      "ratified_criteria": {
+        "name": "Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt Reversal)",
+        "category": "Cascade Liquidity Sweep & Displacement Reversal",
+        "min_rr": "1:3.0",
+        "stop_buffer_rule": "Secondary sweep extreme +/- $1.20 Gold spread buffer.",
+        "be_ratchet_r": 1.5,
+        "direction_rule": "DUAL_DIRECTIONAL (Symmetrical Bearish High Sweeps and Bullish Low Sweeps). Strictly gated to XAUUSD (Gold). Vetoed on Forex and Indices."
+      },
+      "auditor_notes": "Ratified on Gold across 2026 dataset: 235 fills, +41.50R Net Alpha, PF 1.25 to 1.76 (London & NY Killzones). Captures trapped breakout liquidity following false double-top expansions with confirmed MSS through intermediate low/high."
     }
   ]
 }

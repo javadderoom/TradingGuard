@@ -3,31 +3,31 @@
   "horizons": {
     "session": {
       "bias": "RANGE_CHOP",
-      "confidence": 0.65,
+      "confidence": 0.95,
       "session_archetype": "RANGE_BOUND_CHOP",
       "expected_range": {
-        "high": 4000.34,
-        "low": 3945.06
+        "high": 3758.4,
+        "low": 3693.54
       },
-      "key_trigger": 3972.7,
+      "key_trigger": 3725.97,
       "catalyst_danger": "MEDIUM"
     },
     "day": {
       "bias": "CONSOLIDATION",
-      "confidence": 0.3,
+      "confidence": 0.79,
       "daily_dol": {
-        "target": 3942.99,
-        "type": "SELL_SIDE_LIQUIDITY",
-        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting SELL_SIDE_LIQUIDITY"
+        "target": 3857.28,
+        "type": "BUY_SIDE_LIQUIDITY",
+        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting BUY_SIDE_LIQUIDITY"
       },
-      "invalidation": 3924.54,
+      "invalidation": 3693.54,
       "candle_archetype": "CONSOLIDATION_DAY"
     },
     "week": {
-      "bias": "BULLISH",
-      "confidence": 0.09,
-      "macro_target": 4146.82,
-      "weekly_profile": "TUESDAY_LOW_OF_WEEK"
+      "bias": "NEUTRAL",
+      "confidence": 0.14,
+      "macro_target": 4148.55,
+      "weekly_profile": "NEUTRAL_CHOP"
     }
   },
   "trade_management": {
@@ -50,114 +50,114 @@
       "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"
     }
   },
-  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for XAUUSD_o. Session bias rated RANGE_CHOP (confidence 65%), Daily horizon aligned with CONSOLIDATION_DAY toward 3942.99. Weekly profile: TUESDAY_LOW_OF_WEEK.",
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for XAUUSD_o. Session bias rated RANGE_CHOP (confidence 94%), Daily horizon aligned with CONSOLIDATION_DAY toward 3857.28. Weekly profile: NEUTRAL_CHOP.",
   "source": "subq-snap-1.1",
-  "latency_ms": 1001.8,
-  "generated_at_utc": "2026-11-12 12:21:29 UTC",
-  "generated_at_tehran": "2026-11-12 15:51:29 Tehran",
+  "latency_ms": 710.7,
+  "generated_at_utc": "2026-11-19 07:51:07 UTC",
+  "generated_at_tehran": "2026-11-19 11:21:07 Tehran",
   "on_chart_telemetry": {
     "symbol": "XAUUSD_o",
     "asset_class": "METALS",
-    "active_anchor": "PRE_NY",
-    "current_price": 3947.56,
-    "timestamp_utc": "2026-11-12 12:21:28 UTC",
-    "timestamp_tehran": "2026-11-12 15:51:28 Tehran",
+    "active_anchor": "PRE_LONDON",
+    "current_price": 3732.32,
+    "timestamp_utc": "2026-11-19 07:51:07 UTC",
+    "timestamp_tehran": "2026-11-19 11:21:07 Tehran",
     "daily_structure": {
-      "pdh": 4066.87,
-      "pdl": 3982.6,
-      "pdc": 3987.74,
-      "daily_open": 3993.39,
-      "daily_high": 4000.34,
-      "daily_low": 3924.54,
-      "daily_range": 75.8,
-      "adr_14": 91.63,
-      "adr_utilization_pct": 82.7,
+      "pdh": 3857.28,
+      "pdl": 3719.81,
+      "pdc": 3724.8,
+      "daily_open": 3729.84,
+      "daily_high": 3758.4,
+      "daily_low": 3693.54,
+      "daily_range": 64.86,
+      "adr_14": 95.0,
+      "adr_utilization_pct": 68.3,
       "has_swept_pdh": false,
       "has_swept_pdl": true
     },
     "weekly_structure": {
-      "pwh": 4146.82,
-      "pwl": 3890.91,
-      "cwo": 4063.24,
+      "pwh": 4148.55,
+      "pwl": 3852.45,
+      "cwo": 3886.49,
       "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
     },
     "session_ranges": {
-      "asian_high": 4000.34,
-      "asian_low": 3968.7,
-      "asian_range": 31.64,
-      "london_high": 3980.81,
-      "london_low": 3924.54,
-      "london_range": 56.27
+      "asian_high": 3758.4,
+      "asian_low": 3693.54,
+      "asian_range": 64.86,
+      "london_high": 3742.17,
+      "london_low": 3728.16,
+      "london_range": 14.01
     },
     "london_context": {
       "is_established": true,
-      "london_high": 3980.81,
-      "london_low": 3924.54,
-      "london_range": 56.27,
+      "london_high": 3742.17,
+      "london_low": 3728.16,
+      "london_range": 14.01,
       "swept_asian_high": false,
-      "swept_asian_low": true,
-      "pre_ny_adr_util_pct": 82.7,
+      "swept_asian_low": false,
+      "pre_ny_adr_util_pct": 68.3,
       "exhaustion_alert": true
     },
     "draw_on_liquidity": {
-      "type": "SELL_SIDE_LIQUIDITY",
-      "target_price": 3942.99,
-      "distance_pts": 4.57,
-      "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
+      "type": "BUY_SIDE_LIQUIDITY",
+      "target_price": 3857.28,
+      "distance_pts": 124.96,
+      "rationale": "Swept PDL with bullish displacement; Draw on Liquidity is PDH."
     },
     "liquidity_pools": {
       "overhead_bsl": [
-        3948.64,
-        3954.71,
-        3955.43
+        3732.9,
+        3737.78,
+        3741.58
       ],
       "underlying_ssl": [
-        3942.99,
-        3942.08,
-        3941.87
+        3730.59,
+        3728.27,
+        3728.16
       ],
       "active_h1_fvgs": [
         {
-          "type": "BULLISH_FVG",
-          "top": 4053.95,
-          "bottom": 4049.8,
-          "midpoint": 4051.88,
-          "size": 4.15,
-          "bar_time": 1794380400
+          "type": "BEARISH_FVG",
+          "top": 3861.95,
+          "bottom": 3858.47,
+          "midpoint": 3860.21,
+          "size": 3.48,
+          "bar_time": 1794945600
         },
         {
           "type": "BEARISH_FVG",
-          "top": 4040.42,
-          "bottom": 4038.13,
-          "midpoint": 4039.28,
-          "size": 2.29,
-          "bar_time": 1794409200
+          "top": 3845.54,
+          "bottom": 3830.44,
+          "midpoint": 3837.99,
+          "size": 15.1,
+          "bar_time": 1794967200
         }
       ],
       "active_h4_fvgs": [
         {
-          "type": "BEARISH_FVG",
-          "top": 4081.33,
-          "bottom": 4072.97,
-          "midpoint": 4077.15,
-          "size": 8.36,
-          "bar_time": 1793923200
+          "type": "BULLISH_FVG",
+          "top": 3892.05,
+          "bottom": 3887.49,
+          "midpoint": 3889.77,
+          "size": 4.56,
+          "bar_time": 1794528000
         },
         {
-          "type": "BULLISH_FVG",
-          "top": 4114.37,
-          "bottom": 4078.49,
-          "midpoint": 4096.43,
-          "size": 35.88,
-          "bar_time": 1794182400
+          "type": "BEARISH_FVG",
+          "top": 3841.87,
+          "bottom": 3810.08,
+          "midpoint": 3825.97,
+          "size": 31.79,
+          "bar_time": 1794960000
         }
       ]
     },
     "htf_trend": {
       "h1_regime": "CONSOLIDATION_RANGE",
-      "h1_ma20": 3973.27,
-      "h4_ma20": 4046.81,
-      "h1_displacement_3bar": 3.9
+      "h1_ma20": 3740.52,
+      "h4_ma20": 3814.84,
+      "h1_displacement_3bar": 8.0
     },
     "smt_divergence": {
       "has_smt": false,
@@ -167,8 +167,8 @@
   },
   "off_chart_telemetry": {
     "symbol": "XAUUSD",
-    "timestamp_utc": "2026-11-12 12:21:28 UTC",
-    "timestamp_tehran": "2026-11-12 15:51:28 Tehran",
+    "timestamp_utc": "2026-11-19 07:51:07 UTC",
+    "timestamp_tehran": "2026-11-19 11:21:07 Tehran",
     "session_context": {
       "is_active_killzone": false,
       "session_label": "Outside Killzones",
@@ -177,17 +177,17 @@
     "catalysts": {
       "session_risk": "MEDIUM",
       "day_risk": "LOW",
-      "week_risk": "MEDIUM",
+      "week_risk": "LOW",
       "upcoming_high_impact_session": [],
       "upcoming_high_impact_day_count": 0,
-      "upcoming_high_impact_week_count": 2
+      "upcoming_high_impact_week_count": 0
     },
     "retail_sentiment": {
       "sample_size": 10,
-      "retail_long_pct": 88.9,
-      "retail_short_pct": 11.1,
-      "contrarian_bias": "INSTITUTIONAL_SHORT_HUNT",
-      "interpretation": "Retail crowd is 88.9% LONG. Institutional liquidity hunt favors flushing Sell-Side Liquidity."
+      "retail_long_pct": 44.4,
+      "retail_short_pct": 55.6,
+      "contrarian_bias": "BALANCED",
+      "interpretation": "Retail crowd is 44.4% LONG. Institutional liquidity hunt favors two-sided structural expansion."
     }
   }
 }
