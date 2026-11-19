@@ -3081,6 +3081,23 @@ Following extensive continuous backtesting and forensic audits, the codebase had
 5. **Regression Verification**:
    - Executed full test suite (`pytest app/tests/`): **130/130 tests passing (100%)** with zero broken imports or side effects.
 
+### 32.3 Quantitative Alpha MetaTrader 5 Strategy Tester Forward Pipeline (`export_quant_mt5_schedules.py`)
+
+To verify the ratified quant setups against authentic broker ticks inside the MetaTrader 5 Strategy Tester:
+1. **Automated Exporter (`hitl/quant_engine/export_quant_mt5_schedules.py`)**:
+   - Reads `backtest_results/quant_discovery/quant_alpha_trade_ledger.csv` (1,777 ratified trades across XAUUSD, NQ, BTCUSD, GBPUSD) and extracts dynamic parameters (`be_ratchet_r`, `ttl_bars`, `entry_price`, `sl_price`, `tp_price`) from `quant_alpha_discovery_summary.json`.
+   - Generates the canonical 10-column schedule matching `TradingGuard_Executor.mq5`:
+     `ID,Symbol,Type,TriggerTime,Entry,SL,TP,Lot,TTL,BE_Ratchet`
+2. **Dedicated Asset Schedules & Consolidated Master**:
+   - `orders_schedule.csv`: Consolidated master portfolio (1,777 trades, broker-tagged `XAUUSD_o`, `NQ_o`, `BTCUSD_o`, `GBPUSD_o`).
+   - `orders_schedule_xauusd.csv`: 1,218 Gold quant trades (tagged `AUTO` for chart-agnostic symbol resolution).
+   - `orders_schedule_nq.csv`: 254 Nasdaq quant trades (tagged `AUTO`).
+   - `orders_schedule_btcusd.csv`: 234 Bitcoin quant trades (tagged `AUTO`).
+   - `orders_schedule_gbpusd.csv`: 71 Cable quant trades (tagged `AUTO`).
+3. **Automated Mirroring to MT5 Sandboxes**:
+   - Automatically synchronizes all schedules to `%APPDATA%\MetaQuotes\Terminal\Common\Files\` and terminal directories (`065434634B76DD288A1DDF20131E8DDB` and `A19DFEF1E80BEC73AB07B83E44201DC0`).
+   - Verifies deployment of compiled `TradingGuard_Executor.ex5` in `MQL5\Experts\`.
+
 
 
 
