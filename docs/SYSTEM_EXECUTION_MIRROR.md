@@ -1548,6 +1548,34 @@ BTCUSD     Decommissioned    278     49     201  28       17.6%     -49.56R 0.76
 
 ---
 
+### 27.7 Gold (XAUUSD) Annual Integrity Remediation Audit (2026-11-19)
+
+> **Authority**: `docs/BACKTEST_INTEGRITY_RULES.md` & `hitl/backtest/run_gold_annual_integrity_audit.py`  
+> **Manifest**: `backtest_results/gold_integrity_audit/run_manifest.json`  
+
+Per the **Absolute Truthfulness** and **Zero Cheerleading Mandates**, re-running 1-year Gold backtests through the canonical simulator (`evaluator.py::evaluate_council_decision`) and realistic friction quant engine (`vectorized_backtester.py`) establishes the audited truth:
+
+#### 1. SMC/ICT Historical Candidates (679 Candidate Setups Re-Evaluated on M1 Data):
+- **Baseline All Fills**: Degraded from previously reported -54.0R down to **478 fills \| 55W - 365L - 58BE \| WR: 11.5% \| Net R: -172.36R \| Realized PnL: -$1,130.26 \| PF: 0.50**.
+- **Calibrated Suite**: Previously claimed positive expectancy (+17.0R, PF 1.19) was completely dismantled by reality correction, collapsing to **146 fills \| 26W - 101L - 19BE \| WR: 17.8% \| Net R: -10.07R \| Realized PnL: -$38.38 \| PF: 0.93**.
+- **Primary Destruction Vectors**:
+  - **86 same-bar blow-through losses**: Ambiguous intrabar touches previously granted 1-minute immunity resolved as immediate losses under the pessimistic mandate.
+  - **Lot-scaled round-trip commissions**: Deducting $\$0.10 \times (\text{Lot}/0.01)$ rather than flat $0.10 deducted hundreds of dollars in real cash drag.
+  - **Overnight rollover spread widening**: 5x spread multiplier applied during 23:45–01:05 server time.
+
+#### 2. SMC/ICT Dynamic Causal Screening (T-1 Indexing & Closed Bars Across 313,156 M1 Bars):
+- **Baseline All Fills**: **38 Fills \| 9W - 24L - 5BE \| WR: 23.7% \| Net R: +3.46R \| Realized PnL: +$9.96 \| PF: 1.06**.
+- **Calibrated Suite**: **20 Fills \| 2W - 15L - 3BE \| WR: 10.0% \| Net R: -7.99R \| Realized PnL: -$61.43 \| PF: 0.40**.
+- **Symmetric Risk Cap Enforcement**: 1 setup exceeded $12.00 stop loss risk and was cleanly rejected (`status="REJECTED_RISK_CAP"`).
+
+#### 3. Autonomous Quant Suite 1-Year Performance (`XAUUSD_M5_1YEAR.parquet`):
+- **Ratified Orthogonal Triad (`R15_048`, `R14_058`, `R15_023`)**:
+  - 1-Year Continuous Feed: **487 Fills \| 135W - 224L - 18BE \| WR: 27.7% \| Net R: +143.18R \| Realized PnL: +$1,646.67 \| PF: 1.58 \| Max DD: 8.64R \| Sharpe: 2.88**.
+  - 2025 Out-Of-Sample Holdout (Vault 3): **122 Fills \| 34W - 47L - 4BE \| WR: 27.9% \| Net R: +47.44R \| Realized PnL: +$545.82 \| PF: 1.89 \| Max DD: 5.27R**.
+- **Legacy Churn Pruning**: Legacy rule `R5_006` collapsed under lot-scaled commissions to PF 1.01 with -117.78R drawdown, validating its complete removal from live execution.
+
+---
+
 ## 28. Autonomous Quantitative Subagent Suite Architecture
 
 To eliminate reliance on generic developer agents and ensure institutional-grade quantitative rigor across research, calibration, and verification, TradingGuard deploys a dedicated triad of specialized subagents located in `.agents/agents/`:

@@ -1,0 +1,34 @@
+{
+  "audit_name": "GOLD_ANNUAL_INTEGRITY_AUDIT_2026",
+  "timestamp_utc": "2026-11-19T08:44:10.913140+00:00",
+  "git_commit": "ba3712411c8e67ce9508e189a51617bdfc52d859",
+  "governing_rules": "docs/BACKTEST_INTEGRITY_RULES.md",
+  "code_hashes": {
+    "evaluator.py": "1cc51014ea3eadc71d7fa20809839c83d05c38c53f59197afeb70a28f25721b1",
+    "fast_screener.py": "7321fd3b7a0942bac27ab4f3f34efb4afa8a73dd1312ff4f6cf66006f79f009f",
+    "causal_feed.py": "57ce998dcdb0d75b59657142498194aebea12ed126aa7eaf9a2a5971899553e9",
+    "vectorized_backtester.py": "376e9bd0fae606a752962d9023f6ecd43f8fb69c33a536aa82da077d57b097cf",
+    "run_gold_annual_integrity_audit.py": "4e7b37914fa06b1a2a8fb4a1df2e0932921ecc456959d1146cc2eff8e440a343"
+  },
+  "input_hashes": {
+    "M1_XAUUSD_o_2026.parquet": "9d0b0ebf1f3393fd935d5bf0d28a96af6f321773e3d450c504c3b9d99aad4edc",
+    "XAUUSD_M5_1YEAR.parquet": "c03becc5dbbf65c5caab47dfa9ea842dbbd8a1cf320c9ad7fb2b97a1a2bec8c1",
+    "M5_XAUUSD_o_2025.parquet": "060d3f85868bec6c3f742c376ab2d82babbf35de400ec616a6b704ee5346f74a",
+    "annual_master_all_trades_ledger.csv": "bcd53fa9954abc13075084ea06e69d156e7a716d7f52d0c18e8dc36247499885"
+  },
+  "output_hashes": {
+    "smc_historical_candidates_ledger.csv": "e8a2b2492d9ef533e2667c2acecdc454f8b663c4c293d560a2daa30c52280524",
+    "smc_dynamic_causal_ledger.csv": "4f09347a1ba009d35136ae7962d16b0774acccb5c28d2ff2a3db6ad82959597e",
+    "quant_annual_trades_ledger.csv": "76245607eb460b064bd310507cdd3bc81b2177487b651fffe8d6eea14e9635ff",
+    "quant_2025_oos_trades_ledger.csv": "70a1dcc75d4ada1cf20cd5f7683857a8c189fc457181fee2cc109744ad167378"
+  },
+  "parameters": {
+    "symbol": "XAUUSD",
+    "spread_gold": 0.22,
+    "commission_usd_per_001_lot": 0.1,
+    "max_risk_usd": 12.0,
+    "reject_over_risk": true,
+    "ttl_minutes": 75,
+    "rollover_blackout": "23:45 to 01:05 server time (5x spread)"
+  }
+}

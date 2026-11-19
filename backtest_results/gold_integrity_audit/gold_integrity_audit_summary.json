@@ -1,0 +1,174 @@
+{
+  "execution_time_seconds": 3.01,
+  "smc_historical_reevaluation": {
+    "baseline": {
+      "fills": 478,
+      "wins": 55,
+      "losses": 365,
+      "breakevens": 58,
+      "win_rate_pct": 11.5,
+      "net_r": -172.36,
+      "net_pnl_usd": -1130.26,
+      "profit_factor": 0.5
+    },
+    "calibrated": {
+      "fills": 146,
+      "wins": 26,
+      "losses": 101,
+      "breakevens": 19,
+      "win_rate_pct": 17.8,
+      "net_r": -10.07,
+      "net_pnl_usd": -38.38,
+      "profit_factor": 0.93
+    },
+    "same_bar_losses": 86,
+    "rejected_risk_cap": 0
+  },
+  "smc_dynamic_causal": {
+    "baseline": {
+      "fills": 38,
+      "wins": 9,
+      "losses": 24,
+      "breakevens": 5,
+      "win_rate_pct": 23.7,
+      "net_r": 3.46,
+      "net_pnl_usd": 9.96,
+      "profit_factor": 1.06
+    },
+    "calibrated": {
+      "fills": 20,
+      "wins": 2,
+      "losses": 15,
+      "breakevens": 3,
+      "win_rate_pct": 10.0,
+      "net_r": -7.99,
+      "net_pnl_usd": -61.43,
+      "profit_factor": 0.4
+    },
+    "rejected_risk_cap": 1
+  },
+  "quant_annual_1year": {
+    "combined": {
+      "fills": 487,
+      "wins": 135,
+      "losses": 224,
+      "breakevens": 18,
+      "win_rate_pct": 27.7,
+      "net_r": 143.18,
+      "net_pnl_usd": 1646.67,
+      "profit_factor": 1.58
+    },
+    "rules": {
+      "R15_048": {
+        "symbol": "XAUUSD",
+        "rule_id": "R15_048",
+        "signals": 223,
+        "fills": 141,
+        "wins": 44,
+        "losses": 67,
+        "breakevens": 8,
+        "expired": 22,
+        "win_rate_pct": 31.21,
+        "net_r": 58.43,
+        "net_pnl_usd": 684.15,
+        "profit_factor": 1.82,
+        "max_drawdown_r": 6.66,
+        "sharpe_ratio": 3.16
+      },
+      "R14_058": {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_058",
+        "signals": 176,
+        "fills": 173,
+        "wins": 62,
+        "losses": 92,
+        "breakevens": 10,
+        "expired": 9,
+        "win_rate_pct": 35.84,
+        "net_r": 59.42,
+        "net_pnl_usd": 675.36,
+        "profit_factor": 1.6,
+        "max_drawdown_r": 8.64,
+        "sharpe_ratio": 2.9
+      },
+      "R15_023": {
+        "symbol": "XAUUSD",
+        "rule_id": "R15_023",
+        "signals": 187,
+        "fills": 173,
+        "wins": 29,
+        "losses": 65,
+        "breakevens": 0,
+        "expired": 79,
+        "win_rate_pct": 16.76,
+        "net_r": 25.55,
+        "net_pnl_usd": 287.16,
+        "profit_factor": 1.33,
+        "max_drawdown_r": 14.0,
+        "sharpe_ratio": 1.71
+      }
+    }
+  },
+  "quant_2025_oos": {
+    "combined": {
+      "fills": 122,
+      "wins": 34,
+      "losses": 47,
+      "breakevens": 4,
+      "win_rate_pct": 27.9,
+      "net_r": 47.44,
+      "net_pnl_usd": 545.82,
+      "profit_factor": 1.89
+    },
+    "rules": {
+      "R15_048": {
+        "symbol": "XAUUSD",
+        "rule_id": "R15_048",
+        "signals": 24,
+        "fills": 16,
+        "wins": 5,
+        "losses": 7,
+        "breakevens": 0,
+        "expired": 4,
+        "win_rate_pct": 31.25,
+        "net_r": 8.35,
+        "net_pnl_usd": 97.26,
+        "profit_factor": 2.07,
+        "max_drawdown_r": 3.0,
+        "sharpe_ratio": 1.35
+      },
+      "R14_058": {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_058",
+        "signals": 57,
+        "fills": 57,
+        "wins": 21,
+        "losses": 29,
+        "breakevens": 4,
+        "expired": 3,
+        "win_rate_pct": 36.84,
+        "net_r": 22.01,
+        "net_pnl_usd": 248.44,
+        "profit_factor": 1.69,
+        "max_drawdown_r": 5.27,
+        "sharpe_ratio": 1.87
+      },
+      "R15_023": {
+        "symbol": "XAUUSD",
+        "rule_id": "R15_023",
+        "signals": 53,
+        "fills": 49,
+        "wins": 8,
+        "losses": 11,
+        "breakevens": 0,
+        "expired": 30,
+        "win_rate_pct": 16.33,
+        "net_r": 17.17,
+        "net_pnl_usd": 200.12,
+        "profit_factor": 2.26,
+        "max_drawdown_r": 2.77,
+        "sharpe_ratio": 2.41
+      }
+    }
+  }
+}
