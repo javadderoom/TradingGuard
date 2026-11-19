@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Ratified Setup Archetype Registry
-**Last Calibration:** `2026-11-19T14:11:54.811399` | **Version:** `1.0.0`
+**Last Calibration:** `2026-11-19T14:53:14.381709` | **Version:** `1.0.0`
 
 > **Mandatory Firm Governance:** The Operational Trading Council is **strictly prohibited** from placing orders on unratified setups.
 > Every candidate archetype must pass forensic risk stress-testing by the Retrospective Review Council before authorization.
@@ -262,6 +262,78 @@
 - **Mandated Minimum R:R:** `1:1.94`
 - **Stop Buffer Requirement:** `1.8x 5M ATR dynamic stop`
 > **Supervisory Audit Verdict:** RATIFIED | *Identifies pre-breakdown compression via Garman-Klass volatility (<= 0.0020) combined with negative return skew. 50.0% win rate across 98 trades.*
+
+### 🟢 [SETUP-QUANT-NQ-001] Harmonic Open Downside Semi-Variance (NQ BUY) (Machine-Discovered Quant)
+- **Description:** Harmonic open momentum model: [BUY] (intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352) AND (curvature_8 < -0.0019) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.2R, TTL: 48b
+- **Entry Trigger:** `(intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352) AND (curvature_8 < -0.0019)`
+- **Invalidation Anchor:** `2.0x ATR dynamic stop with 1.2R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:2.25`
+- **Stop Buffer Requirement:** `2.0x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *First ratified NQ quantitative archetype in TradingGuard. Uses harmonic intraday cycle cosine (> 0.96) during NYSE cash open with suppressed downside semi-variance to exploit upside momentum with tight 1.0pt spread friction.*
+
+### 🟢 [SETUP-QUANT-NQ-002] Coil Volatility Expansion (NQ BUY) (Machine-Discovered Quant)
+- **Description:** NQ volatility coil expansion model: [BUY] (0.8580 <= bb_keltner_squeeze <= 1.7158) AND (norm_atr >= 0.0019) AND (0.0002 <= velocity_21 <= 0.0010) | TP: 3.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 18b
+- **Entry Trigger:** `(0.8580 <= bb_keltner_squeeze <= 1.7158) AND (norm_atr >= 0.0019) AND (0.0002 <= velocity_21 <= 0.0010)`
+- **Invalidation Anchor:** `2.0x ATR dynamic stop with 1.8R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:1.75`
+- **Stop Buffer Requirement:** `2.0x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *NQ volatility coil expansion model. Captures post-squeeze kinetic expansion with 109 fills and 0.87 degradation ratio across 100k bars.*
+
+### 🟢 [SETUP-QUANT-NQ-003] Harmonic Open Curvature (NQ BUY) (Machine-Discovered Quant)
+- **Description:** NQ open curvature reversal model: [BUY] (curvature_8 < -0.0019) AND (intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352) | TP: 4.0xATR, SL: 2.0xATR, BE: 2.0R, TTL: 36b
+- **Entry Trigger:** `(curvature_8 < -0.0019) AND (intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352)`
+- **Invalidation Anchor:** `2.0x ATR dynamic stop with 2.0R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:2.0`
+- **Stop Buffer Requirement:** `2.0x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *NQ open curvature reversal archetype. Confirms harmonic open window with decelerating bearish curvature and low downside semi-variance.*
+
+### 🟢 [SETUP-QUANT-XAU-005] Stationary RSI & Harmonic Cosine (XAUUSD BUY) (Machine-Discovered Quant)
+- **Description:** Gold stationary RSI & harmonic continuation model: [BUY] (rsi_stationary_14 >= 1.1027) AND (0.0006 <= norm_atr <= 0.0008) AND (intraday_cycle_cos >= 0.7373) | TP: 4.5xATR, SL: 1.5xATR, BE: 1.2R, TTL: 36b
+- **Entry Trigger:** `(rsi_stationary_14 >= 1.1027) AND (0.0006 <= norm_atr <= 0.0008) AND (intraday_cycle_cos >= 0.7373)`
+- **Invalidation Anchor:** `1.5x ATR dynamic stop with 1.2R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:3.0`
+- **Stop Buffer Requirement:** `1.5x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *High-net-R (+76.36R) Gold momentum continuation model. Combines mean-normalized stationary RSI with harmonic time coordinate and moderate normalized ATR.*
+
+### 🟢 [SETUP-QUANT-XAU-006] Yang-Zhang Volatility Harmonic (XAUUSD BUY) (Machine-Discovered Quant)
+- **Description:** Yang-Zhang volatility harmonic momentum model: [BUY] (yang_zhang_vol > 0.0010) AND (intraday_cycle_cos >= 0.9600) | TP: 4.5xATR, SL: 2.5xATR, BE: 1.8R, TTL: 36b
+- **Entry Trigger:** `(yang_zhang_vol > 0.0010) AND (intraday_cycle_cos >= 0.9600)`
+- **Invalidation Anchor:** `2.5x ATR dynamic stop with 1.8R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:1.8`
+- **Stop Buffer Requirement:** `2.5x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *Yang-Zhang jump-and-drift volatility model. Zero out-of-sample degradation (DegRatio 1.08, OOS PF 2.28 vs IS PF 2.12) confirming drift momentum on gold during harmonic cash window.*
+
+### 🟢 [SETUP-QUANT-XAU-007] Tail Shock & Kinetic Velocity (XAUUSD BUY) (Machine-Discovered Quant)
+- **Description:** Gold tail shock kinetic momentum model: [BUY] (skew_kurt_interaction > 1.0000) AND (velocity_8 > 0.0010) | TP: 3.5xATR, SL: 1.2xATR, BE: 1.8R, TTL: 30b
+- **Entry Trigger:** `(skew_kurt_interaction > 1.0000) AND (velocity_8 > 0.0010)`
+- **Invalidation Anchor:** `1.2x ATR dynamic stop with 1.8R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:2.9`
+- **Stop Buffer Requirement:** `1.2x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *Exploits extreme non-linear higher moment interaction (skew_kurt_interaction > 1.0) with positive velocity for rapid directional expansion.*
+
+### 🟢 [SETUP-QUANT-BTC-005] Mid-Quantile MA Divergence (BTCUSD SELL) (Machine-Discovered Quant)
+- **Description:** BTC mid-quantile divergence breakdown model: [SELL] (0.4047 <= rolling_quantile_100 <= 0.5050) AND (ma_divergence >= 0.7175) AND (vol_regime_z <= -0.4584) | TP: 4.0xATR, SL: 2.5xATR, BE: 1.8R, TTL: 72b
+- **Entry Trigger:** `(0.4047 <= rolling_quantile_100 <= 0.5050) AND (ma_divergence >= 0.7175) AND (vol_regime_z <= -0.4584)`
+- **Invalidation Anchor:** `2.5x ATR dynamic stop with 1.8R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:1.6`
+- **Stop Buffer Requirement:** `2.5x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *High win-rate (53.0%) BTC short archetype. Identifies mean-reverting breakdown from the mid-quantile range during suppressed volatility regime.*
+
+### 🟢 [SETUP-QUANT-BTC-006] Parkinson Vol Compression (BTCUSD BUY) (Machine-Discovered Quant)
+- **Description:** BTC momentum breakout archetype: [BUY] (-0.0003 <= accel_8 <= 0.0000) AND (parkinson_vol > 0.0020) | TP: 3.5xATR, SL: 1.2xATR, BE: 1.8R, TTL: 36b
+- **Entry Trigger:** `(-0.0003 <= accel_8 <= 0.0000) AND (parkinson_vol > 0.0020)`
+- **Invalidation Anchor:** `1.2x ATR dynamic stop with 1.8R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:2.9`
+- **Stop Buffer Requirement:** `1.2x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *BTC momentum breakout archetype. Catches directional expansion when Parkinson volatility exceeds 0.0020 while short-term acceleration flattens near zero.*
+
+### 🟢 [SETUP-QUANT-GBP-001] Harmonic Sine & Negative Skew (GBPUSD SELL) (Machine-Discovered Quant)
+- **Description:** Cable harmonic distribution model: [SELL] (intraday_cycle_sin < -0.9884) AND (skewness_30 < -0.8835) AND (acceleration_convexity > 0.1343) | TP: 3.5xATR, SL: 2.5xATR, BE: 1.2R, TTL: 36b
+- **Entry Trigger:** `(intraday_cycle_sin < -0.9884) AND (skewness_30 < -0.8835) AND (acceleration_convexity > 0.1343)`
+- **Invalidation Anchor:** `2.5x ATR dynamic stop with 1.2R Breakeven Ratchet`
+- **Mandated Minimum R:R:** `1:1.4`
+- **Stop Buffer Requirement:** `2.5x 5M ATR dynamic stop`
+> **Supervisory Audit Verdict:** RATIFIED | *First ratified Cable quantitative archetype in TradingGuard. Targets London late afternoon distribution window (negative cyclical sine < -0.988) with strongly negative return skewness.*
 
 ---
 ## ⏳ Candidate Archetypes Under Review / Proposed

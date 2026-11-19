@@ -1,13 +1,13 @@
 {
-  "execution_timestamp_utc": "2026-11-19T10:35:50Z",
+  "execution_timestamp_utc": "2026-11-19T11:17:12Z",
   "symbols_audited": [
     "XAUUSD",
     "NQ",
     "BTCUSD",
     "GBPUSD"
   ],
-  "total_runtime_seconds": 81.36,
-  "trade_ledger_sha256": "fd8cb328ab0ee3bc869b95be5f18f5baedcc5697bedff344510b04b9f24fe927",
+  "total_runtime_seconds": 96.06,
+  "trade_ledger_sha256": "59da7d6d0d8878625ebd6330465ab22bdf67ace323d4ee70a964886ee78ebbcb",
   "governance": {
     "mandate": "Zero SMC / Zero Human Narrative / Pure Mathematical State Space",
     "overfitting_protocol": "60/40 Walk-Forward Cross-Validation with 100-Bar Purge",
@@ -16,46 +16,39 @@
   },
   "portfolio_summary": {
     "XAUUSD": {
-      "ratified_count": 16,
+      "ratified_count": 9,
       "top_models": [
-        "R9_014",
         "HYP_KURT_BUY_70v_12k",
-        "R7_030",
-        "R10_025",
-        "R11_009",
-        "R11_011",
-        "R11_035",
-        "R11_010",
-        "R5_014",
-        "R11_029",
-        "R11_037",
-        "R11_034",
-        "R11_021",
-        "R11_014",
-        "R11_018",
+        "R14_022",
+        "R14_017",
+        "R14_039",
+        "R14_015",
+        "R14_015",
+        "R14_014",
+        "HYP_TAIL_SHOCK_BUY",
         "HYP_SQZ_SELL_85sq_20v"
       ]
     },
     "NQ": {
-      "ratified_count": 0,
-      "top_models": []
+      "ratified_count": 3,
+      "top_models": [
+        "R14_044",
+        "R7_008",
+        "R14_008"
+      ]
     },
     "BTCUSD": {
-      "ratified_count": 8,
+      "ratified_count": 2,
       "top_models": [
-        "R10_008",
-        "R11_026",
-        "R8_012",
-        "R11_009",
-        "R11_008",
-        "R11_015",
-        "R11_013",
-        "R11_006"
+        "R9_039",
+        "HYP_BTC_VOL_COMPRESSION_BUY"
       ]
     },
     "GBPUSD": {
-      "ratified_count": 0,
-      "top_models": []
+      "ratified_count": 1,
+      "top_models": [
+        "R13_023"
+      ]
     }
   }
 }

@@ -282,8 +282,207 @@ class QuantAlphaMiner:
                 cooldown_bars=6
             ))
 
-        # Quant Rule 6: Asset-Specialized Structural Hypotheses
+        # Quant Rule 6: Yang-Zhang Volatility Jump Expansion
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_YZ_EXPANSION_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('yang_zhang_vol', '>', 0.0015),
+                    FeaturePredicate('velocity_21', '>', 0.0012),
+                    FeaturePredicate('acceleration_convexity', '>', 0.20),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('yang_zhang_vol', '>', 0.0015),
+                    FeaturePredicate('velocity_21', '<', -0.0012),
+                    FeaturePredicate('acceleration_convexity', '<', -0.20),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=30,
+                cooldown_bars=6
+            ))
+
+        # Quant Rule 7: VPIN Orderflow Toxicity & Liquidation Shock
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_VPIN_TOXICITY_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('vpin_proxy', '>', 0.50),
+                    FeaturePredicate('downside_semi_var_ratio_30', '<', 0.40),
+                    FeaturePredicate('directional_vol_imb', '>', 0.20),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('vpin_proxy', '>', 0.50),
+                    FeaturePredicate('downside_semi_var_ratio_30', '>', 0.60),
+                    FeaturePredicate('directional_vol_imb', '<', -0.20),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
+
+        # Quant Rule 8: Microstructure Iceberg Absorption Exhaustion Snapback
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_ABSORPTION_REV_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('orderflow_abs_z', '>', 1.50),
+                    FeaturePredicate('rolling_quantile_100', '<=', 0.12),
+                    FeaturePredicate('rsi_stationary_14', '<=', -1.0),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('orderflow_abs_z', '>', 1.50),
+                    FeaturePredicate('rolling_quantile_100', '>=', 0.88),
+                    FeaturePredicate('rsi_stationary_14', '>=', 1.0),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=2.5,
+                sl_atr_mult=1.0,
+                be_ratchet_r=1.5,
+                ttl_bars=24,
+                cooldown_bars=6
+            ))
+
+        # Quant Rule 9: Fractal Hurst Persistence Momentum
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_HURST_MOM_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('hurst_proxy', '>', 0.55),
+                    FeaturePredicate('variance_ratio_20', '>', 1.08),
+                    FeaturePredicate('velocity_55', '>', 0.0025),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('hurst_proxy', '>', 0.55),
+                    FeaturePredicate('variance_ratio_20', '>', 1.08),
+                    FeaturePredicate('velocity_55', '<', -0.0025),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=4.0,
+                sl_atr_mult=1.5,
+                be_ratchet_r=2.0,
+                ttl_bars=48,
+                cooldown_bars=8
+            ))
+
+        # Quant Rule 10: Higher-Moment Tail Shock (Nonlinear Skew-Kurt Interaction)
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_TAIL_SHOCK_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('skew_kurt_interaction', '>', 1.0),
+                    FeaturePredicate('velocity_8', '>', 0.0010),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('skew_kurt_interaction', '<', -1.0),
+                    FeaturePredicate('velocity_8', '<', -0.0010),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=30,
+                cooldown_bars=6
+            ))
+
+        # Quant Rule 11: Intraday Cyclical Harmonic Waves
+        for dir_name in ['BUY', 'SELL']:
+            r_id = f"HYP_CYCLE_WAVE_{dir_name}"
+            if dir_name == 'BUY':
+                preds = [
+                    FeaturePredicate('bb_keltner_squeeze', '<', 0.90),
+                    FeaturePredicate('velocity_21', '>', 0.0012),
+                    FeaturePredicate('intraday_cycle_sin', 'between', (-0.85, 0.85)),
+                ]
+            else:
+                preds = [
+                    FeaturePredicate('bb_keltner_squeeze', '<', 0.90),
+                    FeaturePredicate('velocity_21', '<', -0.0012),
+                    FeaturePredicate('intraday_cycle_sin', 'between', (-0.85, 0.85)),
+                ]
+            candidates.append(QuantRule(
+                rule_id=r_id,
+                direction=dir_name,
+                predicates=preds,
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
+
+        # Quant Rule 12: Asset-Specialized Structural Hypotheses
         if "NQ" in self.symbol:
+            # NQ Asymmetric VPIN Toxic Breakout BUY
+            candidates.append(QuantRule(
+                rule_id="HYP_NQ_VPIN_BREAKOUT_BUY",
+                direction="BUY",
+                predicates=[
+                    FeaturePredicate('vpin_proxy', '>', 0.45),
+                    FeaturePredicate('price_zscore_50', '>=', 1.80),
+                    FeaturePredicate('acceleration_convexity', '>', 0.0),
+                ],
+                tp_atr_mult=4.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
+            # NQ Asymmetric VPIN Toxic Breakdown SELL
+            candidates.append(QuantRule(
+                rule_id="HYP_NQ_VPIN_BREAKDOWN_SELL",
+                direction="SELL",
+                predicates=[
+                    FeaturePredicate('vpin_proxy', '>', 0.45),
+                    FeaturePredicate('price_zscore_50', '<=', -1.80),
+                    FeaturePredicate('acceleration_convexity', '<', 0.0),
+                ],
+                tp_atr_mult=4.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
+            # NQ Yang-Zhang Volatility Compression Coil BUY
+            candidates.append(QuantRule(
+                rule_id="HYP_NQ_YZ_COIL_BUY",
+                direction="BUY",
+                predicates=[
+                    FeaturePredicate('bb_keltner_squeeze', '<', 0.88),
+                    FeaturePredicate('yang_zhang_vol', '<', 0.0018),
+                    FeaturePredicate('velocity_8', '>', 0.0008),
+                ],
+                tp_atr_mult=4.0,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=30,
+                cooldown_bars=6
+            ))
             # NQ Coiling Z-Score Expansion BUY
             candidates.append(QuantRule(
                 rule_id="HYP_NQ_COIL_EXPANSION_BUY",
@@ -294,7 +493,7 @@ class QuantAlphaMiner:
                     FeaturePredicate('accel_8', '<=', 0.00015),
                 ],
                 tp_atr_mult=4.5,
-                sl_atr_mult=2.0,
+                sl_atr_mult=1.5,
                 be_ratchet_r=1.8,
                 ttl_bars=24,
                 cooldown_bars=6
@@ -308,14 +507,44 @@ class QuantAlphaMiner:
                     FeaturePredicate('price_zscore_50', '>=', 2.15),
                     FeaturePredicate('price_zscore_100', '<', 1.10),
                 ],
-                tp_atr_mult=2.5,
+                tp_atr_mult=3.5,
                 sl_atr_mult=1.2,
-                be_ratchet_r=2.0,
+                be_ratchet_r=1.8,
                 ttl_bars=24,
                 cooldown_bars=6
             ))
 
         elif "GBP" in self.symbol:
+            # Cable Flow Toxicity Breakout BUY
+            candidates.append(QuantRule(
+                rule_id="HYP_GBP_FLOW_TOXICITY_BUY",
+                direction="BUY",
+                predicates=[
+                    FeaturePredicate('vpin_proxy', '>', 0.48),
+                    FeaturePredicate('velocity_21', '>', 0.0008),
+                    FeaturePredicate('downside_semi_var_ratio_30', '<', 0.35),
+                ],
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
+            # Cable Flow Toxicity Breakdown SELL
+            candidates.append(QuantRule(
+                rule_id="HYP_GBP_FLOW_TOXICITY_SELL",
+                direction="SELL",
+                predicates=[
+                    FeaturePredicate('vpin_proxy', '>', 0.48),
+                    FeaturePredicate('velocity_21', '<', -0.0008),
+                    FeaturePredicate('downside_semi_var_ratio_30', '>', 0.65),
+                ],
+                tp_atr_mult=3.5,
+                sl_atr_mult=1.2,
+                be_ratchet_r=1.8,
+                ttl_bars=36,
+                cooldown_bars=6
+            ))
             # Cable Velocity-Parkinson Exhaustion Reversion SELL
             candidates.append(QuantRule(
                 rule_id="HYP_GBP_VOL_EXHAUSTION_SELL",
@@ -382,18 +611,18 @@ class QuantAlphaMiner:
     def evolve_genetic_candidates(
         self,
         df_is: pd.DataFrame,
-        seeds: List[int] = [42, 101, 777]
+        seeds: List[int] = [42, 101, 777, 999]
     ) -> List[QuantRule]:
         """Runs genetic evolution across multiple seeds to discover non-obvious rules."""
         genetic_rules: List[QuantRule] = []
         for seed in seeds:
             cfg = EvolutionConfig(
-                population_size=40,
-                generations=12,
+                population_size=45,
+                generations=15,
                 min_predicates=2,
                 max_predicates=3,
                 crossover_prob=0.60,
-                mutation_prob=0.40,
+                mutation_prob=0.45,
                 elitism_ratio=0.15,
                 min_trades_threshold=25,
                 random_seed=seed

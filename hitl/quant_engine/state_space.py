@@ -27,6 +27,8 @@ class StateSpaceConfig:
     squeeze_bb_window: int = 20
     vr_window: int = 50
     vr_lag: int = 20
+    yz_window: int = 30
+    absorption_window: int = 50
 
 
 class MathematicalStateSpace:
@@ -220,6 +222,52 @@ class MathematicalStateSpace:
         # Acceleration-Velocity Convexity Interaction
         res['acceleration_convexity'] = (np.sign(res['velocity_21']) * res['accel_8'] * 1000.0).clip(-50.0, 50.0)
 
+        # -------------------------------------------------------------
+        # 7. ADVANCED MICROSTRUCTURE & HARMONIC CYCLES
+        # -------------------------------------------------------------
+        # Yang-Zhang Volatility Estimator (Unbiased overnight gap and continuous drift)
+        N_yz = self.cfg.yz_window
+        log_ho = np.log(np.maximum(h / o, 1e-12))
+        log_lo = np.log(np.maximum(l / o, 1e-12))
+        log_co = np.log(np.maximum(c / o, 1e-12))
+        log_hc = np.log(np.maximum(h / c, 1e-12))
+        log_lc = np.log(np.maximum(l / c, 1e-12))
+        log_oc = np.log(np.maximum(o / prev_c, 1e-12))
+
+        var_o = log_oc.rolling(N_yz, min_periods=N_yz).var()
+        var_c = log_co.rolling(N_yz, min_periods=N_yz).var()
+        rs_term = log_ho * log_hc + log_lo * log_lc
+        rs_var = rs_term.rolling(N_yz, min_periods=N_yz).mean()
+        k_yz = 0.34 / (1.34 + (N_yz + 1.0) / (N_yz - 1.0))
+        yz_var = var_o + k_yz * var_c + (1.0 - k_yz) * rs_var
+        res['yang_zhang_vol'] = np.sqrt(np.maximum(yz_var, 0.0))
+
+        # VPIN Proxy (Volume-Synchronized Probability of Toxicity proxy in [0.0, 1.0])
+        hl_range = np.maximum(h - l, 1e-9)
+        buy_vol = vol_col * ((c - l) / hl_range)
+        sell_vol = vol_col * ((h - c) / hl_range)
+        imb = (buy_vol - sell_vol).abs().rolling(20, min_periods=20).sum()
+        tot_v = vol_col.rolling(20, min_periods=20).sum()
+        res['vpin_proxy'] = (imb / (tot_v + 1e-9)).clip(0.0, 1.0)
+
+        # Orderflow Absorption Z-Score (Volume to TrueRange efficiency)
+        absorption = vol_col / tr
+        abs_mean = absorption.rolling(self.cfg.absorption_window, min_periods=self.cfg.absorption_window).mean()
+        abs_std = absorption.rolling(self.cfg.absorption_window, min_periods=self.cfg.absorption_window).std()
+        res['orderflow_abs_z'] = ((absorption - abs_mean) / (abs_std + 1e-9)).clip(-4.0, 4.0)
+
+        # Hurst Exponent Proxy (from Lo-MacKinlay fractional scaling)
+        res['hurst_proxy'] = (0.5 + 0.5 * (np.log(np.maximum(res['variance_ratio_20'], 0.05)) / np.log(20.0))).clip(0.1, 0.9)
+
+        # Intraday Cyclical Harmonics (Continuous normalized time coordinate in [-1.0, 1.0])
+        sec_in_day = pd.to_numeric(df['time'], errors='coerce').fillna(0).astype(int) % 86400
+        norm_day = 2.0 * np.pi * (sec_in_day / 86400.0)
+        res['intraday_cycle_sin'] = np.sin(norm_day).clip(-1.0, 1.0)
+        res['intraday_cycle_cos'] = np.cos(norm_day).clip(-1.0, 1.0)
+
+        # Higher-Moment Nonlinear Composite Index
+        res['skew_kurt_interaction'] = (np.sign(res['skewness_30']) * np.sqrt(np.abs(res['skewness_30']) * np.maximum(res['kurtosis_30'], 0.0))).clip(-10.0, 10.0)
+
         # Keep raw prices for backtest execution
         res['open'] = o
         res['high'] = h
@@ -264,4 +312,11 @@ class MathematicalStateSpace:
             'downside_semi_var_ratio_30',
             'rolling_quantile_100',
             'acceleration_convexity',
+            'yang_zhang_vol',
+            'vpin_proxy',
+            'orderflow_abs_z',
+            'hurst_proxy',
+            'intraday_cycle_sin',
+            'intraday_cycle_cos',
+            'skew_kurt_interaction',
         ]

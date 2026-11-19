@@ -1,143 +1,9 @@
 {
   "XAUUSD": {
     "symbol": "XAUUSD",
-    "total_candidates_audited": 76,
-    "ratified_count": 16,
+    "total_candidates_audited": 98,
+    "ratified_count": 9,
     "strategies": [
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R9_014",
-        "direction": "BUY",
-        "formula": "[BUY] (acceleration_convexity > 1.9159) AND (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) | TP: 3.5xATR, SL: 2.5xATR, BE: 1.5R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "acceleration_convexity",
-            "op": ">",
-            "threshold": 1.9158604285336343
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 1.5,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 84,
-          "wins": 36,
-          "losses": 25,
-          "breakevens": 0,
-          "expired": 23,
-          "win_rate_pct": 42.86,
-          "net_r": 32.56,
-          "net_pnl_usd": 382.34,
-          "profit_factor": 2.15,
-          "max_drawdown_r": 4.58,
-          "sharpe_ratio": 3.39,
-          "t_statistic": 3.37
-        },
-        "walk_forward": {
-          "rule_id": "R9_014",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 45,
-            "win_rate": 44.44,
-            "net_r": 18.08,
-            "profit_factor": 2.21,
-            "max_drawdown_r": 4.58,
-            "sharpe_ratio": 2.58
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 39,
-            "win_rate": 41.03,
-            "net_r": 14.48,
-            "profit_factor": 2.08,
-            "max_drawdown_r": 4.28,
-            "sharpe_ratio": 2.2
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.939,
-            "walk_forward_efficiency": 1.204,
-            "drawdown_expansion_ratio": 0.934
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 21,
-            "wins": 7,
-            "losses": 10,
-            "win_rate": 33.3,
-            "net_r": 1.29,
-            "profit_factor": 0.98
-          },
-          "Winter_2026": {
-            "trades": 15,
-            "wins": 9,
-            "losses": 2,
-            "win_rate": 60.0,
-            "net_r": 12.12,
-            "profit_factor": 6.3
-          },
-          "Spring_2026": {
-            "trades": 18,
-            "wins": 10,
-            "losses": 2,
-            "win_rate": 55.6,
-            "net_r": 12.12,
-            "profit_factor": 7.0
-          },
-          "Summer_2026": {
-            "trades": 18,
-            "wins": 5,
-            "losses": 8,
-            "win_rate": 27.8,
-            "net_r": 0.45,
-            "profit_factor": 0.88
-          },
-          "Autumn_2026": {
-            "trades": 12,
-            "wins": 5,
-            "losses": 3,
-            "win_rate": 41.7,
-            "net_r": 6.58,
-            "profit_factor": 2.33
-          }
-        },
-        "monthly_net_r": {
-          "2025-07": -1.0,
-          "2025-08": 4.2,
-          "2025-09": 0.4,
-          "2025-10": -3.32,
-          "2025-11": 0.2,
-          "2025-12": 0.81,
-          "2026-01": 9.7,
-          "2026-02": 2.42,
-          "2026-03": 2.55,
-          "2026-04": 4.45,
-          "2026-05": 5.13,
-          "2026-06": -1.38,
-          "2026-07": 1.5,
-          "2026-08": 0.32,
-          "2026-09": 2.02,
-          "2026-10": 1.21,
-          "2026-11": 3.35
-        }
-      },
       {
         "symbol": "XAUUSD",
         "rule_id": "HYP_KURT_BUY_70v_12k",
@@ -265,1739 +131,889 @@
       },
       {
         "symbol": "XAUUSD",
-        "rule_id": "R7_030",
+        "rule_id": "R14_022",
         "direction": "BUY",
-        "formula": "[BUY] (kurtosis_30 > 1.1932) AND (variance_ratio_20 > 0.4359) AND (0.0008 <= norm_atr <= 0.0016) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 18b",
+        "formula": "[BUY] (rsi_stationary_14 >= 1.1027) AND (0.0006 <= norm_atr <= 0.0008) AND (intraday_cycle_cos >= 0.7373) | TP: 4.5xATR, SL: 1.5xATR, BE: 1.2R, TTL: 36b",
         "predicates": [
           {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "variance_ratio_20",
-            "op": ">",
-            "threshold": 0.4358944342243938
+            "feature": "rsi_stationary_14",
+            "op": ">=",
+            "threshold": 1.1027498014647548
           },
           {
             "feature": "norm_atr",
             "op": "between",
             "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
+              0.0006033201912861853,
+              0.0008187088983509543
             ]
+          },
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">=",
+            "threshold": 0.7372773368101239
           }
         ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 18,
+        "tp_atr_mult": 4.5,
+        "sl_atr_mult": 1.5,
+        "be_ratchet_r": 1.2,
+        "ttl_bars": 36,
         "full_sample": {
-          "total_fills": 109,
-          "wins": 32,
-          "losses": 24,
-          "breakevens": 0,
-          "expired": 53,
-          "win_rate_pct": 29.36,
-          "net_r": 29.55,
-          "net_pnl_usd": 343.67,
-          "profit_factor": 1.94,
-          "max_drawdown_r": 3.46,
-          "sharpe_ratio": 3.09,
-          "t_statistic": 3.08
+          "total_fills": 173,
+          "wins": 51,
+          "losses": 85,
+          "breakevens": 32,
+          "expired": 5,
+          "win_rate_pct": 29.48,
+          "net_r": 76.36,
+          "net_pnl_usd": 878.08,
+          "profit_factor": 1.84,
+          "max_drawdown_r": 9.92,
+          "sharpe_ratio": 3.33,
+          "t_statistic": 3.32
         },
         "walk_forward": {
-          "rule_id": "R7_030",
+          "rule_id": "R14_022",
           "symbol": "XAUUSD",
           "verdict": "RATIFIED",
           "rejection_reasons": [],
           "in_sample": {
             "bars": 60000,
-            "trades": 55,
-            "win_rate": 32.73,
-            "net_r": 18.03,
-            "profit_factor": 2.23,
-            "max_drawdown_r": 3.46,
-            "sharpe_ratio": 2.65
+            "trades": 85,
+            "win_rate": 37.65,
+            "net_r": 60.85,
+            "profit_factor": 2.57,
+            "max_drawdown_r": 8.0,
+            "sharpe_ratio": 3.61
           },
           "out_of_sample": {
             "bars": 39900,
-            "trades": 53,
-            "win_rate": 26.42,
-            "net_r": 12.51,
-            "profit_factor": 1.8,
-            "max_drawdown_r": 2.96,
-            "sharpe_ratio": 1.9
+            "trades": 88,
+            "win_rate": 21.59,
+            "net_r": 15.51,
+            "profit_factor": 1.28,
+            "max_drawdown_r": 9.92,
+            "sharpe_ratio": 1.03
           },
           "overfitting_metrics": {
-            "degradation_ratio_pf": 0.808,
-            "walk_forward_efficiency": 1.043,
-            "drawdown_expansion_ratio": 0.854
+            "degradation_ratio_pf": 0.5,
+            "walk_forward_efficiency": 0.383,
+            "drawdown_expansion_ratio": 1.24
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 61,
+            "wins": 20,
+            "losses": 29,
+            "win_rate": 32.8,
+            "net_r": 32.75,
+            "profit_factor": 2.07
+          },
+          "Winter_2026": {
+            "trades": 17,
+            "wins": 9,
+            "losses": 5,
+            "win_rate": 52.9,
+            "net_r": 22.08,
+            "profit_factor": 5.4
+          },
+          "Spring_2026": {
+            "trades": 30,
+            "wins": 9,
+            "losses": 16,
+            "win_rate": 30.0,
+            "net_r": 15.12,
+            "profit_factor": 1.69
+          },
+          "Summer_2026": {
+            "trades": 32,
+            "wins": 8,
+            "losses": 17,
+            "win_rate": 25.0,
+            "net_r": 7.18,
+            "profit_factor": 1.41
+          },
+          "Autumn_2026": {
+            "trades": 33,
+            "wins": 5,
+            "losses": 18,
+            "win_rate": 15.2,
+            "net_r": -0.78,
+            "profit_factor": 0.83
+          }
+        },
+        "monthly_net_r": {
+          "2025-06": 2.06,
+          "2025-07": 2.04,
+          "2025-08": -1.96,
+          "2025-09": 9.48,
+          "2025-10": 1.08,
+          "2025-11": 14.03,
+          "2025-12": 6.02,
+          "2026-01": 11.05,
+          "2026-02": 11.02,
+          "2026-03": 2.0,
+          "2026-04": 10.74,
+          "2026-05": 2.38,
+          "2026-06": -4.0,
+          "2026-07": 0.06,
+          "2026-08": 11.12,
+          "2026-09": -0.16,
+          "2026-10": 2.31,
+          "2026-11": -2.93
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_017",
+        "direction": "BUY",
+        "formula": "[BUY] (velocity_21 > 0.0063) AND (intraday_cycle_cos > 0.9063) AND (autocorr_lag5 >= -0.3082) | TP: 3.0xATR, SL: 1.8xATR, BE: 2.0R, TTL: 48b",
+        "predicates": [
+          {
+            "feature": "velocity_21",
+            "op": ">",
+            "threshold": 0.0062935161473709166
+          },
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.9063077870366499
+          },
+          {
+            "feature": "autocorr_lag5",
+            "op": ">=",
+            "threshold": -0.3082091606761995
+          }
+        ],
+        "tp_atr_mult": 3.0,
+        "sl_atr_mult": 1.8,
+        "be_ratchet_r": 2.0,
+        "ttl_bars": 48,
+        "full_sample": {
+          "total_fills": 51,
+          "wins": 28,
+          "losses": 21,
+          "breakevens": 0,
+          "expired": 2,
+          "win_rate_pct": 54.9,
+          "net_r": 27.15,
+          "net_pnl_usd": 319.92,
+          "profit_factor": 2.26,
+          "max_drawdown_r": 4.33,
+          "sharpe_ratio": 2.93,
+          "t_statistic": 2.9
+        },
+        "walk_forward": {
+          "rule_id": "R14_017",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 36,
+            "win_rate": 52.78,
+            "net_r": 15.97,
+            "profit_factor": 1.97,
+            "max_drawdown_r": 4.33,
+            "sharpe_ratio": 2.03
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 15,
+            "win_rate": 60.0,
+            "net_r": 11.19,
+            "profit_factor": 3.18,
+            "max_drawdown_r": 2.0,
+            "sharpe_ratio": 2.33
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 1.619,
+            "walk_forward_efficiency": 1.054,
+            "drawdown_expansion_ratio": 0.462
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 9,
+            "wins": 1,
+            "losses": 7,
+            "win_rate": 11.1,
+            "net_r": -5.04,
+            "profit_factor": 0.24
+          },
+          "Winter_2026": {
+            "trades": 20,
+            "wins": 14,
+            "losses": 6,
+            "win_rate": 70.0,
+            "net_r": 17.34,
+            "profit_factor": 3.89
+          },
+          "Spring_2026": {
+            "trades": 10,
+            "wins": 7,
+            "losses": 3,
+            "win_rate": 70.0,
+            "net_r": 8.67,
+            "profit_factor": 3.89
+          },
+          "Summer_2026": {
+            "trades": 8,
+            "wins": 5,
+            "losses": 3,
+            "win_rate": 62.5,
+            "net_r": 5.33,
+            "profit_factor": 2.78
+          },
+          "Autumn_2026": {
+            "trades": 4,
+            "wins": 1,
+            "losses": 2,
+            "win_rate": 25.0,
+            "net_r": 0.85,
+            "profit_factor": 0.83
+          }
+        },
+        "monthly_net_r": {
+          "2025-10": -5.33,
+          "2025-12": 0.29,
+          "2026-01": 10.0,
+          "2026-02": 7.33,
+          "2026-03": 0.33,
+          "2026-04": 5.0,
+          "2026-05": 3.33,
+          "2026-06": 2.33,
+          "2026-07": 0.67,
+          "2026-08": 2.33,
+          "2026-09": 0.18,
+          "2026-10": -1.0,
+          "2026-11": 1.67
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_039",
+        "direction": "BUY",
+        "formula": "[BUY] (velocity_21 > 0.0063) AND (intraday_cycle_cos > 0.9063) | TP: 3.0xATR, SL: 1.8xATR, BE: 2.0R, TTL: 48b",
+        "predicates": [
+          {
+            "feature": "velocity_21",
+            "op": ">",
+            "threshold": 0.0062935161473709166
+          },
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.9063077870366499
+          }
+        ],
+        "tp_atr_mult": 3.0,
+        "sl_atr_mult": 1.8,
+        "be_ratchet_r": 2.0,
+        "ttl_bars": 48,
+        "full_sample": {
+          "total_fills": 52,
+          "wins": 28,
+          "losses": 22,
+          "breakevens": 0,
+          "expired": 2,
+          "win_rate_pct": 53.85,
+          "net_r": 26.15,
+          "net_pnl_usd": 307.82,
+          "profit_factor": 2.16,
+          "max_drawdown_r": 4.33,
+          "sharpe_ratio": 2.79,
+          "t_statistic": 2.76
+        },
+        "walk_forward": {
+          "rule_id": "R14_039",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 37,
+            "win_rate": 51.35,
+            "net_r": 14.97,
+            "profit_factor": 1.85,
+            "max_drawdown_r": 4.33,
+            "sharpe_ratio": 1.87
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 15,
+            "win_rate": 60.0,
+            "net_r": 11.19,
+            "profit_factor": 3.18,
+            "max_drawdown_r": 2.0,
+            "sharpe_ratio": 2.33
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 1.72,
+            "walk_forward_efficiency": 1.124,
+            "drawdown_expansion_ratio": 0.462
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 9,
+            "wins": 1,
+            "losses": 7,
+            "win_rate": 11.1,
+            "net_r": -5.04,
+            "profit_factor": 0.24
+          },
+          "Winter_2026": {
+            "trades": 20,
+            "wins": 14,
+            "losses": 6,
+            "win_rate": 70.0,
+            "net_r": 17.34,
+            "profit_factor": 3.89
+          },
+          "Spring_2026": {
+            "trades": 11,
+            "wins": 7,
+            "losses": 4,
+            "win_rate": 63.6,
+            "net_r": 7.67,
+            "profit_factor": 2.92
+          },
+          "Summer_2026": {
+            "trades": 8,
+            "wins": 5,
+            "losses": 3,
+            "win_rate": 62.5,
+            "net_r": 5.33,
+            "profit_factor": 2.78
+          },
+          "Autumn_2026": {
+            "trades": 4,
+            "wins": 1,
+            "losses": 2,
+            "win_rate": 25.0,
+            "net_r": 0.85,
+            "profit_factor": 0.83
+          }
+        },
+        "monthly_net_r": {
+          "2025-10": -5.33,
+          "2025-12": 0.29,
+          "2026-01": 10.0,
+          "2026-02": 7.33,
+          "2026-03": -0.67,
+          "2026-04": 5.0,
+          "2026-05": 3.33,
+          "2026-06": 2.33,
+          "2026-07": 0.67,
+          "2026-08": 2.33,
+          "2026-09": 0.18,
+          "2026-10": -1.0,
+          "2026-11": 1.67
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_015",
+        "direction": "BUY",
+        "formula": "[BUY] (yang_zhang_vol > 0.0010) AND (intraday_cycle_cos >= 0.9600) | TP: 4.5xATR, SL: 2.5xATR, BE: 1.8R, TTL: 36b",
+        "predicates": [
+          {
+            "feature": "yang_zhang_vol",
+            "op": ">",
+            "threshold": 0.0010486393092128043
+          },
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">=",
+            "threshold": 0.9600498543859286
+          }
+        ],
+        "tp_atr_mult": 4.5,
+        "sl_atr_mult": 2.5,
+        "be_ratchet_r": 1.8,
+        "ttl_bars": 36,
+        "full_sample": {
+          "total_fills": 67,
+          "wins": 22,
+          "losses": 23,
+          "breakevens": 0,
+          "expired": 22,
+          "win_rate_pct": 32.84,
+          "net_r": 26.51,
+          "net_pnl_usd": 311.45,
+          "profit_factor": 2.07,
+          "max_drawdown_r": 3.0,
+          "sharpe_ratio": 2.74,
+          "t_statistic": 2.72
+        },
+        "walk_forward": {
+          "rule_id": "R14_015",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 49,
+            "win_rate": 36.73,
+            "net_r": 20.4,
+            "profit_factor": 2.12,
+            "max_drawdown_r": 2.28,
+            "sharpe_ratio": 2.41
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 17,
+            "win_rate": 23.53,
+            "net_r": 7.11,
+            "profit_factor": 2.28,
+            "max_drawdown_r": 2.09,
+            "sharpe_ratio": 1.58
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 1.076,
+            "walk_forward_efficiency": 0.524,
+            "drawdown_expansion_ratio": 0.915
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 11,
+            "wins": 2,
+            "losses": 4,
+            "win_rate": 18.2,
+            "net_r": 0.06,
+            "profit_factor": 0.9
+          },
+          "Winter_2026": {
+            "trades": 20,
+            "wins": 9,
+            "losses": 6,
+            "win_rate": 45.0,
+            "net_r": 12.2,
+            "profit_factor": 2.7
+          },
+          "Spring_2026": {
+            "trades": 25,
+            "wins": 8,
+            "losses": 9,
+            "win_rate": 32.0,
+            "net_r": 10.03,
+            "profit_factor": 1.6
+          },
+          "Summer_2026": {
+            "trades": 9,
+            "wins": 3,
+            "losses": 4,
+            "win_rate": 33.3,
+            "net_r": 3.18,
+            "profit_factor": 1.35
+          },
+          "Autumn_2026": {
+            "trades": 2,
+            "wins": 0,
+            "losses": 0,
+            "win_rate": 0.0,
+            "net_r": 1.04,
+            "profit_factor": 0.0
+          }
+        },
+        "monthly_net_r": {
+          "2025-08": -1.0,
+          "2025-09": 0.25,
+          "2025-10": -0.72,
+          "2025-11": 0.85,
+          "2025-12": 0.68,
+          "2026-01": 4.59,
+          "2026-02": 7.62,
+          "2026-03": 5.74,
+          "2026-04": 4.5,
+          "2026-05": -0.21,
+          "2026-06": 2.58,
+          "2026-07": 2.6,
+          "2026-08": -2.0,
+          "2026-09": -0.09,
+          "2026-11": 1.13
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_015",
+        "direction": "BUY",
+        "formula": "[BUY] (intraday_cycle_cos > 0.7373) AND (velocity_21 > 0.0063) | TP: 3.0xATR, SL: 1.8xATR, BE: 1.2R, TTL: 48b",
+        "predicates": [
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.7372773368101239
+          },
+          {
+            "feature": "velocity_21",
+            "op": ">",
+            "threshold": 0.0062935161473709166
+          }
+        ],
+        "tp_atr_mult": 3.0,
+        "sl_atr_mult": 1.8,
+        "be_ratchet_r": 1.2,
+        "ttl_bars": 48,
+        "full_sample": {
+          "total_fills": 120,
+          "wins": 53,
+          "losses": 52,
+          "breakevens": 10,
+          "expired": 5,
+          "win_rate_pct": 44.17,
+          "net_r": 37.55,
+          "net_pnl_usd": 437.95,
+          "profit_factor": 1.69,
+          "max_drawdown_r": 5.32,
+          "sharpe_ratio": 2.73,
+          "t_statistic": 2.72
+        },
+        "walk_forward": {
+          "rule_id": "R14_015",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 86,
+            "win_rate": 43.02,
+            "net_r": 26.45,
+            "profit_factor": 1.7,
+            "max_drawdown_r": 5.32,
+            "sharpe_ratio": 2.3
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 34,
+            "win_rate": 47.06,
+            "net_r": 11.1,
+            "profit_factor": 1.67,
+            "max_drawdown_r": 4.59,
+            "sharpe_ratio": 1.47
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.981,
+            "walk_forward_efficiency": 0.631,
+            "drawdown_expansion_ratio": 0.861
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 23,
+            "wins": 7,
+            "losses": 12,
+            "win_rate": 30.4,
+            "net_r": 0.16,
+            "profit_factor": 0.97
+          },
+          "Winter_2026": {
+            "trades": 40,
+            "wins": 21,
+            "losses": 13,
+            "win_rate": 52.5,
+            "net_r": 22.28,
+            "profit_factor": 2.69
+          },
+          "Spring_2026": {
+            "trades": 29,
+            "wins": 13,
+            "losses": 13,
+            "win_rate": 44.8,
+            "net_r": 8.68,
+            "profit_factor": 1.67
+          },
+          "Summer_2026": {
+            "trades": 21,
+            "wins": 9,
+            "losses": 11,
+            "win_rate": 42.9,
+            "net_r": 4.02,
+            "profit_factor": 1.36
+          },
+          "Autumn_2026": {
+            "trades": 7,
+            "wins": 3,
+            "losses": 3,
+            "win_rate": 42.9,
+            "net_r": 2.42,
+            "profit_factor": 1.67
+          }
+        },
+        "monthly_net_r": {
+          "2025-06": -1.0,
+          "2025-10": -1.3,
+          "2025-11": -0.33,
+          "2025-12": 2.8,
+          "2026-01": 12.94,
+          "2026-02": 9.33,
+          "2026-03": -1.65,
+          "2026-04": 7.33,
+          "2026-05": 3.0,
+          "2026-06": 4.67,
+          "2026-07": 0.02,
+          "2026-08": -0.67,
+          "2026-09": -1.59,
+          "2026-10": -1.0,
+          "2026-11": 5.0
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "R14_014",
+        "direction": "BUY",
+        "formula": "[BUY] (intraday_cycle_cos > 0.7373) AND (velocity_21 > 0.0063) AND (accel_3 >= -0.0019) | TP: 3.0xATR, SL: 1.8xATR, BE: 1.2R, TTL: 18b",
+        "predicates": [
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.7372773368101239
+          },
+          {
+            "feature": "velocity_21",
+            "op": ">",
+            "threshold": 0.0062935161473709166
+          },
+          {
+            "feature": "accel_3",
+            "op": ">=",
+            "threshold": -0.0019185281261777788
+          }
+        ],
+        "tp_atr_mult": 3.0,
+        "sl_atr_mult": 1.8,
+        "be_ratchet_r": 1.2,
+        "ttl_bars": 18,
+        "full_sample": {
+          "total_fills": 121,
+          "wins": 43,
+          "losses": 47,
+          "breakevens": 5,
+          "expired": 26,
+          "win_rate_pct": 35.54,
+          "net_r": 29.49,
+          "net_pnl_usd": 340.58,
+          "profit_factor": 1.56,
+          "max_drawdown_r": 6.01,
+          "sharpe_ratio": 2.28,
+          "t_statistic": 2.27
+        },
+        "walk_forward": {
+          "rule_id": "R14_014",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 86,
+            "win_rate": 37.21,
+            "net_r": 23.91,
+            "profit_factor": 1.66,
+            "max_drawdown_r": 5.44,
+            "sharpe_ratio": 2.18
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 35,
+            "win_rate": 31.43,
+            "net_r": 5.57,
+            "profit_factor": 1.33,
+            "max_drawdown_r": 6.01,
+            "sharpe_ratio": 0.81
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.8,
+            "walk_forward_efficiency": 0.351,
+            "drawdown_expansion_ratio": 1.106
           }
         },
         "seasonal_breakdown": {
           "Prior_2025": {
             "trades": 24,
-            "wins": 4,
-            "losses": 6,
-            "win_rate": 16.7,
-            "net_r": -0.54,
-            "profit_factor": 0.93
-          },
-          "Winter_2026": {
-            "trades": 23,
-            "wins": 8,
-            "losses": 5,
-            "win_rate": 34.8,
-            "net_r": 9.34,
-            "profit_factor": 2.24
-          },
-          "Spring_2026": {
-            "trades": 23,
-            "wins": 10,
-            "losses": 2,
-            "win_rate": 43.5,
-            "net_r": 13.19,
-            "profit_factor": 7.0
-          },
-          "Summer_2026": {
-            "trades": 23,
             "wins": 7,
-            "losses": 9,
-            "win_rate": 30.4,
-            "net_r": 2.97,
-            "profit_factor": 1.09
-          },
-          "Autumn_2026": {
-            "trades": 16,
-            "wins": 3,
-            "losses": 2,
-            "win_rate": 18.8,
-            "net_r": 4.58,
-            "profit_factor": 2.1
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -0.1,
-          "2025-07": -1.05,
-          "2025-08": 0.61,
-          "2025-10": 2.46,
-          "2025-11": -0.56,
-          "2025-12": -1.9,
-          "2026-01": 7.78,
-          "2026-02": 1.56,
-          "2026-03": 6.6,
-          "2026-04": 3.17,
-          "2026-05": 3.43,
-          "2026-06": -0.47,
-          "2026-07": 4.74,
-          "2026-08": -1.3,
-          "2026-09": 3.77,
-          "2026-10": 2.05,
-          "2026-11": -1.24
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R10_025",
-        "direction": "BUY",
-        "formula": "[BUY] (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) AND (acceleration_convexity > 1.9159) | TP: 2.2xATR, SL: 1.5xATR, BE: 1.8R, TTL: 48b",
-        "predicates": [
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "acceleration_convexity",
-            "op": ">",
-            "threshold": 1.9158604285336343
-          }
-        ],
-        "tp_atr_mult": 2.2,
-        "sl_atr_mult": 1.5,
-        "be_ratchet_r": 1.8,
-        "ttl_bars": 48,
-        "full_sample": {
-          "total_fills": 88,
-          "wins": 48,
-          "losses": 38,
-          "breakevens": 0,
-          "expired": 2,
-          "win_rate_pct": 54.55,
-          "net_r": 33.95,
-          "net_pnl_usd": 394.73,
-          "profit_factor": 1.86,
-          "max_drawdown_r": 5.53,
-          "sharpe_ratio": 2.98,
-          "t_statistic": 2.97
-        },
-        "walk_forward": {
-          "rule_id": "R10_025",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 46,
-            "win_rate": 60.87,
-            "net_r": 26.61,
-            "profit_factor": 2.61,
-            "max_drawdown_r": 3.6,
-            "sharpe_ratio": 3.38
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 42,
-            "win_rate": 47.62,
-            "net_r": 7.34,
-            "profit_factor": 1.31,
-            "max_drawdown_r": 5.53,
-            "sharpe_ratio": 0.92
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.5,
-            "walk_forward_efficiency": 0.415,
-            "drawdown_expansion_ratio": 1.537
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 22,
-            "wins": 10,
-            "losses": 11,
-            "win_rate": 45.5,
-            "net_r": 4.6,
-            "profit_factor": 1.33
-          },
-          "Winter_2026": {
-            "trades": 15,
-            "wins": 10,
-            "losses": 4,
-            "win_rate": 66.7,
-            "net_r": 11.28,
-            "profit_factor": 3.67
-          },
-          "Spring_2026": {
-            "trades": 18,
-            "wins": 13,
-            "losses": 5,
-            "win_rate": 72.2,
-            "net_r": 14.07,
-            "profit_factor": 3.81
-          },
-          "Summer_2026": {
-            "trades": 18,
-            "wins": 9,
-            "losses": 9,
-            "win_rate": 50.0,
-            "net_r": 4.2,
-            "profit_factor": 1.47
-          },
-          "Autumn_2026": {
-            "trades": 15,
-            "wins": 6,
-            "losses": 9,
-            "win_rate": 40.0,
-            "net_r": -0.2,
-            "profit_factor": 0.98
-          }
-        },
-        "monthly_net_r": {
-          "2025-07": -1.0,
-          "2025-08": 4.4,
-          "2025-09": 0.47,
-          "2025-10": -1.07,
-          "2025-11": 0.4,
-          "2025-12": 1.39,
-          "2026-01": 6.41,
-          "2026-02": 4.87,
-          "2026-03": 7.34,
-          "2026-04": 1.87,
-          "2026-05": 4.87,
-          "2026-06": 1.4,
-          "2026-07": 2.87,
-          "2026-08": -0.07,
-          "2026-09": 0.4,
-          "2026-10": -2.53,
-          "2026-11": 1.93
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_009",
-        "direction": "BUY",
-        "formula": "[BUY] (0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) AND (variance_ratio_20 > 0.7774) | TP: 3.5xATR, SL: 2.0xATR, BE: 2.0R, TTL: 18b",
-        "predicates": [
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "variance_ratio_20",
-            "op": ">",
-            "threshold": 0.7773969490728048
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.0,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 18,
-        "full_sample": {
-          "total_fills": 61,
-          "wins": 18,
-          "losses": 16,
-          "breakevens": 0,
-          "expired": 27,
-          "win_rate_pct": 29.51,
-          "net_r": 25.02,
-          "net_pnl_usd": 293.9,
-          "profit_factor": 2.3,
-          "max_drawdown_r": 2.77,
-          "sharpe_ratio": 2.91,
-          "t_statistic": 2.89
-        },
-        "walk_forward": {
-          "rule_id": "R11_009",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 33,
-            "win_rate": 30.3,
-            "net_r": 11.04,
-            "profit_factor": 1.88,
-            "max_drawdown_r": 2.77,
-            "sharpe_ratio": 1.68
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 27,
-            "win_rate": 29.63,
-            "net_r": 14.97,
-            "profit_factor": 3.65,
-            "max_drawdown_r": 2.0,
-            "sharpe_ratio": 2.83
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.939,
-            "walk_forward_efficiency": 2.039,
-            "drawdown_expansion_ratio": 0.721
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 14,
-            "wins": 3,
-            "losses": 4,
-            "win_rate": 21.4,
-            "net_r": 1.78,
-            "profit_factor": 1.31
-          },
-          "Winter_2026": {
-            "trades": 16,
-            "wins": 5,
-            "losses": 6,
-            "win_rate": 31.2,
-            "net_r": 4.51,
-            "profit_factor": 1.46
-          },
-          "Spring_2026": {
-            "trades": 13,
-            "wins": 5,
-            "losses": 2,
-            "win_rate": 38.5,
-            "net_r": 9.59,
-            "profit_factor": 4.38
-          },
-          "Summer_2026": {
-            "trades": 11,
-            "wins": 5,
-            "losses": 3,
-            "win_rate": 45.5,
-            "net_r": 8.64,
-            "profit_factor": 2.92
-          },
-          "Autumn_2026": {
-            "trades": 7,
-            "wins": 0,
-            "losses": 1,
-            "win_rate": 0.0,
-            "net_r": 0.49,
-            "profit_factor": 0.0
-          }
-        },
-        "monthly_net_r": {
-          "2025-07": -0.07,
-          "2025-08": -0.98,
-          "2025-10": 2.73,
-          "2025-11": 0.89,
-          "2025-12": -0.78,
-          "2026-01": 5.94,
-          "2026-02": -1.43,
-          "2026-03": 3.0,
-          "2026-04": 4.25,
-          "2026-05": 2.34,
-          "2026-06": -0.2,
-          "2026-07": 7.43,
-          "2026-08": 1.41,
-          "2026-09": 0.91,
-          "2026-10": 0.81,
-          "2026-11": -1.23
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_011",
-        "direction": "BUY",
-        "formula": "[BUY] (0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 154,
-          "wins": 52,
-          "losses": 47,
-          "breakevens": 0,
-          "expired": 55,
-          "win_rate_pct": 33.77,
-          "net_r": 35.35,
-          "net_pnl_usd": 408.62,
-          "profit_factor": 1.62,
-          "max_drawdown_r": 5.29,
-          "sharpe_ratio": 2.82,
-          "t_statistic": 2.81
-        },
-        "walk_forward": {
-          "rule_id": "R11_011",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 80,
-            "win_rate": 35.0,
-            "net_r": 18.88,
-            "profit_factor": 1.64,
-            "max_drawdown_r": 4.54,
-            "sharpe_ratio": 2.09
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 73,
-            "win_rate": 32.88,
-            "net_r": 17.47,
-            "profit_factor": 1.66,
-            "max_drawdown_r": 5.29,
-            "sharpe_ratio": 2.03
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.013,
-            "walk_forward_efficiency": 1.392,
-            "drawdown_expansion_ratio": 1.165
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 38,
-            "wins": 11,
-            "losses": 15,
-            "win_rate": 28.9,
-            "net_r": 1.35,
-            "profit_factor": 1.03
-          },
-          "Winter_2026": {
-            "trades": 28,
-            "wins": 10,
-            "losses": 8,
-            "win_rate": 35.7,
-            "net_r": 9.7,
-            "profit_factor": 1.75
-          },
-          "Spring_2026": {
-            "trades": 36,
-            "wins": 17,
-            "losses": 6,
-            "win_rate": 47.2,
-            "net_r": 18.06,
-            "profit_factor": 3.97
-          },
-          "Summer_2026": {
-            "trades": 30,
-            "wins": 9,
-            "losses": 13,
-            "win_rate": 30.0,
-            "net_r": 0.07,
+            "losses": 12,
+            "win_rate": 29.2,
+            "net_r": -0.69,
             "profit_factor": 0.97
           },
-          "Autumn_2026": {
-            "trades": 22,
-            "wins": 5,
-            "losses": 5,
-            "win_rate": 22.7,
-            "net_r": 6.16,
-            "profit_factor": 1.4
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -2.18,
-          "2025-07": -2.54,
-          "2025-08": 3.56,
-          "2025-09": 0.4,
-          "2025-10": 1.64,
-          "2025-11": 1.01,
-          "2025-12": -0.54,
-          "2026-01": 8.81,
-          "2026-02": 0.89,
-          "2026-03": 5.74,
-          "2026-04": 6.98,
-          "2026-05": 5.35,
-          "2026-06": -2.99,
-          "2026-07": 3.0,
-          "2026-08": 0.06,
-          "2026-09": 1.84,
-          "2026-10": 2.4,
-          "2026-11": 1.92
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_035",
-        "direction": "BUY",
-        "formula": "[BUY] (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) | TP: 3.5xATR, SL: 2.5xATR, BE: 1.8R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 1.8,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 154,
-          "wins": 52,
-          "losses": 47,
-          "breakevens": 0,
-          "expired": 55,
-          "win_rate_pct": 33.77,
-          "net_r": 35.35,
-          "net_pnl_usd": 408.62,
-          "profit_factor": 1.62,
-          "max_drawdown_r": 5.29,
-          "sharpe_ratio": 2.82,
-          "t_statistic": 2.81
-        },
-        "walk_forward": {
-          "rule_id": "R11_035",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 80,
-            "win_rate": 35.0,
-            "net_r": 18.88,
-            "profit_factor": 1.64,
-            "max_drawdown_r": 4.54,
-            "sharpe_ratio": 2.09
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 73,
-            "win_rate": 32.88,
-            "net_r": 17.47,
-            "profit_factor": 1.66,
-            "max_drawdown_r": 5.29,
-            "sharpe_ratio": 2.03
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.013,
-            "walk_forward_efficiency": 1.392,
-            "drawdown_expansion_ratio": 1.165
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 38,
-            "wins": 11,
-            "losses": 15,
-            "win_rate": 28.9,
-            "net_r": 1.35,
-            "profit_factor": 1.03
-          },
           "Winter_2026": {
-            "trades": 28,
-            "wins": 10,
-            "losses": 8,
-            "win_rate": 35.7,
-            "net_r": 9.7,
-            "profit_factor": 1.75
-          },
-          "Spring_2026": {
-            "trades": 36,
-            "wins": 17,
-            "losses": 6,
-            "win_rate": 47.2,
-            "net_r": 18.06,
-            "profit_factor": 3.97
-          },
-          "Summer_2026": {
-            "trades": 30,
-            "wins": 9,
-            "losses": 13,
-            "win_rate": 30.0,
-            "net_r": 0.07,
-            "profit_factor": 0.97
-          },
-          "Autumn_2026": {
-            "trades": 22,
-            "wins": 5,
-            "losses": 5,
-            "win_rate": 22.7,
-            "net_r": 6.16,
-            "profit_factor": 1.4
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -2.18,
-          "2025-07": -2.54,
-          "2025-08": 3.56,
-          "2025-09": 0.4,
-          "2025-10": 1.64,
-          "2025-11": 1.01,
-          "2025-12": -0.54,
-          "2026-01": 8.81,
-          "2026-02": 0.89,
-          "2026-03": 5.74,
-          "2026-04": 6.98,
-          "2026-05": 5.35,
-          "2026-06": -2.99,
-          "2026-07": 3.0,
-          "2026-08": 0.06,
-          "2026-09": 1.84,
-          "2026-10": 2.4,
-          "2026-11": 1.92
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_010",
-        "direction": "BUY",
-        "formula": "[BUY] (accel_3 > -0.0007) AND (0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 18b",
-        "predicates": [
-          {
-            "feature": "accel_3",
-            "op": ">",
-            "threshold": -0.0007156291016177873
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 18,
-        "full_sample": {
-          "total_fills": 152,
-          "wins": 43,
-          "losses": 39,
-          "breakevens": 0,
-          "expired": 70,
-          "win_rate_pct": 28.29,
-          "net_r": 32.39,
-          "net_pnl_usd": 373.47,
-          "profit_factor": 1.64,
-          "max_drawdown_r": 3.77,
-          "sharpe_ratio": 2.81,
-          "t_statistic": 2.8
-        },
-        "walk_forward": {
-          "rule_id": "R11_010",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 78,
-            "win_rate": 32.05,
-            "net_r": 21.75,
-            "profit_factor": 1.9,
-            "max_drawdown_r": 3.21,
-            "sharpe_ratio": 2.59
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 73,
-            "win_rate": 24.66,
-            "net_r": 11.64,
-            "profit_factor": 1.46,
-            "max_drawdown_r": 3.77,
-            "sharpe_ratio": 1.49
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.77,
-            "walk_forward_efficiency": 0.805,
-            "drawdown_expansion_ratio": 1.174
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 36,
-            "wins": 8,
-            "losses": 10,
-            "win_rate": 22.2,
-            "net_r": 2.13,
-            "profit_factor": 1.12
-          },
-          "Winter_2026": {
-            "trades": 29,
-            "wins": 10,
-            "losses": 8,
-            "win_rate": 34.5,
-            "net_r": 10.25,
-            "profit_factor": 1.75
-          },
-          "Spring_2026": {
-            "trades": 34,
-            "wins": 15,
-            "losses": 4,
-            "win_rate": 44.1,
-            "net_r": 18.75,
-            "profit_factor": 5.25
-          },
-          "Summer_2026": {
-            "trades": 31,
-            "wins": 8,
-            "losses": 11,
-            "win_rate": 25.8,
-            "net_r": 1.6,
-            "profit_factor": 1.02
-          },
-          "Autumn_2026": {
-            "trades": 22,
-            "wins": 2,
-            "losses": 6,
-            "win_rate": 9.1,
-            "net_r": -0.33,
-            "profit_factor": 0.47
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -2.1,
-          "2025-07": -1.05,
-          "2025-08": 1.03,
-          "2025-09": 0.4,
-          "2025-10": 3.86,
-          "2025-11": 1.6,
-          "2025-12": -1.6,
-          "2026-01": 9.93,
-          "2026-02": 0.32,
-          "2026-03": 6.72,
-          "2026-04": 7.24,
-          "2026-05": 4.78,
-          "2026-06": -0.29,
-          "2026-07": 4.26,
-          "2026-08": -2.37,
-          "2026-09": -0.62,
-          "2026-10": -0.73,
-          "2026-11": 1.02
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R5_014",
-        "direction": "BUY",
-        "formula": "[BUY] (variance_ratio_20 > 0.7774) AND (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "variance_ratio_20",
-            "op": ">",
-            "threshold": 0.7773969490728048
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 59,
-          "wins": 20,
-          "losses": 14,
-          "breakevens": 0,
-          "expired": 25,
-          "win_rate_pct": 33.9,
-          "net_r": 20.02,
-          "net_pnl_usd": 234.37,
-          "profit_factor": 2.18,
-          "max_drawdown_r": 2.59,
-          "sharpe_ratio": 2.75,
-          "t_statistic": 2.73
-        },
-        "walk_forward": {
-          "rule_id": "R5_014",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 31,
-            "win_rate": 29.03,
-            "net_r": 9.28,
-            "profit_factor": 2.08,
-            "max_drawdown_r": 2.0,
-            "sharpe_ratio": 1.84
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 27,
-            "win_rate": 40.74,
-            "net_r": 11.74,
-            "profit_factor": 2.62,
-            "max_drawdown_r": 2.59,
-            "sharpe_ratio": 2.34
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.261,
-            "walk_forward_efficiency": 1.901,
-            "drawdown_expansion_ratio": 1.295
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 13,
-            "wins": 2,
-            "losses": 3,
-            "win_rate": 15.4,
-            "net_r": 0.42,
-            "profit_factor": 0.93
-          },
-          "Winter_2026": {
-            "trades": 15,
-            "wins": 5,
-            "losses": 4,
-            "win_rate": 33.3,
-            "net_r": 6.15,
-            "profit_factor": 1.75
-          },
-          "Spring_2026": {
-            "trades": 13,
-            "wins": 6,
-            "losses": 3,
-            "win_rate": 46.2,
-            "net_r": 6.17,
-            "profit_factor": 2.8
-          },
-          "Summer_2026": {
-            "trades": 11,
-            "wins": 7,
-            "losses": 3,
-            "win_rate": 63.6,
-            "net_r": 6.21,
-            "profit_factor": 3.27
-          },
-          "Autumn_2026": {
-            "trades": 7,
-            "wins": 0,
-            "losses": 1,
-            "win_rate": 0.0,
-            "net_r": 1.07,
-            "profit_factor": 0.0
-          }
-        },
-        "monthly_net_r": {
-          "2025-07": -0.54,
-          "2025-08": -0.14,
-          "2025-10": 1.27,
-          "2025-11": 0.81,
-          "2025-12": -0.98,
-          "2026-01": 4.24,
-          "2026-02": 1.91,
-          "2026-03": 1.32,
-          "2026-04": 3.2,
-          "2026-05": 1.66,
-          "2026-06": -1.19,
-          "2026-07": 6.0,
-          "2026-08": 1.4,
-          "2026-09": 1.07,
-          "2026-10": 1.12,
-          "2026-11": -1.12
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_029",
-        "direction": "BUY",
-        "formula": "[BUY] (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) AND (variance_ratio_20 > 0.7774) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "variance_ratio_20",
-            "op": ">",
-            "threshold": 0.7773969490728048
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 59,
-          "wins": 20,
-          "losses": 14,
-          "breakevens": 0,
-          "expired": 25,
-          "win_rate_pct": 33.9,
-          "net_r": 20.02,
-          "net_pnl_usd": 234.37,
-          "profit_factor": 2.18,
-          "max_drawdown_r": 2.59,
-          "sharpe_ratio": 2.75,
-          "t_statistic": 2.73
-        },
-        "walk_forward": {
-          "rule_id": "R11_029",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 31,
-            "win_rate": 29.03,
-            "net_r": 9.28,
-            "profit_factor": 2.08,
-            "max_drawdown_r": 2.0,
-            "sharpe_ratio": 1.84
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 27,
-            "win_rate": 40.74,
-            "net_r": 11.74,
-            "profit_factor": 2.62,
-            "max_drawdown_r": 2.59,
-            "sharpe_ratio": 2.34
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.261,
-            "walk_forward_efficiency": 1.901,
-            "drawdown_expansion_ratio": 1.295
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 13,
-            "wins": 2,
-            "losses": 3,
-            "win_rate": 15.4,
-            "net_r": 0.42,
-            "profit_factor": 0.93
-          },
-          "Winter_2026": {
-            "trades": 15,
-            "wins": 5,
-            "losses": 4,
-            "win_rate": 33.3,
-            "net_r": 6.15,
-            "profit_factor": 1.75
-          },
-          "Spring_2026": {
-            "trades": 13,
-            "wins": 6,
-            "losses": 3,
-            "win_rate": 46.2,
-            "net_r": 6.17,
-            "profit_factor": 2.8
-          },
-          "Summer_2026": {
-            "trades": 11,
-            "wins": 7,
-            "losses": 3,
-            "win_rate": 63.6,
-            "net_r": 6.21,
-            "profit_factor": 3.27
-          },
-          "Autumn_2026": {
-            "trades": 7,
-            "wins": 0,
-            "losses": 1,
-            "win_rate": 0.0,
-            "net_r": 1.07,
-            "profit_factor": 0.0
-          }
-        },
-        "monthly_net_r": {
-          "2025-07": -0.54,
-          "2025-08": -0.14,
-          "2025-10": 1.27,
-          "2025-11": 0.81,
-          "2025-12": -0.98,
-          "2026-01": 4.24,
-          "2026-02": 1.91,
-          "2026-03": 1.32,
-          "2026-04": 3.2,
-          "2026-05": 1.66,
-          "2026-06": -1.19,
-          "2026-07": 6.0,
-          "2026-08": 1.4,
-          "2026-09": 1.07,
-          "2026-10": 1.12,
-          "2026-11": -1.12
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_037",
-        "direction": "BUY",
-        "formula": "[BUY] (autocorr_lag1 >= -0.1632) AND (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) | TP: 3.5xATR, SL: 2.0xATR, BE: 1.5R, TTL: 48b",
-        "predicates": [
-          {
-            "feature": "autocorr_lag1",
-            "op": ">=",
-            "threshold": -0.16322795641818044
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.0,
-        "be_ratchet_r": 1.5,
-        "ttl_bars": 48,
-        "full_sample": {
-          "total_fills": 138,
-          "wins": 53,
-          "losses": 60,
-          "breakevens": 6,
-          "expired": 19,
-          "win_rate_pct": 38.41,
-          "net_r": 39.63,
-          "net_pnl_usd": 461.75,
-          "profit_factor": 1.61,
-          "max_drawdown_r": 6.0,
-          "sharpe_ratio": 2.67,
-          "t_statistic": 2.66
-        },
-        "walk_forward": {
-          "rule_id": "R11_037",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 74,
-            "win_rate": 40.54,
-            "net_r": 28.66,
-            "profit_factor": 1.93,
-            "max_drawdown_r": 6.0,
-            "sharpe_ratio": 2.66
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 63,
-            "win_rate": 36.51,
-            "net_r": 11.97,
-            "profit_factor": 1.37,
-            "max_drawdown_r": 5.6,
-            "sharpe_ratio": 1.19
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.708,
-            "walk_forward_efficiency": 0.628,
-            "drawdown_expansion_ratio": 0.933
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 35,
-            "wins": 11,
-            "losses": 16,
-            "win_rate": 31.4,
-            "net_r": 4.74,
-            "profit_factor": 1.2
-          },
-          "Winter_2026": {
-            "trades": 29,
-            "wins": 13,
-            "losses": 12,
-            "win_rate": 44.8,
-            "net_r": 12.47,
-            "profit_factor": 1.9
-          },
-          "Spring_2026": {
-            "trades": 29,
-            "wins": 15,
-            "losses": 9,
-            "win_rate": 51.7,
-            "net_r": 21.27,
-            "profit_factor": 2.92
-          },
-          "Summer_2026": {
-            "trades": 27,
-            "wins": 8,
-            "losses": 16,
-            "win_rate": 29.6,
-            "net_r": -1.3,
-            "profit_factor": 0.88
-          },
-          "Autumn_2026": {
-            "trades": 18,
-            "wins": 6,
-            "losses": 7,
-            "win_rate": 33.3,
-            "net_r": 2.45,
-            "profit_factor": 1.5
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -3.0,
-          "2025-07": -2.18,
-          "2025-08": 4.81,
-          "2025-09": 0.75,
-          "2025-10": 3.06,
-          "2025-11": 2.25,
-          "2025-12": -0.94,
-          "2026-01": 12.47,
-          "2026-02": 0.0,
-          "2026-03": 7.19,
-          "2026-04": 9.29,
-          "2026-05": 4.78,
-          "2026-06": -3.8,
-          "2026-07": 4.75,
-          "2026-08": -2.25,
-          "2026-09": 1.27,
-          "2026-10": 1.15,
-          "2026-11": 0.03
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_034",
-        "direction": "BUY",
-        "formula": "[BUY] (0.0008 <= norm_atr <= 0.0016) AND (autocorr_lag1 >= -0.1632) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 2.0xATR, BE: 2.0R, TTL: 48b",
-        "predicates": [
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": ">=",
-            "threshold": -0.16322795641818044
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.0,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 48,
-        "full_sample": {
-          "total_fills": 137,
-          "wins": 55,
-          "losses": 63,
-          "breakevens": 0,
-          "expired": 19,
-          "win_rate_pct": 40.15,
-          "net_r": 40.07,
-          "net_pnl_usd": 466.4,
-          "profit_factor": 1.59,
-          "max_drawdown_r": 6.0,
-          "sharpe_ratio": 2.65,
-          "t_statistic": 2.64
-        },
-        "walk_forward": {
-          "rule_id": "R11_034",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 74,
-            "win_rate": 41.89,
-            "net_r": 28.39,
-            "profit_factor": 1.86,
-            "max_drawdown_r": 6.0,
-            "sharpe_ratio": 2.58
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 62,
-            "win_rate": 38.71,
-            "net_r": 12.68,
-            "profit_factor": 1.37,
-            "max_drawdown_r": 5.81,
-            "sharpe_ratio": 1.24
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.739,
-            "walk_forward_efficiency": 0.672,
-            "drawdown_expansion_ratio": 0.969
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 35,
-            "wins": 11,
-            "losses": 17,
-            "win_rate": 31.4,
-            "net_r": 3.74,
-            "profit_factor": 1.13
-          },
-          "Winter_2026": {
-            "trades": 29,
-            "wins": 14,
-            "losses": 12,
-            "win_rate": 48.3,
-            "net_r": 14.22,
-            "profit_factor": 2.04
-          },
-          "Spring_2026": {
-            "trades": 29,
-            "wins": 15,
-            "losses": 10,
-            "win_rate": 51.7,
-            "net_r": 20.26,
-            "profit_factor": 2.62
-          },
-          "Summer_2026": {
-            "trades": 27,
-            "wins": 8,
-            "losses": 17,
-            "win_rate": 29.6,
-            "net_r": -2.31,
-            "profit_factor": 0.82
-          },
-          "Autumn_2026": {
-            "trades": 17,
-            "wins": 7,
-            "losses": 7,
-            "win_rate": 41.2,
-            "net_r": 4.17,
-            "profit_factor": 1.75
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -3.0,
-          "2025-07": -2.18,
-          "2025-08": 4.81,
-          "2025-09": 0.75,
-          "2025-10": 2.05,
-          "2025-11": 2.25,
-          "2025-12": -0.94,
-          "2026-01": 14.22,
-          "2026-02": 0.0,
-          "2026-03": 6.19,
-          "2026-04": 9.29,
-          "2026-05": 4.78,
-          "2026-06": -4.81,
-          "2026-07": 4.75,
-          "2026-08": -2.25,
-          "2026-09": 2.99,
-          "2026-10": 1.15,
-          "2026-11": 0.03
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_021",
-        "direction": "BUY",
-        "formula": "[BUY] (acceleration_convexity > -1.2641) AND (0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 48b",
-        "predicates": [
-          {
-            "feature": "acceleration_convexity",
-            "op": ">",
-            "threshold": -1.2641274501478315
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 48,
-        "full_sample": {
-          "total_fills": 148,
-          "wins": 65,
-          "losses": 62,
-          "breakevens": 0,
-          "expired": 21,
-          "win_rate_pct": 43.92,
-          "net_r": 36.17,
-          "net_pnl_usd": 419.14,
-          "profit_factor": 1.54,
-          "max_drawdown_r": 6.0,
-          "sharpe_ratio": 2.64,
-          "t_statistic": 2.63
-        },
-        "walk_forward": {
-          "rule_id": "R11_021",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 79,
-            "win_rate": 44.3,
-            "net_r": 20.08,
-            "profit_factor": 1.57,
-            "max_drawdown_r": 6.0,
-            "sharpe_ratio": 2.0
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 68,
-            "win_rate": 44.12,
-            "net_r": 17.08,
-            "profit_factor": 1.56,
-            "max_drawdown_r": 5.7,
-            "sharpe_ratio": 1.84
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.995,
-            "walk_forward_efficiency": 1.279,
-            "drawdown_expansion_ratio": 0.95
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 38,
-            "wins": 13,
-            "losses": 19,
-            "win_rate": 34.2,
-            "net_r": 0.33,
-            "profit_factor": 0.96
-          },
-          "Winter_2026": {
-            "trades": 28,
-            "wins": 15,
-            "losses": 11,
-            "win_rate": 53.6,
-            "net_r": 11.06,
-            "profit_factor": 1.91
-          },
-          "Spring_2026": {
-            "trades": 34,
+            "trades": 40,
             "wins": 18,
-            "losses": 9,
-            "win_rate": 52.9,
-            "net_r": 21.57,
-            "profit_factor": 2.8
+            "losses": 12,
+            "win_rate": 45.0,
+            "net_r": 17.97,
+            "profit_factor": 2.5
           },
-          "Summer_2026": {
+          "Spring_2026": {
             "trades": 28,
             "wins": 10,
-            "losses": 16,
+            "losses": 10,
             "win_rate": 35.7,
-            "net_r": -1.7,
-            "profit_factor": 0.88
+            "net_r": 10.28,
+            "profit_factor": 1.67
+          },
+          "Summer_2026": {
+            "trades": 22,
+            "wins": 5,
+            "losses": 11,
+            "win_rate": 22.7,
+            "net_r": -0.58,
+            "profit_factor": 0.76
+          },
+          "Autumn_2026": {
+            "trades": 7,
+            "wins": 3,
+            "losses": 2,
+            "win_rate": 42.9,
+            "net_r": 2.51,
+            "profit_factor": 2.5
+          }
+        },
+        "monthly_net_r": {
+          "2025-06": -1.0,
+          "2025-10": -1.42,
+          "2025-11": -0.33,
+          "2025-12": 2.06,
+          "2026-01": 9.4,
+          "2026-02": 8.57,
+          "2026-03": 2.7,
+          "2026-04": 5.6,
+          "2026-05": 1.98,
+          "2026-06": 0.86,
+          "2026-07": 1.08,
+          "2026-08": -2.52,
+          "2026-09": -2.24,
+          "2026-10": -0.24,
+          "2026-11": 5.0
+        }
+      },
+      {
+        "symbol": "XAUUSD",
+        "rule_id": "HYP_TAIL_SHOCK_BUY",
+        "direction": "BUY",
+        "formula": "[BUY] (skew_kurt_interaction > 1.0000) AND (velocity_8 > 0.0010) | TP: 3.5xATR, SL: 1.2xATR, BE: 1.8R, TTL: 30b",
+        "predicates": [
+          {
+            "feature": "skew_kurt_interaction",
+            "op": ">",
+            "threshold": 1.0
+          },
+          {
+            "feature": "velocity_8",
+            "op": ">",
+            "threshold": 0.001
+          }
+        ],
+        "tp_atr_mult": 3.5,
+        "sl_atr_mult": 1.2,
+        "be_ratchet_r": 1.8,
+        "ttl_bars": 30,
+        "full_sample": {
+          "total_fills": 224,
+          "wins": 58,
+          "losses": 132,
+          "breakevens": 15,
+          "expired": 19,
+          "win_rate_pct": 25.89,
+          "net_r": 54.56,
+          "net_pnl_usd": 625.9,
+          "profit_factor": 1.39,
+          "max_drawdown_r": 13.59,
+          "sharpe_ratio": 2.15,
+          "t_statistic": 2.14
+        },
+        "walk_forward": {
+          "rule_id": "HYP_TAIL_SHOCK_BUY",
+          "symbol": "XAUUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 121,
+            "win_rate": 26.45,
+            "net_r": 35.19,
+            "profit_factor": 1.48,
+            "max_drawdown_r": 13.06,
+            "sharpe_ratio": 1.87
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 103,
+            "win_rate": 25.24,
+            "net_r": 19.37,
+            "profit_factor": 1.28,
+            "max_drawdown_r": 13.59,
+            "sharpe_ratio": 1.13
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.868,
+            "walk_forward_efficiency": 0.828,
+            "drawdown_expansion_ratio": 1.041
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 39,
+            "wins": 6,
+            "losses": 24,
+            "win_rate": 15.4,
+            "net_r": -0.82,
+            "profit_factor": 0.73
+          },
+          "Winter_2026": {
+            "trades": 39,
+            "wins": 10,
+            "losses": 21,
+            "win_rate": 25.6,
+            "net_r": 13.33,
+            "profit_factor": 1.39
+          },
+          "Spring_2026": {
+            "trades": 62,
+            "wins": 24,
+            "losses": 33,
+            "win_rate": 38.7,
+            "net_r": 36.96,
+            "profit_factor": 2.12
+          },
+          "Summer_2026": {
+            "trades": 64,
+            "wins": 13,
+            "losses": 42,
+            "win_rate": 20.3,
+            "net_r": 1.23,
+            "profit_factor": 0.9
           },
           "Autumn_2026": {
             "trades": 20,
-            "wins": 9,
-            "losses": 7,
-            "win_rate": 45.0,
-            "net_r": 4.91,
-            "profit_factor": 1.8
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -3.0,
-          "2025-07": -2.25,
-          "2025-08": 2.9,
-          "2025-09": 0.4,
-          "2025-10": 0.44,
-          "2025-11": 3.0,
-          "2025-12": -1.16,
-          "2026-01": 11.46,
-          "2026-02": -0.4,
-          "2026-03": 7.5,
-          "2026-04": 8.44,
-          "2026-05": 5.64,
-          "2026-06": -4.5,
-          "2026-07": 3.0,
-          "2026-08": -0.2,
-          "2026-09": 1.39,
-          "2026-10": 3.1,
-          "2026-11": 0.42
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_014",
-        "direction": "BUY",
-        "formula": "[BUY] (autocorr_lag1 >= -0.1632) AND (0.0008 <= norm_atr <= 0.0016) AND (kurtosis_30 > 1.1932) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 24b",
-        "predicates": [
-          {
-            "feature": "autocorr_lag1",
-            "op": ">=",
-            "threshold": -0.16322795641818044
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 24,
-        "full_sample": {
-          "total_fills": 133,
-          "wins": 47,
-          "losses": 43,
-          "breakevens": 0,
-          "expired": 43,
-          "win_rate_pct": 35.34,
-          "net_r": 31.05,
-          "net_pnl_usd": 359.17,
-          "profit_factor": 1.61,
-          "max_drawdown_r": 5.38,
-          "sharpe_ratio": 2.62,
-          "t_statistic": 2.61
-        },
-        "walk_forward": {
-          "rule_id": "R11_014",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 71,
-            "win_rate": 35.21,
-            "net_r": 17.07,
-            "profit_factor": 1.64,
-            "max_drawdown_r": 4.54,
-            "sharpe_ratio": 1.99
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 61,
-            "win_rate": 36.07,
-            "net_r": 14.98,
-            "profit_factor": 1.65,
-            "max_drawdown_r": 5.38,
-            "sharpe_ratio": 1.85
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 1.003,
-            "walk_forward_efficiency": 1.32,
-            "drawdown_expansion_ratio": 1.185
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 33,
-            "wins": 10,
-            "losses": 13,
-            "win_rate": 30.3,
-            "net_r": 2.44,
-            "profit_factor": 1.08
-          },
-          "Winter_2026": {
-            "trades": 28,
-            "wins": 10,
-            "losses": 9,
-            "win_rate": 35.7,
-            "net_r": 8.16,
-            "profit_factor": 1.56
-          },
-          "Spring_2026": {
-            "trades": 29,
-            "wins": 14,
-            "losses": 5,
-            "win_rate": 48.3,
-            "net_r": 13.8,
-            "profit_factor": 3.92
-          },
-          "Summer_2026": {
-            "trades": 25,
-            "wins": 8,
-            "losses": 12,
-            "win_rate": 32.0,
-            "net_r": -0.94,
-            "profit_factor": 0.93
-          },
-          "Autumn_2026": {
-            "trades": 18,
             "wins": 5,
-            "losses": 4,
-            "win_rate": 27.8,
-            "net_r": 7.59,
-            "profit_factor": 1.75
-          }
-        },
-        "monthly_net_r": {
-          "2025-06": -2.18,
-          "2025-07": -2.54,
-          "2025-08": 4.06,
-          "2025-09": 0.4,
-          "2025-10": 2.64,
-          "2025-11": 0.61,
-          "2025-12": -0.54,
-          "2026-01": 8.81,
-          "2026-02": -0.65,
-          "2026-03": 4.34,
-          "2026-04": 5.62,
-          "2026-05": 3.84,
-          "2026-06": -3.08,
-          "2026-07": 3.0,
-          "2026-08": -0.86,
-          "2026-09": 2.75,
-          "2026-10": 2.92,
-          "2026-11": 1.92
-        }
-      },
-      {
-        "symbol": "XAUUSD",
-        "rule_id": "R11_018",
-        "direction": "BUY",
-        "formula": "[BUY] (kurtosis_30 > 1.1932) AND (0.0008 <= norm_atr <= 0.0016) AND (autocorr_lag1 >= -0.1632) | TP: 3.5xATR, SL: 2.5xATR, BE: 2.0R, TTL: 18b",
-        "predicates": [
-          {
-            "feature": "kurtosis_30",
-            "op": ">",
-            "threshold": 1.1931961768275163
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0008187088983509543,
-              0.0015618107482319556
-            ]
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": ">=",
-            "threshold": -0.16322795641818044
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 18,
-        "full_sample": {
-          "total_fills": 138,
-          "wins": 42,
-          "losses": 43,
-          "breakevens": 0,
-          "expired": 53,
-          "win_rate_pct": 30.43,
-          "net_r": 27.58,
-          "net_pnl_usd": 317.08,
-          "profit_factor": 1.54,
-          "max_drawdown_r": 4.2,
-          "sharpe_ratio": 2.38,
-          "t_statistic": 2.37
-        },
-        "walk_forward": {
-          "rule_id": "R11_018",
-          "symbol": "XAUUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 72,
-            "win_rate": 33.33,
-            "net_r": 18.36,
-            "profit_factor": 1.72,
-            "max_drawdown_r": 4.2,
-            "sharpe_ratio": 2.17
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 65,
-            "win_rate": 27.69,
-            "net_r": 10.22,
-            "profit_factor": 1.42,
-            "max_drawdown_r": 4.2,
-            "sharpe_ratio": 1.31
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.822,
-            "walk_forward_efficiency": 0.837,
-            "drawdown_expansion_ratio": 1.0
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 34,
-            "wins": 9,
             "losses": 12,
-            "win_rate": 26.5,
-            "net_r": 2.76,
-            "profit_factor": 1.05
-          },
-          "Winter_2026": {
-            "trades": 28,
-            "wins": 10,
-            "losses": 9,
-            "win_rate": 35.7,
-            "net_r": 7.82,
-            "profit_factor": 1.56
-          },
-          "Spring_2026": {
-            "trades": 30,
-            "wins": 13,
-            "losses": 5,
-            "win_rate": 43.3,
-            "net_r": 16.15,
-            "profit_factor": 3.64
-          },
-          "Summer_2026": {
-            "trades": 27,
-            "wins": 7,
-            "losses": 13,
-            "win_rate": 25.9,
-            "net_r": -2.08,
-            "profit_factor": 0.75
-          },
-          "Autumn_2026": {
-            "trades": 19,
-            "wins": 3,
-            "losses": 4,
-            "win_rate": 15.8,
-            "net_r": 2.94,
-            "profit_factor": 1.05
+            "win_rate": 25.0,
+            "net_r": 3.87,
+            "profit_factor": 1.22
           }
         },
         "monthly_net_r": {
-          "2025-06": -2.1,
-          "2025-07": -2.06,
-          "2025-08": 3.41,
-          "2025-09": 0.4,
-          "2025-10": 3.37,
-          "2025-11": 0.62,
-          "2025-12": -0.89,
-          "2026-01": 9.61,
-          "2026-02": -1.8,
-          "2026-03": 5.59,
-          "2026-04": 5.57,
-          "2026-05": 4.98,
-          "2026-06": -2.8,
-          "2026-07": 2.78,
-          "2026-08": -2.07,
-          "2026-09": 1.46,
-          "2026-10": 2.08,
-          "2026-11": -0.6
+          "2025-06": -2.0,
+          "2025-07": -2.19,
+          "2025-08": 4.48,
+          "2025-09": -0.09,
+          "2025-10": -9.05,
+          "2025-11": 8.03,
+          "2026-01": 13.45,
+          "2026-02": -0.12,
+          "2026-03": 14.17,
+          "2026-04": 12.35,
+          "2026-05": 10.44,
+          "2026-06": 0.17,
+          "2026-07": 5.01,
+          "2026-08": -3.95,
+          "2026-09": 1.1,
+          "2026-10": -5.0,
+          "2026-11": 7.77
         }
       },
       {
@@ -2136,1050 +1152,808 @@
   },
   "NQ": {
     "symbol": "NQ",
-    "total_candidates_audited": 60,
-    "ratified_count": 0,
-    "strategies": []
-  },
-  "BTCUSD": {
-    "symbol": "BTCUSD",
-    "total_candidates_audited": 94,
-    "ratified_count": 8,
+    "total_candidates_audited": 89,
+    "ratified_count": 3,
     "strategies": [
       {
-        "symbol": "BTCUSD",
-        "rule_id": "R10_008",
-        "direction": "SELL",
-        "formula": "[SELL] (skewness_30 < -1.4852) AND (0.0252 <= autocorr_lag1 <= 0.0762) | TP: 4.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
+        "symbol": "NQ",
+        "rule_id": "R14_044",
+        "direction": "BUY",
+        "formula": "[BUY] (0.8580 <= bb_keltner_squeeze <= 1.7158) AND (norm_atr >= 0.0019) AND (0.0002 <= velocity_21 <= 0.0010) | TP: 3.5xATR, SL: 2.0xATR, BE: 1.8R, TTL: 18b",
         "predicates": [
           {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "autocorr_lag1",
+            "feature": "bb_keltner_squeeze",
             "op": "between",
             "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
-            ]
-          }
-        ],
-        "tp_atr_mult": 4.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
-        "full_sample": {
-          "total_fills": 126,
-          "wins": 49,
-          "losses": 57,
-          "breakevens": 6,
-          "expired": 14,
-          "win_rate_pct": 38.89,
-          "net_r": 77.66,
-          "net_pnl_usd": 845.93,
-          "profit_factor": 2.13,
-          "max_drawdown_r": 5.74,
-          "sharpe_ratio": 4.22,
-          "t_statistic": 4.2
-        },
-        "walk_forward": {
-          "rule_id": "R10_008",
-          "symbol": "BTCUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 87,
-            "win_rate": 42.53,
-            "net_r": 62.26,
-            "profit_factor": 2.42,
-            "max_drawdown_r": 4.78,
-            "sharpe_ratio": 4.02
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 39,
-            "win_rate": 30.77,
-            "net_r": 15.41,
-            "profit_factor": 1.59,
-            "max_drawdown_r": 5.74,
-            "sharpe_ratio": 1.57
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.656,
-            "walk_forward_efficiency": 0.372,
-            "drawdown_expansion_ratio": 1.201
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 10,
-            "wins": 4,
-            "losses": 5,
-            "win_rate": 40.0,
-            "net_r": 6.78,
-            "profit_factor": 2.0
-          },
-          "Winter_2026": {
-            "trades": 24,
-            "wins": 10,
-            "losses": 10,
-            "win_rate": 41.7,
-            "net_r": 15.98,
-            "profit_factor": 2.5
-          },
-          "Spring_2026": {
-            "trades": 44,
-            "wins": 20,
-            "losses": 17,
-            "win_rate": 45.5,
-            "net_r": 37.99,
-            "profit_factor": 2.94
-          },
-          "Summer_2026": {
-            "trades": 33,
-            "wins": 9,
-            "losses": 20,
-            "win_rate": 27.3,
-            "net_r": 5.95,
-            "profit_factor": 1.12
-          },
-          "Autumn_2026": {
-            "trades": 15,
-            "wins": 6,
-            "losses": 5,
-            "win_rate": 40.0,
-            "net_r": 10.96,
-            "profit_factor": 3.0
-          }
-        },
-        "monthly_net_r": {
-          "2025-11": -1.0,
-          "2025-12": 7.78,
-          "2026-01": 6.2,
-          "2026-02": 9.79,
-          "2026-03": 10.89,
-          "2026-04": 8.19,
-          "2026-05": 18.91,
-          "2026-06": 4.5,
-          "2026-07": 4.16,
-          "2026-08": -2.72,
-          "2026-09": 5.09,
-          "2026-10": -0.63,
-          "2026-11": 6.5
-        }
-      },
-      {
-        "symbol": "BTCUSD",
-        "rule_id": "R11_026",
-        "direction": "SELL",
-        "formula": "[SELL] (gk_vol <= 0.0020) AND (0.0252 <= autocorr_lag1 <= 0.0762) AND (skewness_30 < -1.4852) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
-        "predicates": [
-          {
-            "feature": "gk_vol",
-            "op": "<=",
-            "threshold": 0.0020024381639439236
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": "between",
-            "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
+              0.8579622916574415,
+              1.7158113407786915
             ]
           },
           {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
+            "feature": "norm_atr",
+            "op": ">=",
+            "threshold": 0.0019081009445816007
+          },
+          {
+            "feature": "velocity_21",
+            "op": "between",
+            "threshold": [
+              0.00017308487913618754,
+              0.0010162322628790201
+            ]
           }
         ],
         "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
+        "sl_atr_mult": 2.0,
+        "be_ratchet_r": 1.8,
+        "ttl_bars": 18,
         "full_sample": {
-          "total_fills": 98,
-          "wins": 49,
-          "losses": 43,
+          "total_fills": 109,
+          "wins": 18,
+          "losses": 27,
           "breakevens": 0,
-          "expired": 6,
-          "win_rate_pct": 50.0,
-          "net_r": 55.74,
-          "net_pnl_usd": 586.85,
-          "profit_factor": 2.06,
-          "max_drawdown_r": 3.11,
-          "sharpe_ratio": 3.95,
-          "t_statistic": 3.93
+          "expired": 64,
+          "win_rate_pct": 16.51,
+          "net_r": 28.14,
+          "net_pnl_usd": 230.41,
+          "profit_factor": 1.5,
+          "max_drawdown_r": 5.38,
+          "sharpe_ratio": 2.68,
+          "t_statistic": 2.67
         },
         "walk_forward": {
-          "rule_id": "R11_026",
-          "symbol": "BTCUSD",
+          "rule_id": "R14_044",
+          "symbol": "NQ",
           "verdict": "RATIFIED",
           "rejection_reasons": [],
           "in_sample": {
             "bars": 60000,
-            "trades": 67,
-            "win_rate": 55.22,
-            "net_r": 46.71,
-            "profit_factor": 2.51,
-            "max_drawdown_r": 3.0,
-            "sharpe_ratio": 4.0
+            "trades": 51,
+            "win_rate": 19.61,
+            "net_r": 15.2,
+            "profit_factor": 1.62,
+            "max_drawdown_r": 5.38,
+            "sharpe_ratio": 2.11
           },
           "out_of_sample": {
             "bars": 39900,
-            "trades": 31,
-            "win_rate": 38.71,
-            "net_r": 9.02,
-            "profit_factor": 1.34,
-            "max_drawdown_r": 3.06,
-            "sharpe_ratio": 1.17
+            "trades": 58,
+            "win_rate": 13.79,
+            "net_r": 12.94,
+            "profit_factor": 1.4,
+            "max_drawdown_r": 4.38,
+            "sharpe_ratio": 1.69
           },
           "overfitting_metrics": {
-            "degradation_ratio_pf": 0.536,
-            "walk_forward_efficiency": 0.29,
-            "drawdown_expansion_ratio": 1.019
+            "degradation_ratio_pf": 0.869,
+            "walk_forward_efficiency": 1.279,
+            "drawdown_expansion_ratio": 0.814
           }
         },
         "seasonal_breakdown": {
           "Prior_2025": {
-            "trades": 8,
-            "wins": 3,
-            "losses": 5,
-            "win_rate": 37.5,
-            "net_r": 0.83,
-            "profit_factor": 1.17
+            "trades": 17,
+            "wins": 5,
+            "losses": 1,
+            "win_rate": 29.4,
+            "net_r": 11.13,
+            "profit_factor": 8.75
           },
           "Winter_2026": {
             "trades": 16,
-            "wins": 12,
+            "wins": 2,
             "losses": 4,
-            "win_rate": 75.0,
-            "net_r": 19.33,
-            "profit_factor": 5.83
+            "win_rate": 12.5,
+            "net_r": 2.82,
+            "profit_factor": 0.88
           },
           "Spring_2026": {
-            "trades": 37,
-            "wins": 19,
-            "losses": 15,
-            "win_rate": 51.4,
-            "net_r": 23.72,
-            "profit_factor": 2.46
+            "trades": 30,
+            "wins": 4,
+            "losses": 9,
+            "win_rate": 13.3,
+            "net_r": 4.59,
+            "profit_factor": 0.78
           },
           "Summer_2026": {
-            "trades": 25,
-            "wins": 11,
-            "losses": 14,
-            "win_rate": 44.0,
-            "net_r": 7.38,
-            "profit_factor": 1.53
+            "trades": 34,
+            "wins": 3,
+            "losses": 10,
+            "win_rate": 8.8,
+            "net_r": 5.1,
+            "profit_factor": 0.53
           },
           "Autumn_2026": {
             "trades": 12,
             "wins": 4,
+            "losses": 3,
+            "win_rate": 33.3,
+            "net_r": 4.49,
+            "profit_factor": 2.33
+          }
+        },
+        "monthly_net_r": {
+          "2025-06": 1.51,
+          "2025-07": 0.39,
+          "2025-08": 2.15,
+          "2025-09": 0.33,
+          "2025-10": 3.61,
+          "2025-11": 3.5,
+          "2025-12": -0.36,
+          "2026-01": -0.12,
+          "2026-02": 2.94,
+          "2026-03": -1.79,
+          "2026-04": 3.13,
+          "2026-05": 3.26,
+          "2026-06": 5.71,
+          "2026-07": -0.73,
+          "2026-08": 0.12,
+          "2026-10": 4.88,
+          "2026-11": -0.38
+        }
+      },
+      {
+        "symbol": "NQ",
+        "rule_id": "R7_008",
+        "direction": "BUY",
+        "formula": "[BUY] (intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352) AND (curvature_8 < -0.0019) | TP: 4.5xATR, SL: 2.0xATR, BE: 1.2R, TTL: 48b",
+        "predicates": [
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.9600498543859286
+          },
+          {
+            "feature": "downside_semi_var_ratio_30",
+            "op": "<=",
+            "threshold": 0.4352124801354185
+          },
+          {
+            "feature": "curvature_8",
+            "op": "<",
+            "threshold": -0.001907964906149209
+          }
+        ],
+        "tp_atr_mult": 4.5,
+        "sl_atr_mult": 2.0,
+        "be_ratchet_r": 1.2,
+        "ttl_bars": 48,
+        "full_sample": {
+          "total_fills": 72,
+          "wins": 13,
+          "losses": 21,
+          "breakevens": 11,
+          "expired": 27,
+          "win_rate_pct": 18.06,
+          "net_r": 26.36,
+          "net_pnl_usd": 191.6,
+          "profit_factor": 1.56,
+          "max_drawdown_r": 4.37,
+          "sharpe_ratio": 2.58,
+          "t_statistic": 2.56
+        },
+        "walk_forward": {
+          "rule_id": "R7_008",
+          "symbol": "NQ",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 40,
+            "win_rate": 15.0,
+            "net_r": 19.2,
+            "profit_factor": 2.0,
+            "max_drawdown_r": 2.0,
+            "sharpe_ratio": 2.73
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 32,
+            "win_rate": 21.88,
+            "net_r": 7.16,
+            "profit_factor": 1.21,
+            "max_drawdown_r": 4.37,
+            "sharpe_ratio": 0.98
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.606,
+            "walk_forward_efficiency": 0.561,
+            "drawdown_expansion_ratio": 2.185
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 23,
+            "wins": 3,
+            "losses": 4,
+            "win_rate": 13.0,
+            "net_r": 13.91,
+            "profit_factor": 1.69
+          },
+          "Winter_2026": {
+            "trades": 11,
+            "wins": 2,
+            "losses": 4,
+            "win_rate": 18.2,
+            "net_r": 2.8,
+            "profit_factor": 1.12
+          },
+          "Spring_2026": {
+            "trades": 12,
+            "wins": 4,
+            "losses": 4,
+            "win_rate": 33.3,
+            "net_r": 6.24,
+            "profit_factor": 2.25
+          },
+          "Summer_2026": {
+            "trades": 19,
+            "wins": 3,
+            "losses": 6,
+            "win_rate": 15.8,
+            "net_r": 2.61,
+            "profit_factor": 1.12
+          },
+          "Autumn_2026": {
+            "trades": 7,
+            "wins": 1,
+            "losses": 3,
+            "win_rate": 14.3,
+            "net_r": 0.8,
+            "profit_factor": 0.75
+          }
+        },
+        "monthly_net_r": {
+          "2025-06": 3.46,
+          "2025-07": 1.26,
+          "2025-08": 0.55,
+          "2025-09": 3.38,
+          "2025-10": 0.72,
+          "2025-11": 4.23,
+          "2025-12": 0.31,
+          "2026-01": 2.47,
+          "2026-02": 0.33,
+          "2026-03": 1.42,
+          "2026-04": 3.33,
+          "2026-05": 1.5,
+          "2026-06": -0.45,
+          "2026-07": 1.48,
+          "2026-08": 1.58,
+          "2026-09": -2.0,
+          "2026-10": 1.11,
+          "2026-11": 1.69
+        }
+      },
+      {
+        "symbol": "NQ",
+        "rule_id": "R14_008",
+        "direction": "BUY",
+        "formula": "[BUY] (curvature_8 < -0.0019) AND (intraday_cycle_cos > 0.9600) AND (downside_semi_var_ratio_30 <= 0.4352) | TP: 4.0xATR, SL: 2.0xATR, BE: 2.0R, TTL: 36b",
+        "predicates": [
+          {
+            "feature": "curvature_8",
+            "op": "<",
+            "threshold": -0.001907964906149209
+          },
+          {
+            "feature": "intraday_cycle_cos",
+            "op": ">",
+            "threshold": 0.9600498543859286
+          },
+          {
+            "feature": "downside_semi_var_ratio_30",
+            "op": "<=",
+            "threshold": 0.4352124801354185
+          }
+        ],
+        "tp_atr_mult": 4.0,
+        "sl_atr_mult": 2.0,
+        "be_ratchet_r": 2.0,
+        "ttl_bars": 36,
+        "full_sample": {
+          "total_fills": 73,
+          "wins": 13,
+          "losses": 23,
+          "breakevens": 0,
+          "expired": 37,
+          "win_rate_pct": 17.81,
+          "net_r": 24.2,
+          "net_pnl_usd": 141.4,
+          "profit_factor": 1.38,
+          "max_drawdown_r": 3.17,
+          "sharpe_ratio": 2.49,
+          "t_statistic": 2.47
+        },
+        "walk_forward": {
+          "rule_id": "R14_008",
+          "symbol": "NQ",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 41,
+            "win_rate": 17.07,
+            "net_r": 16.29,
+            "profit_factor": 1.54,
+            "max_drawdown_r": 2.0,
+            "sharpe_ratio": 2.36
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 32,
+            "win_rate": 18.75,
+            "net_r": 7.91,
+            "profit_factor": 1.22,
+            "max_drawdown_r": 3.17,
+            "sharpe_ratio": 1.16
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.788,
+            "walk_forward_efficiency": 0.73,
+            "drawdown_expansion_ratio": 1.585
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 24,
+            "wins": 5,
+            "losses": 5,
+            "win_rate": 20.8,
+            "net_r": 12.45,
+            "profit_factor": 2.0
+          },
+          "Winter_2026": {
+            "trades": 11,
+            "wins": 1,
+            "losses": 4,
+            "win_rate": 9.1,
+            "net_r": 1.85,
+            "profit_factor": 0.5
+          },
+          "Spring_2026": {
+            "trades": 12,
+            "wins": 4,
             "losses": 5,
             "win_rate": 33.3,
-            "net_r": 4.47,
-            "profit_factor": 1.56
-          }
-        },
-        "monthly_net_r": {
-          "2025-11": -1.0,
-          "2025-12": 1.83,
-          "2026-01": 7.72,
-          "2026-02": 11.61,
-          "2026-03": 9.75,
-          "2026-04": 3.78,
-          "2026-05": 10.2,
-          "2026-06": 4.72,
-          "2026-07": -0.11,
-          "2026-08": 2.78,
-          "2026-09": 2.64,
-          "2026-10": -1.06,
-          "2026-11": 2.89
-        }
-      },
-      {
-        "symbol": "BTCUSD",
-        "rule_id": "R8_012",
-        "direction": "SELL",
-        "formula": "[SELL] (skewness_30 < -1.4852) AND (directional_vol_imb <= 0.5289) AND (0.0252 <= autocorr_lag1 <= 0.0762) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
-        "predicates": [
-          {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "directional_vol_imb",
-            "op": "<=",
-            "threshold": 0.5288848263080405
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": "between",
-            "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
-        "full_sample": {
-          "total_fills": 122,
-          "wins": 59,
-          "losses": 55,
-          "breakevens": 0,
-          "expired": 8,
-          "win_rate_pct": 48.36,
-          "net_r": 61.89,
-          "net_pnl_usd": 650.33,
-          "profit_factor": 1.91,
-          "max_drawdown_r": 4.0,
-          "sharpe_ratio": 3.92,
-          "t_statistic": 3.9
-        },
-        "walk_forward": {
-          "rule_id": "R8_012",
-          "symbol": "BTCUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 83,
-            "win_rate": 49.4,
-            "net_r": 43.81,
-            "profit_factor": 2.0,
-            "max_drawdown_r": 3.24,
-            "sharpe_ratio": 3.35
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 39,
-            "win_rate": 46.15,
-            "net_r": 18.08,
-            "profit_factor": 1.74,
-            "max_drawdown_r": 4.0,
-            "sharpe_ratio": 2.04
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.873,
-            "walk_forward_efficiency": 0.621,
-            "drawdown_expansion_ratio": 1.234
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 9,
-            "wins": 4,
-            "losses": 5,
-            "win_rate": 44.4,
-            "net_r": 2.78,
-            "profit_factor": 1.56
-          },
-          "Winter_2026": {
-            "trades": 23,
-            "wins": 13,
-            "losses": 9,
-            "win_rate": 56.5,
-            "net_r": 15.73,
-            "profit_factor": 2.81
-          },
-          "Spring_2026": {
-            "trades": 42,
-            "wins": 21,
-            "losses": 17,
-            "win_rate": 50.0,
-            "net_r": 25.47,
-            "profit_factor": 2.4
+            "net_r": 5.0,
+            "profit_factor": 1.6
           },
           "Summer_2026": {
-            "trades": 33,
-            "wins": 14,
-            "losses": 19,
-            "win_rate": 42.4,
-            "net_r": 8.22,
-            "profit_factor": 1.43
+            "trades": 19,
+            "wins": 3,
+            "losses": 6,
+            "win_rate": 15.8,
+            "net_r": 4.94,
+            "profit_factor": 1.0
           },
           "Autumn_2026": {
-            "trades": 15,
-            "wins": 7,
-            "losses": 5,
-            "win_rate": 46.7,
-            "net_r": 9.7,
-            "profit_factor": 2.72
+            "trades": 7,
+            "wins": 0,
+            "losses": 3,
+            "win_rate": 0.0,
+            "net_r": -0.03,
+            "profit_factor": 0.0
           }
         },
         "monthly_net_r": {
-          "2025-11": -1.0,
-          "2025-12": 3.78,
-          "2026-01": 9.12,
-          "2026-02": 6.61,
-          "2026-03": 9.55,
-          "2026-04": 5.72,
-          "2026-05": 10.2,
+          "2025-06": 4.0,
+          "2025-07": 0.23,
+          "2025-08": -0.34,
+          "2025-09": 2.31,
+          "2025-10": 0.24,
+          "2025-11": 5.16,
+          "2025-12": 0.85,
+          "2026-01": 1.89,
+          "2026-02": -0.04,
+          "2026-03": 1.74,
+          "2026-04": 2.25,
+          "2026-05": 1.0,
           "2026-06": 1.72,
-          "2026-07": 4.72,
-          "2026-08": 1.78,
-          "2026-09": 3.98,
-          "2026-10": 0.89,
-          "2026-11": 4.83
+          "2026-07": 1.66,
+          "2026-08": 1.57,
+          "2026-09": -1.32,
+          "2026-10": 0.54,
+          "2026-11": 0.74
         }
-      },
+      }
+    ]
+  },
+  "BTCUSD": {
+    "symbol": "BTCUSD",
+    "total_candidates_audited": 97,
+    "ratified_count": 2,
+    "strategies": [
       {
         "symbol": "BTCUSD",
-        "rule_id": "R11_009",
+        "rule_id": "R9_039",
         "direction": "SELL",
-        "formula": "[SELL] (skewness_30 < -1.4852) AND (0.0252 <= autocorr_lag1 <= 0.0762) AND (directional_vol_imb <= 0.5289) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
+        "formula": "[SELL] (0.4047 <= rolling_quantile_100 <= 0.5050) AND (ma_divergence >= 0.7175) AND (vol_regime_z <= -0.4584) | TP: 4.0xATR, SL: 2.5xATR, BE: 1.8R, TTL: 72b",
         "predicates": [
           {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "autocorr_lag1",
+            "feature": "rolling_quantile_100",
             "op": "between",
             "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
+              0.40472691742481137,
+              0.5049855445277772
             ]
           },
           {
-            "feature": "directional_vol_imb",
+            "feature": "ma_divergence",
+            "op": ">=",
+            "threshold": 0.7174574126501119
+          },
+          {
+            "feature": "vol_regime_z",
             "op": "<=",
-            "threshold": 0.5288848263080405
+            "threshold": -0.45841758595696785
           }
         ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
+        "tp_atr_mult": 4.0,
+        "sl_atr_mult": 2.5,
+        "be_ratchet_r": 1.8,
+        "ttl_bars": 72,
         "full_sample": {
-          "total_fills": 122,
-          "wins": 59,
-          "losses": 55,
-          "breakevens": 0,
-          "expired": 8,
-          "win_rate_pct": 48.36,
-          "net_r": 61.89,
-          "net_pnl_usd": 650.33,
-          "profit_factor": 1.91,
-          "max_drawdown_r": 4.0,
-          "sharpe_ratio": 3.92,
-          "t_statistic": 3.9
-        },
-        "walk_forward": {
-          "rule_id": "R11_009",
-          "symbol": "BTCUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 83,
-            "win_rate": 49.4,
-            "net_r": 43.81,
-            "profit_factor": 2.0,
-            "max_drawdown_r": 3.24,
-            "sharpe_ratio": 3.35
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 39,
-            "win_rate": 46.15,
-            "net_r": 18.08,
-            "profit_factor": 1.74,
-            "max_drawdown_r": 4.0,
-            "sharpe_ratio": 2.04
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.873,
-            "walk_forward_efficiency": 0.621,
-            "drawdown_expansion_ratio": 1.234
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 9,
-            "wins": 4,
-            "losses": 5,
-            "win_rate": 44.4,
-            "net_r": 2.78,
-            "profit_factor": 1.56
-          },
-          "Winter_2026": {
-            "trades": 23,
-            "wins": 13,
-            "losses": 9,
-            "win_rate": 56.5,
-            "net_r": 15.73,
-            "profit_factor": 2.81
-          },
-          "Spring_2026": {
-            "trades": 42,
-            "wins": 21,
-            "losses": 17,
-            "win_rate": 50.0,
-            "net_r": 25.47,
-            "profit_factor": 2.4
-          },
-          "Summer_2026": {
-            "trades": 33,
-            "wins": 14,
-            "losses": 19,
-            "win_rate": 42.4,
-            "net_r": 8.22,
-            "profit_factor": 1.43
-          },
-          "Autumn_2026": {
-            "trades": 15,
-            "wins": 7,
-            "losses": 5,
-            "win_rate": 46.7,
-            "net_r": 9.7,
-            "profit_factor": 2.72
-          }
-        },
-        "monthly_net_r": {
-          "2025-11": -1.0,
-          "2025-12": 3.78,
-          "2026-01": 9.12,
-          "2026-02": 6.61,
-          "2026-03": 9.55,
-          "2026-04": 5.72,
-          "2026-05": 10.2,
-          "2026-06": 1.72,
-          "2026-07": 4.72,
-          "2026-08": 1.78,
-          "2026-09": 3.98,
-          "2026-10": 0.89,
-          "2026-11": 4.83
-        }
-      },
-      {
-        "symbol": "BTCUSD",
-        "rule_id": "R11_008",
-        "direction": "SELL",
-        "formula": "[SELL] (0.0012 <= norm_atr <= 0.0024) AND (skewness_30 < -1.4852) AND (0.0252 <= autocorr_lag1 <= 0.0762) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
-        "predicates": [
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0012097032934875413,
-              0.0023798993315337896
-            ]
-          },
-          {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": "between",
-            "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
-        "full_sample": {
-          "total_fills": 60,
-          "wins": 32,
+          "total_fills": 66,
+          "wins": 35,
           "losses": 27,
           "breakevens": 0,
-          "expired": 1,
-          "win_rate_pct": 53.33,
-          "net_r": 34.97,
-          "net_pnl_usd": 387.25,
-          "profit_factor": 2.13,
-          "max_drawdown_r": 4.3,
-          "sharpe_ratio": 3.1,
-          "t_statistic": 3.07
+          "expired": 4,
+          "win_rate_pct": 53.03,
+          "net_r": 29.92,
+          "net_pnl_usd": 309.3,
+          "profit_factor": 1.89,
+          "max_drawdown_r": 4.2,
+          "sharpe_ratio": 2.93,
+          "t_statistic": 2.91
         },
         "walk_forward": {
-          "rule_id": "R11_008",
+          "rule_id": "R9_039",
           "symbol": "BTCUSD",
           "verdict": "RATIFIED",
           "rejection_reasons": [],
           "in_sample": {
             "bars": 60000,
-            "trades": 45,
-            "win_rate": 46.67,
-            "net_r": 17.58,
-            "profit_factor": 1.64,
-            "max_drawdown_r": 4.3,
-            "sharpe_ratio": 1.8
+            "trades": 40,
+            "win_rate": 57.5,
+            "net_r": 20.57,
+            "profit_factor": 2.09,
+            "max_drawdown_r": 4.2,
+            "sharpe_ratio": 2.56
           },
           "out_of_sample": {
             "bars": 39900,
-            "trades": 15,
-            "win_rate": 73.33,
-            "net_r": 17.38,
-            "profit_factor": 4.96,
-            "max_drawdown_r": 1.0,
-            "sharpe_ratio": 3.45
+            "trades": 26,
+            "win_rate": 46.15,
+            "net_r": 9.35,
+            "profit_factor": 1.61,
+            "max_drawdown_r": 3.48,
+            "sharpe_ratio": 1.49
           },
           "overfitting_metrics": {
-            "degradation_ratio_pf": 3.022,
-            "walk_forward_efficiency": 1.487,
-            "drawdown_expansion_ratio": 0.233
+            "degradation_ratio_pf": 0.769,
+            "walk_forward_efficiency": 0.684,
+            "drawdown_expansion_ratio": 0.828
           }
         },
         "seasonal_breakdown": {
           "Prior_2025": {
-            "trades": 8,
-            "wins": 5,
+            "trades": 11,
+            "wins": 7,
             "losses": 3,
-            "win_rate": 62.5,
-            "net_r": 6.72,
-            "profit_factor": 3.24
+            "win_rate": 63.6,
+            "net_r": 7.97,
+            "profit_factor": 3.73
           },
           "Winter_2026": {
-            "trades": 13,
-            "wins": 7,
-            "losses": 6,
-            "win_rate": 53.8,
-            "net_r": 7.61,
-            "profit_factor": 2.27
+            "trades": 10,
+            "wins": 3,
+            "losses": 7,
+            "win_rate": 30.0,
+            "net_r": -2.2,
+            "profit_factor": 0.69
           },
           "Spring_2026": {
-            "trades": 18,
-            "wins": 7,
-            "losses": 10,
-            "win_rate": 38.9,
-            "net_r": 3.37,
-            "profit_factor": 1.36
-          },
-          "Summer_2026": {
-            "trades": 16,
-            "wins": 9,
-            "losses": 7,
-            "win_rate": 56.2,
-            "net_r": 10.5,
-            "profit_factor": 2.5
-          },
-          "Autumn_2026": {
-            "trades": 5,
-            "wins": 4,
-            "losses": 1,
-            "win_rate": 80.0,
-            "net_r": 6.78,
-            "profit_factor": 7.78
-          }
-        },
-        "monthly_net_r": {
-          "2025-12": 6.72,
-          "2026-01": 3.83,
-          "2026-02": 3.78,
-          "2026-03": 2.48,
-          "2026-04": -0.06,
-          "2026-05": 0.94,
-          "2026-06": -0.17,
-          "2026-07": 6.78,
-          "2026-08": 3.89,
-          "2026-09": 1.94,
-          "2026-10": 0.94,
-          "2026-11": 3.89
-        }
-      },
-      {
-        "symbol": "BTCUSD",
-        "rule_id": "R11_015",
-        "direction": "SELL",
-        "formula": "[SELL] (skewness_30 < -1.4852) AND (0.0012 <= norm_atr <= 0.0024) AND (0.0252 <= autocorr_lag1 <= 0.0762) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
-        "predicates": [
-          {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0012097032934875413,
-              0.0023798993315337896
-            ]
-          },
-          {
-            "feature": "autocorr_lag1",
-            "op": "between",
-            "threshold": [
-              0.025184656178928636,
-              0.07617133819714941
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
-        "full_sample": {
-          "total_fills": 60,
-          "wins": 32,
-          "losses": 27,
-          "breakevens": 0,
-          "expired": 1,
-          "win_rate_pct": 53.33,
-          "net_r": 34.97,
-          "net_pnl_usd": 387.25,
-          "profit_factor": 2.13,
-          "max_drawdown_r": 4.3,
-          "sharpe_ratio": 3.1,
-          "t_statistic": 3.07
-        },
-        "walk_forward": {
-          "rule_id": "R11_015",
-          "symbol": "BTCUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 45,
-            "win_rate": 46.67,
-            "net_r": 17.58,
-            "profit_factor": 1.64,
-            "max_drawdown_r": 4.3,
-            "sharpe_ratio": 1.8
-          },
-          "out_of_sample": {
-            "bars": 39900,
             "trades": 15,
-            "win_rate": 73.33,
-            "net_r": 17.38,
-            "profit_factor": 4.96,
-            "max_drawdown_r": 1.0,
-            "sharpe_ratio": 3.45
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 3.022,
-            "walk_forward_efficiency": 1.487,
-            "drawdown_expansion_ratio": 0.233
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 8,
-            "wins": 5,
-            "losses": 3,
-            "win_rate": 62.5,
-            "net_r": 6.72,
-            "profit_factor": 3.24
-          },
-          "Winter_2026": {
-            "trades": 13,
-            "wins": 7,
-            "losses": 6,
-            "win_rate": 53.8,
-            "net_r": 7.61,
-            "profit_factor": 2.27
-          },
-          "Spring_2026": {
-            "trades": 18,
-            "wins": 7,
-            "losses": 10,
-            "win_rate": 38.9,
-            "net_r": 3.37,
-            "profit_factor": 1.36
+            "wins": 11,
+            "losses": 4,
+            "win_rate": 73.3,
+            "net_r": 13.6,
+            "profit_factor": 4.4
           },
           "Summer_2026": {
-            "trades": 16,
+            "trades": 15,
             "wins": 9,
-            "losses": 7,
-            "win_rate": 56.2,
-            "net_r": 10.5,
-            "profit_factor": 2.5
+            "losses": 5,
+            "win_rate": 60.0,
+            "net_r": 9.17,
+            "profit_factor": 2.88
           },
           "Autumn_2026": {
-            "trades": 5,
-            "wins": 4,
-            "losses": 1,
-            "win_rate": 80.0,
-            "net_r": 6.78,
-            "profit_factor": 7.78
+            "trades": 15,
+            "wins": 5,
+            "losses": 8,
+            "win_rate": 33.3,
+            "net_r": 1.38,
+            "profit_factor": 1.0
           }
         },
         "monthly_net_r": {
-          "2025-12": 6.72,
-          "2026-01": 3.83,
-          "2026-02": 3.78,
-          "2026-03": 2.48,
-          "2026-04": -0.06,
-          "2026-05": 0.94,
-          "2026-06": -0.17,
-          "2026-07": 6.78,
-          "2026-08": 3.89,
-          "2026-09": 1.94,
-          "2026-10": 0.94,
-          "2026-11": 3.89
+          "2025-12": 7.97,
+          "2026-01": -3.0,
+          "2026-02": 0.8,
+          "2026-03": -1.4,
+          "2026-04": 3.2,
+          "2026-05": 11.8,
+          "2026-06": -0.03,
+          "2026-07": 2.8,
+          "2026-08": 6.4,
+          "2026-09": 4.78,
+          "2026-10": -3.4
         }
       },
       {
         "symbol": "BTCUSD",
-        "rule_id": "R11_013",
-        "direction": "SELL",
-        "formula": "[SELL] (skewness_30 < -1.4852) AND (0.0012 <= norm_atr <= 0.0024) | TP: 3.5xATR, SL: 1.8xATR, BE: 2.0R, TTL: 36b",
-        "predicates": [
-          {
-            "feature": "skewness_30",
-            "op": "<",
-            "threshold": -1.48524389316076
-          },
-          {
-            "feature": "norm_atr",
-            "op": "between",
-            "threshold": [
-              0.0012097032934875413,
-              0.0023798993315337896
-            ]
-          }
-        ],
-        "tp_atr_mult": 3.5,
-        "sl_atr_mult": 1.8,
-        "be_ratchet_r": 2.0,
-        "ttl_bars": 36,
-        "full_sample": {
-          "total_fills": 297,
-          "wins": 117,
-          "losses": 157,
-          "breakevens": 0,
-          "expired": 23,
-          "win_rate_pct": 39.39,
-          "net_r": 76.14,
-          "net_pnl_usd": 748.88,
-          "profit_factor": 1.37,
-          "max_drawdown_r": 9.17,
-          "sharpe_ratio": 2.89,
-          "t_statistic": 3.13
-        },
-        "walk_forward": {
-          "rule_id": "R11_013",
-          "symbol": "BTCUSD",
-          "verdict": "RATIFIED",
-          "rejection_reasons": [],
-          "in_sample": {
-            "bars": 60000,
-            "trades": 209,
-            "win_rate": 39.71,
-            "net_r": 56.07,
-            "profit_factor": 1.4,
-            "max_drawdown_r": 9.17,
-            "sharpe_ratio": 2.76
-          },
-          "out_of_sample": {
-            "bars": 39900,
-            "trades": 88,
-            "win_rate": 38.64,
-            "net_r": 20.06,
-            "profit_factor": 1.3,
-            "max_drawdown_r": 9.05,
-            "sharpe_ratio": 1.51
-          },
-          "overfitting_metrics": {
-            "degradation_ratio_pf": 0.93,
-            "walk_forward_efficiency": 0.538,
-            "drawdown_expansion_ratio": 0.987
-          }
-        },
-        "seasonal_breakdown": {
-          "Prior_2025": {
-            "trades": 36,
-            "wins": 16,
-            "losses": 18,
-            "win_rate": 44.4,
-            "net_r": 13.73,
-            "profit_factor": 1.73
-          },
-          "Winter_2026": {
-            "trades": 51,
-            "wins": 22,
-            "losses": 25,
-            "win_rate": 43.1,
-            "net_r": 18.28,
-            "profit_factor": 1.71
-          },
-          "Spring_2026": {
-            "trades": 102,
-            "wins": 40,
-            "losses": 54,
-            "win_rate": 39.2,
-            "net_r": 26.11,
-            "profit_factor": 1.44
-          },
-          "Summer_2026": {
-            "trades": 56,
-            "wins": 23,
-            "losses": 30,
-            "win_rate": 41.1,
-            "net_r": 17.18,
-            "profit_factor": 1.49
-          },
-          "Autumn_2026": {
-            "trades": 52,
-            "wins": 16,
-            "losses": 30,
-            "win_rate": 30.8,
-            "net_r": 0.83,
-            "profit_factor": 1.04
-          }
-        },
-        "monthly_net_r": {
-          "2025-11": -1.0,
-          "2025-12": 14.73,
-          "2026-01": 8.44,
-          "2026-02": 9.84,
-          "2026-03": 23.74,
-          "2026-04": -1.31,
-          "2026-05": 3.68,
-          "2026-06": 1.02,
-          "2026-07": 9.44,
-          "2026-08": 6.72,
-          "2026-09": -0.89,
-          "2026-10": 0.84,
-          "2026-11": 0.89
-        }
-      },
-      {
-        "symbol": "BTCUSD",
-        "rule_id": "R11_006",
+        "rule_id": "HYP_BTC_VOL_COMPRESSION_BUY",
         "direction": "BUY",
-        "formula": "[BUY] (-0.0003 <= accel_8 <= -0.0000) AND (parkinson_vol > 0.0020) | TP: 3.5xATR, SL: 2.5xATR, TTL: 36b",
+        "formula": "[BUY] (-0.0003 <= accel_8 <= 0.0000) AND (parkinson_vol > 0.0020) | TP: 3.5xATR, SL: 1.2xATR, BE: 1.8R, TTL: 36b",
         "predicates": [
           {
             "feature": "accel_8",
             "op": "between",
             "threshold": [
-              -0.00030281919654830575,
-              -2.3981643503621225e-06
+              -0.0003,
+              0.0
             ]
           },
           {
             "feature": "parkinson_vol",
             "op": ">",
-            "threshold": 0.0020276902308621132
+            "threshold": 0.002
           }
         ],
         "tp_atr_mult": 3.5,
-        "sl_atr_mult": 2.5,
-        "be_ratchet_r": null,
+        "sl_atr_mult": 1.2,
+        "be_ratchet_r": 1.8,
         "ttl_bars": 36,
         "full_sample": {
-          "total_fills": 157,
-          "wins": 60,
-          "losses": 58,
-          "breakevens": 0,
-          "expired": 39,
-          "win_rate_pct": 38.22,
-          "net_r": 34.94,
-          "net_pnl_usd": 383.42,
-          "profit_factor": 1.51,
-          "max_drawdown_r": 5.09,
-          "sharpe_ratio": 2.61,
-          "t_statistic": 2.6
+          "total_fills": 168,
+          "wins": 45,
+          "losses": 89,
+          "breakevens": 25,
+          "expired": 9,
+          "win_rate_pct": 26.79,
+          "net_r": 55.61,
+          "net_pnl_usd": 596.47,
+          "profit_factor": 1.53,
+          "max_drawdown_r": 9.53,
+          "sharpe_ratio": 2.54,
+          "t_statistic": 2.53
         },
         "walk_forward": {
-          "rule_id": "R11_006",
+          "rule_id": "HYP_BTC_VOL_COMPRESSION_BUY",
           "symbol": "BTCUSD",
           "verdict": "RATIFIED",
           "rejection_reasons": [],
           "in_sample": {
             "bars": 60000,
-            "trades": 119,
-            "win_rate": 36.97,
-            "net_r": 25.33,
-            "profit_factor": 1.49,
-            "max_drawdown_r": 5.09,
-            "sharpe_ratio": 2.19
+            "trades": 126,
+            "win_rate": 26.19,
+            "net_r": 42.64,
+            "profit_factor": 1.57,
+            "max_drawdown_r": 6.0,
+            "sharpe_ratio": 2.27
           },
           "out_of_sample": {
             "bars": 39900,
-            "trades": 38,
-            "win_rate": 42.11,
-            "net_r": 9.62,
-            "profit_factor": 1.56,
-            "max_drawdown_r": 5.0,
-            "sharpe_ratio": 1.42
+            "trades": 42,
+            "win_rate": 28.57,
+            "net_r": 12.97,
+            "profit_factor": 1.42,
+            "max_drawdown_r": 6.12,
+            "sharpe_ratio": 1.14
           },
           "overfitting_metrics": {
-            "degradation_ratio_pf": 1.049,
-            "walk_forward_efficiency": 0.571,
-            "drawdown_expansion_ratio": 0.982
+            "degradation_ratio_pf": 0.906,
+            "walk_forward_efficiency": 0.457,
+            "drawdown_expansion_ratio": 1.021
           }
         },
         "seasonal_breakdown": {
           "Prior_2025": {
             "trades": 10,
             "wins": 3,
-            "losses": 6,
+            "losses": 5,
             "win_rate": 30.0,
-            "net_r": -0.59,
-            "profit_factor": 0.7
-          },
-          "Winter_2026": {
-            "trades": 46,
-            "wins": 20,
-            "losses": 15,
-            "win_rate": 43.5,
-            "net_r": 13.57,
-            "profit_factor": 1.87
-          },
-          "Spring_2026": {
-            "trades": 43,
-            "wins": 15,
-            "losses": 14,
-            "win_rate": 34.9,
-            "net_r": 11.63,
-            "profit_factor": 1.5
-          },
-          "Summer_2026": {
-            "trades": 36,
-            "wins": 15,
-            "losses": 12,
-            "win_rate": 41.7,
-            "net_r": 10.33,
+            "net_r": 6.23,
             "profit_factor": 1.75
           },
+          "Winter_2026": {
+            "trades": 50,
+            "wins": 15,
+            "losses": 25,
+            "win_rate": 30.0,
+            "net_r": 18.68,
+            "profit_factor": 1.75
+          },
+          "Spring_2026": {
+            "trades": 44,
+            "wins": 11,
+            "losses": 21,
+            "win_rate": 25.0,
+            "net_r": 17.57,
+            "profit_factor": 1.53
+          },
+          "Summer_2026": {
+            "trades": 40,
+            "wins": 10,
+            "losses": 24,
+            "win_rate": 25.0,
+            "net_r": 8.79,
+            "profit_factor": 1.22
+          },
           "Autumn_2026": {
-            "trades": 22,
-            "wins": 7,
-            "losses": 11,
-            "win_rate": 31.8,
-            "net_r": 0.0,
-            "profit_factor": 0.89
+            "trades": 24,
+            "wins": 6,
+            "losses": 14,
+            "win_rate": 25.0,
+            "net_r": 4.33,
+            "profit_factor": 1.25
           }
         },
         "monthly_net_r": {
-          "2025-11": 1.21,
-          "2025-12": -1.8,
-          "2026-01": 2.5,
-          "2026-02": 11.07,
-          "2026-03": 8.03,
-          "2026-04": 3.95,
-          "2026-05": -0.35,
-          "2026-06": 0.12,
-          "2026-07": 4.81,
-          "2026-08": 5.41,
-          "2026-09": 1.56,
-          "2026-10": -1.78,
-          "2026-11": 0.23
+          "2025-11": 2.52,
+          "2025-12": 3.72,
+          "2026-01": 2.51,
+          "2026-02": 16.17,
+          "2026-03": 13.6,
+          "2026-04": 7.0,
+          "2026-05": -3.03,
+          "2026-06": -3.85,
+          "2026-07": 5.88,
+          "2026-08": 6.75,
+          "2026-09": 1.75,
+          "2026-10": 3.61,
+          "2026-11": -1.02
         }
       }
     ]
   },
   "GBPUSD": {
     "symbol": "GBPUSD",
-    "total_candidates_audited": 56,
-    "ratified_count": 0,
-    "strategies": []
+    "total_candidates_audited": 104,
+    "ratified_count": 1,
+    "strategies": [
+      {
+        "symbol": "GBPUSD",
+        "rule_id": "R13_023",
+        "direction": "SELL",
+        "formula": "[SELL] (intraday_cycle_sin < -0.9884) AND (skewness_30 < -0.8835) AND (acceleration_convexity > 0.1343) | TP: 3.5xATR, SL: 2.5xATR, BE: 1.2R, TTL: 36b",
+        "predicates": [
+          {
+            "feature": "intraday_cycle_sin",
+            "op": "<",
+            "threshold": -0.9883615104677607
+          },
+          {
+            "feature": "skewness_30",
+            "op": "<",
+            "threshold": -0.8835165571039938
+          },
+          {
+            "feature": "acceleration_convexity",
+            "op": ">",
+            "threshold": 0.1343090321298597
+          }
+        ],
+        "tp_atr_mult": 3.5,
+        "sl_atr_mult": 2.5,
+        "be_ratchet_r": 1.2,
+        "ttl_bars": 36,
+        "full_sample": {
+          "total_fills": 71,
+          "wins": 18,
+          "losses": 17,
+          "breakevens": 2,
+          "expired": 34,
+          "win_rate_pct": 25.35,
+          "net_r": 16.4,
+          "net_pnl_usd": 148.3,
+          "profit_factor": 1.53,
+          "max_drawdown_r": 5.29,
+          "sharpe_ratio": 2.1,
+          "t_statistic": 2.09
+        },
+        "walk_forward": {
+          "rule_id": "R13_023",
+          "symbol": "GBPUSD",
+          "verdict": "RATIFIED",
+          "rejection_reasons": [],
+          "in_sample": {
+            "bars": 60000,
+            "trades": 47,
+            "win_rate": 25.53,
+            "net_r": 12.6,
+            "profit_factor": 1.69,
+            "max_drawdown_r": 5.29,
+            "sharpe_ratio": 2.01
+          },
+          "out_of_sample": {
+            "bars": 39900,
+            "trades": 24,
+            "win_rate": 25.0,
+            "net_r": 3.8,
+            "profit_factor": 1.25,
+            "max_drawdown_r": 2.75,
+            "sharpe_ratio": 0.82
+          },
+          "overfitting_metrics": {
+            "degradation_ratio_pf": 0.739,
+            "walk_forward_efficiency": 0.453,
+            "drawdown_expansion_ratio": 0.52
+          }
+        },
+        "seasonal_breakdown": {
+          "Prior_2025": {
+            "trades": 25,
+            "wins": 8,
+            "losses": 2,
+            "win_rate": 32.0,
+            "net_r": 12.5,
+            "profit_factor": 5.6
+          },
+          "Winter_2026": {
+            "trades": 7,
+            "wins": 0,
+            "losses": 3,
+            "win_rate": 0.0,
+            "net_r": -1.7,
+            "profit_factor": 0.0
+          },
+          "Spring_2026": {
+            "trades": 17,
+            "wins": 5,
+            "losses": 6,
+            "win_rate": 29.4,
+            "net_r": 3.25,
+            "profit_factor": 1.17
+          },
+          "Summer_2026": {
+            "trades": 10,
+            "wins": 3,
+            "losses": 2,
+            "win_rate": 30.0,
+            "net_r": 2.22,
+            "profit_factor": 2.1
+          },
+          "Autumn_2026": {
+            "trades": 12,
+            "wins": 2,
+            "losses": 4,
+            "win_rate": 16.7,
+            "net_r": 0.13,
+            "profit_factor": 0.7
+          }
+        },
+        "monthly_net_r": {
+          "2025-07": 0.79,
+          "2025-08": 6.0,
+          "2025-09": 1.16,
+          "2025-10": 1.79,
+          "2025-11": 1.02,
+          "2025-12": 1.75,
+          "2026-01": -0.41,
+          "2026-02": -1.29,
+          "2026-03": -0.58,
+          "2026-04": 2.38,
+          "2026-05": 1.45,
+          "2026-06": 0.9,
+          "2026-07": 1.08,
+          "2026-08": 0.24,
+          "2026-09": -1.75,
+          "2026-10": 2.9,
+          "2026-11": -1.03
+        }
+      }
+    ]
   }
 }
