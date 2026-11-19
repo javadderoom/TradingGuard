@@ -51,5 +51,15 @@
 - If an AI model, gatekeeper, or filter degraded Profit Factor, Win Rate, or Net Alpha compared to the baseline, state the exact failure bluntly upfront (e.g., *"Model X degraded Profit Factor from 1.77 down to 1.65 and destroyed -15.5R of net alpha compared to the standalone screener"*).
 - Treat profit and loss with identical, unemotional analytical dispassion.
 
+## Backtesting Integrity & Provenance Mandate (Anti-Cheat & Zero Lookahead)
+- **Single Simulator Mandate**: Every backtest and benchmark MUST route trade execution through the canonical, audited simulator (`hitl/backtest/evaluator.py::evaluate_council_decision`). Custom simulation loops in individual scripts are strictly forbidden.
+- **No Artifact, No Claim**: Reporting Net R, Win Rate, Profit Factor, or Sharpe without a saved `trade_ledger.csv` and cryptographic `run_manifest.json` on disk is forbidden.
+- **Strict Realized vs. Unrealized Split**: Positions active at the end of a backtest (`OPEN_AT_END`) must NEVER be summed into realized profit or win rate.
+- **Symmetric Risk & Live MT5 Parity**: Over-risk trades exceeding `max_risk_usd` ($12.00 on 0.01 lot) must return `status="REJECTED_RISK_CAP"` ($0.0 PnL). Asymmetric loss clamping that pays uncapped wins is strictly prohibited.
+- **Pessimistic Intrabar Resolution**: If an order fills on M1 bar `idx` and the same bar touches Stop Loss, the trade resolves as `LOSS` on bar `idx` with zero immunity.
+- **Causal Visibility**: Candle `[open_ts, open_ts + tf)` is visible if and only if `decision_ts >= open_ts + tf`. Forming candles must never leak into screener decisions.
+- **Governing Specification**: All rules in `docs/BACKTEST_INTEGRITY_RULES.md` are binding system law.
+
+
 
 

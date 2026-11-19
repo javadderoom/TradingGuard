@@ -149,8 +149,16 @@ All setups are strictly gated by Review Council ratification:
 | **`SETUP-ARCH-005`** | Intermarket SMT Mitigation | Metals SMT divergence + FVG/Breaker mitigation. | Only executed on Gold with Silver as non-executing radar. |
 | **`SETUP-ARCH-007`** | Intermarket SMT at Counter POI | SMT divergence confirming session high/low rejection. | Scaled entry per phase ratio. Only executed on Gold. |
 | **`SETUP-ARCH-009`** | Pro-Trend Session Retest | Retracement into 50% - 70.5% OTE of prior session expansion. | **PERMANENTLY DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** (-$77.41R uncalibrated loss, 11.6% WR, PF 0.55). |
-| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. | **DECOMMISSIONED ON GOLD** per 1-year empirical audit (7.4% WR, -8.0R loss, PF 0.47 due to false breaks on minor internal 36-bar wicks in chop) and **NQ** (-15.17R drag). |
+| **`SETUP-ARCH-010`** | Prominent Sweep + M1/5M MSS | Prominent wick purge of session liquidity followed by micro MSS. Freshness gated: sweep must occur within last 4 bars (20m) and index $\ge \text{len}(recent) - 6$. | **DECOMMISSIONED ON GOLD** per 1-year empirical audit (7.4% WR, -8.0R loss, PF 0.47 due to false breaks on minor internal 36-bar wicks in chop) and **NQ** (-15.17R drag). |
 | **`SETUP-ARCH-011`** | Nested Double MSS (Macro Shift + Pullback Exhaustion Shift) | Downtrend sweeps $L_1 \to L_2$, displaces above $H_1$ to $H_2$ (1st MSS), pulls back in $H_2 \to L_3 \to H_3 \to L_4$, displaces above $H_3$ to $H_4$ (2nd MSS). Entry on retest of $H_3$ / 5M FVG at $L_5$. | **DECOMMISSIONED ACROSS ENTIRE PORTFOLIO** per 12-month empirical audit (-$3.99R drag, 0.0% win rate across 8 fills). |
+| **`SETUP-ARCH-012`** | ADR Exhaustion Snapback | Daily ADR $\ge 120\%$ exhaustion with 5M reversal FVG. Timestamps converted via `server_epoch_to_zones()` to true UTC for session alignment. | Active across Gold, GBPUSD, NQ. Fades exhausted trend extremes. |
+| **`SETUP-ARCH-013`** | HTF DOL Sweep & Trailing Runner | Macro liquidity pool purged with 15M structural trailing exit. Asian session range resolved strictly via true UTC hours (00:00–07:00 UTC). | Extended target mode with dynamic structural trail. |
+| **`SETUP-ARCH-014`** | Macro H1 Reversal Origin Retest | Retest of origin displacement zone following H1 MSS. Invalidation checked across full candle wicks ($L < \text{inval\_sl}$ / $H > \text{inval\_sl}$) with single-retest gating. | Active during London & NY sessions. |
+| **`SETUP-ARCH-015`** | Gold NY Open Trend Continuation Sweep | NY session high/low liquidity sweep in direction of Daily trend. | Strictly Gold (`XAUUSD_o`), target R:R 2.5, BE 1.5. |
+| **`SETUP-ARCH-016`** | Intermarket SMT Divergence | SMT divergence between correlated assets (e.g. NQ vs ES/YM, Gold vs Silver). | Active on NQ and Gold. |
+| **`SETUP-ARCH-017`** | Institutional 15m Opening Range Breakout | Breakout of initial 15-minute session range with limit retracement entry. H1 trend slope evaluated from EMA50 series ($\text{ema50}[-1] - \text{ema50}[-6]$). | Active on Gold, GBPUSD, NQ with risk clamped $\le \$10.00$. |
+| **`SETUP-ARCH-018`** | Statistical Extreme Judas Reversal | Mean-reversion fade of statistical session extreme sweep in range regime. Overextension evaluated against H1 ATR ($\ge 1.2 \times \text{ATR}_{H1}$) from H1 EMA20. | Active on Gold, GBPUSD, NQ with ADX trend gate. |
+| **`SETUP-ARCH-019`** | Gold Double Sweep Displacement Reversal | Secondary stop-hunt: sweep of prior leg high/low, pullback, sweep of new extreme with $\ge 25\%$ wick + opposing 5M FVG & MSS. | **Strictly gated to Gold (`XAUUSD_o`)**. Target R:R 3.0, BE 1.5, risk clamped $\$1.50 - \$10.00$. PF 1.46 - 1.76. |
 
 ---
 
@@ -160,28 +168,49 @@ Every trade strictly abides by institutional broker execution realism:
 
 1. **Order Type**: Strict **Limit Orders** (`BUY_LIMIT`, `SELL_LIMIT`). Zero market orders.
 2. **Base Position Sizing**: Fixed **`0.01` Base Lot** on all instruments.
-3. **Firm Stop-Loss Ceiling (`max_risk_usd`)**: Configurable dollar risk cap per trade in canonical evaluator (`evaluate_council_decision(..., max_risk_usd=12.0)`):
-   - **Legacy Default ($12.00)**: Strict $12.00 maximum risk ceiling per trade for standard accounts. If calculated structural risk exceeds $12.00, the trade risk is capped strictly at $12.00.
-   - **$2,000 Tier ($20.00)**: In institutional $2,000 capital tier scans (`max_risk_usd=20.0`), enforces a $20.00 ceiling (1.0% account risk).
-   - **Uncapped Research / Human Discretionary (`None`)**: When `max_risk_usd=None`, dollar risk clamping is completely bypassed, preserving true structural stop risk and uncompressed realized R:R for Human setups.
+3. **Firm Stop-Loss Ceiling & Symmetric Risk Rejection (`max_risk_usd` & `reject_over_risk`)**:
+   - **Live Parity & Symmetric Risk Mandate**: When `reject_over_risk=True` (default), if an order's projected total risk (`price_risk_usd + spread_cost + commission_total`) exceeds `max_risk_usd` ($12.00 at 0.01 lot for standard accounts, $20.00 for $2,000 tier), the order is immediately rejected: `status = "REJECTED_RISK_CAP"` with `realized_pnl_usd = 0.0`. This eliminates asymmetric win inflation (where wide stops paid full wins up to $70+ while losses were clamped to -$12.10) and ensures 100% parity with live `MT5Engine`.
+   - **Pessimistic Intrabar Resolution & Zero SL Immunity**: On the M1 bar where a limit order fills (`fill_idx`), `hit_sl` is immediately evaluated on that same bar. If price touched both entry and SL within that minute, the trade is resolved as `LOSS` on `fill_idx`. Limit orders receive zero minutes of SL immunity. Breakeven ratchets and TP checks arm strictly on subsequent bars (`fill_idx + 1`).
+   - **Dynamic Lot-Scaled Commission**: Round-trip commission is strictly computed as `commission_usd * (lot / 0.01)`.
+   - **Rollover Spread Widening**: Historical M1 spreads are respected (`bar['spread']`), with a 5.0x multiplier applied during daily bank rollover liquidity freezes (23:45–01:05 broker server time).
+   - **Uncapped Research / Discretionary (`max_risk_usd=None`)**: When `max_risk_usd=None`, dollar risk clamping is completely bypassed, preserving true structural stop risk and uncompressed realized R:R for Human setups.
    - **Strict Parameter Validation**: If `max_risk_usd` is specified, it must be strictly positive (`max_risk_usd > 0`), raising `ValueError("max_risk_usd must be positive when specified")` if `<= 0`.
-4. **Asset-Specific Structural Risk Bracketing & Physics**:
-   - **Gold (`XAUUSD`)**: Minimum Stop Loss: **$3.50**, Maximum Stop Loss: **$8.00**. Invalidation Buffer: **+$1.50** spread buffer applied outside swing pivots. Point value = $1.00 per point at 0.01 lot.
+4. **Point-in-Time Causal Data Feed (`hitl/backtest/causal_feed.py`)**:
+   - **Strict Bar-Close Visibility**: A candle `[open_ts, open_ts + tf_seconds)` is visible if and only if `decision_ts >= open_ts + tf_seconds`. Forming candles are never leaked into screener decisions.
+   - **Prior-Day (T-1) Indexing**: Daily bars are filtered by `open_ts + 86400 <= decision_ts`, guaranteeing `closed_1d[-1]` is unambiguously **Prior Day (`T-1`)** across `fast_screener.py` and `mtf_structure.py`.
+   - **Dynamic Seasonal Timezones**: Resolves `Europe/Athens` MT5 server timestamps to UTC, `Asia/Tehran` (UTC+3:30 fixed), `Europe/London` (GMT/BST), and `America/New_York` (EST/EDT) with dynamic DST handling.
+   - **Chronological Portfolio Event Queue**: `PortfolioEventQueue` enforces concurrency (max 2 open trades) and the -$34.00 daily circuit breaker strictly at wall-clock event timestamps (adding realized PnL only after an order's real exit timestamp).
+5. **Asset-Specific Structural Risk Bracketing & Physics**:
+   - **Gold (`XAUUSD`)**: Minimum Stop Loss: **$3.50**, Maximum Stop Loss: **$8.00**. Invalidation Buffer: **+$1.20** spread buffer applied outside swing pivots. Point value = $1.00 per point at 0.01 lot ($100.00/pt on 1.0 lot).
+   - **Nasdaq 100 (`NQ`)**: Contract Size = 1.0 (or broker-resolved). Point Value = **$0.20 per point on 0.01 lot** ($20.00/pt on 1.00 lot). Broker digits = 1. Minimum Stop Loss: **15.0 pts**, Maximum Stop Loss: **50.0 pts** ($10.00 max risk on 0.01 lot). Invalidation Buffer: **+1.0 pt** outside swing pivots. Pip size = 0.1 pt. Risk is computed dynamically via MT5 `order_calc_profit` or `trade_tick_value / trade_tick_size * price_dist * lot`, ensuring NQ stops never trigger false $12 risk cap rejections.
    - **Bitcoin (`BTCUSD`)**: Contract Size = 1.0 BTC. Base Lot = 0.01 BTC. Point Value = **$0.01 per dollar** ($1.00 PnL per $100 price movement). Firm Stop Loss Ceiling: **$1,200.00 pts** ($12.00 max risk). Typical structural swing stop: **$200.00 – $450.00 pts** ($2.00 – $4.50 risk). Invalidation Buffer: **+$20.00 – $25.00 pts** ($0.20 – $0.25). Margin required: **$3.80** for 0.01 lot (1:200 leverage). Spread penalty: **$1.50** ($0.015 dollar penalty).
    - **Forex (`EURUSD`, `GBPUSD`)**: Minimum Stop Loss: **12.0 pips** ($0.0012), Maximum Stop Loss: **25.0 pips** ($0.0025). Point value = $0.10 per pip at 0.01 lot.
+   - **Unified Execution Geometry Preservation**: `build_validated_order_plan()` in `smc_tools.py` accepts explicit `entry_ref`, `sl_ref`, `recommended_target_rr`, and `archetype_id`. Ratified screener coordinates are strictly preserved into MT5 order tickets and Telegram approval cards instead of being overwritten with generic 5M FVG + 15-bar SL fallbacks.
 5. **Calibrated Take-Profit & Target Ceilings on Gold & Crypto**:
    - **Max Growth Profile**: Target R:R capped at **3.5R** (31.9% WR, +25.5R Net PnL, 1.94 PF on Gold; 3.5R on Bitcoin).
    - **High Win-Rate Profile**: Target R:R capped at **3.0R** (34.0% WR, +21.0R Net PnL, 1.78 PF).
    - **Target Cliff Physics**: Empirical MFE distribution over 64,000 M1 bars proves a severe cliff at 4.0R (only 2.0% reach 4.0R vs 22.5% at 3.5R); capping Gold and Bitcoin targets strictly at 3.5R is essential to lock in runaway profits before reversal.
-6. **Dynamic Breakeven Ratchet**:
-   - On Gold (`XAUUSD`) and Bitcoin (`BTCUSD`): Ratchet triggers at **+1.8R** peak excursion for `PRO_EXPANSION` (converts losses into risk-free scratches).
-   - On Forex (`EURUSD`, `GBPUSD`): Ratchet triggers at $+2.0R$ (`PRO_EXPANSION`) and $+1.5R$ (`HTF_RETRACEMENT`).
-   - When triggered, Stop Loss is moved to $\text{Entry} + \text{Spread}$ for Buys ($\text{Entry} - \text{Spread}$ for Sells) to ensure a guaranteed risk-free scratch (`$0.00` loss).
-7. **Order Inactivity TTL**: **75 Minutes**. If an order does not fill within 75 forward M1 bars, it is automatically cancelled safely (`EXPIRED`).
-8. **Watchdog Momentum Radar**:
-   - Computes rolling 15-period M1 ATR.
-   - Detects adverse momentum spikes: $\ge 3.5\times\text{ATR}$ for Precious Metals and Crypto ($\ge 2.0\times\text{ATR}$ for Forex).
-   - If adverse spike occurs within $3.0\times\text{ATR}$ of the pending limit price, order is instantly cancelled (`CANCELLED_WATCHDOG`).
+6. **Dynamic Breakeven Ratchet & Ticket Metadata Tracking**:
+   - Ticket-level metadata store (`hitl/memory/active_order_meta.json`) maps MT5 tickets to ratified archetype-specific rules:
+     - `SETUP-ARCH-001` (Asian High/Low Judas): **1.2R** ratchet threshold.
+     - `SETUP-ARCH-015` / `SETUP-ARCH-019` (London Breakout / Pre-Open): **1.5R** ratchet threshold.
+     - `SETUP-ARCH-013` (Daily Extreme Runner): **3.0R** ratchet threshold.
+     - Autonomous Quant Rules: **2.0R** ratchet threshold.
+     - Default Asset Policy: **+1.8R** on Gold/BTC (`PRO_EXPANSION`), **+2.0R** on Forex (`PRO_EXPANSION`), **+1.5R** on Retracement.
+   - When triggered, Stop Loss is moved to $\text{Entry} \pm (\text{Spread} + 1\text{ point})$ dynamically rounded to broker `digits` (5 for FX, 2 for Gold, 1 for NQ), ensuring a true risk-free scratch.
+7. **Order Inactivity TTL & Automated Watchdog Cancellation**: **75 Minutes**. If an order does not fill within 75 forward M1 bars (or live poll minutes), it is automatically cancelled safely (`EXPIRED` / `engine.cancel_order()`) and alerted to Telegram.
+8. **Watchdog Momentum & Spread Radar (`hitl/watchdog.py`)**:
+   - **Closed-Bar ATR Baseline**: Rolling 15-period M1 ATR computed strictly on closed bars (`rates_1m[-15:-1]`), excluding the forming spike candle.
+   - **Momentum Thresholds**: $\ge 3.5\times\text{ATR}$ for Precious Metals and Crypto; $\ge 2.0\times\text{ATR}$ for Forex and Indices.
+   - **Proximity Gating**: Pending limit order is cancelled (`CANCELLED_WATCHDOG`) ONLY if current market price is within $3.0\times\text{ATR}$ of the entry price (matching `evaluator.py`).
+   - **Broker Rollover Blackout**: Between `23:55` and `00:15` broker server time, order placement is paused and false spread alerts/cancellations are suppressed during daily interbank liquidity settlement.
+   - **Asset-Scaled Maximum Allowable Spread**:
+     - Forex (`GBPUSD`, `EURUSD`): **60 points** (0.6 pips).
+     - Gold (`XAUUSD`): **120 points** ($1.20).
+     - Nasdaq 100 (`NQ`): **450 points** (45.0 pts).
+     - S&P 500 (`SPX`): **250 points** (25.0 pts).
+     - Bitcoin (`BTCUSD`): **3000 points** ($30.00).
+     Prevents false cancellations on normal index/metals broker spreads.
 9. **Calibrated Broker Spread Penalties (Verified Live MT5 Feeds)**:
    - Gold (`XAUUSD`): **$0.22** spread (22 pts, verified live `XAUUSD_o`).
    - Silver (`XAGUSD`): **$0.027** spread (2.7 cents, verified live `XAGUSD_o`).
@@ -191,6 +220,29 @@ Every trade strictly abides by institutional broker execution realism:
    - GBPUSD: **0.00006** (0.6 pips; verified live Raw ECN 0.0 spread + commission buffer).
    - **Buy Execution**: Enters at $\text{Ask} = \text{Bid} + \text{Spread}$. Closed at $\text{Bid}$.
    - **Sell Execution**: Enters at $\text{Bid}$. Closed at $\text{Ask} = \text{Bid} + \text{Spread}$.
+10. **Broker Midnight, Net Accounting & Engine Hardening (`hitl/mt5_engine.py`)**:
+    - Daily performance accounting synchronizes to broker server midnight (EET/EEST) resolved dynamically from MT5 tick timestamps, eliminating local host timezone skew.
+    - Net deal PnL calculation: `deal.profit + deal.commission + deal.swap + deal.fee`, ensuring commission-drag breakevens are correctly registered as net losses in consecutive loss accounting.
+    - **Thread Safety**: All transactional MT5 functions (`place_limit_order`, `cancel_order`, `modify_position_sltp`) are guarded by `_MT5_LOCK` (`threading.RLock`).
+    - **Dynamic Filling Mode Resolution**: Automatically selects broker-supported execution policy: `RETURN` (bit 4) $\to$ `IOC` (bit 2) $\to$ `FOK` (bit 1).
+    - **Price & Tick Snapping**: Limit entry, Stop Loss, and Take Profit prices are snapped dynamically to `symbol_info.digits` and `symbol_info.trade_tick_size`.
+    - **English Localization**: 100% clean, professional English terminal and logging messages.
+11. **Institutional Screener Geometry & Reversal Pivot Rules (`hitl/backtest/fast_screener.py`)**:
+    - **Bearish MSS & Breaker Blocks**: Reversal requires the structural swing low to precede the sweep high (`last_low_idx < last_high_idx`), followed by a displacement break below that swing low.
+    - **Bullish MSS & Breaker Blocks**: Reversal requires the structural swing high to precede the sweep low (`last_high_idx < last_low_idx`), followed by a displacement break above that swing high.
+    - **Unmitigated FVG Validation**: `detect_fvg_5m()` and `get_smc_landmarks()` inspect all subsequent candles; gaps that were pierced or closed through are rejected as active POIs.
+12. **Institutional SMC Live Radar & Screener Gate (`hitl/live_radar.py` & `hitl/screener_gate.py`)**:
+    - Operates on closed bars only (`closed_bars_only=True`).
+    - Fetches 240 M5 bars (20 hours), 80 H1 bars, 90 D1 bars, and 60 M1 bars, guaranteeing Asian and London ranges are preserved during NY sessions.
+    - Evaluates all ratified archetypes via `screen_ict_session()` directly. Computes real-time Silver SMT divergence on Gold (`detect_metals_smt_divergence`) and passes `smt_info` and `bars_1m` directly to `screen_ict_session()`.
+13. **Dynamic Quantitative Position Sizing & Orthogonal Rule Portfolio (`hitl/quant_engine/live_quant_bridge.py`)**:
+    - **Dynamic Risk Clamping**: Clamps position size to exact $12.00 dollar risk: $\text{lot} = \max(0.01, \text{round}(12.0 / (\text{stop\_distance} \times \text{point\_value}), 2))$.
+    - **Orthogonal Rule Deduplication**: Cleaned feature dimensions by eliminating duplicate rules:
+      - **Nasdaq 100 (`NQ`)**: `R14_011` (Mean Reversion) and `R14_025` (Volatility Compression). Clone `R14_009` removed.
+      - **Gold (`XAUUSD`)**: `R15_048` (Velocity Breakout), `R14_058` (Garman-Klass Orderflow Imbalance), and `R15_023` (Autocorrelation Momentum). Duplicate `R11_022` removed.
+    - **Dynamic Session Clock Resolution**: Resolves session status dynamically via `get_active_session_status()`.
+    - **Feature Normalization**: Strictly aligned with `VectorizedBacktester` rolling window math.
+    - **Duplicate Exposure Veto**: Suppresses execution if an active position or pending order already exists for that symbol.
 
 ---
 
@@ -2208,10 +2260,11 @@ Audited zero-lookahead via `evaluate_council_decision` (`$0.22` spread, `$0.10` 
   - **Midday Re-Anchor Sweep (`14:30`-style standalone)**: Negative out-of-sample in 2025 (`49 fills | -14.65R | PF 0.54`); gating by strong London displacement (`>= 25% ADR`) narrowed to `23` combined trades over 17 months (`+4.28R | PF 1.33 | t = +0.57`, negative in Winter `-0.52R` and Spring `-0.54R`)—insufficient for autonomous production deployment.
 
 ### 20.3 Visual Sweep Detection Enhancement & Multi-Candle Raid Linking (`web_replayer/src/utils/coTraderLogic.ts`)
-1. **Causal 1L/1R & 3L/3R Pivot Tracking**: Upgraded `extractLiquiditySweeps` with causal `1L/1R` minor pivot sweep tracking alongside `3L/3R` major pivots (`>= 50%` rejection wick requirement on minor pivots vs `>= 35%` on major pivots).
-2. **Multi-Candle Raid Pivot Preservation**: Resolved premature pivot pruning in `consumeSweptHigh` and `consumeSweptLow`. Previously, any intermediate bar touching `sh.price` or closing marginally above it immediately executed `list.splice(s, 1)` without checking whether the bar qualified as a sweep, destroying the major origin pivot before the actual raid peak candle arrived. Under the upgraded logic, a pivot is retained across intermediate probes unless a clean displacement break occurs (`close > price + 0.25 * range` with body dominance) or an authentic rejection sweep is confirmed (`wickRatio >= minWickRatio`). This enables the replayer to correctly connect multi-candle raid peaks (e.g. `2026-11-12 14:30 Tehran` on Gold or `14:20 UTC` on GBPUSD) directly back to their major origin swing highs (e.g. `12:00 Tehran` at `3953.93` or `12:00 UTC` at `1.32733`).
-3. **Dynamic Distance-Independent Backward Ray Search (Track 4)**: Added a dynamic backward ray search in `extractLiquiditySweeps` that operates independently of arbitrary bar distance numbers. Whenever a candle prints an upper/lower rejection wick ($\ge 35\%$), the engine casts a horizontal ray backward across all historical candles in memory. It locates the earliest confirmed unmitigated swing peak/trough (at least 2L/2R clearance) that the wick penetrated, verifying that no intermediate candle closed decisively beyond that level in between. This eliminates the distance-blindness bug where macro sweeps across wide multi-session consolidations were previously missed due to fixed-distance or local fractal window limits.
-4. **Backend Screener Lookback Expansion (`hitl/backtest/fast_screener.py`)**: Expanded `lookback_5m` in `detect_prominent_sweep_and_mss` from 36 bars (3 hours) to 120 bars (10 hours) to prevent clipping distant intraday swing levels during liquidity sweep detection.
+1. **Causal 1L/1R & 3L/3R Pivot Tracking**: Upgraded `extractLiquiditySweeps` with causal `1L/1R` minor pivot sweep tracking alongside `3L/3R` major pivots (`>= 50%` rejection wick requirement on minor pivots vs calibrated rejection wicks on major pivots).
+2. **Multi-Candle Raid Pivot Preservation & Invalidation**: Resolved premature pivot pruning in `consumeSweptHigh` and `consumeSweptLow`. Under the upgraded logic, a pivot is retained across intermediate probes unless a clean displacement break occurs (`close > price + 0.15 * range`) or an authentic rejection sweep is confirmed. This prevents lower breached levels from generating phantom delayed sweeps while correctly preserving valid origin levels.
+3. **5M Expansion Candle & Marginal Close Calibration**: On 5M charts, large expansion raid candles (such as Gold 2026-11-16 16:45, $11.97 range, $3.20 rejection wick) frequently carry rejection wicks between 20% and 35% of total bar range while closing strictly back below the swept high (`close < sh.price`). Rigidly demanding $\ge 35\%$ wick ratio caused 5M false negatives while 1M and 15M detected the sweep. The engine now recognizes sweeps when `wickRatio >= minWickRatio || (isClosedBelow && wickRatio >= 0.20)`, fully aligning 5M sweep sensitivity with the institutional 25% rejection wick trigger rule in Section 20.1 (`RULE-ARCH-015`).
+4. **Dynamic Distance-Independent Backward Ray Search (Track 4)**: Calibrated `bestRayHigh` and `bestRayLow` backward ray search threshold to `wickRatio >= 0.20` with marginal close tolerance (`close <= prev.high + 0.15 * range` or lower half of bar). The ray casts backward across historical candles in memory to find the earliest unmitigated swing peak/trough (at least 2L/2R clearance) that was swept without intervening decisive close breaks.
+5. **Backend Screener Lookback Expansion (`hitl/backtest/fast_screener.py`)**: Expanded `lookback_5m` in `detect_prominent_sweep_and_mss` from 36 bars (3 hours) to 120 bars (10 hours) to prevent clipping distant intraday swing levels during liquidity sweep detection.
 
 ### 20.4 Empirical Backtest Audit: Midday Major Swing Sweep Hypothesis
 Prompted by the Nov 12, 2026 price action (where GBPUSD swept `12:00 UTC` at `14:20 UTC` and subsequently dropped 47 pips, and Gold swept `12:00 Tehran` at `14:30 Tehran` before dropping $100), a full-scale zero-lookahead backtest grid was executed across all 2026 trading days using canonical `evaluate_council_decision` (SL-first, closed bars, live broker spread, commission, slippage stress):
@@ -2572,4 +2625,194 @@ Three candidate fast/sharp archetypes were rigorously tested across 17 months wi
 4. **Architectural Verdict**:
    - Standalone 15-minute Opening Range Breakouts and unconfirmed Judas limit orders in fast markets are **mathematically non-viable under live broker tick execution**.
    - These models CANNOT be deployed to live prop firm capital in their current form without secondary multi-candle confirmation (such as a 1M confirmed BOS/ChoCh after the sweep rather than a blind limit order).
+
+---
+
+## 25. `SETUP-ARCH-019` — Gold Double Sweep Displacement Reversal Model
+
+### 25.1 Institutional Concept & Microstructure Physics
+When Gold establishes a directional move or liquidity purge, breakout traders frequently enter upon the first sweep of an established swing high/low ($H_0$ / $L_0$). Institutional liquidity providers often engineer a **secondary stop-hunt**:
+1. **First Sweep ($H_1$ / $L_1$)**: Sweeps a prior swing level ($H_0$ / $L_0$) from an earlier leg.
+2. **Intermediate Retracement ($L_{\text{mid}}$ / $H_{\text{mid}}$)**: Induces retail trend-continuation entries with a minor pullback of at least $\$1.20$.
+3. **Secondary Sweep ($H_2$ / $L_2$)**: Traps retail traders by printing a marginal new high ($H_2 > H_1$) or low ($L_2 < L_1$) with distinct rejection ($\ge 25\%$ wick ratio or closing back inside).
+4. **Opposing Displacement & FVG (MSS)**: Institutional smart money aggressively unloads inventory in the opposite direction, creating a 5M Fair Value Gap ($\ge \$0.30$) and decisively breaking the intermediate structural level ($L_{\text{mid}}$ / $H_{\text{mid}}$).
+5. **Entry Execution**: A limit order placed at the 50% equilibrium of the opposing 5M FVG captures the true reversal with an invalidation anchor strictly placed beyond the secondary sweep peak ($H_2$ / $L_2$) plus $\$1.20$ Gold spread buffer.
+
+### 25.2 Formal Algorithmic Rules (`hitl/backtest/fast_screener.py`)
+The detector `detect_gold_double_sweep_reversal` enforces strict parametric boundaries:
+1. **Asset Gating**: Strictly restricted to Gold (`XAUUSD_o`). Vetoed on Forex (`GBPUSD`) and Indices (`NQ`) due to empirical failure under multi-asset testing.
+2. **Dynamic Session Window**: Active during London Open through late NY Killzones (`lon_utc <= sig_utc <= nyse_utc + 7200`, spanning 08:00 to 16:30 UTC / 11:30 to 20:00 Tehran in Winter).
+3. **Primary Sweep ($H_1$ / $L_1$)**: Sweeps an earlier swing level ($H_0$ / $L_0$) established $\ge 4$ bars earlier within the last 35 bars by $\ge \$0.20$.
+4. **Intermediate Retracement Depth**: Minimum pullback $H_1 - L_{\text{mid}} \ge \$1.20$ (for Bearish shorts) or $H_{\text{mid}} - L_1 \ge \$1.20$ (for Bullish longs).
+5. **Secondary Sweep Rejection**:
+   - $H_2 > H_1$ (Short) with upper wick $\ge 25\%$ of bar range or bar close $\le H_1 + \$0.30$.
+   - $L_2 < L_1$ (Long) with lower wick $\ge 25\%$ of bar range or bar close $\ge L_1 - \$0.30$.
+6. **Market Structure Shift (MSS)**: Current or prior 5M bar close must break decisively beyond $L_{\text{mid}}$ (close $< L_{\text{mid}}$) or $H_{\text{mid}}$ (close $> H_{\text{mid}}$).
+7. **Opposing 5M FVG**: Displacing candles must form a valid Fair Value Gap with minimum gap width $\ge \$0.30$.
+8. **Prop Firm Dynamic Limit Entry & Risk Clamping**:
+   - Limit entry placed at 50% FVG midpoint (`fvg_mid`).
+   - Stop Loss placed at $H_2 + \$1.20$ (Short) or $L_2 - \$1.20$ (Long).
+   - If calculated risk $\text{SL} - \text{Entry} > \$10.00$, the limit entry is automatically pulled closer to the stop (`Entry = SL - $10.00`), strictly guaranteeing that no trade can exceed $\$10.00$ dollar risk.
+   - Minimum structural risk floor: $\$1.50$.
+9. **Target & Trade Management**:
+   - Mandated Target R:R: `1:3.0`.
+   - Breakeven Ratchet: `+1.5R` (locks trade risk to $0.00 once price traverses $+1.5R$).
+
+### 25.3 Empirical 2026 Backtest & Multi-Asset Audit Findings
+A zero-lookahead backtest across all 2026 broker data (308,472 M1 bars, 61,694 5M bars) revealed clear asset divergence:
+- **Gold (`XAUUSD_o`)**:
+  - Total Fills: **235 fills**
+  - Win Rate: **33.2% - 41.8%** (at 1:3.0 R:R)
+  - Profit Factor: **1.46 – 1.76**
+  - Net Alpha: **+41.50R** (London & NY Killzones)
+- **Cable (`GBPUSD_o`)**:
+  - Profit Factor: **0.66 – 0.93** (VETOED: Currency pairs trending strongly blow through secondary high/low sweeps without reversing).
+- **Nasdaq 100 (`NQ`)**:
+  - Profit Factor: **0.85** (VETOED: Momentum expansions on tech equities produce adverse continuation).
+
+### 25.4 Governance State & Production Integration
+- **Setup Registry**: Ratified as `SETUP-ARCH-019` in `hitl/memory/setup_registry.json` and `hitl/memory/setup_registry.md`.
+- **Fast Screener Pipeline**: Integrated into both the late NY PM window (`session_hour in (17, 18, 19)`) and general session router in `hitl/backtest/fast_screener.py`.
+- **Replay & Live Radar**: Active in `hitl/replay_data.py` and `hitl/bot.py`.
+
+---
+
+## 26. Comprehensive Microstructure Hardening & Execution Reliability (2026-11-18 Audit Remediation)
+
+Following the forensic multi-asset audit of live screener detections, quant bridge rules, market watchdog monitoring, and MT5 broker execution, the pipeline underwent rigorous algorithmic hardening:
+
+### 26.1 Fast Screener Microstructure Precision (`hitl/backtest/fast_screener.py`)
+1. **`SETUP-ARCH-017` H1 Slope Smoothness**:
+   - Replaced fragile raw close subtraction (`cur_h1['close'] - bars_h1[-6]['close']`) with true 50-period EMA series slope (`ema50_series[-1] - ema50_series[-6]`).
+   - Prevents intra-bar noise or isolated single-candle wick spikes from creating false trend reversals.
+2. **`SETUP-ARCH-018` Statistical Overextension Calibrated to H1 ATR**:
+   - Replaced mismatched 5-minute ATR calculation with genuine 1-Hour ATR:
+     $$\text{stat\_overextended} = |C - \text{EMA}_{20}(H1)| \ge 1.2 \times \text{ATR}_{14}(H1)$$
+   - Previously, evaluating distance from an H1 moving average against 5M ATR (~$1.50 on Gold vs ~$10.00 normal H1 distance) caused the overextension filter to remain almost permanently tripped.
+3. **True UTC Conversion for Session Clocks (`ARCH-012` & `ARCH-013`)**:
+   - Bar timestamps in `detect_adr_exhaustion_snapback` and `detect_macro_dol_runner` are converted via `server_epoch_to_zones()["utc_dt"].hour` instead of raw broker server hour.
+   - Accurately captures true Asian session (00:00–07:00 UTC) and London/NY session alignment regardless of broker server DST shifts.
+4. **`SETUP-ARCH-014` Full Candle Wick Invalidation & Single Retest Gating**:
+   - Structural invalidation checks evaluate full candle wicks (`sb['low'] < inval_sl` for Longs, `sb['high'] > inval_sl` for Shorts) instead of only candle closes.
+   - Implemented strict single-retest gating: if subsequent candles prior to the trigger candle (`subsequent[:-1]`) had already entered and retested the origin base, the setup is rejected as an exhausted or stale retest.
+5. **Liquidity Sweep Freshness Gating (`screen_ict_session` & `ARCH-010`)**:
+   - Enforces that session high/low pierces must occur within the most recent 4 bars (`bars_5m[-4:]`, $\le 20$ minutes) and `sweep_bar_idx >= len(recent) - 6`.
+   - Eliminates false setups triggering on stale sweeps that occurred hours prior with price having already extended away.
+
+### 26.2 Live Screener Gate & Intermarket SMT Live Resolution (`hitl/screener_gate.py`)
+1. **Multi-Timeframe Live Bar Depth**:
+   - `fetch_live_bars()` fetches 240 M5 bars (20 hours), 80 H1 bars, 90 D1 bars, and 60 M1 bars from MT5, ensuring full Asian/London reference levels are available during NY afternoon trading.
+2. **Real-Time Precious Metals SMT Divergence**:
+   - Computes Silver (`XAGUSD_o`) vs Gold (`XAUUSD_o`) SMT divergence dynamically via `detect_metals_smt_divergence` during each live screener cycle.
+   - Passes both `smt_info` and live `bars_1m` directly into `screen_ict_session()` to empower SMT confirmation on Gold setups.
+
+### 26.3 Quant Rule Deduplication & Orthogonal Portfolios (`hitl/quant_engine/live_quant_bridge.py`)
+To prevent correlated double-triggering on identical market conditions, duplicate rule clones were decommissioned:
+- **Nasdaq 100 (`NQ`)**: Active rules orthogonalized to `R14_011` (Mean Reversion) and `R14_025` (Volatility Compression). Clone `R14_009` decommissioned.
+- **Gold (`XAUUSD`)**: Active rules orthogonalized to `R15_048` (Velocity Breakout), `R14_058` (Garman-Klass Orderflow Imbalance), and `R15_023` (Autocorrelation Momentum). Duplicate `R11_022` decommissioned.
+- **Dynamic Clock & Rolling Standard**: Real-time evaluation uses `get_active_session_status()` and exact rolling window math aligned 1:1 with `VectorizedBacktester`.
+
+### 26.4 Watchdog Automated Lifecycle & Rollover Blackout (`hitl/watchdog.py`)
+1. **Automated Order TTL Cancellation**:
+   - Active pending limit orders exceeding `ttl_minutes` (default 75.0 minutes) are automatically cancelled via `engine.cancel_order()` during the continuous polling loop, with automated Telegram alerting.
+2. **Broker Rollover Blackout Window**:
+   - `is_rollover_blackout()` activates between `23:55` and `00:15` broker server time (EET/EEST).
+   - Prevents new order submissions and suppresses false spread spike cancellations during the daily 20-minute interbank liquidity freeze and swap rollover.
+
+### 26.5 MT5 Execution Engine Hardening & Localization (`hitl/mt5_engine.py`)
+1. **Concurrency Protection**:
+   - All critical transactional calls (`place_limit_order`, `cancel_order`, `modify_position_sltp`) are protected by a thread-safe `_MT5_LOCK = threading.RLock()`.
+2. **Dynamic Order Filling Mode**:
+   - Resolves broker-supported filling policies from `sym_info.filling_mode`:
+     - Bit 4 set (`& 4`): `ORDER_FILLING_RETURN` (Standard pending limit orders).
+     - Bit 2 set (`& 2`): `ORDER_FILLING_IOC` (Immediate-Or-Cancel brokers).
+     - Bit 1 set (`& 1`): `ORDER_FILLING_FOK` (Fill-Or-Kill brokers).
+3. **Price, SL, and TP Tick Snapping**:
+   - Quantized to broker `trade_tick_size` and rounded to `digits`:
+     $$\text{snapped\_price} = \text{round}\left(\text{round}\left(\frac{\text{price}}{\text{tick\_size}}\right) \times \text{tick\_size},\, \text{digits}\right)$$
+   - Completely eliminates `10013` (Invalid Request) and `10014` (Invalid Volume / Price) broker rejections.
+4. **100% Professional English Localization**:
+   - Entire logging, terminal, and user notification messages translated from Persian to clean, professional English per system guidelines.
+
+### 26.6 Account Risk Governor Isolation & Mock Sanitization (`hitl/account_risk_manager.py`)
+1. **Mock Object & Non-Numeric Protection**:
+   - In `sync_state()`, strictly verifies that `acc["equity"]` is numeric (`isinstance(acc["equity"], (int, float))`).
+   - If unit tests or disconnected mocks return non-numeric `MagicMock` instances, `acc` is safely bypassed, preventing `float(MagicMock()) == 1.0` from writing phantom 99.9% daily drawdown breaches to disk.
+2. **Test Isolation**:
+   - Unit tests calling `watchdog.poll()` patch `risk_governor.sync_state` to prevent test executions from mutating `hitl/memory/account_risk_profile.json`.
+
+
+## 27. Backtesting Integrity, Causal Governance & Anti-Cheat Pipeline (2026-11-19 Remediation)
+
+To remediate every vulnerability, lookahead leak, asymmetric clamping distortion, unscaled commission discrepancy, off-by-one prior-day shift, and executor deviation documented in `docs/backtest-integrity-audit-and-plan.md`, the backtesting core has been completely overhauled and mathematically hardened.
+
+### 27.1 Canonical Simulator Hardening (`hitl/backtest/evaluator.py`)
+1. **Symmetric Over-Risk Rejection (`reject_over_risk=True`)**:
+   - Eliminates the asymmetric clamping bug where wide stops (e.g., $25 on Gold) paid uncapped wins ($70+) while losses were clamped to -$12.10.
+   - At fixed `0.01` lot, if projected structural risk (`price_risk_usd + spread_cost + commission_total`) exceeds `max_risk_usd` ($12.00 legacy, $20.00 for $2,000 tier), the order returns `status="REJECTED_RISK_CAP"` with `realized_pnl_usd=0.0`.
+2. **Intrabar Conflict & Fill-Bar Stop-Loss Blow-Through Check**:
+   - Eliminates the 1-minute SL immunity bug on the fill candle.
+   - When a limit order fills on M1 bar `idx`, `hit_sl` is tested on that exact same bar. If price touched both entry and SL within that minute, the trade is resolved as `LOSS` immediately.
+   - Breakeven ratchets and TP checks arm strictly on subsequent bars (`idx + 1`).
+3. **Lot-Scaled Commission & Historical Rollover Spreads**:
+   - Commission is scaled dynamically: $\text{Commission} = \text{Commission}_{0.01} \times (\text{Lot} / 0.01)$.
+   - Real historical bar spreads (`bar['spread']`) are preserved, and a $5.0\times$ spread multiplier is enforced during daily bank rollover liquidity blackouts (`23:45–01:05` broker server time).
+
+### 27.2 Multi-Timeframe Prior-Day Shift & Visibility (`hitl/backtest/fast_screener.py` & `mtf_structure.py`)
+1. **Unambiguous Prior-Day (`T-1`) Indexing**:
+   - Eliminates the double-slicing bug where `bars_1d[:-1]` combined with `bars_1d[-2]` caused `PDH`, `PDL`, and `is_inside_day` to read Two Days Ago (`T-2`).
+   - Slicing standardization:
+     - `closed_1d[-1]` is strictly **Prior Day (`T-1`)**.
+     - `closed_1d[-2]` is **Two Days Ago (`T-2`)**.
+   - `detect_macro_dol_runner` and `detect_extreme_judas_reversal` read `bars_1d[-1]` for Prior Day levels.
+   - `mtf_structure.py::analyze_mtf_state` reads `pd = bars_1d[-1]` and tests inside days via `p2d = bars_1d[-2]`.
+
+### 27.3 Quant Engine Realistic Friction & Rollover Protection (`hitl/quant_engine/vectorized_backtester.py`)
+1. **Dynamic Lot Sizing Commission Scaling**:
+   - Positions sized to achieve target dollar risk calculate required lot size:
+     $$\text{Lot} = \max\left(0.01, \text{round}\left(\frac{\text{Risk}_{\text{USD}}}{\text{InitialRisk}_{\text{Points}} \times \text{PointVal}_{0.01}} \times 0.01, 2\right)\right)$$
+   - Deducts authentic scaled commission $\text{Commission}_{0.10} \times (\text{Lot} / 0.01)$ from all WIN, LOSS, and BREAKEVEN outcomes.
+2. **Overnight Rollover Freeze**:
+   - Suppresses trade entry during `23:45–01:05` broker server time, matching live `MarketWatchdog.is_rollover_blackout()`.
+   - Multiplies forward simulation spread by $5.0\times$ during any bars traversing rollover.
+
+### 27.4 Strategy Tester EA Limit-Only Integrity (`mql5/TradingGuard_Executor.mq5`)
+1. **Elimination of Market Order Fallbacks**:
+   - In lines 220–226 (Sell) and 251–257 (Buy), market order fallbacks (`g_trade.Sell` / `g_trade.Buy`) were deleted.
+   - If market price has reached or crossed limit entry at `trigger_time`, the plan is marked `EXPIRED` and skipped.
+   - If entry is within minimum broker stops distance, the order is cancelled rather than shifting the price.
+   - Guarantees MT5 Strategy Tester ("Every tick based on real ticks") strictly evaluates authentic limit executions.
+
+### 27.5 Point-in-Time Causal Data Feed (`hitl/backtest/causal_feed.py`)
+1. **Strict Bar-Close Visibility**:
+   - `get_causal_slice(bars, decision_ts, tf_seconds)`: strictly enforces `open_ts + tf_seconds <= decision_ts`.
+   - Completely prevents leaking forming 5M, 15M, 1H, or D1 candles into screener decisions.
+2. **Unified Seasonal Timezone Resolvers**:
+   - `convert_epoch_to_session_context(srv_epoch)`: converts `Europe/Athens` MT5 epochs to true UTC, `Asia/Tehran` (UTC+3:30 fixed), `Europe/London`, and `America/New_York` with dynamic DST awareness.
+3. **Chronological Portfolio Event Queue (`PortfolioEventQueue`)**:
+   - Maintains multi-asset trade state: active open trades, concurrency caps (max 2 positions), and the -$34.00 daily circuit breaker.
+   - Realized PnL updates strictly at an order's verified `exit_ts`, preventing future exit PnL from leaking into current decisions.
+
+### 27.6 Automated Anti-Cheat Pytest Suite (`app/tests/test_backtest_integrity.py`)
+Contains 6 automated mathematical integrity verification tests:
+1. `test_future_scramble_invariance`: Zero-lookahead proof confirming that +1000% fantasy spikes after timestamp $T$ produce byte-for-byte identical screener results at $T$.
+2. `test_intrabar_conflict_and_fill_bar_blow_through`: Verifies same-bar entry + SL touch resolves strictly as `LOSS` on bar 0.
+3. `test_risk_reward_symmetry_and_over_risk_rejection`: Confirms stops exceeding $12.00 at 0.01 lot return `REJECTED_RISK_CAP`.
+4. `test_ast_custom_simulator_linter`: AST parser that fails if any non-deprecated file in `hitl/backtest/` defines custom simulation loops.
+5. `test_causal_data_slicer_bar_close_visibility`: Verifies point-in-time slice boundaries and Prior-Day D1 indexing.
+6. `test_chronological_portfolio_event_queue`: Validates that portfolio concurrency and daily drawdown update strictly at real exit times.
+
+### 27.7 Cryptographic Governance & 3-Vault Partition (`docs/BACKTEST_INTEGRITY_RULES.md`)
+1. **Binding Governance Mandates**:
+   - Single Simulator Mandate (`evaluator.py`).
+   - No Artifact, No Claim (Mandatory `trade_ledger.csv` and `run_manifest.json`).
+   - Mandatory Unfiltered Baseline alongside filtered reports.
+   - Strict Realized vs. Unrealized Split (`OPEN_AT_END` floating positions excluded from realized metrics).
+2. **Three-Vault Chronological Split**:
+   - Vault 1 (Discovery/Train): 2025 H1 - 2026 Q1.
+   - Vault 2 (Validation/Calibration): 2026 Q2 - Nov 6, 2026.
+   - Vault 3 (Locked Holdout): 2025 H2 OOS & Post-Nov 7, 2026 forward holdout.
+
+
+
 
