@@ -42,21 +42,26 @@ def analyze_mtf_state(
     dol_external = None
     dol_internal = None
 
-    if bars_1d and len(bars_1d) >= 2:
-        pd = bars_1d[-2]
+    if bars_1d and len(bars_1d) >= 1:
+        # Completed daily bars: bars_1d[-1] is strictly Prior Day (T-1)
+        pd = bars_1d[-1]
         pdh = pd['high']
         pdl = pd['low']
         pdr = pdh - pdl
-        cd = bars_1d[-1]
 
-        is_inside_day = (cd['high'] <= pdh and cd['low'] >= pdl)
+        # Inside day check: was yesterday (T-1) an inside day relative to two days ago (T-2)?
+        is_inside_day = False
+        if len(bars_1d) >= 2:
+            p2d = bars_1d[-2]
+            is_inside_day = (pd['high'] <= p2d['high'] and pd['low'] >= p2d['low'])
+
         if pdr > 0:
             in_mid_equilibrium = (pdl + 0.25 * pdr) <= current_price <= (pdl + 0.75 * pdr)
             dol_internal = round(pdl + 0.50 * pdr, 1 if is_index else (2 if (is_gold or is_crypto) else (3 if is_silver else 5)))
 
         if len(bars_1d) >= 5:
-            recent_highs = [b['high'] for b in bars_1d[-10:-1]]
-            recent_lows = [b['low'] for b in bars_1d[-10:-1]]
+            recent_highs = [b['high'] for b in bars_1d[-10:]]
+            recent_lows = [b['low'] for b in bars_1d[-10:]]
             major_high = max(recent_highs)
             major_low = min(recent_lows)
             dol_external = major_high if current_price >= (pdl + 0.50 * pdr) else major_low

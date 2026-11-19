@@ -55,7 +55,7 @@ def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = 
         min_body = 0.0004
 
     recent = bars[-lookback:]
-    for i in range(len(recent) - 1, 2, -1):
+    for i in range(len(recent) - 1, 1, -1):
         c1 = recent[i - 2]
         c2 = recent[i - 1]
         c3 = recent[i]
@@ -65,14 +65,20 @@ def detect_fvg_5m(bars: List[Dict[str, Any]], lookback: int = 12, symbol: str = 
             gap_size = c3['low'] - c1['high']
             body_size = abs(c2['close'] - c2['open'])
             if gap_size >= min_gap and body_size >= min_body and body_size > gap_size:  # Impulsive displacement
-                return True, "BULLISH", c3['low'], c1['high']
+                # Check if subsequent candles have completely filled/mitigated or closed through the gap
+                is_mitigated = any(sub['low'] <= c1['high'] or sub['close'] < c1['high'] for sub in recent[i+1:])
+                if not is_mitigated:
+                    return True, "BULLISH", c3['low'], c1['high']
 
         # Bearish FVG: Candle 1 Low > Candle 3 High (imbalance in Candle 2)
         if c1['low'] > c3['high']:
             gap_size = c1['low'] - c3['high']
             body_size = abs(c2['close'] - c2['open'])
             if gap_size >= min_gap and body_size >= min_body and body_size > gap_size:  # Impulsive displacement
-                return True, "BEARISH", c3['high'], c1['low']
+                # Check if subsequent candles have completely filled/mitigated or closed through the gap
+                is_mitigated = any(sub['high'] >= c1['low'] or sub['close'] > c1['low'] for sub in recent[i+1:])
+                if not is_mitigated:
+                    return True, "BEARISH", c3['high'], c1['low']
 
     return False, "NONE", 0.0, 0.0
 
@@ -127,12 +133,14 @@ def detect_breaker_and_mss(bars: List[Dict[str, Any]], lookback: int = 24, symbo
         return False, "NONE", 0.0
 
     # Bearish MSS: Price broke below the last structural swing low with momentum
-    if current_close < last_low_val and last_high_idx < last_low_idx:
+    # Institutional Reversal: Prior swing low must precede the sweep high
+    if current_close < last_low_val and last_low_idx < last_high_idx:
         breaker_price = recent[last_low_idx]['high']
         return True, "BEARISH_BREAKER", breaker_price
 
     # Bullish MSS: Price broke above the last structural swing high with momentum
-    if current_close > last_high_val and last_low_idx < last_high_idx:
+    # Institutional Reversal: Prior swing high must precede the sweep low
+    if current_close > last_high_val and last_high_idx < last_low_idx:
         breaker_price = recent[last_high_idx]['low']
         return True, "BULLISH_BREAKER", breaker_price
 
@@ -216,6 +224,9 @@ def detect_prominent_sweep_and_mss(
     # 1. Bearish Prominent Sweep (EQH / Prominent High swept then MSS down)
     if len(highs) >= 2:
         for h_idx, h_val in highs[-3:]:
+            # Recency gate: the sweep peak must have formed within the last 6 bars
+            if h_idx < len(recent) - 6:
+                continue
             prior_highs = [h for h in highs if h[0] < h_idx]
             if not prior_highs:
                 continue
@@ -314,6 +325,9 @@ def detect_prominent_sweep_and_mss(
     # 2. Bullish Prominent Sweep (EQL / Prominent Low swept then MSS up)
     if len(lows) >= 2:
         for l_idx, l_val in lows[-3:]:
+            # Recency gate: the sweep low must have formed within the last 6 bars
+            if l_idx < len(recent) - 6:
+                continue
             prior_lows = [l for l in lows if l[0] < l_idx]
             if not prior_lows:
                 continue
@@ -527,7 +541,7 @@ def detect_adr_exhaustion_snapback(
     # Calculate 20-day ADR
     adr_20 = 0.0
     if bars_1d and len(bars_1d) >= 20:
-        prior_20 = bars_1d[-21:-1] if len(bars_1d) > 20 else bars_1d[-20:]
+        prior_20 = bars_1d[-20:]
         adr_20 = sum(b['high'] - b['low'] for b in prior_20) / len(prior_20)
     elif bars_1h and len(bars_1h) >= 480:  # ~20 days of 1H
         ranges = []
@@ -542,9 +556,16 @@ def detect_adr_exhaustion_snapback(
         adr_20 = 45.0  # Conservative fallback
 
     curr_b = bars_5m[-1]
-    curr_dt = curr_b.get('dt')
-    if curr_dt is not None and hasattr(curr_dt, 'hour') and curr_dt.hour >= 16:
-        return False, "NONE", 0.0, 0.0, ""
+    bar_ts = curr_b.get('time')
+    if bar_ts:
+        from hitl.replay_data import server_epoch_to_zones
+        utc_hour = server_epoch_to_zones(int(bar_ts))["utc_dt"].hour
+        if utc_hour >= 16:
+            return False, "NONE", 0.0, 0.0, ""
+    else:
+        curr_dt = curr_b.get('dt')
+        if curr_dt is not None and hasattr(curr_dt, 'hour') and curr_dt.hour >= 16:
+            return False, "NONE", 0.0, 0.0, ""
 
     # Intraday range from recent 5M bars
     lookback = min(len(bars_5m), 72)
@@ -604,8 +625,8 @@ def detect_macro_dol_runner(
     # Determine PDH/PDL from bars_1d or 24h blocks in bars_1h
     pdh = 0.0
     pdl = 0.0
-    if bars_1d and len(bars_1d) >= 2:
-        prev_d = bars_1d[-2]
+    if bars_1d and len(bars_1d) >= 1:
+        prev_d = bars_1d[-1]
         pdh = prev_d['high']
         pdl = prev_d['low']
     elif len(bars_1h) >= 48:
@@ -614,8 +635,16 @@ def detect_macro_dol_runner(
         pdl = min(b['low'] for b in prev_day_1h)
 
     # Asian session extremes from bars_1h (00:00 - 07:00 UTC)
+    from hitl.replay_data import server_epoch_to_zones
     today_bars = [b for b in bars_1h[-24:]]
-    asian_bars = [b for b in today_bars if hasattr(b.get('dt'), 'hour') and b['dt'].hour < 7]
+    asian_bars = []
+    for b in today_bars:
+        if b.get('time'):
+            h_utc = server_epoch_to_zones(int(b['time']))["utc_dt"].hour
+            if 0 <= h_utc < 7:
+                asian_bars.append(b)
+        elif hasattr(b.get('dt'), 'hour') and b['dt'].hour < 7:
+            asian_bars.append(b)
     asian_high = max(b['high'] for b in asian_bars) if asian_bars else 0.0
     asian_low = min(b['low'] for b in asian_bars) if asian_bars else 0.0
 
@@ -715,8 +744,11 @@ def detect_reversal_origin_retest(
                         inval_sl = og_low - 2.00
 
                         subsequent = recent_h1[i+1:]
-                        if not any(sb['close'] < inval_sl for sb in subsequent):
-                            if curr_low <= og_high and curr_high >= og_low:
+                        # Invalidation check: no candle wick traded below invalidation SL
+                        if not any(sb['low'] < inval_sl for sb in subsequent):
+                            # Retest mitigation check: ignition base must NOT have been mitigated by prior candles in subsequent
+                            prior_mitigated = any(sb['low'] <= og_high and sb['high'] >= og_low for sb in subsequent[:-1])
+                            if not prior_mitigated and curr_low <= og_high and curr_high >= og_low:
                                 entry = curr_p
                                 risk = entry - inval_sl
                                 if 4.00 <= risk <= 10.00:
@@ -738,8 +770,11 @@ def detect_reversal_origin_retest(
                         inval_sl = og_high + 2.00
 
                         subsequent = recent_h1[i+1:]
-                        if not any(sb['close'] > inval_sl for sb in subsequent):
-                            if curr_high >= og_low and curr_low <= og_high:
+                        # Invalidation check: no candle wick traded above invalidation SL
+                        if not any(sb['high'] > inval_sl for sb in subsequent):
+                            # Retest mitigation check: ignition base must NOT have been mitigated by prior candles in subsequent
+                            prior_mitigated = any(sb['high'] >= og_low and sb['low'] <= og_high for sb in subsequent[:-1])
+                            if not prior_mitigated and curr_high >= og_low and curr_low <= og_high:
                                 entry = curr_p
                                 risk = inval_sl - entry
                                 if 4.00 <= risk <= 10.00:
@@ -1006,7 +1041,7 @@ def detect_opening_range_breakout(
 
     # ADR Headroom Gate (<= 75% of ADR14 consumed)
     if bars_1d and len(bars_1d) >= 5:
-        recent_adrs = [b['high'] - b['low'] for b in bars_1d[-15:-1]]
+        recent_adrs = [b['high'] - b['low'] for b in bars_1d[-14:]]
         adr14 = sum(recent_adrs) / len(recent_adrs) if recent_adrs else (or_range * 4.0)
         m5_day = [b for b in bars_5m if (int(b['time']) - offset_sec) >= day_start_utc]
         day_consumed = (max(b['high'] for b in m5_day) - min(b['low'] for b in m5_day)) if m5_day else 0.0
@@ -1016,14 +1051,15 @@ def detect_opening_range_breakout(
     # Macro Trend Determination (H1 EMA20 & EMA50)
     alpha50 = 2.0 / (50.0 + 1.0)
     ema50 = float(bars_1h[0]['close'])
+    ema50_series = [ema50]
     for hb in bars_1h[1:]:
         ema50 = alpha50 * float(hb['close']) + (1.0 - alpha50) * ema50
+        ema50_series.append(ema50)
     h1_close = float(bars_1h[-1]['close'])
 
     h1_slope = 0.0
-    if len(bars_1h) >= 6:
-        ema_prev5 = float(bars_1h[-6]['close'])
-        h1_slope = ema50 - ema_prev5
+    if len(ema50_series) >= 6:
+        h1_slope = ema50_series[-1] - ema50_series[-6]
 
     macro_bull = (h1_close > ema50 and h1_slope >= 0)
     macro_bear = (h1_close < ema50 and h1_slope <= 0)
@@ -1205,9 +1241,9 @@ def detect_extreme_judas_reversal(
     asia_l = min(b['low'] for b in asia_bars)
 
     pdh, pdl = None, None
-    if bars_1d and len(bars_1d) >= 2:
-        pdh = bars_1d[-2]['high']
-        pdl = bars_1d[-2]['low']
+    if bars_1d and len(bars_1d) >= 1:
+        pdh = bars_1d[-1]['high']
+        pdl = bars_1d[-1]['low']
 
     bench_h = max(asia_h, pdh) if pdh else asia_h
     bench_l = min(asia_l, pdl) if pdl else asia_l
@@ -1220,18 +1256,24 @@ def detect_extreme_judas_reversal(
     ema20 = float(bars_1h[0]['close'])
     alpha50 = 2.0 / (50.0 + 1.0)
     ema50 = float(bars_1h[0]['close'])
+    ema50_series = [ema50]
     for hb in bars_1h[1:]:
         c_val = float(hb['close'])
         ema20 = alpha20 * c_val + (1.0 - alpha20) * ema20
         ema50 = alpha50 * c_val + (1.0 - alpha50) * ema50
+        ema50_series.append(ema50)
 
     h1_close = float(bars_1h[-1]['close'])
     h1_slope = 0.0
-    if len(bars_1h) >= 6:
-        h1_slope = ema50 - float(bars_1h[-6]['close'])
+    if len(ema50_series) >= 6:
+        h1_slope = ema50_series[-1] - ema50_series[-6]
 
     is_heavy_bull = (h1_close > ema20 and ema20 > ema50 and h1_slope > 0)
     is_heavy_bear = (h1_close < ema20 and ema20 < ema50 and h1_slope < 0)
+
+    # Calculate 14-period H1 ATR for H1 overextension measurement
+    atrs_h1 = [b['high'] - b['low'] for b in bars_1h[-15:-1]]
+    atr_h1 = sum(atrs_h1) / len(atrs_h1) if atrs_h1 else (min_pen * 6.0)
 
     candle_range = cur['high'] - cur['low']
     if candle_range <= 0:
@@ -1242,7 +1284,7 @@ def detect_extreme_judas_reversal(
     uw = cur['high'] - max(cur['open'], cur['close'])
     lw = min(cur['open'], cur['close']) - cur['low']
 
-    stat_overextended = abs(cur['close'] - ema20) >= (1.2 * atr_m5)
+    stat_overextended = abs(cur['close'] - ema20) >= (1.2 * atr_h1)
 
     max_risk_usd = 10.0  # Prop firm 1.0% limit on $1,000 account
     allowed_risk_pts = max_risk_usd / dollar_per_pt
@@ -1289,6 +1331,162 @@ def detect_gold_judas_extreme_reversal(
     return detect_extreme_judas_reversal(bars_5m, bars_1h, bars_1d, symbol)
 
 
+def detect_gold_double_sweep_reversal(
+    bars_5m: List[Dict[str, Any]],
+    bars_1h: Optional[List[Dict[str, Any]]] = None,
+    bars_1d: Optional[List[Dict[str, Any]]] = None,
+    symbol: str = "XAUUSD"
+) -> Tuple[bool, str, float, float, str]:
+    """
+    Detects SETUP-ARCH-019: Gold Double Sweep Displacement Reversal (Secondary Stop-Hunt).
+    Mechanics:
+      1. Symbol strictly XAUUSD (Gold). Vetoed on Forex / Indices per 1-year empirical audit.
+      2. Session Gate: Active during London Open through late NY (08:00 UTC up to NYSE + 120m).
+      3. Primary Sweep (Sweep 1): Price sweeps an earlier established swing high/low (H0 / L0) setting peak H1 / trough L1.
+      4. Intermediate Pullback / Rally: Price retraces by at least $1.20 forming L_mid / H_mid.
+      5. Secondary Sweep (Sweep 2): Price sweeps the new extreme (H2 > H1 or L2 < L1) with rejection wick >= 25% or close back inside.
+      6. Opposing Displacement & FVG: Immediately prints an opposing 5M FVG (gap >= $0.30) confirming Market Structure Shift (MSS)
+         breaking L_mid / H_mid.
+      7. Dynamic Prop Firm Retracement: Risk clamped between $1.50 and $10.00.
+    """
+    if "XAU" not in symbol.upper():
+        return False, "NONE", 0.0, 0.0, ""
+    if not bars_5m or len(bars_5m) < 25:
+        return False, "NONE", 0.0, 0.0, ""
+
+    offset_sec = 7200
+    try:
+        from hitl.backtest.chart_renderer import get_broker_utc_offset_seconds
+        offset_sec = get_broker_utc_offset_seconds()
+    except Exception:
+        pass
+
+    cur = bars_5m[-1]
+    sig_utc = int(cur['time']) - offset_sec
+    sig_dt = datetime.datetime.fromtimestamp(sig_utc, tz=datetime.timezone.utc)
+    stimes = get_session_times_for_date(sig_dt.date())
+    lon_utc = int(stimes["london"]["utc_time"].timestamp())
+    ny_utc = int(stimes["new_york"]["utc_time"].timestamp())
+    nyse_utc = int(stimes["nyse_open"]["utc_time"].timestamp())
+
+    # Active during London Open through late NY (up to NYSE + 120m)
+    if not (lon_utc <= sig_utc <= nyse_utc + 7200):
+        return False, "NONE", 0.0, 0.0, ""
+
+    min_gap = 0.30
+    sl_buffer = 1.20
+    max_risk = 10.00
+    min_risk = 1.50
+
+    # 1. Bearish Double Sweep Reversal Setup (Short)
+    has_bear_fvg = False
+    fvg_top = 0.0
+    fvg_bottom = 0.0
+    fvg_mid = 0.0
+    
+    if len(bars_5m) >= 4:
+        b1, b2, b3 = bars_5m[-3], bars_5m[-2], bars_5m[-1]
+        if b1['low'] > b3['high'] + min_gap and b2['close'] < b2['open']:
+            has_bear_fvg = True
+            fvg_top = b1['low']
+            fvg_bottom = b3['high']
+            fvg_mid = (fvg_top + fvg_bottom) / 2.0
+        else:
+            b0, b1, b2 = bars_5m[-4], bars_5m[-3], bars_5m[-2]
+            if b0['low'] > b2['high'] + min_gap and b1['close'] < b1['open']:
+                has_bear_fvg = True
+                fvg_top = b0['low']
+                fvg_bottom = b2['high']
+                fvg_mid = (fvg_top + fvg_bottom) / 2.0
+
+    if has_bear_fvg:
+        for idx in range(len(bars_5m) - 2, max(len(bars_5m) - 8, 5), -1):
+            h2_bar = bars_5m[idx]
+            if h2_bar['high'] >= bars_5m[idx - 1]['high']:
+                h2_price = h2_bar['high']
+                if any(b['high'] > h2_price for b in bars_5m[idx + 1:]):
+                    continue
+                rng = h2_bar['high'] - h2_bar['low']
+                u_wick = h2_bar['high'] - max(h2_bar['open'], h2_bar['close'])
+                w_ratio = u_wick / rng if rng > 0 else 0
+
+                for h1_idx in range(idx - 2, max(idx - 25, 3), -1):
+                    h1_bar = bars_5m[h1_idx]
+                    if h1_bar['high'] < h2_price:
+                        mid_lows = [b['low'] for b in bars_5m[h1_idx:idx]]
+                        l_mid = min(mid_lows)
+                        if h1_bar['high'] - l_mid >= 1.20:
+                            # MSS Check: Current close or prior close breaks l_mid
+                            if cur['close'] < l_mid or bars_5m[-2]['close'] < l_mid:
+                                if w_ratio >= 0.25 or h2_bar['close'] <= h1_bar['high'] + 0.30:
+                                    earlier_highs = [b['high'] for b in bars_5m[max(0, h1_idx - 35):h1_idx - 4]]
+                                    if earlier_highs and max(earlier_highs) < h1_bar['high'] and (h1_bar['high'] - max(earlier_highs)) >= 0.20:
+                                        sl = round(h2_price + sl_buffer, 2)
+                                        entry = round(fvg_mid, 2)
+                                        risk = sl - entry
+                                        if risk > max_risk:
+                                            entry = round(sl - max_risk, 2)
+                                            risk = max_risk
+                                        if risk >= min_risk:
+                                            desc = f"Gold Double Sweep Reversal: H2 {h2_price:.2f} swept H1 {h1_bar['high']:.2f} (swept H0 {max(earlier_highs):.2f}) with {w_ratio*100:.1f}% wick, opposing 5M FVG [{fvg_bottom:.2f} - {fvg_top:.2f}]"
+                                            return True, "BEARISH", entry, sl, desc
+                                        break
+                                break
+
+    # 2. Bullish Double Sweep Reversal Setup (Long)
+    has_bull_fvg = False
+    if len(bars_5m) >= 4:
+        b1, b2, b3 = bars_5m[-3], bars_5m[-2], bars_5m[-1]
+        if b1['high'] < b3['low'] - min_gap and b2['close'] > b2['open']:
+            has_bull_fvg = True
+            fvg_top = b3['low']
+            fvg_bottom = b1['high']
+            fvg_mid = (fvg_top + fvg_bottom) / 2.0
+        else:
+            b0, b1, b2 = bars_5m[-4], bars_5m[-3], bars_5m[-2]
+            if b0['high'] < b2['low'] - min_gap and b1['close'] > b1['open']:
+                has_bull_fvg = True
+                fvg_top = b2['low']
+                fvg_bottom = b0['high']
+                fvg_mid = (fvg_top + fvg_bottom) / 2.0
+
+    if has_bull_fvg:
+        for idx in range(len(bars_5m) - 2, max(len(bars_5m) - 8, 5), -1):
+            l2_bar = bars_5m[idx]
+            if l2_bar['low'] <= bars_5m[idx - 1]['low']:
+                l2_price = l2_bar['low']
+                if any(b['low'] < l2_price for b in bars_5m[idx + 1:]):
+                    continue
+                rng = l2_bar['high'] - l2_bar['low']
+                l_wick = min(l2_bar['open'], l2_bar['close']) - l2_bar['low']
+                w_ratio = l_wick / rng if rng > 0 else 0
+
+                for l1_idx in range(idx - 2, max(idx - 25, 3), -1):
+                    l1_bar = bars_5m[l1_idx]
+                    if l1_bar['low'] > l2_price:
+                        mid_highs = [b['high'] for b in bars_5m[l1_idx:idx]]
+                        h_mid = max(mid_highs)
+                        if h_mid - l1_bar['low'] >= 1.20:
+                            # MSS Check: Current close or prior close breaks h_mid
+                            if cur['close'] > h_mid or bars_5m[-2]['close'] > h_mid:
+                                if w_ratio >= 0.25 or l2_bar['close'] >= l1_bar['low'] - 0.30:
+                                    earlier_lows = [b['low'] for b in bars_5m[max(0, l1_idx - 35):l1_idx - 4]]
+                                    if earlier_lows and min(earlier_lows) > l1_bar['low'] and (min(earlier_lows) - l1_bar['low']) >= 0.20:
+                                        sl = round(l2_price - sl_buffer, 2)
+                                        entry = round(fvg_mid, 2)
+                                        risk = entry - sl
+                                        if risk > max_risk:
+                                            entry = round(sl + max_risk, 2)
+                                            risk = max_risk
+                                        if risk >= min_risk:
+                                            desc = f"Gold Double Sweep Reversal: L2 {l2_price:.2f} swept L1 {l1_bar['low']:.2f} (swept L0 {min(earlier_lows):.2f}) with {w_ratio*100:.1f}% wick, opposing 5M FVG [{fvg_bottom:.2f} - {fvg_top:.2f}]"
+                                            return True, "BULLISH", entry, sl, desc
+                                        break
+                                break
+
+    return False, "NONE", 0.0, 0.0, ""
+
+
 def screen_ict_session(
     bars_5m: List[Dict[str, Any]],
     bars_1h: List[Dict[str, Any]],
@@ -1325,10 +1523,16 @@ def screen_ict_session(
     if closed_bars_only:
         bars_5m = bars_5m[:-1]
         bars_1h = bars_1h[:-1]
-        if bars_1d is not None:
-            bars_1d = bars_1d[:-1]
         if bars_1m is not None:
             bars_1m = bars_1m[:-1]
+
+    # Standardize bars_1d: ensure bars_1d[-1] is strictly Prior Day (T-1)
+    if bars_1d is not None and bars_1d:
+        sig_t = bars_5m[-1]['time'] if bars_5m else 0
+        last_d1_t = bars_1d[-1].get('time', 0)
+        # If last D1 bar belongs to today's forming day, drop it so bars_1d[-1] is strictly T-1
+        if last_d1_t and sig_t and (last_d1_t <= sig_t < last_d1_t + 86400 or (sig_t - last_d1_t) < 86400):
+            bars_1d = bars_1d[:-1]
     signal_bar_time = bars_5m[-1]['time'] if bars_5m else None
 
     if len(bars_5m) < 40 or len(bars_1h) < 10:
@@ -1416,6 +1620,9 @@ def screen_ict_session(
             rec_be = 1.2      # Early breakeven ratchet to eliminate adverse mean-reversion
         elif arch_id == "SETUP-ARCH-015" and "XAU" in symbol.upper():
             rec_target = 2.5  # Calibrated across 17-month OOS+IS audit (89tr, +25.45R, PF 1.55)
+            rec_be = 1.5
+        elif arch_id == "SETUP-ARCH-019" and "XAU" in symbol.upper():
+            rec_target = 3.0  # Calibrated for Gold Double Sweep Displacement Reversal (PF 1.46 - 1.76)
             rec_be = 1.5
 
         return {
@@ -1527,6 +1734,17 @@ def screen_ict_session(
                 smt_dir_label = "LONG" if smt_dir == "BULLISH" else "SHORT"
                 return _build_setup_package(smt_mtf, "SETUP-ARCH-016", f"{smt_dir}_SMT_DIV", smt_entry, smt_sl, smt_desc, smt_dir_label)
 
+        # Allow Gold Double Sweep Displacement Reversal (SETUP-ARCH-019)
+        if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-019"):
+            has_ds, ds_dir, ds_entry, ds_sl, ds_desc = detect_gold_double_sweep_reversal(
+                bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
+            )
+            if has_ds:
+                from hitl.backtest.mtf_structure import analyze_mtf_state
+                ds_mtf = analyze_mtf_state(bars_1d=bars_1d, bars_1h=bars_1h, bars_5m=bars_5m, symbol=symbol)
+                ds_dir_label = "LONG" if ds_dir == "BULLISH" else "SHORT"
+                return _build_setup_package(ds_mtf, "SETUP-ARCH-019", f"{ds_dir}_DOUBLE_SWEEP_REV", ds_entry, ds_sl, ds_desc, ds_dir_label)
+
         if "XAU" in symbol.upper() or is_gbp or is_nq:
             # Banned on Gold (-33.01R), Cable (-6.54R), and unratified NQ models per empirical audit
             return {
@@ -1565,13 +1783,13 @@ def screen_ict_session(
             "signal_bar_time": signal_bar_time
         }
 
-    # 2. Liquidity Sweeps vs Breakouts in recent 10 bars
+    # 2. Liquidity Sweeps vs Breakouts (Fresh Window: last 4 bars = 20 mins)
     recent_bars = bars_5m[-10:]
     recent_high = max(b['high'] for b in recent_bars)
     recent_low = min(b['low'] for b in recent_bars)
-
-    pierced_high = recent_high >= range_high
-    pierced_low = recent_low <= range_low
+    fresh_bars = bars_5m[-4:]
+    pierced_high = any(b['high'] >= range_high for b in fresh_bars)
+    pierced_low = any(b['low'] <= range_low for b in fresh_bars)
 
     breakout_buf = 1.5 if is_spx else (8.0 if is_ym else (6.0 if is_nq else (30.0 if is_crypto else (1.0 if "XAU" in symbol.upper() else (0.10 if is_silver else 0.0008)))))
     rejection_buf = 0.8 if is_spx else (4.0 if is_ym else (3.0 if is_nq else (15.0 if is_crypto else (0.5 if "XAU" in symbol.upper() else (0.05 if is_silver else 0.0004)))))
@@ -1808,6 +2026,16 @@ def screen_ict_session(
             arch_id = "SETUP-ARCH-018"
             direction = "LONG" if jsr_dir == "BULLISH" else "SHORT"
             return _package_setup(arch_id, f"{jsr_dir}_EXTREME_JUDAS_REV", jsr_entry, jsr_sl, jsr_desc, direction)
+
+    # Setup O: Gold Double Sweep Displacement Reversal (SETUP-ARCH-019)
+    if "XAU" in symbol.upper() and setup_registry.is_archetype_ratified("SETUP-ARCH-019"):
+        has_ds, ds_dir, ds_entry, ds_sl, ds_desc = detect_gold_double_sweep_reversal(
+            bars_5m=bars_5m, bars_1h=bars_1h, bars_1d=bars_1d, symbol=symbol
+        )
+        if has_ds:
+            arch_id = "SETUP-ARCH-019"
+            direction = "LONG" if ds_dir == "BULLISH" else "SHORT"
+            return _package_setup(arch_id, f"{ds_dir}_DOUBLE_SWEEP_REV", ds_entry, ds_sl, ds_desc, direction)
 
     # Price in equilibrium consolidation or no ratified archetype entry criteria met
     return {

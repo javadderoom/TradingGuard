@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Gold Macro Expansion Empirical Research Engine
 Audits 3 Institutional Methods for Capturing Big Moves ($30 - $80+) on Gold (XAUUSD_o):

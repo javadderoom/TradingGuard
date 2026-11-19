@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Autumn 2-Month Quantitative British Pound (GBPUSD) Strategy Audit
 Audit Period: September 1, 2026 - November 4, 2026 (Autumn Season & DST Transition)

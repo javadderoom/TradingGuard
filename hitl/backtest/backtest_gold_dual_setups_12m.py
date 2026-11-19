@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Full-Year 2026 Comparative Backtest Audit: Gold (XAUUSD_o)
 Evaluates two distinct execution architectures across 12 months (305,293 M1 bars / 700 sessions):

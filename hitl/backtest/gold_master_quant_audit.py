@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Master Quantitative Gold (XAUUSD) Strategy Audit
 Examines the 2-Month Broker Dataset (September 1, 2026 - November 4, 2026):

@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Quantitative Optimization & Calibration of SETUP-ARCH-001 on Gold (XAUUSD_o)
 Tests institutional hypotheses across the 305,293 M1 broker bars of 2026:

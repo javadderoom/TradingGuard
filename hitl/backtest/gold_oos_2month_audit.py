@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Out-Of-Sample (OOS) 2-Month Quantitative Gold (XAUUSD) Strategy Audit
 Audit Period: July 1, 2026 - August 31, 2026 (Continuous M1 Broker Microstructure & Raw Ticks)

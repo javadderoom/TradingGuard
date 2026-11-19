@@ -1,5 +1,9 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: This legacy script contains phantom instant fills, 4-minute intra-bar lookahead,
+# and TP-first precedence. Decommissioned per docs/backtest-integrity-audit-and-plan.md.
+# All authentic evaluations must route through hitl/backtest/evaluator.py.
 """
-TradingGuard HITL - Full-Year 2026 Master Production Portfolio Audit
+TradingGuard HITL - Full-Year 2026 Master Production Portfolio Audit (DEPRECATED)
 Simulates the unified production pipeline (ARCH-001 through ARCH-014) end-to-end
 across 175 trading days (700 sessions | 90.2M raw broker ticks) on Gold & GBPUSD.
 Evaluates the cumulative multi-seasonal performance of all ratified setups:

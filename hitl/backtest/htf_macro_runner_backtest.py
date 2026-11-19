@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - HTF Draw on Liquidity (DOL) & 1-Minute Macro Runner Backtester
 Empirical Full-Year 2026 Audit (175 Trading Days | 700 Sessions | Gold & GBPUSD)

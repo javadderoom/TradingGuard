@@ -50,7 +50,19 @@ DEFAULT_COMMISSION_USD_PER_001_LOT = 0.10
 
 def get_optimal_trade_management(symbol: str, session_label: str, setup_arch_id: Optional[str] = None) -> Tuple[float, Optional[float]]:
     """Retrieves empirical (Target R:R, Breakeven R:R) for a given symbol, session, and archetype."""
-    sym_clean = "XAUUSD" if "XAU" in symbol.upper() else ("EURUSD" if "EUR" in symbol.upper() else ("GBPUSD" if "GBP" in symbol.upper() else "XAUUSD"))
+    s_upper = symbol.upper()
+    if "XAU" in s_upper:
+        sym_clean = "XAUUSD"
+    elif "GBP" in s_upper:
+        sym_clean = "GBPUSD"
+    elif "EUR" in s_upper:
+        sym_clean = "EURUSD"
+    elif "NQ" in s_upper or "USTEC" in s_upper or "NAS100" in s_upper:
+        sym_clean = "NQ"
+    elif "BTC" in s_upper:
+        sym_clean = "BTCUSD"
+    else:
+        sym_clean = "XAUUSD"
     
     if POLICY_FILE.exists():
         try:
@@ -198,7 +210,8 @@ def evaluate_council_decision(
     commission_usd: Optional[float] = None,
     slippage_pts: float = 0.0,
     ttl_minutes: int = CANONICAL_TTL_MINUTES,
-    max_risk_usd: Optional[float] = 12.0
+    max_risk_usd: Optional[float] = 12.0,
+    reject_over_risk: bool = True
 ) -> Dict[str, Any]:
     """
     Canonical backtest simulator. Evaluates the CIO Council decision
@@ -342,8 +355,23 @@ def evaluate_council_decision(
 
     # Risk Check (from the effective, slipped entry)
     price_risk_usd = abs(effective_entry - sl) * pip_val
-    if max_risk_usd is not None and price_risk_usd > max_risk_usd:
-        price_risk_usd = float(max_risk_usd)
+    spread = spread_pts if spread_pts is not None else get_default_broker_spread(symbol)
+    spread_cost = spread * pip_val
+    total_projected_risk = price_risk_usd + spread_cost + commission_total
+
+    if max_risk_usd is not None and total_projected_risk > max_risk_usd:
+        if reject_over_risk:
+            return {
+                "status": "REJECTED_RISK_CAP",
+                "realized_pnl_usd": 0.0,
+                "is_realized": True,
+                "fill_minute": None,
+                "exit_minute": 0,
+                "rr_realized": 0.0,
+                "notes": f"Order rejected: projected risk ${total_projected_risk:.2f} exceeds ${max_risk_usd:.2f} ceiling."
+            }
+        else:
+            price_risk_usd = float(max_risk_usd)
     risk_desc = f"risk capped at ${max_risk_usd:.2f}" if max_risk_usd is not None else "risk uncapped"
 
     # Target R:R Realism Cap: Capping fantasy intraday targets (e.g. max 3.5 to 4.0 R:R)
@@ -372,6 +400,18 @@ def evaluate_council_decision(
 
     for idx, bar in enumerate(forward_m1_bars):
         recent_m1_history.append(bar)
+
+        bar_spread = spread
+        if 'spread' in bar and isinstance(bar['spread'], (int, float)) and bar['spread'] > 0:
+            point_mult = 0.00001 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else (0.01 if ("XAU" in symbol.upper() or "XAG" in symbol.upper()) else 0.1)
+            bar_spread = max(spread, bar['spread'] * point_mult)
+
+        bar_time = bar.get('time', 0)
+        if bar_time:
+            server_hour = (bar_time % 86400) // 3600
+            server_min = (bar_time % 3600) // 60
+            if (server_hour == 23 and server_min >= 45) or (server_hour == 0) or (server_hour == 1 and server_min <= 5):
+                bar_spread = max(bar_spread, spread * 5.0)
 
         if not is_filled:
             # 1. Inactivity TTL Check (canonical: CANONICAL_TTL_MINUTES = 75)
@@ -411,13 +451,30 @@ def evaluate_council_decision(
 
             # 3. Check Fill (Realistic Bid/Ask Spread Simulation)
             # BUY orders fill at ASK = Bid + Spread
-            if is_buy and (bar['low'] + spread) <= entry:
+            if is_buy and (bar['low'] + bar_spread) <= entry:
                 is_filled = True
                 fill_idx = idx
             # SELL orders fill at BID
             elif (not is_buy) and bar['high'] >= entry:
                 is_filled = True
                 fill_idx = idx
+
+            if is_filled:
+                # Immediate fill-bar SL blow-through check:
+                # If price touched both entry and SL within the same M1 candle,
+                # intrabar order is ambiguous -> conservative execution resolves as LOSS.
+                fill_hit_sl = (bar['low'] <= active_sl) if is_buy else ((bar['high'] + bar_spread) >= active_sl)
+                if fill_hit_sl:
+                    loss_amount = -price_risk_usd - commission_total
+                    return {
+                        "status": "LOSS",
+                        "realized_pnl_usd": round(loss_amount, 2),
+                        "is_realized": True,
+                        "fill_minute": fill_idx,
+                        "exit_minute": idx,
+                        "rr_realized": -1.0,
+                        "notes": f"Hit Stop Loss on fill bar at {sl_fmt}. Realized loss ${abs(loss_amount):.2f} (same-bar blow-through)."
+                    }
 
         else:
             # Filled! Monitor for SL, Breakeven, or TP with Spread Dynamics
@@ -522,7 +579,7 @@ def evaluate_council_decision(
                 curr_rr = curr_fav_dist * pip_val / max(0.1, price_risk_usd)
                 if breakeven_rr is not None and curr_rr >= breakeven_rr and not is_be_active:
                     is_be_active = True
-                    active_sl = entry + spread  # cover broker spread for risk-free scratch
+                    active_sl = entry + bar_spread  # cover broker spread for risk-free scratch
 
             else:
                 # SELL Position: Closed at ASK = BID + Spread
@@ -532,17 +589,17 @@ def evaluate_council_decision(
                 # SL-first: see BUY branch above. Spread convention: a
                 # short exits at ask (bid + spread), so TP is low +
                 # spread and SL is high + spread.
-                hit_sl = (bar['high'] + spread) >= active_sl
-                hit_tp = (bar['low'] + spread) <= tp
+                hit_sl = (bar['high'] + bar_spread) >= active_sl
+                hit_tp = (bar['low'] + bar_spread) <= tp
                 # 3. Check Stop Loss / Breakeven Hit (checked first)
                 if hit_sl:
                     if is_be_active:
                         mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
-                        max_rr = round((entry - (mfe_full + spread)) * pip_val / max(0.1, price_risk_usd), 2)
+                        max_rr = round((entry - (mfe_full + bar_spread)) * pip_val / max(0.1, price_risk_usd), 2)
                         # BE exit is at active_sl = entry - spread (ask), so
                         # the spread is recovered as gross profit; commission
                         # is then deducted. NOT 0.0 (see BUY branch).
-                        be_pnl = spread * pip_val - commission_total
+                        be_pnl = bar_spread * pip_val - commission_total
                         return {
                             "status": "BREAKEVEN",
                             "realized_pnl_usd": round(be_pnl, 2),
@@ -550,12 +607,12 @@ def evaluate_council_decision(
                             "fill_minute": fill_idx,
                             "exit_minute": idx,
                             "rr_realized": round(be_pnl / max(0.1, price_risk_usd), 2),
-                            "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Net PnL ${be_pnl:+.2f} (spread ${spread * pip_val:.2f} - commission ${commission_total:.2f})."
+                            "notes": f"Breakeven triggered at {active_sl:{val_fmt}} after peak excursion of {mfe_full:{val_fmt}} (1:{max_rr:.2f} R:R). Net PnL ${be_pnl:+.2f} (spread ${bar_spread * pip_val:.2f} - commission ${commission_total:.2f})."
                         }
                     else:
                         loss_amount = -price_risk_usd - commission_total  # capped risk + commission
                         mfe_full = min(b['low'] for b in forward_m1_bars[fill_idx:idx+1])
-                        max_fav_dist = max(0.0, entry - (mfe_full + spread))
+                        max_fav_dist = max(0.0, entry - (mfe_full + bar_spread))
                         max_rr = round(max_fav_dist * pip_val / max(0.1, price_risk_usd), 2)
                         unit_scale = 10000.0 if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else 1.0
                         unit_name = "pips" if ("EUR" in symbol.upper() or "GBP" in symbol.upper()) else "pts"
@@ -578,7 +635,7 @@ def evaluate_council_decision(
                             "exit_minute": idx,
                             "rr_realized": -1.0,
                             "target_optimization": target_opt,
-                            "notes": f"Hit Stop Loss (Ask {bar['high'] + spread:{val_fmt}} >= SL {sl_fmt}). Realized loss ${abs(loss_amount):.2f} ({risk_desc} + commission ${commission_total:.2f}).{notes_extra}"
+                            "notes": f"Hit Stop Loss (Ask {bar['high'] + bar_spread:{val_fmt}} >= SL {sl_fmt}). Realized loss ${abs(loss_amount):.2f} ({risk_desc} + commission ${commission_total:.2f}).{notes_extra}"
                         }
 
                 # 2. Check Take Profit Hit (checked second)

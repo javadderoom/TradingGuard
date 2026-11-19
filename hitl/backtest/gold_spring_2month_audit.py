@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Spring 2-Month Quantitative Gold (XAUUSD) Strategy Audit
 Audit Period: March 1, 2026 - April 30, 2026 (Spring Season & DST Transition)

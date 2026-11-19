@@ -28,19 +28,46 @@ def detect_metals_smt_divergence(
             "summary": "Insufficient data for SMT calculation"
         }
 
-    # 1. Determine prior session benchmark window
-    if session_hour in (9, 10, 11):
-        window_g = rates_5m_gold[-84:-10] if len(rates_5m_gold) >= 84 else rates_5m_gold[:-10]
-        window_s = rates_5m_silver[-84:-10] if len(rates_5m_silver) >= 84 else rates_5m_silver[:-10]
-        label = "Asian Range"
-    elif session_hour in (14, 15, 16):
-        window_g = rates_5m_gold[-72:-10] if len(rates_5m_gold) >= 72 else rates_5m_gold[:-10]
-        window_s = rates_5m_silver[-72:-10] if len(rates_5m_silver) >= 72 else rates_5m_silver[:-10]
-        label = "London Range"
+    # 1. Determine prior session benchmark window dynamically using session clock
+    from hitl.backtest.session_clock import get_session_times_for_date, get_tehran_session_hours, TZ_UTC
+    import datetime
+
+    bar_time = rates_5m_gold[-1].get("time") if rates_5m_gold else None
+    if bar_time:
+        dt_utc = datetime.datetime.fromtimestamp(bar_time, TZ_UTC)
+        times = get_session_times_for_date(dt_utc.date())
+        lon_open = times["london"]["utc_time"]
+        ny_open = times["new_york"]["utc_time"]
+        if dt_utc < lon_open + datetime.timedelta(hours=3):
+            window_g = rates_5m_gold[-84:-10] if len(rates_5m_gold) >= 84 else rates_5m_gold[:-10]
+            window_s = rates_5m_silver[-84:-10] if len(rates_5m_silver) >= 84 else rates_5m_silver[:-10]
+            label = "Asian Range"
+        elif dt_utc < ny_open + datetime.timedelta(hours=4):
+            window_g = rates_5m_gold[-72:-10] if len(rates_5m_gold) >= 72 else rates_5m_gold[:-10]
+            window_s = rates_5m_silver[-72:-10] if len(rates_5m_silver) >= 72 else rates_5m_silver[:-10]
+            label = "London Range"
+        else:
+            window_g = rates_5m_gold[-36:-6] if len(rates_5m_gold) >= 36 else rates_5m_gold[:-6]
+            window_s = rates_5m_silver[-36:-6] if len(rates_5m_silver) >= 36 else rates_5m_silver[:-6]
+            label = "NY AM Range"
     else:
-        window_g = rates_5m_gold[-36:-6] if len(rates_5m_gold) >= 36 else rates_5m_gold[:-6]
-        window_s = rates_5m_silver[-36:-6] if len(rates_5m_silver) >= 36 else rates_5m_silver[:-6]
-        label = "NY AM Range"
+        # Fallback to session_hour using dynamic Tehran session hours
+        d_today = datetime.date.today()
+        th_hours = get_tehran_session_hours(d_today)
+        lon_h = th_hours["london_hour"]
+        ny_h = th_hours["ny_hour"]
+        if session_hour in (lon_h - 1, lon_h, lon_h + 1):
+            window_g = rates_5m_gold[-84:-10] if len(rates_5m_gold) >= 84 else rates_5m_gold[:-10]
+            window_s = rates_5m_silver[-84:-10] if len(rates_5m_silver) >= 84 else rates_5m_silver[:-10]
+            label = "Asian Range"
+        elif session_hour in (ny_h - 1, ny_h, ny_h + 1):
+            window_g = rates_5m_gold[-72:-10] if len(rates_5m_gold) >= 72 else rates_5m_gold[:-10]
+            window_s = rates_5m_silver[-72:-10] if len(rates_5m_silver) >= 72 else rates_5m_silver[:-10]
+            label = "London Range"
+        else:
+            window_g = rates_5m_gold[-36:-6] if len(rates_5m_gold) >= 36 else rates_5m_gold[:-6]
+            window_s = rates_5m_silver[-36:-6] if len(rates_5m_silver) >= 36 else rates_5m_silver[:-6]
+            label = "NY AM Range"
 
     if not (window_g and window_s):
         return {"has_smt": False, "smt_type": "NONE", "summary": "No session window data"}

@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - 2025 Out-of-Sample Production Portfolio Benchmark
 Evaluates Subquadratic SubQ Snap (subq-snap-1.1) on authentic broker historical data from 2025 (H2 OOS period).

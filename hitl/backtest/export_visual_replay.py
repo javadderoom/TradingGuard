@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy visual replay compiler with ad-hoc simulation. Use hitl/replay_server.py and evaluator.py.
 """
 TradingGuard HITL - Visual Backtest Replay Data Compiler
 Generates complete bar-by-bar M5 & M1 candlesticks, true UTC/Tehran/MT5 timestamps,

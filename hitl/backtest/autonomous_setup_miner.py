@@ -1,3 +1,5 @@
+# STATUS: DEPRECATED_UNVERIFIABLE
+# WARNING: Legacy unverified simulation loop. All canonical backtests must use hitl/backtest/evaluator.py.
 """
 TradingGuard HITL - Autonomous Quantitative Setup Mining Engine
 Evaluates new non-ICT microstructure hypotheses across Full-Year 2026 (175 Trading Days):

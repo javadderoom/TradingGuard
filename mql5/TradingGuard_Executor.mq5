@@ -217,24 +217,24 @@ void OnTick()
                continue;
             }
 
-            // If current market price has already reached or exceeded the Sell Limit price
+            // Authentic limit-only execution: If price has already crossed entry, do NOT convert to Market Order
             if(tick.bid >= entry)
             {
-               PrintFormat("[TradingGuard_Executor] Market has already crossed Sell Limit price (Bid=%.5f >= Entry=%.5f). Executing Market SELL directly!",
-                           tick.bid, entry);
-               res = g_trade.Sell(lot, sym, tick.bid, sl, tp, g_plans[i].id);
+               PrintFormat("[TradingGuard_Executor] Plan %s EXPIRED: Market Bid=%.5f has already crossed Sell Limit Entry=%.5f. Skipping to preserve limit execution integrity.",
+                           g_plans[i].id, tick.bid, entry);
+               g_plans[i].placed = true;
+               continue;
+            }
+            else if(entry < tick.ask + min_dist)
+            {
+               PrintFormat("[TradingGuard_Executor] Plan %s CANCELLED: Entry %.5f violates minimum stops distance from Ask=%.5f (MinDist=%.5f). Skipping without shifting price.",
+                           g_plans[i].id, entry, tick.ask, min_dist);
+               g_plans[i].placed = true;
+               continue;
             }
             else
             {
-               // Price is below market ask: ensure entry is above ask by at least stops_level
-               double valid_entry = entry;
-               if(valid_entry < tick.ask + min_dist)
-               {
-                  PrintFormat("[TradingGuard_Executor] WARNING: Entry %.5f violates Ask+Stops (Ask=%.5f, MinDist=%.5f). Adjusting to valid limit price.",
-                              entry, tick.ask, min_dist);
-                  valid_entry = NormalizeDouble(tick.ask + min_dist + point, digits);
-               }
-               res = g_trade.SellLimit(lot, valid_entry, sym, sl, tp, type_time, expiry, g_plans[i].id);
+               res = g_trade.SellLimit(lot, entry, sym, sl, tp, type_time, expiry, g_plans[i].id);
             }
          }
          else if(g_plans[i].order_type == ORDER_TYPE_BUY_LIMIT)
@@ -248,20 +248,24 @@ void OnTick()
                continue;
             }
 
+            // Authentic limit-only execution: If price has already reached/crossed entry, do NOT convert to Market Order
             if(tick.ask <= entry)
             {
-               PrintFormat("[TradingGuard_Executor] Market has already reached Buy Limit price (Ask=%.5f <= Entry=%.5f). Executing Market BUY directly!",
-                           tick.ask, entry);
-               res = g_trade.Buy(lot, sym, tick.ask, sl, tp, g_plans[i].id);
+               PrintFormat("[TradingGuard_Executor] Plan %s EXPIRED: Market Ask=%.5f has already crossed Buy Limit Entry=%.5f. Skipping to preserve limit execution integrity.",
+                           g_plans[i].id, tick.ask, entry);
+               g_plans[i].placed = true;
+               continue;
+            }
+            else if(entry > tick.bid - min_dist)
+            {
+               PrintFormat("[TradingGuard_Executor] Plan %s CANCELLED: Entry %.5f violates minimum stops distance from Bid=%.5f (MinDist=%.5f). Skipping without shifting price.",
+                           g_plans[i].id, entry, tick.bid, min_dist);
+               g_plans[i].placed = true;
+               continue;
             }
             else
             {
-               double valid_entry = entry;
-               if(valid_entry > tick.bid - min_dist)
-               {
-                  valid_entry = NormalizeDouble(tick.bid - min_dist - point, digits);
-               }
-               res = g_trade.BuyLimit(lot, valid_entry, sym, sl, tp, type_time, expiry, g_plans[i].id);
+               res = g_trade.BuyLimit(lot, entry, sym, sl, tp, type_time, expiry, g_plans[i].id);
             }
          }
 
