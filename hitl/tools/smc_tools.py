@@ -360,7 +360,7 @@ def build_validated_order_plan(
     decision: str,
     poi_selection: str,
     landmarks: Dict[str, Any],
-    macro_filter: str = "",
+    macro_filter: str = "",  # Deprecated/no-op for legacy backtest replay callers; live enforcement uses hitl.fundamental.governor
     entry_ref: Optional[float] = None,
     sl_ref: Optional[float] = None,
     recommended_target_rr: Optional[float] = None,

@@ -150,6 +150,27 @@ class TrendOracle:
         sess_risk = catalysts.get("session_risk", "LOW")
         risk_badge = "🔴 High Danger" if sess_risk in ("HIGH", "CRITICAL") else ("🟡 Moderate" if sess_risk == "MEDIUM" else "🟢 Low Risk")
 
+        fc_causal = off_chart.get("fundamental_causal", {}) or {}
+        fc_block = ""
+        if fc_causal and "asset_score" in fc_causal:
+            rt = fc_causal.get("rates_tape", {}) or {}
+            f_bias = str(fc_causal.get("asset_bias", "NEUTRAL")).replace("_", " ")
+            f_score = int(fc_causal.get("asset_score", 0) or 0)
+            f_icon = "🟢" if f_score >= 20 else ("🔴" if f_score <= -20 else "🟡")
+            f_reg = str(fc_causal.get("global_regime", "N/A")).replace("_", " ")
+            r10 = rt.get("real_10y")
+            r10_5d = rt.get("real_10y_5d_bps")
+            dxy_lvl = rt.get("dxy_level")
+            dxy_5d = rt.get("dxy_5d_pct")
+            r10_s = f"{r10:.2f}% ({r10_5d:+.1f}bps)" if (r10 is not None and r10_5d is not None) else "N/A"
+            dxy_s = f"{dxy_lvl:.2f} ({dxy_5d:+.2f}%)" if (dxy_lvl is not None and dxy_5d is not None) else "N/A"
+            fc_mech = str(fc_causal.get("dominant_mechanism") or fc_causal.get("dominant_driver") or "")
+            fc_block = (
+                f"• Fundamental Bias: {f_icon} *{f_bias}* (`{f_score:+d}`) | Regime: `{f_reg}`\n"
+                f"• Real 10Y / DXY: `{r10_s}` | `{dxy_s}`\n"
+                + (f"• Causal Mechanism: _{fc_mech}_\n" if fc_mech else "")
+            )
+
         smt = on_chart.get("smt_divergence", {})
         smt_badge = f"⚡ *SMT:* {smt.get('type')}" if smt.get("has_smt") else "🔹 *SMT:* Neutral"
 
@@ -218,6 +239,7 @@ class TrendOracle:
             f"• Sideways Range Fades : `TP {sd_tm.get('tp_r', def_sd['tp_r']):.1f}R` | `BE {sd_tm.get('be_ratchet_r', def_sd['be_ratchet_r']):.1f}R`\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📊 *OFF-CHART & MACRO INTELLIGENCE:*\n"
+            f"{fc_block}"
             f"• Retail Sentiment: `{retail_l}% Long` / `{retail_s}% Short`\n"
             f"• {smt_badge}\n\n"
             f"💡 *Institutional Synthesis:*\n"

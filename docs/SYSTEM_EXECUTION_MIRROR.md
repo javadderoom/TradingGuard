@@ -3143,3 +3143,42 @@ To grant the human operator full command over the execution pipeline, the Review
    - `/status` command prominently displays `🏛️ Review Council: 🟢 Active` or `🔴 Bypassed (Direct Quant Mode)` with a 1-tap `[⚙️ Review Council Settings]` button.
    - Market Analysis menu keyboard features direct `⚙️ Council Settings` button.
 
+## 34. Evidence-Grounded Multi-Order Causal Fundamental Engine (`hitl/fundamental/`)
+
+### 34.1 Legacy Remediation & Architectural Shift
+The legacy fundamental subsystem (`hitl/macro_bias.py`, `hitl/trend/off_chart_macro.py`, `hitl/sentiment_feed.py`, `hitl/macro_calendar.py`) suffered from hardcoded static central bank policy rates (`4.75%`), fabricated `"Global Easing Regime"` boilerplate for Gold, a dead `macro_filter` parameter in `hitl/tools/smc_tools.py`, and an HTML parser bug in `hitl/sentiment_feed.py` (`"long" in art_lower`) that misclassified bearish posts as `BULLISH` and silently mapped unsupported symbols (`BTCUSD`) to `XAUUSD`.
+
+TradingGuard now deploys a four-layer **Causal Macro Intelligence Engine (`hitl/fundamental/`)** covering an 11-asset core scoreboard (`XAUUSD`, `XAGUSD`, `EURUSD`, `GBPUSD`, `USDJPY`, `NQ`, `SPX`, `HK50`, `BTCUSD`, `ETHUSD`, `USCRUDE`) plus on-demand symbols:
+
+### 34.2 Live-Verified Zero-Cost Data Stack
+1. **Layer 1A — Sovereign Nominal & TIPS Real Yield Curves (`hitl/fundamental/market_tape.py`)**:
+   - Official US Treasury Daily Nominal (`3M/2Y/5Y/10Y/30Y`) and Daily TIPS Real Yield Curves (`5Y/10Y/30Y`) sorted chronologically ascending (correcting Treasury CSV newest-first ordering), cached 4 hours (`analysis_assets/treasury_curves_cache.json`).
+   - Computes 1D/5D/20D basis-point deltas, `2s10s` / `3m10s` slopes, and implied `10Y Breakeven Inflation` (`Nominal 10Y - Real 10Y`).
+2. **Layer 1B — Intraday & Cross-Asset Tape (`market_tape.py`)**:
+   - Yahoo Finance chart feeds (`15m` cache: `^TNX`, `^TYX`, `^FVX`, `^IRX`, `TLT`, `SHY`, `TIP`, `HYG`, `000300.SS`, `^HSI`, `CNH=X`, `HG=F`, `^VIX`, `DX-Y.NYB`, `CL=F`, `GC=F`, `BTC-USD`) fused with live MetaTrader 5 cross-asset bars (`USDX`, `EURLFX`, `GBPLFX`, `LFXJPY`, `CHFLFX`, `AUDLFX`, `CADLFX`, `VIX`, `SPX`, `NQ`, `FDAX`, `HK50`, `NI225`, `UKBRENT`, `USCRUDE`, `XAUUSD_o`, `XAGUSD_o`, `BTCUSD`, `ETHUSD`).
+   - Computes universal non-hardcoded regime diagnostics: `real_yield_10y`, `bond_equity_co_selloff`, `credit_stress_5d_pct` (`HYG` vs `SHY`), `asia_china_stress` (`CSI300`/`HK50` + `USD/CNH`), `energy_shock_5d_pct`, `copper_gold_5d_diff`, and G7 FX relative strength ranking.
+3. **Layer 1C — Official CFTC Commitment of Traders (`hitl/fundamental/cot_feed.py`)**:
+   - CFTC Socrata APIs (`gpe5-46if` TFF Leveraged Funds & `72hh-3qpy` Disaggregated Managed Money), 24h cached (`analysis_assets/cot_cache.json`), normalizing `JAPANESE YEN` futures inversion cleanly onto `USDJPY` direction and flagging `EXTREME_LONG` (`>=75%`) / `EXTREME_SHORT` (`<=25%`).
+4. **Layer 2 — Multi-Source Macro News & Economic Calendar (`hitl/fundamental/news_aggregator.py`, `hitl/macro_calendar.py`)**:
+   - Parallel stdlib XML/RSS/Atom ingestion (`15m` cache, direct-first with `TELEGRAM_PROXY` fallback) across Tier 1 Central Banks & Macro Desks (Fed Monetary Policy Press, BoE, ForexLive, FXStreet), Tier 2 Verticals (Investing.com Economy/Bonds/Forex/Commodities/Crypto, CNBC Economy/World), and Tier 3 Google News macro search feeds (`when:2d`), deduplicated via normalized token Jaccard similarity (`>=0.60`).
+   - Integrated with `hitl/macro_calendar.py` (`get_upcoming_events` + `get_recent_released_events` past 12h + `-5m..+20m` hard news embargo).
+
+### 34.3 Multi-Order Causal Reasoning, Tape Verification & Deterministic Fallback (`hitl/fundamental/causal_engine.py`)
+1. **LLM Global Synthesis (`gemini-3.8-flash-high` via local `agy.exe`)**:
+   - Evaluates Layer 1 + Layer 2 via a single unified prompt (default `FUNDAMENTAL_CACHE_TTL_MINUTES=45`) enforcing zero naive 1st-order clichés, explicit multi-step causal chains (`Trigger -> Intermediate Rate/Flow/Liquidity Mechanism -> Asset Impact`), mandatory `tape_verification` (`CONFIRMED_BY_TAPE`, `PARTIAL`, `CONTRADICTED_BY_TAPE`), competing bullish vs. bearish forces, per-asset scores (`-100..+100`), confidence (`0.0..1.0`), and measurable macro invalidation triggers.
+2. **Deterministic Quantitative Fallback**:
+   - Automatically activates if `agy` fails, times out, returns malformed JSON, or when called with `allow_llm=False` — scoring all assets transparently from live real yields, nominal curve, DXY, G7 FX spreads, VIX, credit stress, China/Asia stress, oil/copper, and CFTC COT (`analysis_source="deterministic_tape_fallback"`).
+3. **Persistence & Forward Audit Trail**:
+   - Latest dossier atomically saved to `hitl/memory/fundamental_state.json`.
+   - Every synthesis cycle appends a timestamped asset-score snapshot to `hitl/memory/fundamental_history_log.jsonl` for empirical forward accuracy auditing.
+
+### 34.4 Enforcement Governor (`hitl/fundamental/governor.py`) & Integrations
+- **Switchable Governance Gate**: Persisted in `hitl/memory/fundamental_governor.json` (`FUNDAMENTAL_ENFORCEMENT_MODE`, defaulting to `"advisory"`).
+  - `"advisory"`: Enriches Telegram order cards (`🌐 Fundamental:` alignment badge), `OmniTrend Oracle`, Morning Briefings, and Council Seat #2 with zero trade blocking.
+  - `"hard_veto"`: Blocks counter-fundamental setups strictly when `abs(score) >= 55`, `confidence >= 0.75`, and at least one supporting causal chain carries `tape_verification == "CONFIRMED_BY_TAPE"`.
+- **Telegram & Watchdog Controls**:
+  - Commands `/macro`, `/fundamental`, `/macro <symbol>`, `/macro refresh`, `/macro mode|advisory|veto`, inline asset deep-dive buttons, `🌐 Macro Causal Radar` button in `ANALYSIS_KEYBOARD`, and non-blocking background daemon refresh in `hitl/watchdog.py` every 45m on weekdays.
+- **Sentiment & Calendar Fixes**:
+  - `hitl/sentiment_feed.py` now classifies strictly via explicit badge classes first then title-only word-boundary regex (`classify_tv_idea_sentiment`), and maps `BTCUSD`/`ETHUSD`/`USDJPY`/`SPX`/`USCRUDE` without defaulting unknown symbols to `XAUUSD`.
+  - `hitl/trend/off_chart_macro.py` fixes post-release high-impact danger window checks (`-5 <= minutes_away <= 60`).
+

@@ -284,7 +284,6 @@ class LiveMarketRadar:
                 return
 
             landmarks = dossier.get("landmarks")
-            macro_filter = dossier.get("macro_bias_data", {}).get("execution_filter", "")
 
             from hitl.council_governor import is_council_enabled
             if is_council_enabled():
@@ -321,14 +320,30 @@ class LiveMarketRadar:
                 )
                 print(f"[LiveRadar] Direct Quant Execution active (Council Bypassed) for {sym}: {decision}")
 
+            # Evaluate Fundamental Causal Gate (Advisory by default; Hard Veto only if opted in + tape-confirmed)
+            fund_gate = {}
+            fund_badge = ""
+            try:
+                from hitl.fundamental.governor import evaluate_fundamental_gate
+                fund_gate = evaluate_fundamental_gate(sym, decision)
+                f_bias = str(fund_gate.get("asset_bias", "NEUTRAL")).replace("_", " ")
+                f_score = int(fund_gate.get("asset_score", 0) or 0)
+                f_align = str(fund_gate.get("alignment_label", "NEUTRAL")).replace("_", " ")
+                f_icon = "🟢" if fund_gate.get("aligned") is True else ("🔴" if fund_gate.get("aligned") is False else "🟡")
+                fund_badge = f"🌐 *Fundamental:* {f_icon} {f_bias} (`{f_score:+d}` · {f_align})\n"
+            except Exception as fg_err:
+                print(f"[LiveRadar] Fundamental gate check skipped: {fg_err}")
+
             plan = None
             reason = ""
-            if decision != "STAND_ASIDE" and landmarks:
+            if decision != "STAND_ASIDE" and fund_gate and not fund_gate.get("allow_trade", True):
+                reason = f"FUNDAMENTAL_HARD_VETO: {fund_gate.get('reason', 'Blocked by Hard Veto gate')}"
+                decision = "STAND_ASIDE"
+            elif decision != "STAND_ASIDE" and landmarks:
                 plan, reason = build_validated_order_plan(
                     decision=decision,
                     poi_selection="PROXIMAL_EDGE",
                     landmarks=landmarks,
-                    macro_filter=macro_filter,
                     entry_ref=setup.get("entry_ref"),
                     sl_ref=setup.get("sl_ref"),
                     recommended_target_rr=setup.get("recommended_target_rr"),
@@ -455,6 +470,7 @@ class LiveMarketRadar:
                         f"🎯 *TP:*    `{plan['tp']:{fmt}}` (R:R: *1:{plan['rr']:.2f}* [Capped])\n"
                         f"{be_str}"
                         f"{smt_str}"
+                        f"{fund_badge}"
                         f"💡 *Hunt:*  `{setup['swept_target']}` (+{setup['sweep_delta_pips']} {pips_unit})\n"
                         f"⚖️ *Lot:*   `0.01`\n"
                         f"✅ *Final Verdict:* {clean_verdict}\n\n"
@@ -525,6 +541,7 @@ class LiveMarketRadar:
                         f"{be_str}"
                         f"{smt_str}"
                         f"{trend_badge}"
+                        f"{fund_badge}"
                         f"💡 *Hunt:*  `{setup['swept_target']}` (+{setup['sweep_delta_pips']} {pips_unit})\n"
                         f"⚖️ *Lot:*   `0.01`\n"
                         f"✅ *Final Verdict:* {clean_verdict}"
@@ -560,8 +577,8 @@ class LiveMarketRadar:
                 # Quiet, zero-clutter 2-line flash note for Stand Aside (no charts sent)
                 veto_reason = ""
                 if plan is None and reason:
-                    if "violates" in reason or "Macro" in reason:
-                        veto_reason = f"Macro Filter ({macro_filter}) vetoes counter-trend execution."
+                    if "FUNDAMENTAL_HARD_VETO" in reason:
+                        veto_reason = reason.replace("FUNDAMENTAL_HARD_VETO: ", "").strip()
                     elif "below mandatory" in reason:
                         veto_reason = "Risk-to-Reward ratio is below mandatory 1:3.0 institutional threshold."
                     elif "exceeds maximum permitted" in reason:

@@ -58,11 +58,12 @@ MAIN_KEYBOARD = {
 
 ANALYSIS_KEYBOARD = {
     "keyboard": [
-        [{"text": "🔮 Gold Trend Oracle"}, {"text": "🥇 Gold Full Pack"}],
-        [{"text": "💷 GBP Full Pack"}, {"text": "💶 EUR Full Pack"}],
-        [{"text": "💻 Nasdaq Full Pack"}, {"text": "🏛️ Gold Council Only"}],
-        [{"text": "🏛️ GBP Council Only"}, {"text": "🏛️ NQ Council Only"}],
-        [{"text": "⚙️ Council Settings"}, {"text": "🔙 Back to Main Menu"}]
+        [{"text": "🔮 Gold Trend Oracle"}, {"text": "🌐 Macro Causal Radar"}],
+        [{"text": "🥇 Gold Full Pack"}, {"text": "💷 GBP Full Pack"}],
+        [{"text": "💶 EUR Full Pack"}, {"text": "💻 Nasdaq Full Pack"}],
+        [{"text": "🏛️ Gold Council Only"}, {"text": "🏛️ GBP Council Only"}],
+        [{"text": "🏛️ NQ Council Only"}, {"text": "⚙️ Council Settings"}],
+        [{"text": "🔙 Back to Main Menu"}]
     ],
     "resize_keyboard": True,
     "is_persistent": True
@@ -764,6 +765,96 @@ def handle_trend_command(client: TelegramClient, chat_id: int | str, symbol: str
         client.send_message(chat_id, f"⚠️ *Trend Forecast Error:* {e}")
 
 
+def _macro_refresh_worker(client: TelegramClient, chat_id: int | str, symbol: str = ""):
+    """Background worker refreshing global causal macro dossier with local LLM without blocking bot polling."""
+    try:
+        from hitl.fundamental import (
+            format_asset_macro_card,
+            format_global_macro_card,
+            fundamental_engine,
+        )
+        dossier = fundamental_engine.get_global_dossier(force_refresh=True, allow_llm=True)
+        if symbol and symbol.upper() != "GLOBAL":
+            card, kb = format_asset_macro_card(dossier, symbol)
+        else:
+            card, kb = format_global_macro_card(dossier)
+        client.send_message(chat_id, card, reply_markup=kb)
+    except Exception as e:
+        client.send_message(chat_id, f"⚠️ *Macro Refresh Error:* `{e}`")
+
+
+def handle_macro_command(
+    client: TelegramClient,
+    chat_id: int | str,
+    arg: str = "",
+    force_refresh: bool = False,
+):
+    """Handles /macro, /fundamental, asset deep dives, mode toggles, and non-blocking refreshes."""
+    try:
+        from hitl.fundamental import (
+            CORE_ASSETS,
+            format_asset_macro_card,
+            format_global_macro_card,
+            fundamental_engine,
+            normalize_fundamental_symbol,
+            set_enforcement_mode,
+            toggle_enforcement_mode,
+        )
+
+        clean_arg = (arg or "").strip().lower()
+        if clean_arg in ("refresh", "reload", "update"):
+            force_refresh = True
+            clean_arg = ""
+
+        if clean_arg in ("mode", "toggle", "switch"):
+            new_m = toggle_enforcement_mode(toggled_by=f"tg_cmd_{chat_id}")
+            dossier = fundamental_engine.get_global_dossier(force_refresh=False, allow_llm=False)
+            card, kb = format_global_macro_card(dossier)
+            badge = "🛡️ ADVISORY (Info Only)" if new_m == "advisory" else "⛔ HARD VETO (High-Conviction Block)"
+            client.send_message(chat_id, f"🔄 *Fundamental Enforcement Mode Switched:* `{badge}`\n\n{card}", reply_markup=kb)
+            return
+
+        if clean_arg in ("advisory", "soft"):
+            set_enforcement_mode("advisory", toggled_by=f"tg_cmd_{chat_id}")
+            dossier = fundamental_engine.get_global_dossier(force_refresh=False, allow_llm=False)
+            card, kb = format_global_macro_card(dossier)
+            client.send_message(chat_id, f"🛡️ *Fundamental Enforcement Set to:* `ADVISORY`\n\n{card}", reply_markup=kb)
+            return
+
+        if clean_arg in ("veto", "hard_veto", "hard", "strict"):
+            set_enforcement_mode("hard_veto", toggled_by=f"tg_cmd_{chat_id}")
+            dossier = fundamental_engine.get_global_dossier(force_refresh=False, allow_llm=False)
+            card, kb = format_global_macro_card(dossier)
+            client.send_message(chat_id, f"⛔ *Fundamental Enforcement Set to:* `HARD VETO`\n\n{card}", reply_markup=kb)
+            return
+
+        target_sym = ""
+        if clean_arg and clean_arg not in ("global", "all", "overview", "status"):
+            target_sym = normalize_fundamental_symbol(clean_arg)
+            if target_sym not in CORE_ASSETS and clean_arg.upper() not in ("AUDUSD", "USDCHF", "FDAX", "NI225"):
+                # Keep fallback if symbol alias matched nicely
+                pass
+
+        if force_refresh:
+            client.send_message(chat_id, "⏳ *Refreshing Global Causal Macro Intelligence (Treasury + Cross-Asset + COT + News + Causal LLM)...*")
+            t = threading.Thread(target=_macro_refresh_worker, args=(client, chat_id, target_sym), daemon=True)
+            t.start()
+            return
+
+        dossier = fundamental_engine.get_global_dossier(force_refresh=False, allow_llm=False)
+        if target_sym:
+            if target_sym not in dossier.get("assets", {}):
+                view = fundamental_engine.get_asset_view(target_sym, force_refresh=False, allow_llm=False)
+                card, kb = format_asset_macro_card(view, target_sym)
+            else:
+                card, kb = format_asset_macro_card(dossier, target_sym)
+        else:
+            card, kb = format_global_macro_card(dossier)
+        client.send_message(chat_id, card, reply_markup=kb)
+    except Exception as e:
+        client.send_message(chat_id, f"⚠️ *Fundamental Intelligence Error:* `{e}`")
+
+
 def handle_soli_signals_command(client: TelegramClient, chat_id: int | str):
     """Synchronizes and dispatches all active Soli-Trader institutional key levels and charts."""
     client.send_message(chat_id, "📡 *Fetching latest institutional key levels from Soli-Trader...*")
@@ -834,6 +925,10 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
     council_on = is_council_enabled()
     council_badge = "🟢 *Active* (6-Seat Deliberation)" if council_on else "🔴 *Bypassed* (Direct Quant Mode)"
 
+    from hitl.fundamental.governor import get_enforcement_mode
+    fund_mode = get_enforcement_mode()
+    fund_badge = "🛡️ *Advisory* (Info Only)" if fund_mode == "advisory" else "⛔ *Hard Veto* (Tape-Confirmed Block)"
+
     text = (
         f"🛡️ *TradingGuard HITL System Status*\n\n"
         f"👤 *Account:* `{acc['login']}` ({acc['server']})\n"
@@ -845,6 +940,7 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
         f"⚖️ *Per-Trade Risk Cap:* `${MAX_RISK_USD:.2f}` (Lot: {BASE_LOT})\n\n"
         f"{gov_line}\n\n"
         f"🏛️ *Review Council:* {council_badge}\n"
+        f"🌐 *Fundamental Gate:* {fund_badge}\n"
         f"🛡️ *Daily Circuit Breaker:* {breaker_badge}\n"
         f"⏰ *Trading Session:* {session_badge}\n"
         f"⏱ *Cooldown Status:* {cd_badge}\n"
@@ -852,7 +948,10 @@ def handle_status_command(client: TelegramClient, engine: MT5Engine, chat_id: in
     )
     status_kb = {
         "inline_keyboard": [
-            [{"text": "⚙️ Review Council Settings", "callback_data": "council_status"}]
+            [
+                {"text": "⚙️ Review Council Settings", "callback_data": "council_status"},
+                {"text": "🌐 Macro Causal Radar", "callback_data": "macro_global"}
+            ]
         ]
     }
     client.send_message(chat_id, text, reply_markup=status_kb)
@@ -1065,6 +1164,14 @@ def run_bot():
                         card, kb = format_council_status_card()
                         client.send_message(sender_id, card, reply_markup=kb)
 
+                    elif any(k in text.lower() for k in ["🌐 macro causal radar", "/macro", "/fundamental", "فاندامنتال", "ماکرو"]):
+                        parts = text.strip().split(maxsplit=1)
+                        low_t = text.strip().lower()
+                        if "macro causal radar" in low_t or low_t in ("/macro", "/fundamental", "فاندامنتال", "ماکرو"):
+                            handle_macro_command(client, sender_id, "")
+                        else:
+                            arg_part = parts[1].strip() if len(parts) > 1 else ""
+                            handle_macro_command(client, sender_id, arg_part)
                     # 3. Council Only (Without recapturing charts)
                     elif any(k in text.lower() for k in ["council only", "🏛️"]) or (any(k in text.lower() for k in ["/council", "council", "شورا", "مجلس"]) and not any(k in text.lower() for k in ["چارت", "پکیج", "کامل", "pack"])):
                         if any(k in text.lower() for k in ["💻", "nq", "nasdaq", "نزدک"]):
@@ -1199,6 +1306,15 @@ def run_bot():
                             handle_council_command(client, sender_id, "GBPUSD")
                         elif data in ["council_nq", "council_nasdaq"]:
                             handle_council_command(client, sender_id, "NQ")
+                        elif data == "macro_global":
+                            handle_macro_command(client, sender_id, "")
+                        elif data == "macro_refresh":
+                            handle_macro_command(client, sender_id, "refresh", force_refresh=True)
+                        elif data == "macro_toggle_mode":
+                            handle_macro_command(client, sender_id, "toggle")
+                        elif data.startswith("macro_asset_"):
+                            sym = data.replace("macro_asset_", "")
+                            handle_macro_command(client, sender_id, sym)
                         elif data.startswith("trend_refresh_"):
                             sym = data.replace("trend_refresh_", "")
                             handle_trend_command(client, sender_id, symbol=sym, force_refresh=True)

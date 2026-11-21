@@ -482,28 +482,29 @@ def convene_investment_council(
 
     macro_role = (
         "You are the Chief Macro & Exposure Risk Officer for TradingGuard.\n"
-        "You do NOT analyze 5-minute candlestick patterns. Your sole mandate is macro catalysts, "
-        "economic news calendar volatility, USDX correlation alignment, and enforcing account exposure limits.\n"
+        "You do NOT analyze 5-minute candlestick patterns. Your sole mandate is multi-order causal macro "
+        "analysis (sovereign real yields, curve slopes, liquidity flows, cross-asset stress, CFTC COT positioning), "
+        "economic news calendar volatility, and enforcing account exposure limits.\n"
         "Critical Rules:\n"
         "1. High-Impact News Embargo: Strict trading embargo if CPI, NFP, FOMC or high-impact catalyst is within +-15 minutes.\n"
         "2. RULE-RISK-010 Zero Duplicate Exposure: VETO any trade if an active position or pending order is already open on this symbol.\n"
-        "3. USDX Correlation: Confirm dollar trend alignment."
+        "3. Multi-Order Causal & Tape Verification: Evaluate verified causal transmission chains, US 10Y nominal/real yields, USDX liquidity, and CFTC positioning."
     )
     macro_task = (
         f"{memory_prompt}\n\n"
         f"Asset: {sym} | USDX: {intel['usdx_bid']:.2f} / {intel['usdx_ask']:.2f}\n"
-        f"Directional Macro Filter: {intel.get('macro_bias_prompt', '')}\n\n"
-        f"=== MACROECONOMIC & GEOPOLITICAL ENVIRONMENT ===\n"
+        f"{intel.get('macro_bias_prompt', '')}\n\n"
+        f"=== SCHEDULED ECONOMIC CALENDAR ===\n"
         f"{intel['macro_brief']}\n\n"
         f"=== RETAIL SENTIMENT RECONNAISSANCE ===\n"
         f"{intel['sentiment_brief']}\n\n"
         f"{intel.get('active_exposure_prompt', '')}\n\n"
         f"Deliver your macro assessment strictly in the following structure:\n"
-        f"• Central Bank Policy & USDX Correlation Alignment:\n"
-        f"• Scheduled Economic Events & High-Volatility Embargo Status:\n"
+        f"• Causal Transmission, Sovereign Yields & Cross-Asset Tape Alignment:\n"
+        f"• CFTC Institutional Positioning & Scheduled Event Embargo Status:\n"
         f"• Broker Exposure & RULE-RISK-010 Compliance:\n"
         f"• Macro Recommendation: [PERMIT_FULL | PERMIT_HALF_RISK | VETO_MACRO_NEWS | VETO_DUPLICATE_EXPOSURE]\n"
-        f"Keep under 150 words."
+        f"Keep under 160 words."
     )
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:

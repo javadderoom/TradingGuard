@@ -62,24 +62,71 @@ def _fetch_html(url: str, timeout: int = 12) -> Optional[str]:
     return None
 
 
+def _resolve_tv_symbol(symbol: str) -> Optional[str]:
+    """Maps internal symbol to TradingView ideas URL symbol. Returns None if unsupported."""
+    _sym = (symbol or "").upper().replace("_O", "").strip()
+    if "EUR" in _sym and "GBP" not in _sym and "JPY" not in _sym and "XAU" not in _sym:
+        return "EURUSD"
+    if "GBP" in _sym:
+        return "GBPUSD"
+    if "JPY" in _sym and "USD" in _sym:
+        return "USDJPY"
+    if "XAG" in _sym or "SILVER" in _sym:
+        return "XAGUSD"
+    if "XAU" in _sym or "GOLD" in _sym:
+        return "XAUUSD"
+    if any(k in _sym for k in ("NQ", "NAS", "USTEC", "US100", "NDX")):
+        return "NDX"
+    if any(k in _sym for k in ("SPX", "US500", "SP500")):
+        return "SPX"
+    if "BTC" in _sym:
+        return "BTCUSD"
+    if "ETH" in _sym:
+        return "ETHUSD"
+    if any(k in _sym for k in ("OIL", "CRUDE", "WTI", "BRENT")):
+        return "USOIL"
+    if any(k in _sym for k in ("HK50", "HSI")):
+        return "HSI"
+    return None
+
+
+_BULL_TITLE_RE = re.compile(r"\b(bullish|buy|long|breakout|rally|rebound|upside|recovery)\b", re.IGNORECASE)
+_BEAR_TITLE_RE = re.compile(r"\b(bearish|sell|short|breakdown|decline|rejection|drop|plunge|downtrend|crash)\b", re.IGNORECASE)
+
+
+def classify_tv_idea_sentiment(art_html: str, title: str) -> str:
+    """
+    Classifies a TradingView idea strictly using explicit badge classes first,
+    then title-only word-boundary matching (never substring matching on raw HTML).
+    """
+    art_lower = (art_html or "").lower()
+    has_bull_badge = any(cls in art_lower for cls in ("tv-idea-label--long", "badge-bullish", "label-bullish", "direction--long"))
+    has_bear_badge = any(cls in art_lower for cls in ("tv-idea-label--short", "badge-bearish", "label-bearish", "direction--short"))
+
+    if has_bull_badge and not has_bear_badge:
+        return "BULLISH"
+    if has_bear_badge and not has_bull_badge:
+        return "BEARISH"
+
+    title_str = title or ""
+    has_bull_title = bool(_BULL_TITLE_RE.search(title_str))
+    has_bear_title = bool(_BEAR_TITLE_RE.search(title_str))
+
+    if has_bull_title and not has_bear_title:
+        return "BULLISH"
+    if has_bear_title and not has_bull_title:
+        return "BEARISH"
+    return "NEUTRAL"
+
+
 def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
     """
     Parses live public analyst ideas from TradingView for the specified symbol.
-    Returns a list of structured idea dictionaries.
+    Returns a list of structured idea dictionaries (empty list if symbol unsupported).
     """
-    _sym = symbol.upper()
-    if "EUR" in _sym:
-        sym = "EURUSD"
-    elif "GBP" in _sym:
-        sym = "GBPUSD"
-    elif "XAG" in _sym or "SILVER" in _sym:
-        sym = "XAGUSD"
-    elif "XAU" in _sym or "GOLD" in _sym:
-        sym = "XAUUSD"
-    elif "NQ" in _sym or "NAS" in _sym or "USTEC" in _sym or "US100" in _sym:
-        sym = "NDX"
-    else:
-        sym = "XAUUSD"
+    sym = _resolve_tv_symbol(symbol)
+    if not sym:
+        return []
     url = f"https://www.tradingview.com/symbols/{sym}/ideas/"
     
     # Check cache
@@ -111,8 +158,7 @@ def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
             continue
         title = html.unescape(re.sub(r'<[^>]+>', '', t_match.group(1)).strip())
         if not title or title.upper() == sym:
-            # Skip empty or generic symbol titles if better text exists
-            pass
+            continue
 
         # Author
         author_match = re.search(r'data-username="([^"]+)"', art)
@@ -120,14 +166,7 @@ def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
             author_match = re.search(r'href="/u/([^/"]+)/"', art)
         author = author_match.group(1) if author_match else "Community Analyst"
 
-        # Sentiment Badge / Keywords
-        art_lower = art.lower()
-        if "badge-bullish" in art_lower or "long" in art_lower or "buy" in title.lower():
-            sentiment = "BULLISH"
-        elif "badge-bearish" in art_lower or "short" in art_lower or "sell" in title.lower():
-            sentiment = "BEARISH"
-        else:
-            sentiment = "NEUTRAL"
+        sentiment = classify_tv_idea_sentiment(art, title)
 
         # Clean snippet text
         lines = [re.sub(r'<[^>]+>', ' ', line).strip() for line in art.split('\n')]
@@ -137,13 +176,12 @@ def fetch_tradingview_ideas(symbol: str = "XAUUSD") -> List[Dict[str, str]]:
         if len(snippet) > 200:
             snippet = snippet[:197] + "..."
 
-        if title and title != sym:
-            ideas.append({
-                "author": author,
-                "title": title,
-                "sentiment": sentiment,
-                "snippet": snippet
-            })
+        ideas.append({
+            "author": author,
+            "title": title,
+            "sentiment": sentiment,
+            "snippet": snippet
+        })
 
     # Save to cache
     try:
@@ -166,19 +204,9 @@ def format_sentiment_summary(symbol: str = "XAUUSD") -> str:
     """
     Returns an institutional summary of retail/community sentiment for the Council prompt.
     """
-    _sym = symbol.upper()
-    if "EUR" in _sym:
-        sym = "EURUSD"
-    elif "GBP" in _sym:
-        sym = "GBPUSD"
-    elif "XAG" in _sym or "SILVER" in _sym:
-        sym = "XAGUSD"
-    elif "XAU" in _sym or "GOLD" in _sym:
-        sym = "XAUUSD"
-    elif "NQ" in _sym or "NAS" in _sym or "USTEC" in _sym or "US100" in _sym:
-        sym = "NDX"
-    else:
-        sym = "XAUUSD"
+    sym = _resolve_tv_symbol(symbol)
+    if not sym:
+        return f"- TradingView Community ({symbol}): Symbol not mapped; defaulting to neutral sentiment baseline."
     ideas = fetch_tradingview_ideas(sym)
     
     if not ideas:

@@ -39,43 +39,47 @@ def fetch_calendar_data(force_refresh: bool = False) -> List[Dict[str, Any]]:
         except Exception as e:
             print(f"[Macro Calendar] Cache read error: {e}")
 
-    # Fetch from public endpoint via configured proxy
-    try:
-        proxies = {}
-        if TELEGRAM_PROXY:
-            proxies = {"http": TELEGRAM_PROXY, "https": TELEGRAM_PROXY}
-            
-        proxy_handler = urllib.request.ProxyHandler(proxies)
-        opener = urllib.request.build_opener(proxy_handler)
-        req = urllib.request.Request(
-            CALENDAR_URL,
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        )
-        
-        with opener.open(req, timeout=12) as resp:
-            content = resp.read().decode("utf-8")
-            data = json.loads(content)
-            
-            with open(CACHE_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-                
-            return data
-    except Exception as e:
-        print(f"[Macro Calendar] Fetch error: {e}")
-        # Fallback to stale cache if network fails
-        if CACHE_FILE.exists():
-            try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        return []
+    # Fetch from public endpoint: try direct first, then proxy fallback
+    openers = [("direct", urllib.request.build_opener())]
+    if TELEGRAM_PROXY:
+        proxy_handler = urllib.request.ProxyHandler({"http": TELEGRAM_PROXY, "https": TELEGRAM_PROXY})
+        openers.append(("proxy", urllib.request.build_opener(proxy_handler)))
+
+    last_err = None
+    for _, opener in openers:
+        try:
+            req = urllib.request.Request(
+                CALENDAR_URL,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+            )
+            with opener.open(req, timeout=12) as resp:
+                content = resp.read().decode("utf-8")
+                data = json.loads(content)
+
+                with open(CACHE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+
+                return data
+        except Exception as e:
+            last_err = e
+
+    print(f"[Macro Calendar] Fetch error: {last_err}")
+    # Fallback to stale cache if network fails
+    if CACHE_FILE.exists():
+        try:
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
 
 
 def get_symbol_currencies(symbol: str) -> List[str]:
     """Returns relevant macro currencies for a given symbol."""
     sym = symbol.upper()
-    if "XAU" in sym or "GOLD" in sym:
+    if sym == "ALL":
+        return ["USD", "EUR", "GBP", "JPY", "CNY", "CHF", "CAD", "AUD"]
+    if "XAU" in sym or "GOLD" in sym or "XAG" in sym or "SILVER" in sym:
         return ["USD"]
     elif "EUR" in sym:
         return ["USD", "EUR"]
@@ -85,7 +89,53 @@ def get_symbol_currencies(symbol: str) -> List[str]:
         return ["USD", "GBP"]
     elif "JPY" in sym:
         return ["USD", "JPY"]
+    elif "HK50" in sym or "HSI" in sym:
+        return ["USD", "CNY"]
     return ["USD"]
+
+
+def get_recent_released_events(symbol: str = "XAUUSD", hours_back: int = 12) -> List[Dict[str, Any]]:
+    """
+    Returns High and Medium impact events that were released within the past `hours_back` hours,
+    sorted most recent first, so the causal engine can correlate live prints with headlines and yield moves.
+    """
+    raw_events = fetch_calendar_data()
+    if not raw_events:
+        return []
+
+    target_currencies = set(get_symbol_currencies(symbol))
+    now_tehran = datetime.datetime.now(TEHRAN_TZ)
+    cutoff_tehran = now_tehran - datetime.timedelta(hours=hours_back)
+
+    recent = []
+    for ev in raw_events:
+        c = ev.get("country", "")
+        impact = ev.get("impact", "")
+        if c not in target_currencies or impact not in ["High", "Medium"]:
+            continue
+
+        date_str = ev.get("date", "")
+        try:
+            ev_dt = datetime.datetime.fromisoformat(date_str).astimezone(TEHRAN_TZ)
+        except Exception:
+            continue
+
+        if cutoff_tehran <= ev_dt < now_tehran:
+            mins_ago = int((now_tehran - ev_dt).total_seconds() / 60)
+            recent.append({
+                "title": ev.get("title", "Unknown"),
+                "country": c,
+                "impact": impact,
+                "datetime_tehran": ev_dt,
+                "time_str": ev_dt.strftime("%H:%M"),
+                "date_str": ev_dt.strftime("%Y-%m-%d"),
+                "forecast": ev.get("forecast", "-"),
+                "previous": ev.get("previous", "-"),
+                "minutes_ago": mins_ago,
+            })
+
+    recent.sort(key=lambda x: x["datetime_tehran"], reverse=True)
+    return recent
 
 
 def get_upcoming_events(symbol: str = "XAUUSD", hours_ahead: int = 24) -> List[Dict[str, Any]]:

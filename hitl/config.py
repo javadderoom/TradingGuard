@@ -56,3 +56,11 @@ SNAP_MODEL = os.getenv("SNAP_MODEL", "subq-snap-1.1")
 # Review Council Deliberation Governor
 COUNCIL_ENABLED = os.getenv("COUNCIL_ENABLED", "true").strip().lower() in ("true", "1", "yes")
 
+# Evidence-Grounded Causal Fundamental Engine Configuration
+FUNDAMENTAL_CACHE_TTL_MINUTES = int(os.getenv("FUNDAMENTAL_CACHE_TTL_MINUTES", "45"))
+FUNDAMENTAL_LLM_MODEL = os.getenv("FUNDAMENTAL_LLM_MODEL", "gemini-3.8-flash-high")
+FUNDAMENTAL_ENFORCEMENT_MODE = os.getenv("FUNDAMENTAL_ENFORCEMENT_MODE", "advisory").strip().lower()
+if FUNDAMENTAL_ENFORCEMENT_MODE not in ("advisory", "hard_veto"):
+    FUNDAMENTAL_ENFORCEMENT_MODE = "advisory"
+
+

@@ -6,6 +6,7 @@ TradingGuard HITL - Watchdog & Safety Radar Service
 
 import time
 import datetime
+import threading
 from pathlib import Path
 from typing import Dict, Set, Tuple, Optional, Callable, Any
 import json
@@ -17,7 +18,8 @@ from hitl.config import (
     COOLDOWN_LOSS_MINUTES,
     TELEGRAM_CHAT_ID,
     BASE_DIR,
-    DEFAULT_SYMBOL
+    DEFAULT_SYMBOL,
+    FUNDAMENTAL_CACHE_TTL_MINUTES,
 )
 from hitl.mt5_engine import MT5Engine
 from hitl.telegram_client import TelegramClient
@@ -108,6 +110,16 @@ class MarketWatchdog:
         self.last_london_briefing_date: Optional[datetime.date] = None
         self.last_ny_briefing_date: Optional[datetime.date] = None
         self.last_circuit_alerted: bool = False
+
+        # Background Fundamental Causal Refresh State
+        self.last_fundamental_refresh_ts: float = 0.0
+        self._fundamental_refresh_running: bool = False
+        fund_state = BASE_DIR / "hitl" / "memory" / "fundamental_state.json"
+        if fund_state.exists():
+            try:
+                self.last_fundamental_refresh_ts = fund_state.stat().st_mtime
+            except Exception:
+                pass
 
     def send_heartbeat(self, chat_id: int | str, is_manual: bool = False):
         """Sends an operational system health check card."""
@@ -510,6 +522,31 @@ class MarketWatchdog:
                         self.send_trend_briefing(chat_id, "New York")
             except Exception as e:
                 print(f"[Watchdog] Trend Briefing Error: {e}")
+
+        # 9. Non-blocking Periodic Causal Fundamental Refresh (every FUNDAMENTAL_CACHE_TTL_MINUTES on weekdays)
+        self._maybe_trigger_fundamental_refresh(is_weekday=is_weekday, now_ts=now_ts)
+
+    def _maybe_trigger_fundamental_refresh(self, is_weekday: bool, now_ts: float):
+        """Triggers non-blocking background causal macro synthesis without stalling the 3s poll loop."""
+        if not is_weekday or now_ts < 1e9 or self._fundamental_refresh_running:
+            return
+        ttl_sec = max(300.0, float(FUNDAMENTAL_CACHE_TTL_MINUTES) * 60.0)
+        if (now_ts - self.last_fundamental_refresh_ts) < ttl_sec:
+            return
+
+        self._fundamental_refresh_running = True
+        self.last_fundamental_refresh_ts = now_ts
+
+        def _bg_worker():
+            try:
+                from hitl.fundamental.causal_engine import fundamental_engine
+                fundamental_engine.get_global_dossier(force_refresh=True, allow_llm=True)
+            except Exception as e:
+                print(f"[Watchdog] Background fundamental refresh error: {e}")
+            finally:
+                self._fundamental_refresh_running = False
+
+        threading.Thread(target=_bg_worker, daemon=True, name="FundamentalCausalRefresh").start()
 
     def send_trend_briefing(self, chat_id: int | str, session_name: str):
         """Sends proactive session trend forecast card to Telegram."""

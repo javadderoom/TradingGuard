@@ -76,7 +76,8 @@ class SnapTrendClassifier:
             f"--- Off-Chart Macro & Sentiment ---\n"
             f"Retail Crowd Positioning: {off_chart.get('retail_sentiment', {}).get('retail_long_pct', 50)}% Long / {off_chart.get('retail_sentiment', {}).get('retail_short_pct', 50)}% Short (Contrarian: {off_chart.get('retail_sentiment', {}).get('contrarian_bias', 'NEUTRAL')})\n"
             f"Catalyst Danger Score: Session={off_chart.get('catalysts', {}).get('session_risk', 'LOW')} | Day={off_chart.get('catalysts', {}).get('day_risk', 'LOW')}\n"
-            f"Active Session: {off_chart.get('session_context', {}).get('session_label', 'Active')}"
+            f"Active Session: {off_chart.get('session_context', {}).get('session_label', 'Active')}\n"
+            + self._format_causal_state_snippet(off_chart.get("fundamental_causal", {}))
         )
 
         questions = {
@@ -227,27 +228,31 @@ class SnapTrendClassifier:
                     "source": "subq-snap-1.1"
                 }
         return None
-        return None
 
-    def _build_prompt(self, on_chart: Dict[str, Any], off_chart: Dict[str, Any]) -> str:
-        """Constructs high-density structured prompt for SubQ Snap."""
-        sym = on_chart.get("symbol", "XAUUSD")
+    def _format_causal_state_snippet(self, fc: Dict[str, Any]) -> str:
+        """Formats causal macro intelligence snippet for SubQ Snap state vector."""
+        if not fc or "asset_score" not in fc:
+            return ""
+        rt = fc.get("rates_tape", {})
+        chains = fc.get("causal_chains") or []
+        top_ch = chains[0] if chains else {}
+        ch_str = (
+            f"Top Causal Chain [{top_ch.get('tape_verification')}]: {top_ch.get('event')} -> {' -> '.join(top_ch.get('transmission_steps', [])[:2])}"
+            if top_ch else "No dominant causal chain"
+        )
+        cot = fc.get("cot_positioning") or {}
+        cot_s = (
+            f"COT Net {cot.get('net_contracts', 0):+,} ({cot.get('crowding_flag')})"
+            if cot else "COT N/A"
+        )
         return (
-            f"Analyze the following institutional state vector for {sym} and forecast the trend:\n\n"
-            f"=== ON-CHART MICROSTRUCTURE ===\n"
-            f"{json.dumps(on_chart, indent=2)}\n\n"
-            f"=== OFF-CHART MACRO & SENTIMENT ===\n"
-            f"{json.dumps(off_chart, indent=2)}\n\n"
-            "Produce strict JSON output formatted as:\n"
-            "{\n"
-            f'  "symbol": "{sym}",\n'
-            '  "horizons": {\n'
-            '    "session": {"bias": "BULLISH"|"BEARISH"|"RANGE_CHOP", "confidence": float, "session_archetype": str, "expected_range": {"high": float, "low": float}, "key_trigger": float, "catalyst_danger": str},\n'
-            '    "day": {"bias": "BULLISH"|"BEARISH"|"CONSOLIDATION", "confidence": float, "daily_dol": {"target": float, "type": str, "rationale": str}, "invalidation": float, "candle_archetype": str},\n'
-            '    "week": {"bias": "BULLISH"|"BEARISH"|"NEUTRAL", "confidence": float, "macro_target": float, "weekly_profile": str}\n'
-            "  },\n"
-            '  "synthesis_rationale": str\n'
-            "}"
+            f"--- Evidence-Grounded Causal Fundamental State ---\n"
+            f"Global Macro Regime: {fc.get('global_regime')} | Dominant Theme: {fc.get('dominant_theme')}\n"
+            f"Rates & Dollar Tape: US10Y Nom={rt.get('nom_10y')}% ({rt.get('nom_10y_5d_bps')}bps 5D) | "
+            f"US10Y Real={rt.get('real_10y')}% ({rt.get('real_10y_5d_bps')}bps 5D) | "
+            f"DXY={rt.get('dxy_level')} ({rt.get('dxy_5d_pct')}% 5D) | Co-Selloff={rt.get('bond_equity_co_selloff')}\n"
+            f"Asset Fundamental Score: {fc.get('asset_bias')} ({fc.get('asset_score'):+d}/100, conf {fc.get('confidence', 0.0):.2f}) | {cot_s}\n"
+            f"{ch_str}"
         )
 
     def _compute_session_expected_range(
@@ -402,7 +407,13 @@ class SnapTrendClassifier:
         elif retail_long_pct <= 30.0:
             score_day += 1.5  # Institutional short squeeze
 
-        # Feature F: Weekly Range Premium / Discount Exhaustion
+        # Feature F: Evidence-Grounded Causal Fundamental Bias
+        fund_causal = off_chart.get("fundamental_causal", {}) or {}
+        fc_score = fund_causal.get("asset_score", 0)
+        if fc_score:
+            score_day += max(-1.5, min(1.5, float(fc_score) / 50.0))
+
+        # Feature G: Weekly Range Premium / Discount Exhaustion
         if pwh > pwl:
             w_pct = (curr_p - pwl) / (pwh - pwl)
             if w_pct >= 0.85:

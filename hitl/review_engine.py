@@ -522,10 +522,34 @@ def run_morning_briefing(
             bench_lines.append(f"• {icon} *{sym}:* _Awaiting Asian Range Calculation_")
     bench_text = "\n".join(bench_lines)
 
-    # 3. Macro Bias & High-Impact Events Preview
+    # 3. Macro Bias, Causal Chains & High-Impact Events Preview
     macro_gold = calculate_htf_fundamental_bias("XAUUSD")
     macro_filter = macro_gold.get("execution_filter", "SELECTIVE_BI_DIRECTIONAL")
     usdx_mom = macro_gold.get("usdx_metrics", {}).get("momentum_5d_pct", 0.0)
+
+    causal_section = ""
+    reg = macro_gold.get("global_macro_regime") or {}
+    diag = macro_gold.get("diagnostics") or {}
+    chains = macro_gold.get("causal_chains") or []
+    if reg or chains:
+        reg_lbl = str(reg.get("label", "N/A")).replace("_", " ")
+        nom10 = diag.get("nom_10y_level")
+        real10 = diag.get("real_10y_level")
+        r10_5d = diag.get("real_10y_5d_bps")
+        rates_line = (
+            f"• US10Y Nom: `{nom10:.2f}%` | Real 10Y: `{real10:.2f}%` (`{r10_5d:+.1f}bps` 5D)\n"
+            if (nom10 is not None and real10 is not None and r10_5d is not None)
+            else ""
+        )
+        chain_lines = []
+        for ch in chains[:2]:
+            steps_s = " → ".join((ch.get("transmission_steps") or [])[:2])
+            chain_lines.append(f"• [{ch.get('tape_verification', 'PARTIAL')}] {ch.get('event', '')}: _{steps_s}_")
+        causal_section = (
+            f"• Global Regime: `{reg_lbl}`\n"
+            f"{rates_line}"
+            + ("\n".join(chain_lines) + "\n" if chain_lines else "")
+        )
 
     events = get_upcoming_events("XAUUSD", hours_ahead=12)
     news_lines = []
@@ -549,9 +573,10 @@ def run_morning_briefing(
         f"{past_recap_text}\n\n"
         f"🎯 *Overnight Asian Benchmarks (00:00 - 07:00 UTC):*\n"
         f"{bench_text}\n\n"
-        f"🌐 *Macro Stance & USDX Context:*\n"
+        f"🌐 *Macro Stance, Yields & Causal Context:*\n"
         f"• Directional Stance: *[{macro_filter}]*\n"
-        f"• USDX 5D Momentum: `{usdx_mom:+.2f}%`\n\n"
+        f"• USDX 5D Momentum: `{usdx_mom:+.2f}%`\n"
+        f"{causal_section}\n"
         f"📅 *Today's Key Economic Windows:*\n"
         f"{news_text}\n\n"
         f"🚀 *London Open activates at {lon_tehran_str} | NY Open at {ny_tehran_str}.*"
