@@ -1,0 +1,34 @@
+{
+  "381114397": {
+    "symbol": "GBPUSD",
+    "archetype_id": "SETUP-ARCH-010",
+    "be_rr": 1.5,
+    "target_rr": 3.5,
+    "ttl_minutes": 60,
+    "created_at": 1795080462.6116745
+  },
+  "381200186": {
+    "symbol": "XAUUSD",
+    "archetype_id": "SETUP-ARCH-007",
+    "be_rr": 1.5,
+    "target_rr": 7.32,
+    "ttl_minutes": 60,
+    "created_at": 1795089060.365592
+  },
+  "382851642": {
+    "symbol": "XAUUSD",
+    "archetype_id": "QUANT_R15_048",
+    "be_rr": 2.0,
+    "target_rr": 2.5,
+    "ttl_minutes": 120,
+    "created_at": 1795161612.8561401
+  },
+  "383057332": {
+    "symbol": "XAUUSD",
+    "archetype_id": "SETUP-ARCH-005",
+    "be_rr": 1.8,
+    "target_rr": 7.2,
+    "ttl_minutes": 60,
+    "created_at": 1795168509.852638
+  }
+}

@@ -3,31 +3,31 @@
   "horizons": {
     "session": {
       "bias": "RANGE_CHOP",
-      "confidence": 0.95,
+      "confidence": 0.45,
       "session_archetype": "RANGE_BOUND_CHOP",
       "expected_range": {
-        "high": 3758.4,
-        "low": 3693.54
+        "high": 3636.56,
+        "low": 3502.73
       },
-      "key_trigger": 3725.97,
-      "catalyst_danger": "MEDIUM"
+      "key_trigger": 3569.64,
+      "catalyst_danger": "LOW"
     },
     "day": {
       "bias": "CONSOLIDATION",
-      "confidence": 0.79,
+      "confidence": 0.27,
       "daily_dol": {
-        "target": 3857.28,
-        "type": "BUY_SIDE_LIQUIDITY",
-        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting BUY_SIDE_LIQUIDITY"
+        "target": 3535.41,
+        "type": "SELL_SIDE_LIQUIDITY",
+        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting SELL_SIDE_LIQUIDITY"
       },
-      "invalidation": 3693.54,
+      "invalidation": 3502.73,
       "candle_archetype": "CONSOLIDATION_DAY"
     },
     "week": {
-      "bias": "NEUTRAL",
+      "bias": "BULLISH",
       "confidence": 0.14,
       "macro_target": 4148.55,
-      "weekly_profile": "NEUTRAL_CHOP"
+      "weekly_profile": "TUESDAY_LOW_OF_WEEK"
     }
   },
   "trade_management": {
@@ -50,28 +50,28 @@
       "note": "Range Fade: 3.5R Boundary Target with early 1.0R BE protection"
     }
   },
-  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for XAUUSD_o. Session bias rated RANGE_CHOP (confidence 94%), Daily horizon aligned with CONSOLIDATION_DAY toward 3857.28. Weekly profile: NEUTRAL_CHOP.",
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for XAUUSD_o. Session bias rated RANGE_CHOP (confidence 45%), Daily horizon aligned with CONSOLIDATION_DAY toward 3535.41. Weekly profile: TUESDAY_LOW_OF_WEEK.",
   "source": "subq-snap-1.1",
-  "latency_ms": 710.7,
-  "generated_at_utc": "2026-11-19 07:51:07 UTC",
-  "generated_at_tehran": "2026-11-19 11:21:07 Tehran",
+  "latency_ms": 4739.4,
+  "generated_at_utc": "2026-11-21 12:07:40 UTC",
+  "generated_at_tehran": "2026-11-21 15:37:40 Tehran",
   "on_chart_telemetry": {
     "symbol": "XAUUSD_o",
     "asset_class": "METALS",
-    "active_anchor": "PRE_LONDON",
-    "current_price": 3732.32,
-    "timestamp_utc": "2026-11-19 07:51:07 UTC",
-    "timestamp_tehran": "2026-11-19 11:21:07 Tehran",
+    "active_anchor": "PRE_NY",
+    "current_price": 3537.64,
+    "timestamp_utc": "2026-11-21 12:07:39 UTC",
+    "timestamp_tehran": "2026-11-21 15:37:39 Tehran",
     "daily_structure": {
-      "pdh": 3857.28,
-      "pdl": 3719.81,
-      "pdc": 3724.8,
-      "daily_open": 3729.84,
-      "daily_high": 3758.4,
-      "daily_low": 3693.54,
-      "daily_range": 64.86,
-      "adr_14": 95.0,
-      "adr_utilization_pct": 68.3,
+      "pdh": 3758.4,
+      "pdl": 3619.79,
+      "pdc": 3625.14,
+      "daily_open": 3633.09,
+      "daily_high": 3636.56,
+      "daily_low": 3502.73,
+      "daily_range": 133.83,
+      "adr_14": 103.04,
+      "adr_utilization_pct": 129.9,
       "has_swept_pdh": false,
       "has_swept_pdl": true
     },
@@ -82,67 +82,59 @@
       "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
     },
     "session_ranges": {
-      "asian_high": 3758.4,
-      "asian_low": 3693.54,
-      "asian_range": 64.86,
-      "london_high": 3742.17,
-      "london_low": 3728.16,
-      "london_range": 14.01
+      "asian_high": 3636.56,
+      "asian_low": 3502.73,
+      "asian_range": 133.83,
+      "london_high": 3636.56,
+      "london_low": 3502.73,
+      "london_range": 133.83
     },
     "london_context": {
       "is_established": true,
-      "london_high": 3742.17,
-      "london_low": 3728.16,
-      "london_range": 14.01,
+      "london_high": 3636.56,
+      "london_low": 3502.73,
+      "london_range": 133.83,
       "swept_asian_high": false,
       "swept_asian_low": false,
-      "pre_ny_adr_util_pct": 68.3,
+      "pre_ny_adr_util_pct": 129.9,
       "exhaustion_alert": true
     },
     "draw_on_liquidity": {
-      "type": "BUY_SIDE_LIQUIDITY",
-      "target_price": 3857.28,
-      "distance_pts": 124.96,
-      "rationale": "Swept PDL with bullish displacement; Draw on Liquidity is PDH."
+      "type": "SELL_SIDE_LIQUIDITY",
+      "target_price": 3535.41,
+      "distance_pts": 2.23,
+      "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
     },
     "liquidity_pools": {
       "overhead_bsl": [
-        3732.9,
-        3737.78,
-        3741.58
+        3542.18,
+        3543.93,
+        3546.44
       ],
       "underlying_ssl": [
-        3730.59,
-        3728.27,
-        3728.16
+        3535.41,
+        3526.81,
+        3526.23
       ],
       "active_h1_fvgs": [
         {
           "type": "BEARISH_FVG",
-          "top": 3861.95,
-          "bottom": 3858.47,
-          "midpoint": 3860.21,
-          "size": 3.48,
-          "bar_time": 1794945600
+          "top": 3725.54,
+          "bottom": 3721.62,
+          "midpoint": 3723.58,
+          "size": 3.92,
+          "bar_time": 1795093200
         },
         {
           "type": "BEARISH_FVG",
-          "top": 3845.54,
-          "bottom": 3830.44,
-          "midpoint": 3837.99,
-          "size": 15.1,
-          "bar_time": 1794967200
+          "top": 3703.22,
+          "bottom": 3692.05,
+          "midpoint": 3697.64,
+          "size": 11.17,
+          "bar_time": 1795107600
         }
       ],
       "active_h4_fvgs": [
-        {
-          "type": "BULLISH_FVG",
-          "top": 3892.05,
-          "bottom": 3887.49,
-          "midpoint": 3889.77,
-          "size": 4.56,
-          "bar_time": 1794528000
-        },
         {
           "type": "BEARISH_FVG",
           "top": 3841.87,
@@ -150,14 +142,22 @@
           "midpoint": 3825.97,
           "size": 31.79,
           "bar_time": 1794960000
+        },
+        {
+          "type": "BEARISH_FVG",
+          "top": 3805.6,
+          "bottom": 3789.44,
+          "midpoint": 3797.52,
+          "size": 16.16,
+          "bar_time": 1794974400
         }
       ]
     },
     "htf_trend": {
       "h1_regime": "CONSOLIDATION_RANGE",
-      "h1_ma20": 3740.52,
-      "h4_ma20": 3814.84,
-      "h1_displacement_3bar": 8.0
+      "h1_ma20": 3554.55,
+      "h4_ma20": 3694.33,
+      "h1_displacement_3bar": 2.66
     },
     "smt_divergence": {
       "has_smt": false,
@@ -167,15 +167,15 @@
   },
   "off_chart_telemetry": {
     "symbol": "XAUUSD",
-    "timestamp_utc": "2026-11-19 07:51:07 UTC",
-    "timestamp_tehran": "2026-11-19 11:21:07 Tehran",
+    "timestamp_utc": "2026-11-21 12:07:39 UTC",
+    "timestamp_tehran": "2026-11-21 15:37:39 Tehran",
     "session_context": {
       "is_active_killzone": false,
-      "session_label": "Outside Killzones",
+      "session_label": "Weekend (Market Closed)",
       "session_key": "Outside_Killzones"
     },
     "catalysts": {
-      "session_risk": "MEDIUM",
+      "session_risk": "LOW",
       "day_risk": "LOW",
       "week_risk": "LOW",
       "upcoming_high_impact_session": [],
@@ -184,10 +184,94 @@
     },
     "retail_sentiment": {
       "sample_size": 10,
-      "retail_long_pct": 44.4,
-      "retail_short_pct": 55.6,
-      "contrarian_bias": "BALANCED",
-      "interpretation": "Retail crowd is 44.4% LONG. Institutional liquidity hunt favors two-sided structural expansion."
+      "retail_long_pct": 28.6,
+      "retail_short_pct": 71.4,
+      "contrarian_bias": "INSTITUTIONAL_LONG_HUNT",
+      "interpretation": "Retail crowd is 28.6% LONG. Institutional liquidity hunt favors squeezing Buy-Side Liquidity."
+    },
+    "fundamental_causal": {
+      "global_regime": "EQUITY_LIQUIDITY_SQUEEZE_FLIGHT_TO_TREASURIES",
+      "dominant_theme": "Equity De-Risking Spurs Treasury Safe-Haven Bid While Forcing Metals & Crypto Liquidation",
+      "asset_bias": "BEARISH",
+      "asset_score": -55,
+      "confidence": 0.8,
+      "dominant_driver": "MARGIN_CALL_DELEVERAGING",
+      "dominant_mechanism": "Equity drawdowns force margin calls -> 86.5% long COT liquidated -> Gold sells off",
+      "causal_chains": [
+        {
+          "chain_id": "CHAIN-1",
+          "event": "Tech Valuation De-Grossing and Equity Liquidity Wall",
+          "transmission_steps": [
+            "Mega-cap tech valuation unwind triggers heavy equity liquidation and VIX spike.",
+            "Capital flees risky assets into US Treasuries, driving yields sharply down.",
+            "Equity indexes plunge while duration bonds rally on flight-to-safety flows."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "NQ 1D -4.62% and SPX 1D -3.01% while US 10Y yield drops 14bps to 4.912% and TLT rallies +1.37% 1D / +2.61% 5D.",
+          "affected_assets": {
+            "NQ": "BEARISH",
+            "SPX": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.9
+        },
+        {
+          "chain_id": "CHAIN-2",
+          "event": "Crowded Long Liquidation in Precious Metals via Cross-Asset Margin Pressure",
+          "transmission_steps": [
+            "Multi-asset drawdown and VIX spike trigger cross-margin calls across leveraged funds.",
+            "Highly crowded long positions in gold are sold to raise cash collateral.",
+            "Gold and silver decline sharply despite dropping real yields and geopolitical strikes."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "COT Gold Managed Money long is 86.5%; XAUUSD drops -2.41% 1D / -8.93% 5D and XAGUSD drops -15.42% 5D despite TIPS yield dropping 14bps 5D to 2.77%.",
+          "affected_assets": {
+            "XAUUSD": "BEARISH",
+            "XAGUSD": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.85
+        },
+        {
+          "chain_id": "CHAIN-3",
+          "event": "US Treasury Yield Collapse Triggers Carry Trade Unwind in USDJPY",
+          "transmission_steps": [
+            "Flight to Treasuries drives US 2Y down 25bps and 10Y down 23bps 5D.",
+            "US-Japan sovereign yield differentials compress rapidly, making JPY carry expensive.",
+            "Leveraged funds trim USD longs, forcing USDJPY lower alongside global risk-off."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "US 10Y yields fall 14bps 1D and 23bps 5D; USDJPY falls -0.72% 1D to 158.54.",
+          "affected_assets": {
+            "USDJPY": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.8
+        }
+      ],
+      "rates_tape": {
+        "nom_10y": 4.912,
+        "nom_10y_5d_bps": -23.0,
+        "real_10y": 2.77,
+        "real_10y_5d_bps": -14.0,
+        "dxy_level": 103.64,
+        "dxy_5d_pct": 0.34,
+        "vix_level": 26.8,
+        "bond_equity_co_selloff": false
+      },
+      "cot_positioning": {
+        "symbol": "XAUUSD",
+        "report_date": "2026-11-17",
+        "participant": "Managed Money",
+        "long_contracts": 121994,
+        "short_contracts": 19052,
+        "net_contracts": 102942,
+        "net_change_wow": -9399,
+        "long_pct": 86.5,
+        "crowding_flag": "EXTREME_LONG",
+        "note": "COMEX Gold futures (Managed Money)"
+      },
+      "analysis_source": "llm:gemini-3.8-flash-high"
     }
   }
 }

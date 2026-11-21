@@ -1,0 +1,683 @@
+{
+  "generated_at_utc": "2026-11-21 11:43:01 UTC",
+  "generated_epoch": 1795261252.9776409,
+  "latency_ms": 128464.3,
+  "analysis_source": "llm:gemini-3.8-flash-high",
+  "global_macro_regime": {
+    "label": "EQUITY_LIQUIDITY_SQUEEZE_FLIGHT_TO_TREASURIES",
+    "summary": "Severe mega-cap tech and global equity de-grossing has triggered an authentic flight-to-safety into US Treasuries, pulling benchmark yields down sharply. Concurrently, acute margin and liquidity strains are forcing leveraged funds to dump crowded winners in precious metals and crypto to cover equity losses.",
+    "dominant_theme": "Equity De-Risking Spurs Treasury Safe-Haven Bid While Forcing Metals & Crypto Liquidation",
+    "dollar_regime": "NEUTRAL_RANGE",
+    "rates_regime": "FLIGHT_TO_SAFETY_DROP",
+    "risk_regime": "RISK_OFF_FLIGHT_TO_QUALITY"
+  },
+  "causal_chains": [
+    {
+      "chain_id": "CHAIN-1",
+      "event": "Tech Valuation De-Grossing and Equity Liquidity Wall",
+      "transmission_steps": [
+        "Mega-cap tech valuation unwind triggers heavy equity liquidation and VIX spike.",
+        "Capital flees risky assets into US Treasuries, driving yields sharply down.",
+        "Equity indexes plunge while duration bonds rally on flight-to-safety flows."
+      ],
+      "tape_verification": "CONFIRMED_BY_TAPE",
+      "tape_evidence": "NQ 1D -4.62% and SPX 1D -3.01% while US 10Y yield drops 14bps to 4.912% and TLT rallies +1.37% 1D / +2.61% 5D.",
+      "affected_assets": {
+        "NQ": "BEARISH",
+        "SPX": "BEARISH"
+      },
+      "horizon": "SWING_1_5D",
+      "confidence": 0.9
+    },
+    {
+      "chain_id": "CHAIN-2",
+      "event": "Crowded Long Liquidation in Precious Metals via Cross-Asset Margin Pressure",
+      "transmission_steps": [
+        "Multi-asset drawdown and VIX spike trigger cross-margin calls across leveraged funds.",
+        "Highly crowded long positions in gold are sold to raise cash collateral.",
+        "Gold and silver decline sharply despite dropping real yields and geopolitical strikes."
+      ],
+      "tape_verification": "CONFIRMED_BY_TAPE",
+      "tape_evidence": "COT Gold Managed Money long is 86.5%; XAUUSD drops -2.41% 1D / -8.93% 5D and XAGUSD drops -15.42% 5D despite TIPS yield dropping 14bps 5D to 2.77%.",
+      "affected_assets": {
+        "XAUUSD": "BEARISH",
+        "XAGUSD": "BEARISH"
+      },
+      "horizon": "SWING_1_5D",
+      "confidence": 0.85
+    },
+    {
+      "chain_id": "CHAIN-3",
+      "event": "US Treasury Yield Collapse Triggers Carry Trade Unwind in USDJPY",
+      "transmission_steps": [
+        "Flight to Treasuries drives US 2Y down 25bps and 10Y down 23bps 5D.",
+        "US-Japan sovereign yield differentials compress rapidly, making JPY carry expensive.",
+        "Leveraged funds trim USD longs, forcing USDJPY lower alongside global risk-off."
+      ],
+      "tape_verification": "CONFIRMED_BY_TAPE",
+      "tape_evidence": "US 10Y yields fall 14bps 1D and 23bps 5D; USDJPY falls -0.72% 1D to 158.54.",
+      "affected_assets": {
+        "USDJPY": "BEARISH"
+      },
+      "horizon": "SWING_1_5D",
+      "confidence": 0.8
+    },
+    {
+      "chain_id": "CHAIN-4",
+      "event": "Global Growth Slowdown & Risk Liquidation Truncates Energy Geopolitical Premium",
+      "transmission_steps": [
+        "Tanker attacks near Hormuz provide transient supply concerns in oil markets.",
+        "Severe global equity slump and demand destruction fears overwhelm Middle East disruptions.",
+        "Crude oil rallies weakly intraday but remains deeply negative on multi-week horizon."
+      ],
+      "tape_verification": "PARTIAL",
+      "tape_evidence": "USCRUDE trades up +0.42% 1D on tanker hits, but down -4.91% 5D and -18.86% 20D while Copper falls -9.78% 5D.",
+      "affected_assets": {
+        "USCRUDE": "NEUTRAL"
+      },
+      "horizon": "INTRADAY",
+      "confidence": 0.75
+    }
+  ],
+  "assets": {
+    "XAUUSD": {
+      "bias": "BEARISH",
+      "score": -55,
+      "confidence": 0.8,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "NEUTRAL"
+      },
+      "dominant_driver": "MARGIN_CALL_DELEVERAGING",
+      "dominant_mechanism": "Equity drawdowns force margin calls -> 86.5% long COT liquidated -> Gold sells off",
+      "bullish_forces": [
+        "10Y TIPS real yield fell 14bps 5D to 2.77%",
+        "Tanker attacks in Hormuz stoke safe-haven demand"
+      ],
+      "bearish_forces": [
+        "Managed Money extreme long at 86.5% creates liquidation overhang",
+        "Cash liquidity squeeze forces sales to cover equity losses"
+      ],
+      "invalidation_trigger": "10Y real yields rebound above 2.90% while XAUUSD reclaims $3,650 on volume.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "XAGUSD": {
+      "bias": "STRONG_BEARISH",
+      "score": -75,
+      "confidence": 0.85,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "DUAL_INDUSTRIAL_AND_PRECIOUS_LIQUIDATION",
+      "dominant_mechanism": "Industrial slowdown plus precious metals de-grossing accelerates silver liquidation cascade",
+      "bullish_forces": [
+        "Drop in US yields reduces carrying cost of holding metals",
+        "Oversold bounce potential after severe -23.48% 20D decline"
+      ],
+      "bearish_forces": [
+        "Copper collapse (-9.78% 5D) signals severe industrial demand contraction",
+        "Silver dropped -15.42% 5D reflecting forced liquidation across leveraged accounts"
+      ],
+      "invalidation_trigger": "Copper rebounds above $5.80 and XAGUSD crosses above $44.50.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "EURUSD": {
+      "bias": "NEUTRAL",
+      "score": -10,
+      "confidence": 0.7,
+      "horizon_bias": {
+        "intraday": "NEUTRAL",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "RATE_DIFFERENTIAL_VS_GROWTH_DRAG",
+      "dominant_mechanism": "Falling US yields support EUR while European growth and cyber headwinds cap upside",
+      "bullish_forces": [
+        "US 10Y yield fell 14bps intraday, eroding USD yield advantage",
+        "German Bund yields ticking higher relative to falling US Treasuries"
+      ],
+      "bearish_forces": [
+        "FDAX down -8.09% 5D reflects acute European growth headwinds",
+        "DXY remains up +2.00% 20D with EUR down -2.23% 20D"
+      ],
+      "invalidation_trigger": "EURUSD breaks above 1.1080 or US 10Y yield surges back above 5.05%.",
+      "execution_posture": "TWO_WAY_SELECTIVE"
+    },
+    "GBPUSD": {
+      "bias": "BEARISH",
+      "score": -35,
+      "confidence": 0.72,
+      "horizon_bias": {
+        "intraday": "NEUTRAL",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "RISK_OFF_BETA_DELEVERAGING",
+      "dominant_mechanism": "Global equity selloff depresses high-beta sterling despite falling US Treasury yields",
+      "bullish_forces": [
+        "US 2Y yield plunged 25bps 5D, softening broad dollar yields",
+        "CFTC Leveraged Funds hold net long GBP position (62.5% long)"
+      ],
+      "bearish_forces": [
+        "Global risk-off and VIX spike (26.8) punish cyclical growth currencies",
+        "GBP 5D return of -0.98% underperforms EUR and USD"
+      ],
+      "invalidation_trigger": "Global equities stage 3%+ relief rally and GBPUSD clears 1.3200.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "USDJPY": {
+      "bias": "BEARISH",
+      "score": -60,
+      "confidence": 0.8,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "YIELD_SPREAD_COMPRESSION_AND_CARRY_UNWIND",
+      "dominant_mechanism": "Plunging US Treasury yields narrow US-JP yield spread, triggering carry unwinds",
+      "bullish_forces": [
+        "Nikkei crash (-10.0% 5D) reflects domestic Japanese financial stress",
+        "CFTC positioning still shows Leveraged Funds long USDJPY (55.7%)"
+      ],
+      "bearish_forces": [
+        "US 10Y down 23bps 5D rapidly compresses US-JP bond spreads",
+        "USDJPY dropped -0.72% 1D as safe-haven yen demand expands"
+      ],
+      "invalidation_trigger": "US 10Y yield reclaims 5.05% or USDJPY trades above 160.20.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "NQ": {
+      "bias": "STRONG_BEARISH",
+      "score": -85,
+      "confidence": 0.9,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "AI_VALUATION_UNWIND_AND_LIQUIDITY_LIMITS",
+      "dominant_mechanism": "Tech valuations face liquidity limits -> heavy fund selling -> Nasdaq cascade",
+      "bullish_forces": [
+        "US 10Y yield drop to 4.91% provides theoretical duration relief",
+        "Oversold conditions after -13.06% 20D drop could spur short covering"
+      ],
+      "bearish_forces": [
+        "Headlines confirm US stocks hit liquidity limits with Nasdaq sliding 5%",
+        "CFTC Leveraged Funds dumped net -25,357 contracts WoW to net short"
+      ],
+      "invalidation_trigger": "NQ closes back above 26,000 with VIX dropping below 20.0.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "SPX": {
+      "bias": "BEARISH",
+      "score": -70,
+      "confidence": 0.88,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "BROAD_EQUITY_DERISKING_AND_CREDIT_SPREAD_WIDENING",
+      "dominant_mechanism": "Credit spreads widen and VIX surges -> institutional portfolio hedging -> SPX de-grossing",
+      "bullish_forces": [
+        "TLT rallying (+2.61% 5D) confirms Treasuries absorbing flight-to-safety flows",
+        "Leveraged Funds reduced net shorts by +68,082 contracts WoW"
+      ],
+      "bearish_forces": [
+        "VIX elevated at 26.8 (+40.24% 5D) confirms persistent volatility regime",
+        "HYG vs SHY credit stress widening -1.33% 5D pressures equities"
+      ],
+      "invalidation_trigger": "SPX reclaims 7,100 while VIX compresses below 21.0.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "HK50": {
+      "bias": "STRONG_BEARISH",
+      "score": -75,
+      "confidence": 0.82,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "ASIA_STRESS_AND_GLOBAL_GROWTH_SLOWDOWN",
+      "dominant_mechanism": "Active Asia stress flag plus global tech liquidation triggers capital flight from HK",
+      "bullish_forces": [
+        "Hang Seng valuation multiples historically discounted versus Western peers",
+        "Potential Beijing policy stimulus support if local stress deepens"
+      ],
+      "bearish_forces": [
+        "Asia/China Stress Flag is actively True with HK50 -7.10% 5D",
+        "Nikkei -10.00% 5D confirms synchronized regional equity liquidation"
+      ],
+      "invalidation_trigger": "HK50 reclaims 23,000 alongside a confirmed reversal in CSI300.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "BTCUSD": {
+      "bias": "STRONG_BEARISH",
+      "score": -80,
+      "confidence": 0.85,
+      "horizon_bias": {
+        "intraday": "BEARISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "MACRO_LIQUIDITY_SQUEEZE_AND_FORCED_DELEVERAGING",
+      "dominant_mechanism": "Global equity/tech de-risking triggers crypto liquidity squeeze and cascades liquidations",
+      "bullish_forces": [
+        "Oversold after -25.32% 20D plunge towards key support levels",
+        "CFTC Leveraged Funds hold balanced positioning (-1,211 net contracts)"
+      ],
+      "bearish_forces": [
+        "Liquidity squeeze deepens crypto rout as BTC breaches $56,000",
+        "High beta risk-off correlation with NQ (-13.06% 20D) remains acute"
+      ],
+      "invalidation_trigger": "BTC reclaims $62,000 alongside VIX dropping below 22.0.",
+      "execution_posture": "SELL_RALLIES_ALIGNED"
+    },
+    "ETHUSD": {
+      "bias": "BEARISH",
+      "score": -65,
+      "confidence": 0.8,
+      "horizon_bias": {
+        "intraday": "BULLISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "TECHNICAL_RELIEF_WITHIN_STRUCTURAL_LIQUIDATION",
+      "dominant_mechanism": "Short-term technical bounce fails to overcome dominant multi-week liquidity drain",
+      "bullish_forces": [
+        "Intraday counter-trend rebound of +2.24% outperforming BTC (-1.34%)",
+        "Short covering following extreme 20D drawdown of -26.95%"
+      ],
+      "bearish_forces": [
+        "Broader crypto market in severe rout with altcoins shedding 10%+",
+        "High-beta vulnerability to continued tech and liquidity drain"
+      ],
+      "invalidation_trigger": "ETH maintains hold above $1,850 with sustained institutional crypto inflows.",
+      "execution_posture": "DEFENSIVE_REDUCED_SIZE"
+    },
+    "USCRUDE": {
+      "bias": "NEUTRAL",
+      "score": -15,
+      "confidence": 0.72,
+      "horizon_bias": {
+        "intraday": "BULLISH",
+        "swing_1_5d": "BEARISH",
+        "macro_1_4w": "BEARISH"
+      },
+      "dominant_driver": "GEOPOLITICAL_RISK_VS_DEMAND_DESTRUCTION",
+      "dominant_mechanism": "Hormuz tanker attacks supply friction collides with severe global demand destruction",
+      "bullish_forces": [
+        "Tanker attacks and missile intercepts reported near Hormuz strait",
+        "Intraday bounce (+0.42%) following multi-week heavy selloff"
+      ],
+      "bearish_forces": [
+        "Copper plunge (-9.78% 5D) and equity crash signal industrial demand slump",
+        "Energy impulse deeply negative (-4.91% 5D, -18.86% 20D) caps upside"
+      ],
+      "invalidation_trigger": "Sustained supply outage closing Hormuz pushes WTI cleanly above $88.00.",
+      "execution_posture": "TWO_WAY_SELECTIVE"
+    }
+  },
+  "diagnostics": {
+    "nom_10y_level": 4.912,
+    "nom_10y_5d_bps": -23.0,
+    "real_10y_level": 2.77,
+    "real_10y_5d_bps": -14.0,
+    "breakeven_10y_level": 2.15,
+    "breakeven_5d_bps": -9.0,
+    "slope_2s10s": 0.29,
+    "rate_impulse_driver": "REAL_YIELD_EASING",
+    "bond_equity_co_selloff": false,
+    "tlt_5d_pct": 2.61,
+    "spx_5d_pct": -7.84,
+    "nq_5d_pct": -9.42,
+    "credit_stress_5d_pct": -1.33,
+    "asia_china_stress": true,
+    "csi300_5d_pct": null,
+    "hk50_5d_pct": -7.1,
+    "usdcnh_5d_pct": null,
+    "oil_5d_pct": -4.91,
+    "oil_20d_pct": -18.86,
+    "copper_5d_pct": -9.78,
+    "gold_5d_pct": -8.93,
+    "copper_gold_5d_diff": -0.85,
+    "dxy_level": 103.64,
+    "dxy_1d_pct": -0.19,
+    "dxy_5d_pct": 0.34,
+    "dxy_20d_pct": 2.0,
+    "vix_level": 26.8,
+    "vix_5d_pct": 40.24,
+    "fx_strength_ranking_5d": [
+      [
+        "CHF",
+        0.5
+      ],
+      [
+        "USD",
+        0.34
+      ],
+      [
+        "EUR",
+        0.01
+      ],
+      [
+        "CAD",
+        -0.05
+      ],
+      [
+        "GBP",
+        -0.48
+      ],
+      [
+        "JPY",
+        -1.34
+      ],
+      [
+        "AUD",
+        -1.88
+      ]
+    ]
+  },
+  "treasury_curves": {
+    "as_of_date": "2026-11-20",
+    "nom_2y": {
+      "date": "2026-11-20",
+      "latest": 4.63,
+      "chg_1d_bps": -13.0,
+      "chg_5d_bps": -25.0,
+      "chg_20d_bps": -2.0
+    },
+    "nom_10y": {
+      "date": "2026-11-20",
+      "latest": 4.92,
+      "chg_1d_bps": -12.0,
+      "chg_5d_bps": -23.0,
+      "chg_20d_bps": -4.0
+    },
+    "nom_30y": {
+      "date": "2026-11-20",
+      "latest": 5.31,
+      "chg_1d_bps": -9.0,
+      "chg_5d_bps": -16.0,
+      "chg_20d_bps": 2.0
+    },
+    "real_10y": {
+      "date": "2026-11-20",
+      "latest": 2.77,
+      "chg_1d_bps": -11.0,
+      "chg_5d_bps": -14.0,
+      "chg_20d_bps": 13.0
+    },
+    "breakeven_10y": {
+      "date": "2026-11-20",
+      "latest": 2.15,
+      "chg_1d_bps": -1.0,
+      "chg_5d_bps": -9.0,
+      "chg_20d_bps": -17.0
+    },
+    "slope_2s10s": {
+      "date": "2026-11-20",
+      "latest": 0.29,
+      "chg_1d_bps": 1.0,
+      "chg_5d_bps": 2.0,
+      "chg_20d_bps": -2.0
+    },
+    "slope_3m10s": {
+      "date": "2026-11-20",
+      "latest": 0.6,
+      "chg_1d_bps": -10.0,
+      "chg_5d_bps": -23.0,
+      "chg_20d_bps": -14.0
+    }
+  },
+  "cot_positioning": {
+    "NQ": {
+      "symbol": "NQ",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 51004,
+      "short_contracts": 63472,
+      "net_contracts": -12468,
+      "net_change_wow": -25357,
+      "long_pct": 44.6,
+      "crowding_flag": "BALANCED",
+      "note": "CME Nasdaq-100 Consolidated (Leveraged Funds)"
+    },
+    "SPX": {
+      "symbol": "SPX",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 197833,
+      "short_contracts": 432811,
+      "net_contracts": -234978,
+      "net_change_wow": 68082,
+      "long_pct": 31.4,
+      "crowding_flag": "BALANCED",
+      "note": "CME E-Mini S&P 500 (Leveraged Funds)"
+    },
+    "BTCUSD": {
+      "symbol": "BTCUSD",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 6264,
+      "short_contracts": 7475,
+      "net_contracts": -1211,
+      "net_change_wow": 32,
+      "long_pct": 45.6,
+      "crowding_flag": "BALANCED",
+      "note": "CME Bitcoin futures (Leveraged Funds)"
+    },
+    "EURUSD": {
+      "symbol": "EURUSD",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 116493,
+      "short_contracts": 193080,
+      "net_contracts": -76587,
+      "net_change_wow": -4911,
+      "long_pct": 37.6,
+      "crowding_flag": "BALANCED",
+      "note": "CME Euro FX futures (Leveraged Funds)"
+    },
+    "USDJPY": {
+      "symbol": "USDJPY",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 116898,
+      "short_contracts": 93108,
+      "net_contracts": 23790,
+      "net_change_wow": 6935,
+      "long_pct": 55.7,
+      "crowding_flag": "BALANCED",
+      "note": "Inverted from CME Japanese Yen futures so positive=long USDJPY"
+    },
+    "GBPUSD": {
+      "symbol": "GBPUSD",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 71766,
+      "short_contracts": 42976,
+      "net_contracts": 28790,
+      "net_change_wow": -5705,
+      "long_pct": 62.5,
+      "crowding_flag": "BALANCED",
+      "note": "CME British Pound futures (Leveraged Funds)"
+    },
+    "UST10Y": {
+      "symbol": "UST10Y",
+      "report_date": "2026-11-17",
+      "participant": "Leveraged Funds",
+      "long_contracts": 539725,
+      "short_contracts": 3022168,
+      "net_contracts": -2482443,
+      "net_change_wow": -181116,
+      "long_pct": 15.2,
+      "crowding_flag": "EXTREME_SHORT",
+      "note": "10Y Treasury Note price futures (short=bearish bonds / higher yields)"
+    },
+    "XAUUSD": {
+      "symbol": "XAUUSD",
+      "report_date": "2026-11-17",
+      "participant": "Managed Money",
+      "long_contracts": 121994,
+      "short_contracts": 19052,
+      "net_contracts": 102942,
+      "net_change_wow": -9399,
+      "long_pct": 86.5,
+      "crowding_flag": "EXTREME_LONG",
+      "note": "COMEX Gold futures (Managed Money)"
+    },
+    "COPPER": {
+      "symbol": "COPPER",
+      "report_date": "2026-11-17",
+      "participant": "Managed Money",
+      "long_contracts": 52057,
+      "short_contracts": 23365,
+      "net_contracts": 28692,
+      "net_change_wow": -6372,
+      "long_pct": 69.0,
+      "crowding_flag": "BALANCED",
+      "note": "COMEX Copper #1 futures (Managed Money)"
+    },
+    "XAGUSD": {
+      "symbol": "XAGUSD",
+      "report_date": "2026-11-17",
+      "participant": "Managed Money",
+      "long_contracts": 16254,
+      "short_contracts": 14974,
+      "net_contracts": 1280,
+      "net_change_wow": -2335,
+      "long_pct": 52.0,
+      "crowding_flag": "BALANCED",
+      "note": "COMEX Silver futures (Managed Money)"
+    },
+    "USCRUDE": {
+      "symbol": "USCRUDE",
+      "report_date": "2026-11-17",
+      "participant": "Managed Money",
+      "long_contracts": 153611,
+      "short_contracts": 137797,
+      "net_contracts": 15814,
+      "net_change_wow": -9900,
+      "long_pct": 52.7,
+      "crowding_flag": "BALANCED",
+      "note": "NYMEX WTI Physical Crude (Managed Money)"
+    }
+  },
+  "cot_report_date": "2026-11-17",
+  "top_headlines": [
+    {
+      "source": "GNews Geo/China/Bonds",
+      "tier": 3,
+      "title": "AI Bubble Bursting or Catching Its Breath? US Stocks Hit Liquidity Limits as Nasdaq Slides 5% - bloomingbit",
+      "summary": "AI Bubble Bursting or Catching Its Breath? US Stocks Hit Liquidity Limits as Nasdaq Slides 5% bloomingbit",
+      "published_utc": "2026-11-21 11:33 UTC",
+      "timestamp": 1795260812.0,
+      "age_hours": 0.1
+    },
+    {
+      "source": "Investing Economy",
+      "tier": 2,
+      "title": "EU proposes digital tax to fund budget amid member state divisions",
+      "summary": "",
+      "published_utc": "2026-11-21 11:29 UTC",
+      "timestamp": 1795260574.0,
+      "age_hours": 0.2
+    },
+    {
+      "source": "CNBC World",
+      "tier": 2,
+      "title": "FBI's criminal information database hacked, CNN reports",
+      "summary": "The apparent compromise of the National Crime Information Center database would mark the second intrusion involving an FBI system in recent months.",
+      "published_utc": "2026-11-21 11:24 UTC",
+      "timestamp": 1795260240.0,
+      "age_hours": 0.3
+    },
+    {
+      "source": "CNBC World",
+      "tier": 2,
+      "title": "Two tanker attack incidents reported near Oman's Khasab, UKMTO says",
+      "summary": "The incidents followed a similar attack on a tanker near Khasab on Friday that caused a fire on board, according to the British maritime security agency.",
+      "published_utc": "2026-11-21 11:15 UTC",
+      "timestamp": 1795259725.0,
+      "age_hours": 0.4
+    },
+    {
+      "source": "Investing Forex",
+      "tier": 2,
+      "title": "Bitcoin falls to its lowest in two years",
+      "summary": "",
+      "published_utc": "2026-11-21 09:12 UTC",
+      "timestamp": 1795252338.0,
+      "age_hours": 2.5
+    },
+    {
+      "source": "CNBC World",
+      "tier": 2,
+      "title": "Trump orders federal contractors to notify White House before giving Congress information",
+      "summary": "Companies that fail to comply could face cancelation of existing contracts or suspension from future federal business.",
+      "published_utc": "2026-11-21 08:54 UTC",
+      "timestamp": 1795251262.0,
+      "age_hours": 2.8
+    },
+    {
+      "source": "Investing Crypto",
+      "tier": 2,
+      "title": "Bitcoin falls below $56,000 as liquidity squeeze deepens crypto selloff",
+      "summary": "",
+      "published_utc": "2026-11-21 08:46 UTC",
+      "timestamp": 1795250786.0,
+      "age_hours": 2.9
+    },
+    {
+      "source": "CNBC World",
+      "tier": 2,
+      "title": "Meta's India offices hit by opposition protests over account removals",
+      "summary": "Prime Minister Modi's government says it orders content to be taken down only if it breaches local laws, or can harm public safety or national security.",
+      "published_utc": "2026-11-21 08:22 UTC",
+      "timestamp": 1795249350.0,
+      "age_hours": 3.3
+    },
+    {
+      "source": "GNews Rates/CB",
+      "tier": 3,
+      "title": "Treasury Yields Fall, German Bunds’ Tick Higher - WSJ",
+      "summary": "Treasury Yields Fall, German Bunds’ Tick Higher WSJ",
+      "published_utc": "2026-11-21 08:19 UTC",
+      "timestamp": 1795249199.0,
+      "age_hours": 3.4
+    },
+    {
+      "source": "Investing Economy",
+      "tier": 2,
+      "title": "Iran war sees tanker hit near Hormuz as Saudi Arabia intercepts Houthi missiles",
+      "summary": "",
+      "published_utc": "2026-11-21 08:13 UTC",
+      "timestamp": 1795248788.0,
+      "age_hours": 3.5
+    }
+  ],
+  "upcoming_calendar": [],
+  "recent_releases": [],
+  "feed_health": {
+    "Fed Monetary Policy": "OK(0)",
+    "Bank of England": "OK(0)",
+    "ForexLive": "OK(23)",
+    "FXStreet": "OK(25)",
+    "Investing Economy": "OK(10)",
+    "Investing Indicators/Bonds": "OK(10)",
+    "Investing Forex": "OK(10)",
+    "Investing Commodities": "OK(10)",
+    "Investing Crypto": "OK(10)",
+    "CNBC Economy": "OK(3)",
+    "CNBC World": "OK(24)",
+    "GNews Rates/CB": "OK(25)",
+    "GNews Geo/China/Bonds": "OK(23)",
+    "GNews Assets Macro": "OK(25)"
+  }
+}

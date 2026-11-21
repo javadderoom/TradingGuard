@@ -1,5 +1,5 @@
 # 🏛️ TradingGuard Institutional AI Playbook & Memory Ledger
-**Last Calibration:** `2026-11-18T21:00:00.390428` | **Version:** `2.0.0-LEAN`
+**Last Calibration:** `2026-11-19T21:00:02.246227` | **Version:** `2.0.0-LEAN`
 
 This playbook represents the continuous learning feedback loop of the Antigravity 6-Seat Investment Council.
 It is updated dynamically after every executed trade and every counterfactual audit of debated stand-asides.
@@ -855,6 +855,7 @@ Rules proposed by the LLM review council. They do **not** affect live council de
 | 2026-11-13 21:00 | MULTI | Review Council Audit (2026-11-13): ... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Audited 31 decision(s) for `2026-11-13`: | 20 counterfactual expansion(s) (GBPUSD: 5, NQ: 10, XAUUSD: 5) — inspect screener clock/gates before modifying ratified rules |
 | 2026-11-16 21:00 | MULTI | Review Council Audit (2026-11-16): ... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Audited 25 decision(s) for `2026-11-16`: | all outcomes neutral/unfilled |
 | 2026-11-18 21:00 | MULTI | Review Council Audit (2026-11-18): ... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Audited 26 decision(s) for `2026-11-18`: | 25 counterfactual expansion(s) (GBPUSD: 10, NQ: 8, XAUUSD: 7) — inspect screener clock/gates before modifying ratified rules |
+| 2026-11-19 21:00 | MULTI | Review Council Audit (2026-11-19): ... | +0.00 / -0.00 pts | **AUDIT_SYNTHESIS** | Audited 17 decision(s) for `2026-11-19`: | 5 protective veto(es) | 4 counterfactual expansion(s) (GBPUSD: 2, XAUUSD: 2) — inspect screener clock/gates before modifying ratified rules |
 
 ---
 ## 🎯 Executed Trade Post-Mortems

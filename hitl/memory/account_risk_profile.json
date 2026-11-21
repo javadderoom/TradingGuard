@@ -24,10 +24,10 @@
       "hard_overall_drawdown_pct": 20.0
     }
   },
-  "daily_reference_equity": 1112.51,
-  "daily_reference_date": "2026-11-19",
-  "high_water_mark_equity": 1112.51,
+  "daily_reference_equity": 1109.03,
+  "daily_reference_date": "2026-11-20",
+  "high_water_mark_equity": 1130.83,
   "circuit_breaker_active": false,
   "circuit_breaker_reason": "",
-  "last_updated": "2026-11-19T11:41:38.460492"
+  "last_updated": "2026-11-20T11:59:58.268831"
 }

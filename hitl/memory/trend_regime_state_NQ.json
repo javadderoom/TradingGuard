@@ -2,32 +2,32 @@
   "symbol": "NQ",
   "horizons": {
     "session": {
-      "bias": "RANGE_CHOP",
-      "confidence": 0.98,
-      "session_archetype": "RANGE_BOUND_CHOP",
+      "bias": "BEARISH",
+      "confidence": 0.95,
+      "session_archetype": "BEARISH_EXPANSION",
       "expected_range": {
-        "high": 28502.6,
-        "low": 28214.9
+        "high": 25418.93,
+        "low": 24817.3
       },
-      "key_trigger": 28358.75,
-      "catalyst_danger": "HIGH"
+      "key_trigger": 26509.6,
+      "catalyst_danger": "LOW"
     },
     "day": {
-      "bias": "CONSOLIDATION",
-      "confidence": 0.97,
+      "bias": "BEARISH",
+      "confidence": 0.96,
       "daily_dol": {
-        "target": 28251.4,
+        "target": 25161.6,
         "type": "SELL_SIDE_LIQUIDITY",
-        "rationale": "SubQ Snap classified CONSOLIDATION_DAY targeting SELL_SIDE_LIQUIDITY"
+        "rationale": "SubQ Snap classified BEARISH_DAY targeting SELL_SIDE_LIQUIDITY"
       },
-      "invalidation": 28142.7,
-      "candle_archetype": "CONSOLIDATION_DAY"
+      "invalidation": 26509.6,
+      "candle_archetype": "BEARISH_DAY"
     },
     "week": {
-      "bias": "BEARISH",
-      "confidence": 0.24,
-      "macro_target": 26254.3,
-      "weekly_profile": "TUESDAY_HIGH_OF_WEEK"
+      "bias": "NEUTRAL",
+      "confidence": 0.19,
+      "macro_target": 28596.6,
+      "weekly_profile": "MID_WEEK_REVERSAL"
     }
   },
   "trade_management": {
@@ -50,137 +50,228 @@
       "note": "Index Range Boundary Fade: 3.0R TP with 0.8R BE protection"
     }
   },
-  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for NQ. Session bias rated RANGE_CHOP (confidence 98%), Daily horizon aligned with CONSOLIDATION_DAY toward 28251.40. Weekly profile: TUESDAY_HIGH_OF_WEEK.",
+  "synthesis_rationale": "SubQ Snap 1.1 Multimodal Classification: Evaluated on-chart MTF state vs off-chart macro catalysts for NQ. Session bias rated BEARISH (confidence 95%), Daily horizon aligned with BEARISH_DAY toward 25161.60. Weekly profile: MID_WEEK_REVERSAL.",
   "source": "subq-snap-1.1",
-  "latency_ms": 2130.5,
-  "generated_at_utc": "2026-11-13 10:37:59 UTC",
-  "generated_at_tehran": "2026-11-13 14:07:59 Tehran",
+  "latency_ms": 622.4,
+  "generated_at_utc": "2026-11-21 11:44:03 UTC",
+  "generated_at_tehran": "2026-11-21 15:14:03 Tehran",
   "on_chart_telemetry": {
     "symbol": "NQ",
     "asset_class": "INDEX",
-    "active_anchor": "PRE_LONDON",
-    "current_price": 28259.2,
-    "timestamp_utc": "2026-11-13 10:37:57 UTC",
-    "timestamp_tehran": "2026-11-13 14:07:57 Tehran",
+    "active_anchor": "PRE_NY",
+    "current_price": 25207.1,
+    "timestamp_utc": "2026-11-21 11:44:02 UTC",
+    "timestamp_tehran": "2026-11-21 15:14:02 Tehran",
     "daily_structure": {
-      "pdh": 28545.5,
-      "pdl": 27908.6,
-      "pdc": 28294.4,
-      "daily_open": 28308.9,
-      "daily_high": 28502.6,
-      "daily_low": 28142.7,
-      "daily_range": 359.9,
-      "adr_14": 874.88,
-      "adr_utilization_pct": 41.1,
+      "pdh": 27754.2,
+      "pdl": 26356.2,
+      "pdc": 26427.4,
+      "daily_open": 26496.5,
+      "daily_high": 26509.6,
+      "daily_low": 24897.3,
+      "daily_range": 1612.3,
+      "adr_14": 1059.17,
+      "adr_utilization_pct": 152.2,
       "has_swept_pdh": false,
-      "has_swept_pdl": false
+      "has_swept_pdl": true
     },
     "weekly_structure": {
-      "pwh": 28837.1,
-      "pwl": 26254.3,
-      "cwo": 26817.3,
-      "relation_to_weekly_open": "ABOVE_WEEKLY_OPEN"
+      "pwh": 28596.6,
+      "pwl": 26644.9,
+      "cwo": 27970.9,
+      "relation_to_weekly_open": "BELOW_WEEKLY_OPEN"
     },
     "session_ranges": {
-      "asian_high": 28502.6,
-      "asian_low": 28214.9,
-      "asian_range": 287.7,
-      "london_high": 28290.8,
-      "london_low": 28142.7,
-      "london_range": 148.1
+      "asian_high": 26509.6,
+      "asian_low": 24897.3,
+      "asian_range": 1612.3,
+      "london_high": 26509.6,
+      "london_low": 24897.3,
+      "london_range": 1612.3
     },
     "london_context": {
-      "is_established": true,
-      "london_high": 28290.8,
-      "london_low": 28142.7,
-      "london_range": 148.1,
+      "is_established": false,
+      "london_high": 26509.6,
+      "london_low": 24897.3,
+      "london_range": 1612.3,
       "swept_asian_high": false,
-      "swept_asian_low": true,
-      "pre_ny_adr_util_pct": 41.1,
-      "exhaustion_alert": false
+      "swept_asian_low": false,
+      "pre_ny_adr_util_pct": 152.2,
+      "exhaustion_alert": true
     },
     "draw_on_liquidity": {
       "type": "SELL_SIDE_LIQUIDITY",
-      "target_price": 28251.4,
-      "distance_pts": 7.8,
+      "target_price": 25161.6,
+      "distance_pts": 45.5,
       "rationale": "Trading below previous day close; expanding toward resting sell-side liquidity."
     },
     "liquidity_pools": {
       "overhead_bsl": [
-        28261.9,
-        28280.0,
-        28281.5
+        25281.8,
+        25284.3,
+        25571.8
       ],
       "underlying_ssl": [
-        28251.4,
-        28249.6,
-        28240.3
+        25161.6,
+        24984.1,
+        24897.3
       ],
       "active_h1_fvgs": [
         {
-          "type": "BEARISH_FVG",
-          "top": 28501.9,
-          "bottom": 28471.6,
-          "midpoint": 28486.75,
-          "size": 30.3,
-          "bar_time": 1794430800
+          "type": "BULLISH_FVG",
+          "top": 27563.7,
+          "bottom": 27428.9,
+          "midpoint": 27496.3,
+          "size": 134.8,
+          "bar_time": 1795075200
         },
         {
           "type": "BEARISH_FVG",
-          "top": 28435.0,
-          "bottom": 28410.0,
-          "midpoint": 28422.5,
-          "size": 25.0,
-          "bar_time": 1794434400
+          "top": 27538.0,
+          "bottom": 27347.3,
+          "midpoint": 27442.65,
+          "size": 190.7,
+          "bar_time": 1795107600
         }
       ],
       "active_h4_fvgs": [
         {
-          "type": "BULLISH_FVG",
-          "top": 27185.2,
-          "bottom": 27038.8,
-          "midpoint": 27112.0,
-          "size": 146.4,
-          "bar_time": 1794225600
+          "type": "BEARISH_FVG",
+          "top": 27461.1,
+          "bottom": 27318.9,
+          "midpoint": 27390.0,
+          "size": 142.2,
+          "bar_time": 1794844800
         },
         {
           "type": "BULLISH_FVG",
-          "top": 27784.7,
-          "bottom": 27269.4,
-          "midpoint": 27527.05,
-          "size": 515.3,
-          "bar_time": 1794240000
+          "top": 27562.4,
+          "bottom": 27482.0,
+          "midpoint": 27522.2,
+          "size": 80.4,
+          "bar_time": 1795075200
         }
       ]
     },
     "htf_trend": {
-      "h1_regime": "CONSOLIDATION_RANGE",
-      "h1_ma20": 28311.36,
-      "h4_ma20": 28128.09,
-      "h1_displacement_3bar": 24.5
+      "h1_regime": "BEARISH_EXPANSION",
+      "h1_ma20": 25956.95,
+      "h4_ma20": 26777.72,
+      "h1_displacement_3bar": -333.3
     },
     "smt_divergence": {
-      "has_smt": false,
-      "type": "NONE",
-      "note": "Aligned market structure"
+      "has_smt": true,
+      "type": "BEARISH_SMT",
+      "note": "SPX broke higher high while NQ showed relative weakness (Bearish SMT)"
     }
   },
   "off_chart_telemetry": {
     "symbol": "NQ",
-    "timestamp_utc": "2026-11-13 10:37:57 UTC",
-    "timestamp_tehran": "2026-11-13 14:07:57 Tehran",
+    "timestamp_utc": "2026-11-21 11:44:02 UTC",
+    "timestamp_tehran": "2026-11-21 15:14:02 Tehran",
     "session_context": {
-      "is_active_killzone": true,
-      "session_label": "London Killzone",
-      "session_key": "London_Post_Open"
+      "is_active_killzone": false,
+      "session_label": "Weekend (Market Closed)",
+      "session_key": "Outside_Killzones"
     },
     "catalysts": {
-      "session_risk": "HIGH",
-      "day_risk": "HIGH",
-      "week_risk": "MEDIUM",
-      "upcoming_high_impact_session": [
+      "session_risk": "LOW",
+      "day_risk": "LOW",
+      "week_risk": "LOW",
+      "upcoming_high_impact_session": [],
+      "upcoming_high_impact_day_count": 0,
+      "upcoming_high_impact_week_count": 0
+    },
+    "retail_sentiment": {
+      "sample_size": 10,
+      "retail_long_pct": 20.0,
+      "retail_short_pct": 80.0,
+      "contrarian_bias": "INSTITUTIONAL_LONG_HUNT",
+      "interpretation": "Retail crowd is 20.0% LONG. Institutional liquidity hunt favors squeezing Buy-Side Liquidity."
+    },
+    "fundamental_causal": {
+      "global_regime": "EQUITY_LIQUIDITY_SQUEEZE_FLIGHT_TO_TREASURIES",
+      "dominant_theme": "Equity De-Risking Spurs Treasury Safe-Haven Bid While Forcing Metals & Crypto Liquidation",
+      "asset_bias": "STRONG_BEARISH",
+      "asset_score": -85,
+      "confidence": 0.9,
+      "dominant_driver": "AI_VALUATION_UNWIND_AND_LIQUIDITY_LIMITS",
+      "dominant_mechanism": "Tech valuations face liquidity limits -> heavy fund selling -> Nasdaq cascade",
+      "causal_chains": [
         {
-          "title": "Core PPI m/m",
-          "country": "USD",
-          "impact": "High",
-          "datetime_tehran": 
+          "chain_id": "CHAIN-1",
+          "event": "Tech Valuation De-Grossing and Equity Liquidity Wall",
+          "transmission_steps": [
+            "Mega-cap tech valuation unwind triggers heavy equity liquidation and VIX spike.",
+            "Capital flees risky assets into US Treasuries, driving yields sharply down.",
+            "Equity indexes plunge while duration bonds rally on flight-to-safety flows."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "NQ 1D -4.62% and SPX 1D -3.01% while US 10Y yield drops 14bps to 4.912% and TLT rallies +1.37% 1D / +2.61% 5D.",
+          "affected_assets": {
+            "NQ": "BEARISH",
+            "SPX": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.9
+        },
+        {
+          "chain_id": "CHAIN-2",
+          "event": "Crowded Long Liquidation in Precious Metals via Cross-Asset Margin Pressure",
+          "transmission_steps": [
+            "Multi-asset drawdown and VIX spike trigger cross-margin calls across leveraged funds.",
+            "Highly crowded long positions in gold are sold to raise cash collateral.",
+            "Gold and silver decline sharply despite dropping real yields and geopolitical strikes."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "COT Gold Managed Money long is 86.5%; XAUUSD drops -2.41% 1D / -8.93% 5D and XAGUSD drops -15.42% 5D despite TIPS yield dropping 14bps 5D to 2.77%.",
+          "affected_assets": {
+            "XAUUSD": "BEARISH",
+            "XAGUSD": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.85
+        },
+        {
+          "chain_id": "CHAIN-3",
+          "event": "US Treasury Yield Collapse Triggers Carry Trade Unwind in USDJPY",
+          "transmission_steps": [
+            "Flight to Treasuries drives US 2Y down 25bps and 10Y down 23bps 5D.",
+            "US-Japan sovereign yield differentials compress rapidly, making JPY carry expensive.",
+            "Leveraged funds trim USD longs, forcing USDJPY lower alongside global risk-off."
+          ],
+          "tape_verification": "CONFIRMED_BY_TAPE",
+          "tape_evidence": "US 10Y yields fall 14bps 1D and 23bps 5D; USDJPY falls -0.72% 1D to 158.54.",
+          "affected_assets": {
+            "USDJPY": "BEARISH"
+          },
+          "horizon": "SWING_1_5D",
+          "confidence": 0.8
+        }
+      ],
+      "rates_tape": {
+        "nom_10y": 4.912,
+        "nom_10y_5d_bps": -23.0,
+        "real_10y": 2.77,
+        "real_10y_5d_bps": -14.0,
+        "dxy_level": 103.64,
+        "dxy_5d_pct": 0.34,
+        "vix_level": 26.8,
+        "bond_equity_co_selloff": false
+      },
+      "cot_positioning": {
+        "symbol": "NQ",
+        "report_date": "2026-11-17",
+        "participant": "Leveraged Funds",
+        "long_contracts": 51004,
+        "short_contracts": 63472,
+        "net_contracts": -12468,
+        "net_change_wow": -25357,
+        "long_pct": 44.6,
+        "crowding_flag": "BALANCED",
+        "note": "CME Nasdaq-100 Consolidated (Leveraged Funds)"
+      },
+      "analysis_source": "llm:gemini-3.8-flash-high"
+    }
+  }
+}
